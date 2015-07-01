@@ -8,8 +8,6 @@
  * @brief Decaf high-level functions.
  */
 
-#include <stdio.h> // FIXME remove
-
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #define __STDC_WANT_LIB_EXT1__ 1 /* for memset_s */
 #include "decaf.h"
@@ -83,7 +81,7 @@ const size_t API_NS2(alignof,precomputed_s) = 32;
 
 #ifdef __clang__
 #if 100*__clang_major__ + __clang_minor__ > 305
-#define UNROLL _Pragma("clang loop unroll(full)") // FIXME: vectorize?
+#define UNROLL _Pragma("clang loop unroll(full)") // PERF FIXME: vectorize?
 #endif
 #endif
 
@@ -143,7 +141,7 @@ siv gf_sub_nr ( gf_s *__restrict__ c, const gf a, const gf b ) {
     ANALYZE_THIS_ROUTINE_CAREFULLY; //TODO
     field_sub_nr((field_t *)c, (const field_t *)a, (const field_t *)b);
     gf_bias(c, 2);
-    if (WBITS==32) field_weak_reduce((field_t*) c); // HACK FIXME
+    if (WBITS==32) field_weak_reduce((field_t*) c); // HACK
 }
 
 /** Subtract mod p. Bias by amt but don't reduce.  */
@@ -151,7 +149,7 @@ siv gf_sub_nr_x ( gf c, const gf a, const gf b, int amt ) {
     ANALYZE_THIS_ROUTINE_CAREFULLY; //TODO
     field_sub_nr((field_t *)c, (const field_t *)a, (const field_t *)b);
     gf_bias(c, amt);
-    if (WBITS==32) field_weak_reduce((field_t*) c); // HACK FIXME
+    if (WBITS==32) field_weak_reduce((field_t*) c); // HACK
 }
 
 /** Add mod p.  Don't reduce. */
@@ -163,15 +161,6 @@ siv gf_add_nr ( gf c, const gf a, const gf b ) {
 
 /** Constant time, x = is_z ? z : y */
 siv cond_sel(gf x, const gf y, const gf z, decaf_bool_t is_z) {
-    /*
-    big_register_t br_mask = br_set_to_mask(is_z);
-    big_register_t *out = (big_register_t *)x;
-    const big_register_t *y_ = (const big_register_t *)y, *z_ = (const big_register_t *)z;
-    word_t k;
-    for (k=0; k<sizeof(gf)/sizeof(big_register_t); k++) {
-        out[k] = (~br_mask & y_[k]) | (br_mask & z_[k]);
-    }
-    */
     constant_time_select(x,z,y,sizeof(gf),is_z);
 }
 
@@ -870,7 +859,6 @@ sv sub_pniels_from_pt (
 
 extern const scalar_t API_NS(point_scalarmul_adjustment);
 
-/* TODO: get rid of big_register_t dependencies? */
 siv constant_time_lookup_xx (
     void *__restrict__ out_,
     const void *table_,
@@ -878,23 +866,6 @@ siv constant_time_lookup_xx (
     decaf_word_t n_table,
     decaf_word_t idx
 ) {
-    /*
-    big_register_t big_one = br_set_to_mask(1), big_i = br_set_to_mask(idx);
-    big_register_t *out = (big_register_t *)out_;
-    const unsigned char *table = (const unsigned char *)table_;
-    word_t j,k;
-    
-    big_register_t br_mask = br_is_zero(big_i);
-    for (k=0; k<elem_bytes/sizeof(big_register_t); k++)
-        out[k] = br_mask & *(const big_register_t*)(&table[k*sizeof(big_register_t)]);
-    big_i-=big_one;
-    for (j=1; j<n_table; j++, big_i-=big_one) {
-        br_mask = br_is_zero(big_i);
-        for (k=0; k<elem_bytes/sizeof(big_register_t); k++) {
-            out[k] |= br_mask & *(const big_register_t*)(&table[k*sizeof(big_register_t)+j*elem_bytes]);
-        }
-    }
-    */
     constant_time_lookup(out_,table_,elem_bytes,n_table,idx);
 }
 
@@ -1164,7 +1135,6 @@ API_NS(invert_elligator_nonuniform) (
         /* if hint is to neg t/s, then go to infinity, effectively set s to 1 */
         cond_sel(c,c,ONE,is_identity & sgn_t_over_s);
         cond_sel(b,b,ZERO,is_identity & ~sgn_t_over_s & ~sgn_s); /* identity adjust */
-        //cond_neg(b,is_identity & sgn_ed_T);
         
     }
     gf_mlw(d,c,2*EDWARDS_D-1); /* $d = (2d-a)s^2 */
@@ -1178,7 +1148,7 @@ API_NS(invert_elligator_nonuniform) (
     cond_neg(b, sgn_r0^hibit(b));
     
     succ &= ~(gf_eq(b,ZERO) & sgn_r0);
-    succ &= ~(is_identity & sgn_ed_T); /* FIXME: preimages of rotation */
+    succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
     
     gf_encode(recovered_hash, b); 
     /* TODO: deal with overflow flag */

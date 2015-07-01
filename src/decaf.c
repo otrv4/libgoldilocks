@@ -117,7 +117,7 @@ const size_t alignof_decaf_448_precomputed_s = 32;
 
 #define FOR_LIMB(i,op) { unsigned int i=0; for (i=0; i<DECAF_448_LIMBS; i++)  { op; }}
 
-/* TODO: figure out why this horribly degrades speed if you use it */
+/* PERF: figure out why this horribly degrades speed if you use it */
 #define FOR_LIMB_V(i,op) { unsigned int i=0; VECTORIZE for (i=0; i<DECAF_448_LIMBS; i++)  { op; }}
 
 /** Copy x = y */

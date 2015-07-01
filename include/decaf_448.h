@@ -512,7 +512,6 @@ decaf_448_invert_elligator_nonuniform (
  *    decaf_448_point_from_hash_uniform with the given hint.
  *
  * @warning The hinting system is subject to change, especially in corner cases.
- * @warning FIXME The hinting system doesn't work for certain inputs which have many 0xFF.
  */
 decaf_bool_t
 decaf_448_invert_elligator_uniform (
