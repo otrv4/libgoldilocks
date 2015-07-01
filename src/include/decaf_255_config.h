@@ -20,7 +20,7 @@
  * kilobytes at the cost of perhaps 5-10% overhead in direct scalarmul
  * time.
  */
-#define DECAF_USE_MONTGOMERY_LADDER 1
+#define DECAF_USE_MONTGOMERY_LADDER 0 /* FUTURE */
 
 /** The number of comb tables for fixed base scalarmul. */
 #define DECAF_COMBS_N 3

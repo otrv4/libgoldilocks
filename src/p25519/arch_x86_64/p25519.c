@@ -14,10 +14,6 @@ p255_mul (
     const uint64_t *a = as->limb, *b = bs->limb, mask = ((1ull<<51)-1);
     uint64_t *c = cs->limb;
     
-    uint64_t bh[4];
-    int i;
-    for (i=0; i<4; i++) bh[i] = b[i+1] * 19;
-    
     __uint128_t accum0, accum1, accum2;
     
     uint64_t ai = a[0];
@@ -26,24 +22,26 @@ p255_mul (
     accum2 = widemul_rm(ai, &b[2]);
     
     ai = a[1];
-    mac_rm(&accum0, ai, &bh[3]);
-    mac_rm(&accum1, ai, &b[0]);
     mac_rm(&accum2, ai, &b[1]);
+    mac_rm(&accum1, ai, &b[0]);
+    ai *= 19;
+    mac_rm(&accum0, ai, &b[4]);
     
     ai = a[2];
-    mac_rm(&accum0, ai, &bh[2]);
-    mac_rm(&accum1, ai, &bh[3]);
     mac_rm(&accum2, ai, &b[0]);
+    ai *= 19;
+    mac_rm(&accum0, ai, &b[3]);
+    mac_rm(&accum1, ai, &b[4]);
     
-    ai = a[3];
-    mac_rm(&accum0, ai, &bh[1]);
-    mac_rm(&accum1, ai, &bh[2]);
-    mac_rm(&accum2, ai, &bh[3]);
+    ai = a[3] * 19;
+    mac_rm(&accum0, ai, &b[2]);
+    mac_rm(&accum1, ai, &b[3]);
+    mac_rm(&accum2, ai, &b[4]);
     
-    ai = a[4];
-    mac_rm(&accum0, ai, &bh[0]);
-    mac_rm(&accum1, ai, &bh[1]);
-    mac_rm(&accum2, ai, &bh[2]);
+    ai = a[4] * 19;
+    mac_rm(&accum0, ai, &b[1]);
+    mac_rm(&accum1, ai, &b[2]);
+    mac_rm(&accum2, ai, &b[3]);
     
     uint64_t c0 = accum0 & mask;
     accum1 += accum0 >> 51;
@@ -52,6 +50,8 @@ p255_mul (
     c[2] = accum2 & mask;
     
     accum0 = accum2 >> 51;
+
+    mac_rm(&accum0, ai, &b[4]);
     
     ai = a[0];
     mac_rm(&accum0, ai, &b[3]);
@@ -70,8 +70,71 @@ p255_mul (
     mac_rm(&accum1, ai, &b[1]);
     
     ai = a[4];
-    mac_rm(&accum0, ai, &bh[3]);
     mac_rm(&accum1, ai, &b[0]);
+    
+    c[3] = accum0 & mask;
+    accum1 += accum0 >> 51;
+    c[4] = accum1 & mask;
+    
+    /* 2^102 * 16 * 5 * 19 * (1+ep) >> 64
+     * = 2^(-13 + <13)
+     * PERF: good enough to fit into uint64_t?
+     */
+    
+    uint64_t a1 = accum1>>51;
+    accum1 = (__uint128_t)a1 * 19 + c0;
+    c[0] = accum1 & mask;
+    c[1] = c1 + (accum1>>51);
+}
+
+void
+p255_sqr (
+    p255_t *__restrict__ cs,
+    const p255_t *as
+) {
+    const uint64_t *a = as->limb, mask = ((1ull<<51)-1);
+    uint64_t *c = cs->limb;
+    
+    __uint128_t accum0, accum1, accum2;
+    
+    uint64_t ai = a[0];
+    accum0 = widemul_rr(ai, ai);
+    ai *= 2;
+    accum1 = widemul_rm(ai, &a[1]);
+    accum2 = widemul_rm(ai, &a[2]);
+    
+    ai = a[1];
+    mac_rr(&accum2, ai, ai);
+    ai *= 38;
+    mac_rm(&accum0, ai, &a[4]);
+    
+    ai = a[2] * 38;
+    mac_rm(&accum0, ai, &a[3]);
+    mac_rm(&accum1, ai, &a[4]);
+    
+    ai = a[3] * 19;
+    mac_rm(&accum1, ai, &a[3]);
+    ai *= 2;
+    mac_rm(&accum2, ai, &a[4]);
+    
+    uint64_t c0 = accum0 & mask;
+    accum1 += accum0 >> 51;
+    uint64_t c1 = accum1 & mask;
+    accum2 += accum1 >> 51;
+    c[2] = accum2 & mask;
+    
+    accum0 = accum2 >> 51;
+    
+    ai = a[0]*2;
+    mac_rm(&accum0, ai, &a[3]);
+    accum1 = widemul_rm(ai, &a[4]);
+    
+    ai = a[1]*2;
+    mac_rm(&accum0, ai, &a[2]);
+    mac_rm(&accum1, ai, &a[3]);
+    
+    mac_rr(&accum0, a[4]*19, a[4]);
+    mac_rr(&accum1, a[2], a[2]);
     
     c[3] = accum0 & mask;
     accum1 += accum0 >> 51;
@@ -113,74 +176,6 @@ p255_mulw (
     
     assert(accum < mask);
     c[1] += accum;
-}
-
-void
-p255_sqr (
-    p255_t *__restrict__ cs,
-    const p255_t *as
-) {
-    const uint64_t *a = as->limb, mask = ((1ull<<51)-1);
-    uint64_t *c = cs->limb;
-    
-    uint64_t ah[4];
-    int i;
-    for (i=0; i<4; i++) ah[i] = a[i+1] * 19;
-    
-    __uint128_t accum0, accum1, accum2;
-    
-    uint64_t ai = a[0];
-    accum0 = widemul_rr(ai, ai);
-    ai *= 2;
-    accum1 = widemul_rm(ai, &a[1]);
-    accum2 = widemul_rm(ai, &a[2]);
-    
-    ai = a[1];
-    mac_rr(&accum2, ai, ai);
-    ai *= 2;
-    mac_rm(&accum0, ai, &ah[3]);
-    
-    ai = a[2] * 2;
-    mac_rm(&accum0, ai, &ah[2]);
-    mac_rm(&accum1, ai, &ah[3]);
-    
-    ai = a[3];
-    mac_rm(&accum1, ai, &ah[2]);
-    ai *= 2;
-    mac_rm(&accum2, ai, &ah[3]);
-    
-    uint64_t c0 = accum0 & mask;
-    accum1 += accum0 >> 51;
-    uint64_t c1 = accum1 & mask;
-    accum2 += accum1 >> 51;
-    c[2] = accum2 & mask;
-    
-    accum0 = accum2 >> 51;
-    
-    ai = a[0]*2;
-    mac_rm(&accum0, ai, &a[3]);
-    accum1 = widemul_rm(ai, &a[4]);
-    
-    ai = a[1]*2;
-    mac_rm(&accum0, ai, &a[2]);
-    mac_rm(&accum1, ai, &a[3]);
-    
-    mac_rm(&accum0, a[4], &ah[3]);
-    mac_rr(&accum1, a[2], a[2]);
-    
-    c[3] = accum0 & mask;
-    accum1 += accum0 >> 51;
-    c[4] = accum1 & mask;
-    
-    /* 2^102 * 16 * 5 * 19 * (1+ep) >> 64
-     * = 2^(-13 + <13)
-     * PERF: good enough to fit into uint64_t?
-     */
-    
-    uint64_t a1 = accum1>>51;
-    accum1 = (__uint128_t)a1 * 19 + c0;
-    c[0] = accum1 & mask;
-    c[1] = c1 + (accum1>>51);
 }
 
 void
