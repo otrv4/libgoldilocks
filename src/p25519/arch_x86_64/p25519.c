@@ -158,24 +158,32 @@ p255_mulw (
     uint64_t b
 ) {
     const uint64_t *a = as->limb, mask = ((1ull<<51)-1);
-    int i;
-    
     uint64_t *c = cs->limb;
 
-    __uint128_t accum = 0;
-    for (i=0; i<5; i++) {
-        mac_rm(&accum, b, &a[i]);
-        c[i] = accum & mask;
-        accum >>= 51;
-    }
-    /* PERF: parallelize? eh well this is reference */
-    accum *= 19;
-    accum += c[0];
-    c[0] = accum & mask;
+    __uint128_t accum = widemul_rm(b, &a[0]);
+    uint64_t c0 = accum & mask;
     accum >>= 51;
     
-    assert(accum < mask);
-    c[1] += accum;
+    mac_rm(&accum, b, &a[1]);
+    uint64_t c1 = accum & mask;
+    accum >>= 51;
+    
+    mac_rm(&accum, b, &a[2]);
+    c[2] = accum & mask;
+    accum >>= 51;
+    
+    mac_rm(&accum, b, &a[3]);
+    c[3] = accum & mask;
+    accum >>= 51;
+    
+    mac_rm(&accum, b, &a[4]);
+    c[4] = accum & mask;
+    
+    uint64_t a1 = accum>>51;
+    accum = (__uint128_t)a1 * 19 + c0;
+    
+    c[0] = accum & mask;
+    c[1] = c1 + (accum>>51);
 }
 
 void
