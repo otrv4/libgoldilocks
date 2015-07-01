@@ -168,10 +168,10 @@ static void test_elligator() {
     decaf::SecureBuffer *alts[NHINTS];
     bool successes[NHINTS];
 
-    for (int i=0; i<NTESTS && (test.passing_now || i < 100); i++) {
+    for (int i=0; i<NTESTS/10 && (test.passing_now || i < 100); i++) {
         size_t len =  (i % (2*Point::HASH_BYTES + 3)); // FIXME: 0
         decaf::SecureBuffer b1(len);
-        rng.read(b1);
+        if (i!=Point::HASH_BYTES) rng.read(b1); /* special test case */
         if (i==1) b1[0] = 1; /* special case test */
         if (len >= Point::HASH_BYTES) b1[Point::HASH_BYTES-1] &= 0x7F; // FIXME MAGIC
         Point s = Point::from_hash(b1);
@@ -203,6 +203,12 @@ static void test_elligator() {
                     hexprint("x",b1);
                     hexprint("X",*alts[j]);
                 }
+                /*
+                if (i == Point::HASH_BYTES) {
+                    printf("Identity, hint = %d\n", j);
+                    hexprint("einv(0)",*alts[j]);
+                }
+                */
             }
         }
         

@@ -1183,13 +1183,14 @@ API_NS(invert_elligator_nonuniform) (
     gf_mul(b,c,a);
     gf_sub(b,ONE,b); /* t+1 */
     gf_sqr(c,a); /* s^2 */
+    decaf_bool_t is_identity = gf_eq(p->t,ZERO);
     {   /* identity adjustments */
         /* in case of identity, currently c=0, t=0, b=1, will encode to 1 */
         /* if hint is 0, -> 0 */
         /* if hint is to neg t/s, then go to infinity, effectively set s to 1 */
-        decaf_bool_t is_identity = gf_eq(p->x,ZERO);
         cond_sel(c,c,ONE,is_identity & sgn_t_over_s);
         cond_sel(b,b,ZERO,is_identity & ~sgn_t_over_s & ~sgn_s); /* identity adjust */
+        //cond_neg(b,is_identity & sgn_ed_T);
         
     }
     gf_mlw(d,c,2*EDWARDS_D-1); /* $d = (2d-a)s^2 */
@@ -1203,6 +1204,7 @@ API_NS(invert_elligator_nonuniform) (
     cond_neg(b, sgn_r0^hibit(b));
     
     succ &= ~(gf_eq(b,ZERO) & sgn_r0);
+    succ &= ~(is_identity & sgn_ed_T); /* FIXME: preimages of rotation */
     
     gf_encode(recovered_hash, b); 
     /* TODO: deal with overflow flag */

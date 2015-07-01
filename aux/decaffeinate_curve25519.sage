@@ -67,24 +67,30 @@ def decaf_encode_from_E_c(X,Y):
     # Precompute
     sd = sqrt(F(1-d))
     
-    zx = Z^2-X^2
-    TZ = T*Z
+    # comments in case of identity point
+    # (1,0) or (0,1)
+    zx = Z^2-X^2 # 0^2 or 1 * Z^2
+    TZ = T*Z # 0 * Z^2
     assert zx.is_square
-    ooAll = isqrt(zx*TZ^2)
-    osx = ooAll * TZ
-    ooTZ = ooAll * zx * osx
+    ooAll = isqrt(zx*TZ^2) # inf^2 or inf * 1/Z^3
+    osx = ooAll * TZ # inf or 1 * 1/Z
+    ooTZ = ooAll * zx * osx # inf * 1/Z^2
     
-    floop = qpositive(T^2 * ooTZ) or doPinkBikeShed
+    floop = qpositive(T^2 * ooTZ) or doPinkBikeShed # 0
     if floop:
-        frob = zx * ooTZ
+        frob = zx * ooTZ # 0 or inf
+        # Y = 0 or 1
     else:
-        frob = sd
-        Y = -X
+        frob = sd # sd
+        Y = -X # -1 or 0 * Z
         
-    osx *= frob
+    osx *= frob # 1 or inf * 1/Z || inf sd or sd * 1/Z
+    # y * osx = 0 or inf or -inf sd or 0 sd
+    # y * ootz * z = 1 or inf or inf sd or 0^2 sd
+    # s = 0 or 1 or inf sd or 
     
     if qpositive(-2*osx*Z) != floop: osx = -osx
-    s = Y*(ooTZ*Z + osx)
+    s = Y*(ooTZ*Z + osx) # 
     if not qpositive(s): s = -s
     
     return s
