@@ -28,6 +28,7 @@
 #include <string.h> /* for memcpy */
 
 #include "decaf.h"
+#include "secure_buffer.hxx"
 #include <string>
 #include <sys/types.h>
 #include <limits.h>
@@ -39,208 +40,17 @@
 #if __cplusplus >= 201103L
 #define NOEXCEPT noexcept
 #define EXPLICIT_CON explicit
-#define GET_DATA(str) ((const unsigned char *)&(str)[0])
+#define FINAL final
+#define DELETE = delete
 #else
 #define NOEXCEPT throw()
 #define EXPLICIT_CON
-#define GET_DATA(str) ((const unsigned char *)((str).data()))
+#define FINAL
+#define DELETE
 #endif
 /** @endcond */
 
 namespace decaf {
-
-/** @brief An exception for when crypto (ie point decode) has failed. */
-class CryptoException : public std::exception {
-public:
-    /** @return "CryptoException" */
-    virtual const char * what() const NOEXCEPT { return "CryptoException"; }
-};
-
-/** @brief An exception for when crypto (ie point decode) has failed. */
-class LengthException : public std::exception {
-public:
-    /** @return "CryptoException" */
-    virtual const char * what() const NOEXCEPT { return "LengthException"; }
-};
-
-/**
- * Securely erase contents of memory.
- */
-static inline void really_bzero(void *data, size_t size) { decaf_bzero(data,size); }
-
-/** Block object */
-class Block {
-protected:
-    unsigned char *data_;
-    size_t size_;
-
-public:
-    /** Empty init */
-    inline Block() NOEXCEPT : data_(NULL), size_(0) {}
-    
-    /** Init from C string */
-    inline Block(const char *data) NOEXCEPT : data_((unsigned char *)data), size_(strlen(data)) {}
-
-    /** Unowned init */
-    inline Block(const unsigned char *data, size_t size) NOEXCEPT : data_((unsigned char *)data), size_(size) {}
-    
-    /** Block from std::string */
-    inline Block(const std::string &s) : data_((unsigned char *)GET_DATA(s)), size_(s.size()) {}
-
-    /** Get const data */
-    inline const unsigned char *data() const NOEXCEPT { return data_; }
-
-    /** Get the size */
-    inline size_t size() const NOEXCEPT { return size_; }
-
-    /** Autocast to const unsigned char * */
-    inline operator const unsigned char*() const NOEXCEPT { return data_; }
-
-    /** Convert to C++ string */
-    inline std::string get_string() const {
-        return std::string((const char *)data_,size_);
-    }
-
-    /** Slice the buffer*/
-    inline Block slice(size_t off, size_t length) const throw(LengthException) {
-        if (off > size() || length > size() - off)
-            throw LengthException();
-        return Block(data()+off, length);
-    }
-    
-    /* Content-wise comparison; constant-time if they are the same length.
-     * FIXME: is it wise to have a content-wise compare on objects that may be mutable?
-     */ 
-    inline decaf_bool_t operator==(const Block &b) const NOEXCEPT {
-        return ~(*this != b);
-    }
-    
-    inline decaf_bool_t operator!=(const Block &b) const NOEXCEPT {
-        if (b.size() != size()) return true;
-        return ~decaf_memeq(b,*this,size());
-    }
-
-    /** Virtual destructor for SecureBlock. TODO: probably means vtable?  Make bool? */
-    inline virtual ~Block() {};
-};
-
-class TmpBuffer;
-
-class Buffer : public Block {
-public:
-    /** Null init */
-    inline Buffer() NOEXCEPT : Block() {}
-
-    /** Unowned init */
-    inline Buffer(unsigned char *data, size_t size) NOEXCEPT : Block(data,size) {}
-
-    /** Get unconst data */
-    inline unsigned char *data() NOEXCEPT { return data_; }
-
-    /** Get const data */
-    inline const unsigned char *data() const NOEXCEPT { return data_; }
-
-    /** Autocast to const unsigned char * */
-    inline operator const unsigned char*() const NOEXCEPT { return data_; }
-
-    /** Autocast to unsigned char */
-    inline operator unsigned char*() NOEXCEPT { return data_; }
-
-    /** Slice the buffer*/
-    inline TmpBuffer slice(size_t off, size_t length) throw(LengthException);
-};
-
-class TmpBuffer : public Buffer {
-public:
-    /** Unowned init */
-    inline TmpBuffer(unsigned char *data, size_t size) NOEXCEPT : Buffer(data,size) {}
-};
-
-TmpBuffer Buffer::slice(size_t off, size_t length) throw(LengthException) {
-    if (off > size() || length > size() - off) throw LengthException();
-    return TmpBuffer(data()+off, length);
-}
-
-/** A self-erasing block of data */
-class SecureBuffer : public Buffer {
-public:
-    /** Null secure block */
-    inline SecureBuffer() NOEXCEPT : Buffer() {}
-
-    /** Construct empty from size */
-    inline SecureBuffer(size_t size) {
-        data_ = new unsigned char[size_ = size];
-        memset(data_,0,size);
-    }
-
-    /** Construct from data */
-    inline SecureBuffer(const unsigned char *data, size_t size){
-        data_ = new unsigned char[size_ = size];
-        memcpy(data_, data, size);
-    }
-
-    /** Copy constructor */
-    inline SecureBuffer(const Block &copy) : Buffer() { *this = copy; }
-
-    /** Copy-assign constructor */
-    inline SecureBuffer& operator=(const Block &copy) throw(std::bad_alloc) {
-        if (&copy == this) return *this;
-        clear();
-        data_ = new unsigned char[size_ = copy.size()];
-        memcpy(data_,copy.data(),size_);
-        return *this;
-    }
-
-    /** Copy-assign constructor */
-    inline SecureBuffer& operator=(const SecureBuffer &copy) throw(std::bad_alloc) {
-        if (&copy == this) return *this;
-        clear();
-        data_ = new unsigned char[size_ = copy.size()];
-        memcpy(data_,copy.data(),size_);
-        return *this;
-    }
-
-    /** Destructor erases data */
-    ~SecureBuffer() NOEXCEPT { clear(); }
-
-    /** Clear data */
-    inline void clear() NOEXCEPT {
-        if (data_ == NULL) return;
-        really_bzero(data_,size_);
-        delete[] data_;
-        data_ = NULL;
-        size_ = 0;
-    }
-
-#if __cplusplus >= 201103L
-    /** Move constructor */
-    inline SecureBuffer(SecureBuffer &&move) { *this = move; }
-
-    /** Move non-constructor */
-    inline SecureBuffer(Block &&move) { *this = (Block &)move; }
-
-    /** Move-assign constructor. TODO: check that this actually gets used.*/ 
-    inline SecureBuffer& operator=(SecureBuffer &&move) {
-        clear();
-        data_ = move.data_; move.data_ = NULL;
-        size_ = move.size_; move.size_ = 0;
-        return *this;
-    }
-
-    /** C++11-only explicit cast */
-    inline explicit operator std::string() const { return get_string(); }
-#endif
-};
-
-
-/** @brief Passed to constructors to avoid (conservative) initialization */
-struct NOINIT {};
-
-/**@cond internal*/
-/** Forward-declare sponge RNG object */
-class SpongeRng;
-/**@endcond*/
-
 
 /**
  * @brief Ed255-Goldilocks/Decaf instantiation of group.
@@ -274,7 +84,10 @@ public:
     inline Scalar(const int w) NOEXCEPT { *this = w; } 
     
     /** @brief Construct from RNG */
-    inline explicit Scalar(SpongeRng &rng) NOEXCEPT;
+    inline explicit Scalar(Rng &rng) NOEXCEPT {
+        StackBuffer<SER_BYTES> sb(rng);
+        *this = sb;
+    }
     
     /** @brief Construct from decaf_scalar_t object. */
     inline Scalar(const decaf_255_scalar_t &t = decaf_255_scalar_zero) NOEXCEPT {  decaf_255_scalar_copy(s,t); } 
@@ -299,7 +112,7 @@ public:
         return *this;
     }
     
-    /** Destructor securely erases the scalar. */
+    /** Destructor securely zeorizes the scalar. */
     inline ~Scalar() NOEXCEPT { decaf_255_scalar_destroy(s); }
     
     /** @brief Assign from arbitrary-length little-endian byte sequence in a Block. */
@@ -414,16 +227,24 @@ public:
     inline Point(const decaf_255_point_t &q = decaf_255_point_identity) NOEXCEPT { decaf_255_point_copy(p,q); }
     
     /** @brief Copy constructor. */
-    inline Point(const Point &q) NOEXCEPT { decaf_255_point_copy(p,q.p); }
+    inline Point(const Point &q) NOEXCEPT { *this = q; }
     
     /** @brief Assignment. */
     inline Point& operator=(const Point &q) NOEXCEPT { decaf_255_point_copy(p,q.p); return *this; }
     
-    /** @brief Destructor securely erases the point. */
+    /** @brief Destructor securely zeorizes the point. */
     inline ~Point() NOEXCEPT { decaf_255_point_destroy(p); }
     
     /** @brief Construct from RNG */
-    inline explicit Point(SpongeRng &rng, bool uniform = true) NOEXCEPT;
+    inline explicit Point(Rng &rng, bool uniform = true) NOEXCEPT {
+        if (uniform) {
+            StackBuffer<2*HASH_BYTES> b(rng);
+            set_to_hash(b);
+        } else {
+            StackBuffer<HASH_BYTES> b(rng);
+            set_to_hash(b);
+        }
+    }
     
     /**
      * @brief Initialize from C++ fixed-length byte string.
@@ -591,11 +412,30 @@ public:
         Point r((NOINIT())); decaf_255_base_double_scalarmul_non_secret(r.p,s_base.s,p,s.s); return r;
     }
     
-    inline Point& debugging_torque_in_place() {
-        decaf_255_point_debugging_torque(p,p);
-        return *this;
+    /** @brief Return a point equal to *this, whose internal data is rotated by a torsion element. */
+    inline Point debugging_torque() const NOEXCEPT {
+        Point q;
+        decaf_255_point_debugging_torque(q.p,p);
+        return q;
     }
     
+    /** @brief Return a point equal to *this, whose internal data has a modified representation. */
+    inline Point debugging_pscale(const uint8_t factor[/*SER_BYTES*/]) const NOEXCEPT {
+        Point q;
+        decaf_255_point_debugging_pscale(q.p,p,factor);
+        return q;
+    }
+    
+    /** @brief Return a point equal to *this, whose internal data has a randomized representation. */
+    inline Point debugging_pscale(Rng &r) const NOEXCEPT {
+        StackBuffer<SER_BYTES> sb(r);
+        return debugging_pscale(sb);
+    }
+    
+    /**
+     * Modify buffer so that Point::from_hash(Buffer) == *this, and return true;
+     * or leave buf unmodified and return false.
+     */
     inline bool invert_elligator (
         Buffer &buf, uint16_t hint
     ) const NOEXCEPT {
@@ -611,13 +451,24 @@ public:
         if (buf.size() < HASH_BYTES) {
             ret &= decaf_memeq(&buf2[buf.size()], &buf2[HASH_BYTES], HASH_BYTES - buf.size());
         }
-        memcpy(buf,buf2,(buf.size() < HASH_BYTES) ? buf.size() : HASH_BYTES);
+        if (ret) {
+            /* TODO: make this constant time?? */
+            memcpy(buf,buf2,(buf.size() < HASH_BYTES) ? buf.size() : HASH_BYTES);
+        }
         decaf_bzero(buf2,sizeof(buf2));
         return !!ret;
     }
     
     /** @brief Steganographically encode this */
-    inline SecureBuffer steg_encode(SpongeRng &rng) const NOEXCEPT;
+    inline SecureBuffer steg_encode(Rng &rng) const throw(std::bad_alloc) {
+        SecureBuffer out(STEG_BYTES);
+        bool done;
+        do {
+            rng.read(out.slice(HASH_BYTES-1,STEG_BYTES-HASH_BYTES+1));
+            done = invert_elligator(out, out[HASH_BYTES-1]); 
+        } while (!done);
+        return out;
+    }
     
     /** @brief Return the base point */
     static inline const Point base() NOEXCEPT { return Point(decaf_255_point_base); }
@@ -661,7 +512,7 @@ private:
     inline const decaf_255_precomputed_s *get() const NOEXCEPT { return isMine ? ours.mine : ours.yours; }
     /** @endcond */
 public:
-    /** Destructor securely erases the memory. */
+    /** Destructor securely zeorizes the memory. */
     inline ~Precomputed() NOEXCEPT { clear(); }
     
     /**
@@ -744,7 +595,7 @@ public:
 
 #undef NOEXCEPT
 #undef EXPLICIT_CON
-#undef GET_DATA
+#undef FINAL
 } /* namespace decaf */
 
 #endif /* __DECAF_255_HXX__ */

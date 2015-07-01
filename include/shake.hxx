@@ -18,15 +18,9 @@
 
 /** @cond internal */
 #if __cplusplus >= 201103L
-#define DELETE = delete
 #define NOEXCEPT noexcept
-#define EXPLICIT_CON explicit
-#define GET_DATA(str) ((const unsigned char *)&(str)[0])
 #else
-#define DELETE
 #define NOEXCEPT throw()
-#define EXPLICIT_CON
-#define GET_DATA(str) ((const unsigned char *)((str).data()))
 #endif
 /** @endcond */
 
@@ -143,9 +137,9 @@ public:
     /** @return "ProtocolException" */
     virtual const char * what() const NOEXCEPT { return "ProtocolException"; }
 };
-    
+
 /** Sponge-based random-number generator */
-class SpongeRng : private KeccakSponge {
+class SpongeRng : public Rng, private KeccakSponge {
 public:
     class RngException : public std::exception {
     private:
@@ -172,46 +166,19 @@ public:
         }
     }
     
-    /** Read data to a buffer. */
-    inline void read(Buffer &buffer) NOEXCEPT { spongerng_next(sp,buffer.data(),buffer.size()); }
+    using Rng::read;
     
     /** Read data to a buffer. */
-    inline void read(TmpBuffer buffer) NOEXCEPT { read((Buffer &)buffer); }
-    
-    /** Read data to a C++ string 
-     * @warning TODO Future versions of this function may throw RngException if a
-     * nondeterministic RNG fails a reseed.
-     */
-    inline SecureBuffer read(size_t length) throw(std::bad_alloc) {
-        SecureBuffer out(length); read(out); return out;
-    }
+    virtual inline void read(Buffer &buffer) NOEXCEPT
+#if __cplusplus >= 201103L
+        final
+#endif
+        { spongerng_next(sp,buffer.data(),buffer.size()); }
     
 private:
     SpongeRng(const SpongeRng &) DELETE;
     SpongeRng &operator=(const SpongeRng &) DELETE;
 };
-
-/**@cond internal*/
-inline Ed255::Scalar::Scalar(SpongeRng &rng) NOEXCEPT {
-    *this = rng.read(SER_BYTES);
-}
-
-inline Ed255::Point::Point(SpongeRng &rng, bool uniform) NOEXCEPT {
-    SecureBuffer buffer((uniform ? 2 : 1) * HASH_BYTES);
-    rng.read(buffer);
-    set_to_hash(buffer);
-}
-
-
-inline SecureBuffer Ed255::Point::steg_encode(SpongeRng &rng) const NOEXCEPT {
-    SecureBuffer out(STEG_BYTES);
-    bool done;
-    do {
-        rng.read(out.slice(HASH_BYTES-1,STEG_BYTES-HASH_BYTES+1));
-        done = invert_elligator(out, out[HASH_BYTES-1]); 
-    } while (!done);
-    return out;
-}
 /**@endcond*/
 
 class Strobe : private KeccakSponge {
@@ -374,8 +341,5 @@ public:
 } /* namespace decaf */
 
 #undef NOEXCEPT
-#undef EXPLICIT_CON
-#undef GET_DATA
-#undef DELETE
 
 #endif /* __SHAKE_HXX__ */

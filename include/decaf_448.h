@@ -25,33 +25,8 @@
 #ifndef __DECAF_448_H__
 #define __DECAF_448_H__ 1
 
-#include <stdint.h>
-#include <sys/types.h>
-
-/* Goldilocks' build flags default to hidden and stripping executables. */
-/** @cond internal */
-#if defined(DOXYGEN) && !defined(__attribute__)
-#define __attribute__((x))
-#endif
-#define API_VIS __attribute__((visibility("default")))
-#define NOINLINE  __attribute__((noinline))
-#define WARN_UNUSED __attribute__((warn_unused_result))
-#define NONNULL1 __attribute__((nonnull(1)))
-#define NONNULL2 __attribute__((nonnull(1,2)))
-#define NONNULL3 __attribute__((nonnull(1,2,3)))
-#define NONNULL4 __attribute__((nonnull(1,2,3,4)))
-#define NONNULL5 __attribute__((nonnull(1,2,3,4,5)))
-
-/* Internal word types */
-#if (defined(__ILP64__) || defined(__amd64__) || defined(__x86_64__) || (((__UINT_FAST32_MAX__)>>30)>>30)) \
-	 && !defined(DECAF_FORCE_32_BIT)
-#define DECAF_WORD_BITS 64
-typedef uint64_t decaf_word_t, decaf_bool_t;
-typedef __uint128_t decaf_dword_t;
-#else
-#define DECAF_WORD_BITS 32
-typedef uint32_t decaf_word_t, decaf_bool_t;
-typedef uint64_t decaf_dword_t;
+#ifndef __DECAF_H__
+#error "include <decaf.h>, not <decaf_448.h>."
 #endif
 
 #define DECAF_448_LIMBS (512/DECAF_WORD_BITS)
@@ -89,13 +64,6 @@ typedef struct decaf_448_scalar_s {
     /** @endcond */
 } decaf_448_scalar_t[1];
 
-/** DECAF_TRUE = -1 so that DECAF_TRUE & x = x */
-static const decaf_bool_t DECAF_TRUE = -(decaf_bool_t)1, DECAF_FALSE = 0;
-
-/** NB Success is -1, failure is 0.  TODO: see if people would rather the reverse. */
-static const decaf_bool_t DECAF_SUCCESS = -(decaf_bool_t)1 /*DECAF_TRUE*/,
-	DECAF_FAILURE = 0 /*DECAF_FALSE*/;
-
 /** A scalar equal to 1. */
 extern const decaf_448_scalar_t decaf_448_scalar_one API_VIS;
 
@@ -114,10 +82,6 @@ extern const decaf_448_point_t decaf_448_point_base API_VIS;
 
 /** Precomputed table for the base point on the curve. */
 extern const struct decaf_448_precomputed_s *decaf_448_precomputed_base API_VIS;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @brief Read a scalar from wire format or from bytes.
@@ -632,20 +596,5 @@ void decaf_448_point_destroy (
 void decaf_448_precomputed_destroy (
   decaf_448_precomputed_s *pre
 ) NONNULL1 API_VIS;
-
-/* TODO: functions to invert point_from_hash?? */
-
-#undef API_VIS
-#undef WARN_UNUSED
-#undef NOINLINE
-#undef NONNULL1
-#undef NONNULL2
-#undef NONNULL3
-#undef NONNULL4
-#undef NONNULL5
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
 
 #endif /* __DECAF_448_H__ */

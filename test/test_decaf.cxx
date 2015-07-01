@@ -167,6 +167,8 @@ static void test_elligator() {
     const int NHINTS = 1<<4;
     decaf::SecureBuffer *alts[NHINTS];
     bool successes[NHINTS];
+    decaf::SecureBuffer *alts2[NHINTS];
+    bool successes2[NHINTS];
 
     for (int i=0; i<NTESTS/10 && (test.passing_now || i < 100); i++) {
         size_t len =  (i % (2*Point::HASH_BYTES + 3)); // FIXME: 0
@@ -174,17 +176,36 @@ static void test_elligator() {
         if (i!=Point::HASH_BYTES) rng.read(b1); /* special test case */
         if (i==1) b1[0] = 1; /* special case test */
         if (len >= Point::HASH_BYTES) b1[Point::HASH_BYTES-1] &= 0x7F; // FIXME MAGIC
-        Point s = Point::from_hash(b1);
-        for (int j=0; j<(i&3); j++) s.debugging_torque_in_place();
+        
+        Point s = Point::from_hash(b1), ss=s;
+        for (int j=0; j<(i&3); j++) ss = ss.debugging_torque();
+        
+        ss = ss.debugging_pscale(rng);
         
         bool good = false;
         for (int j=0; j<NHINTS; j++) {
             alts[j] = new decaf::SecureBuffer(len);
+            alts2[j] = new decaf::SecureBuffer(len);
 
             if (len > Point::HASH_BYTES)
                 memcpy(&(*alts[j])[Point::HASH_BYTES], &b1[Point::HASH_BYTES], len-Point::HASH_BYTES);
             
-            successes[j] = s.invert_elligator(*alts[j],j);
+            if (len > Point::HASH_BYTES)
+                memcpy(&(*alts2[j])[Point::HASH_BYTES], &b1[Point::HASH_BYTES], len-Point::HASH_BYTES);
+            
+            successes[j]  =  s.invert_elligator(*alts[j], j);
+            successes2[j] = ss.invert_elligator(*alts2[j],j);
+            
+            if (successes[j] != successes2[j]
+                || (successes[j] && successes2[j] && *alts[j] != *alts2[j])
+            ) {
+                test.fail();
+                printf("   Unscalable Elligator inversion: i=%d, hint=%d, s=%d,%d\n",i,j,
+                    -int(successes[j]),-int(successes2[j]));
+                hexprint("x",b1);
+                hexprint("X",*alts[j]);
+                hexprint("X",*alts2[j]);
+            }
            
             if (successes[j]) {
                 good = good || (b1 == *alts[j]);
@@ -228,6 +249,8 @@ static void test_elligator() {
         for (int j=0; j<NHINTS; j++) {
             delete alts[j];
             alts[j] = NULL;
+            delete alts2[j];
+            alts2[j] = NULL;
         }
         
         Point t(rng);
@@ -260,9 +283,7 @@ static void test_ec() {
         Point r = Point::from_hash(buffer);
         
         point_check(test,p,q,r,0,0,p,Point((decaf::SecureBuffer)p),"round-trip");
-        Point pp = p;
-        pp = p + q - q;
-        pp.debugging_torque_in_place();
+        Point pp = p.debugging_torque().debugging_pscale(rng);
         if (decaf::SecureBuffer(pp) != decaf::SecureBuffer(p)) {
             test.fail();
             printf("Fail torque seq test\n");

@@ -25,33 +25,8 @@
 #ifndef __DECAF_255_H__
 #define __DECAF_255_H__ 1
 
-#include <stdint.h>
-#include <sys/types.h>
-
-/* Goldilocks' build flags default to hidden and stripping executables. */
-/** @cond internal */
-#if defined(DOXYGEN) && !defined(__attribute__)
-#define __attribute__((x))
-#endif
-#define API_VIS __attribute__((visibility("default")))
-#define NOINLINE  __attribute__((noinline))
-#define WARN_UNUSED __attribute__((warn_unused_result))
-#define NONNULL1 __attribute__((nonnull(1)))
-#define NONNULL2 __attribute__((nonnull(1,2)))
-#define NONNULL3 __attribute__((nonnull(1,2,3)))
-#define NONNULL4 __attribute__((nonnull(1,2,3,4)))
-#define NONNULL5 __attribute__((nonnull(1,2,3,4,5)))
-
-/* Internal word types */
-#if (defined(__ILP64__) || defined(__amd64__) || defined(__x86_64__) || (((__UINT_FAST32_MAX__)>>30)>>30)) \
-	 && !defined(DECAF_FORCE_32_BIT)
-#define DECAF_WORD_BITS 64
-typedef uint64_t decaf_word_t, decaf_bool_t;
-typedef __uint128_t decaf_dword_t;
-#else
-#define DECAF_WORD_BITS 32
-typedef uint32_t decaf_word_t, decaf_bool_t;
-typedef uint64_t decaf_dword_t;
+#ifndef __DECAF_H__
+#error "include <decaf.h>, not <decaf_255.h>."
 #endif
 
 #define DECAF_255_LIMBS (320/DECAF_WORD_BITS)
@@ -59,9 +34,9 @@ typedef uint64_t decaf_dword_t;
 #define DECAF_255_SCALAR_LIMBS (256/DECAF_WORD_BITS)
 
 /** Galois field element internal structure */
-typedef struct gf_s {
+typedef struct gf_255_s {
     decaf_word_t limb[DECAF_255_LIMBS];
-} gf_s, gf[1];
+} gf_255_s, gf_255_t[1];
 /** @endcond */
 
 /** Number of bytes in a serialized point. */
@@ -71,7 +46,7 @@ typedef struct gf_s {
 #define DECAF_255_SCALAR_BYTES 32
 
 /** Twisted Edwards (-1,d-1) extended homogeneous coordinates */
-typedef struct decaf_255_point_s { /**@cond internal*/gf x,y,z,t;/**@endcond*/ } decaf_255_point_t[1];
+typedef struct decaf_255_point_s { /**@cond internal*/gf_255_t x,y,z,t;/**@endcond*/ } decaf_255_point_t[1];
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
 struct decaf_255_precomputed_s;
@@ -88,13 +63,6 @@ typedef struct decaf_255_scalar_s {
     decaf_word_t limb[DECAF_255_SCALAR_LIMBS];
     /** @endcond */
 } decaf_255_scalar_t[1];
-
-/** DECAF_TRUE = -1 so that DECAF_TRUE & x = x */
-static const decaf_bool_t DECAF_TRUE = -(decaf_bool_t)1, DECAF_FALSE = 0;
-
-/** NB Success is -1, failure is 0.  TODO: see if people would rather the reverse. */
-static const decaf_bool_t DECAF_SUCCESS = -(decaf_bool_t)1 /*DECAF_TRUE*/,
-	DECAF_FAILURE = 0 /*DECAF_FALSE*/;
 
 /** A scalar equal to 1. */
 extern const decaf_255_scalar_t decaf_255_scalar_one API_VIS;
@@ -114,10 +82,6 @@ extern const decaf_255_point_t decaf_255_point_base API_VIS;
 
 /** Precomputed table for the base point on the curve. */
 extern const struct decaf_255_precomputed_s *decaf_255_precomputed_base API_VIS;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @brief Read a scalar from wire format or from bytes.
@@ -481,7 +445,8 @@ decaf_bool_t decaf_255_point_valid (
 ) API_VIS WARN_UNUSED NONNULL1 NOINLINE;
 
 /**
- * @brief 2-torque a point, for debugging purposes.
+ * @brief Torque a point, for debugging purposes.  The output
+ * will be equal to the input.
  *
  * @param [out] q The point to torque.
  * @param [in] p The point to torque.
@@ -489,6 +454,21 @@ decaf_bool_t decaf_255_point_valid (
 void decaf_255_point_debugging_torque (
      decaf_255_point_t q,
      const decaf_255_point_t p
+) API_VIS NONNULL2 NOINLINE;
+
+/**
+ * @brief Projectively scale a point, for debugging purposes.
+ * The output will be equal to the input, and will be valid
+ * even if the factor is zero.
+ *
+ * @param [out] q The point to scale.
+ * @param [in] p The point to scale.
+ * @param [in] factor Serialized GF factor to scale.
+ */
+void decaf_255_point_debugging_pscale (
+     decaf_255_point_t q,
+     const decaf_255_point_t p,
+     const unsigned char factor[DECAF_255_SER_BYTES]
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
@@ -623,20 +603,5 @@ void decaf_255_point_destroy (
 void decaf_255_precomputed_destroy (
   decaf_255_precomputed_s *pre
 ) NONNULL1 API_VIS;
-
-/* TODO: functions to invert point_from_hash?? */
-
-#undef API_VIS
-#undef WARN_UNUSED
-#undef NOINLINE
-#undef NONNULL1
-#undef NONNULL2
-#undef NONNULL3
-#undef NONNULL4
-#undef NONNULL5
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
 
 #endif /* __DECAF_255_H__ */

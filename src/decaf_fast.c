@@ -29,6 +29,8 @@
 #define point_t decaf_255_point_t
 #define precomputed_s decaf_255_precomputed_s
 #define SER_BYTES DECAF_255_SER_BYTES
+#define gf_s gf_255_s
+#define gf gf_255_t
 
 #if WBITS == 64
 typedef __int128_t decaf_sdword_t;
@@ -40,23 +42,14 @@ typedef int64_t decaf_sdword_t;
 #error "Only supporting 32- and 64-bit platforms right now"
 #endif
 
-//static const int QUADRATIC_NONRESIDUE = -1;
-
 #define sv static void
 #define snv static void __attribute__((noinline))
 #define siv static inline void __attribute__((always_inline))
-static const gf ZERO = {{{0}}}, ONE = {{{1}}};//, TWO = {{{2}}};
+static const gf ZERO = {{{0}}}, ONE = {{{1}}};
 
 static const int EDWARDS_D = -121665;
-    // PinkBikeShed: -89747;
 
 static const scalar_t sc_p = {{{
-    /* PinkBikeShed:
-    SC_LIMB(0xb6b98fd8849faf35),
-    SC_LIMB(0x16241e6093b2ce59),
-    SC_LIMB(0),
-    SC_LIMB(0x2000000000000000)
-    */
     SC_LIMB(0x5812631a5cf5d3ed),
     SC_LIMB(0x14def9dea2f79cd6),
     SC_LIMB(0),
@@ -119,7 +112,7 @@ siv gf_isqrt(gf y, const gf x) {
     field_isr((field_t *)y, (const field_t *)x);
 }
 
-/** Inverse.  TODO: adapt to 5-mod-8 fields? */
+/** Inverse. */
 sv gf_invert(gf y, const gf x) {
     gf t1, t2;
     gf_sqr(t1, x); // o^2
@@ -1269,6 +1262,24 @@ void API_NS(point_debugging_torque) (
     gf_cpy(q->z,p->z);
     gf_sub(q->t,ZERO,p->t);
 #endif
+}
+
+void API_NS(point_debugging_pscale) (
+    point_t q,
+    const point_t p,
+    const uint8_t factor[SER_BYTES]
+) {
+    gf gfac,tmp;
+    ignore_result(gf_deser(gfac,factor));
+    cond_sel(gfac,gfac,ONE,gf_eq(gfac,ZERO));
+    gf_mul(tmp,p->x,gfac);
+    gf_cpy(q->x,tmp);
+    gf_mul(tmp,p->y,gfac);
+    gf_cpy(q->y,tmp);
+    gf_mul(tmp,p->z,gfac);
+    gf_cpy(q->z,tmp);
+    gf_mul(tmp,p->t,gfac);
+    gf_cpy(q->t,tmp);
 }
 
 static void gf_batch_invert (
