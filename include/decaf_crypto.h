@@ -122,11 +122,11 @@ void
 decaf_255_sign_shake (
     decaf_255_signature_t sig,
     const decaf_255_private_key_t priv,
-    const keccak_sponge_t shake
+    const shake256_ctx_t shake
 ) NONNULL3 API_VIS;
 
 /**
- * @brief Sign a message from its SHAKE context.
+ * @brief Sign a message.
  *
  * @param [out] sig The signature.
  * @param [in] priv Your private key.
@@ -152,7 +152,7 @@ decaf_bool_t
 decaf_255_verify_shake (
     const decaf_255_signature_t sig,
     const decaf_255_public_key_t pub,
-    const keccak_sponge_t shake
+    const shake256_ctx_t shake
 ) NONNULL3 API_VIS WARN_UNUSED;
 
 /**

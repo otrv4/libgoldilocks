@@ -20,28 +20,28 @@ int main(int argc, char **argv) {
     unsigned char buf[1024];
     
     unsigned int outlen = 512;
-    shake256_init(sponge);
+    shake256_gen_init(sponge);
 
     /* Sloppy.  Real utility would parse --algo, --size ... */
     if (argc > 1) {
         if (!strcmp(argv[1], "shake256") || !strcmp(argv[1], "SHAKE256")) {
             outlen = 512;
-            shake256_init(sponge);
+            shake256_gen_init(sponge);
         } else if (!strcmp(argv[1], "shake128") || !strcmp(argv[1], "SHAKE128")) {
             outlen = 512;
-            shake128_init(sponge);
+            shake128_gen_init(sponge);
         } else if (!strcmp(argv[1], "sha3-224") || !strcmp(argv[1], "SHA3-224")) {
             outlen = 224/8;
-            sha3_224_init(sponge);
+            sha3_224_gen_init(sponge);
         } else if (!strcmp(argv[1], "sha3-256") || !strcmp(argv[1], "SHA3-256")) {
             outlen = 256/8;
-            sha3_256_init(sponge);
+            sha3_256_gen_init(sponge);
         } else if (!strcmp(argv[1], "sha3-384") || !strcmp(argv[1], "SHA3-384")) {
             outlen = 384/8;
-            sha3_384_init(sponge);
+            sha3_384_gen_init(sponge);
         } else if (!strcmp(argv[1], "sha3-512") || !strcmp(argv[1], "SHA3-512")) {
             outlen = 512/8;
-            sha3_512_init(sponge);
+            sha3_512_gen_init(sponge);
         }
     }
 

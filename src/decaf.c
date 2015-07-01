@@ -81,7 +81,6 @@ const decaf_448_point_t decaf_448_point_base = {{
 
 struct decaf_448_precomputed_s { decaf_448_point_t p[1]; };
 
-/* FIXME: restore */
 const struct decaf_448_precomputed_s *decaf_448_precomputed_base =
     (const struct decaf_448_precomputed_s *)decaf_448_point_base;
 

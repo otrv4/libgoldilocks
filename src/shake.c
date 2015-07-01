@@ -669,11 +669,13 @@ decaf_bool_t strobe_prng (
     size_t len,
     uint8_t more
 ) {
-    /* FIXME: length?? */
-    unsigned char control[] = { PRNG };
+    unsigned char control[9] = { PRNG };
+    int i;
+    for (i=0; i<8; i++) control[i+1] = len>>(8*i);
+    
     decaf_bool_t ret = strobe_control_word(sponge, control, sizeof(control), more);
     strobe_duplex(sponge, out, NULL, len);
-    // /** TODO: orly? */
+    // TODO: forget as follows? this breaks "more"
     // unsigned char control2[] = { 0, STROBE_FORGET_BYTES, TAGFORGET };
     // ret &= strobe_control_word(sponge, control2, sizeof(control2));
     // strobe_forget(sponge, STROBE_FORGET_BYTES);
@@ -681,7 +683,6 @@ decaf_bool_t strobe_prng (
     return ret;
 }
 
-/* TODO: remove reliance on decaf? */
 decaf_bool_t strobe_verify_auth (
     keccak_sponge_t sponge,
     const unsigned char *in,
@@ -720,4 +721,4 @@ decaf_bool_t strobe_respec (
     return ret;
 }
 
-/* TODO: Keyak instances, etc */
+/* FUTURE: Keyak instances, etc */

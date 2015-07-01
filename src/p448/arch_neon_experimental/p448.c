@@ -618,7 +618,7 @@ p448_mulw (
     vo[1] += vmovn_u64(accum);
 }
 
-/* TODO: vectorize? */
+/* PERF: vectorize? */
 void
 p448_strong_reduce (
     p448_t *a

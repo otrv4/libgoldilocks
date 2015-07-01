@@ -151,7 +151,8 @@ int main(int argc, char **argv) {
     }
     scalar_print("sc_r2", smadj);
     
-    API_NS(scalar_sub)(smadj,API_NS(scalar_zero),API_NS(scalar_one)); /* HACK */
+    
+    API_NS(scalar_sub)(smadj,API_NS(scalar_zero),API_NS(scalar_one)); /* get p-1 */
     
     unsigned long long w = 1, plo = smadj->limb[0]+1;
 #if DECAF_WORD_BITS == 32

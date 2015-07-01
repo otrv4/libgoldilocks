@@ -26,7 +26,6 @@
 #define NONNULL3 __attribute__((nonnull(1,2,3)))
 /** @endcond */
 
-/* TODO: different containing structs for each primitive? */
 #ifndef INTERNAL_SPONGE_STRUCT
     /** Sponge container object for the various primitives. */
     typedef struct keccak_sponge_s {
@@ -119,40 +118,48 @@ void sponge_hash (
 /** @cond internal */
 #define DECSHAKE(n) \
     extern const struct kparams_s SHAKE##n##_params_s API_VIS; \
-    static inline void NONNULL1 shake##n##_init(keccak_sponge_t sponge) { \
+    typedef struct shake##n##_ctx_s { keccak_sponge_t s; } shake##n##_ctx_t[1]; \
+    static inline void NONNULL1 shake##n##_init(shake##n##_ctx_t sponge) { \
+        sponge_init(sponge->s, &SHAKE##n##_params_s); \
+    } \
+    static inline void NONNULL1 shake##n##_gen_init(keccak_sponge_t sponge) { \
         sponge_init(sponge, &SHAKE##n##_params_s); \
     } \
-    static inline void NONNULL2 shake##n##_update(keccak_sponge_t sponge, const uint8_t *in, size_t inlen ) { \
-        sha3_update(sponge, in, inlen); \
+    static inline void NONNULL2 shake##n##_update(shake##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
+        sha3_update(sponge->s, in, inlen); \
     } \
-    static inline void  NONNULL2 shake##n##_final(keccak_sponge_t sponge, uint8_t *out, size_t outlen ) { \
-        sha3_output(sponge, out, outlen); \
-        sponge_init(sponge, &SHAKE##n##_params_s); \
+    static inline void  NONNULL2 shake##n##_final(shake##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
+        sha3_output(sponge->s, out, outlen); \
+        sponge_init(sponge->s, &SHAKE##n##_params_s); \
     } \
     static inline void  NONNULL13 shake##n##_hash(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen) { \
         sponge_hash(in,inlen,out,outlen,&SHAKE##n##_params_s); \
     } \
-    static inline void  NONNULL1 shake##n##_destroy( keccak_sponge_t sponge ) { \
-        sponge_destroy(sponge); \
+    static inline void  NONNULL1 shake##n##_destroy( shake##n##_ctx_t sponge ) { \
+        sponge_destroy(sponge->s); \
     }
     
 #define DECSHA3(n) \
     extern const struct kparams_s SHA3_##n##_params_s API_VIS; \
-    static inline void NONNULL1 sha3_##n##_init(keccak_sponge_t sponge) { \
+    typedef struct sha3_##n##_ctx_s { keccak_sponge_t s; } sha3_##n##_ctx_t[1]; \
+    static inline void NONNULL1 sha3_##n##_init(sha3_##n##_ctx_t sponge) { \
+        sponge_init(sponge->s, &SHA3_##n##_params_s); \
+    } \
+    static inline void NONNULL1 sha3_##n##_gen_init(keccak_sponge_t sponge) { \
         sponge_init(sponge, &SHA3_##n##_params_s); \
     } \
-    static inline void NONNULL2 sha3_##n##_update(keccak_sponge_t sponge, const uint8_t *in, size_t inlen ) { \
-        sha3_update(sponge, in, inlen); \
+    static inline void NONNULL2 sha3_##n##_update(sha3_##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
+        sha3_update(sponge->s, in, inlen); \
     } \
-    static inline void NONNULL2 sha3_##n##_final(keccak_sponge_t sponge, uint8_t *out, size_t outlen ) { \
-        sha3_output(sponge, out, outlen); \
-        sponge_init(sponge, &SHA3_##n##_params_s); \
+    static inline void NONNULL2 sha3_##n##_final(sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
+        sha3_output(sponge->s, out, outlen); \
+        sponge_init(sponge->s, &SHA3_##n##_params_s); \
     } \
     static inline void NONNULL13 sha3_##n##_hash(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen) { \
         sponge_hash(in,inlen,out,outlen,&SHA3_##n##_params_s); \
     } \
-    static inline void NONNULL1 sha3_##n##_destroy( keccak_sponge_t sponge ) { \
-        sponge_destroy(sponge); \
+    static inline void NONNULL1 sha3_##n##_destroy(sha3_##n##_ctx_t sponge) { \
+        sponge_destroy(sponge->s); \
     }
 /** @endcond */
 
@@ -253,7 +260,6 @@ extern const struct kparams_s STROBE_256 API_VIS;
 extern const struct kparams_s STROBE_KEYED_128 API_VIS;
 extern const struct kparams_s STROBE_KEYED_256 API_VIS;
 
-/** TODO: remove this restriction?? */
 #define STROBE_MAX_AUTH_BYTES 255
 
 /** TODO: check "more" flags? */

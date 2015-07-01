@@ -21,7 +21,7 @@ void decaf_255_derive_private_key (
     uint8_t encoded_scalar[DECAF_255_SCALAR_OVERKILL_BYTES];
     decaf_255_point_t pub;
 
-    keccak_sponge_t sponge;
+    shake256_ctx_t sponge;
     shake256_init(sponge);
     shake256_update(sponge, proto, sizeof(decaf_255_symmetric_key_t));
     shake256_update(sponge, (const unsigned char *)magic, strlen(magic));
@@ -77,7 +77,7 @@ decaf_255_shared_secret (
     }
     less >>= 8;
 
-    keccak_sponge_t sponge;
+    shake256_ctx_t sponge;
     shake256_init(sponge);
 
     /* update the lesser */
@@ -117,7 +117,7 @@ void
 decaf_255_sign_shake (
     decaf_255_signature_t sig,
     const decaf_255_private_key_t priv,
-    const keccak_sponge_t shake
+    const shake256_ctx_t shake
 ) {
     const char *magic = "decaf_255_sign_shake";
 
@@ -126,7 +126,7 @@ decaf_255_sign_shake (
     decaf_255_scalar_t nonce, challenge;
     
     /* Derive nonce */
-    keccak_sponge_t ctx;
+    shake256_ctx_t ctx;
     memcpy(ctx, shake, sizeof(ctx));
     shake256_update(ctx, priv->sym, sizeof(priv->sym));
     shake256_update(ctx, (const unsigned char *)magic, strlen(magic));
@@ -163,7 +163,7 @@ decaf_bool_t
 decaf_255_verify_shake (
     const decaf_255_signature_t sig,
     const decaf_255_public_key_t pub,
-    const keccak_sponge_t shake
+    const shake256_ctx_t shake
 ) {
     decaf_bool_t ret;
 
@@ -172,7 +172,7 @@ decaf_255_verify_shake (
     decaf_255_scalar_t challenge, response;
     
     /* Derive challenge */
-    keccak_sponge_t ctx;
+    shake256_ctx_t ctx;
     memcpy(ctx, shake, sizeof(ctx));
     shake256_update(ctx, pub, sizeof(decaf_255_public_key_t));
     shake256_update(ctx, sig, DECAF_255_SER_BYTES);
@@ -201,7 +201,7 @@ decaf_255_sign (
     const unsigned char *message,
     size_t message_len
 ) {
-    keccak_sponge_t ctx;
+    shake256_ctx_t ctx;
     shake256_init(ctx);
     shake256_update(ctx, message, message_len);
     decaf_255_sign_shake(sig, priv, ctx);
@@ -215,7 +215,7 @@ decaf_255_verify (
     const unsigned char *message,
     size_t message_len
 ) {
-    keccak_sponge_t ctx;
+    shake256_ctx_t ctx;
     shake256_init(ctx);
     shake256_update(ctx, message, message_len);
     decaf_bool_t ret = decaf_255_verify_shake(sig, pub, ctx);
