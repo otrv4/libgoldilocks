@@ -53,6 +53,25 @@ static __inline__ __uint128_t widemul_rm(uint64_t a, const uint64_t *b) {
   #endif
 }
 
+static __inline__ __uint128_t widemul_rr(uint64_t a, uint64_t b) {
+  #ifndef __BMI2__
+  uint64_t c,d;
+  __asm__ volatile
+      ("mulq %[b];"
+       : [c]"=a"(c), [d]"=d"(d)
+       : [b]"r"(b), "a"(a)
+       : "cc");
+  return (((__uint128_t)(d))<<64) | c;
+  #else
+  uint64_t c,d;
+  __asm__ volatile
+      ("mulx %[b], %[c], %[d];"
+       : [c]"=r"(c), [d]"=r"(d)
+       : [b]"r"(b), [a]"d"(a));
+  return (((__uint128_t)(d))<<64) | c;
+  #endif
+}
+
 static __inline__ __uint128_t widemul2(const uint64_t *a, const uint64_t *b) {
   #ifndef __BMI2__
   uint64_t c,d;
@@ -157,6 +176,31 @@ static __inline__ void mac_rm(__uint128_t *acc, uint64_t a, const uint64_t *b) {
        "adcq %%rdx, %[hi]; "
        : [lo]"+r"(lo), [hi]"+r"(hi)
        : [b]"m"(*b), [a]"r"(a)
+       : "rax", "rdx", "cc");
+  #endif
+  
+  *acc = (((__uint128_t)(hi))<<64) | lo;
+}
+
+static __inline__ void mac_rr(__uint128_t *acc, uint64_t a, const uint64_t b) {
+  uint64_t lo = *acc, hi = *acc>>64;
+  
+  #ifdef __BMI2__
+  uint64_t c,d;
+  __asm__ volatile
+      ("mulx %[b], %[c], %[d]; "
+       "addq %[c], %[lo]; "
+       "adcq %[d], %[hi]; "
+       : [c]"=r"(c), [d]"=r"(d), [lo]"+r"(lo), [hi]"+r"(hi)
+       : [b]"r"(b), [a]"d"(a)
+       : "cc");
+  #else
+  __asm__ volatile
+      ("mulq %[b]; "
+       "addq %%rax, %[lo]; "
+       "adcq %%rdx, %[hi]; "
+       : [lo]"+r"(lo), [hi]"+r"(hi)
+       : [b]"r"(b), "a"(a)
        : "rax", "rdx", "cc");
   #endif
   

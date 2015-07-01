@@ -361,7 +361,7 @@ decaf_bool_t API_NS(scalar_invert) (
     }
     return ~API_NS(scalar_eq)(out,API_NS(scalar_zero));
 #else
-    decaf_255_scalar_t b, ma;
+    scalar_t b, ma;
     int i;
     sc_montmul(b,API_NS(scalar_one),sc_r2);
     sc_montmul(ma,a,sc_r2);
@@ -378,10 +378,10 @@ decaf_bool_t API_NS(scalar_invert) (
         }
     }
 
-    sc_montmul(out,b,decaf_255_scalar_one);
+    sc_montmul(out,b,API_NS(scalar_one));
     API_NS(scalar_destroy)(b);
     API_NS(scalar_destroy)(ma);
-    return ~API_NS(scalar_eq)(out,decaf_255_scalar_zero);
+    return ~API_NS(scalar_eq)(out,API_NS(scalar_zero));
 #endif
 }
 

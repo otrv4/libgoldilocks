@@ -19,7 +19,7 @@ ASM ?= $(CC)
 DECAF ?= decaf_fast
 
 ifneq (,$(findstring x86_64,$(MACHINE)))
-ARCH ?= arch_ref64
+ARCH ?= arch_x86_64
 else
 # no i386 port yet
 ARCH ?= arch_ref32
