@@ -33,7 +33,6 @@
 #include <sys/types.h>
 #include <limits.h>
 
-/* TODO: This is incomplete */
 /* TODO: attribute nonnull */
 
 /** @cond internal */
@@ -96,12 +95,12 @@ public:
     inline Scalar& operator=(const Scalar &x) NOEXCEPT {  decaf_255_scalar_copy(s,x.s); return *this; }
     
     /** @brief Assign from unsigned word. */
-    inline Scalar& operator=(decaf_word_t w) NOEXCEPT {  decaf_255_scalar_set(s,w); return *this; }
+    inline Scalar& operator=(decaf_word_t w) NOEXCEPT {  decaf_255_scalar_set_unsigned(s,w); return *this; }
     
     /** @brief Assign from signed int. */
     inline Scalar& operator=(int w) NOEXCEPT {
         Scalar t(-(decaf_word_t)INT_MIN);
-        decaf_255_scalar_set(s,(decaf_word_t)w - (decaf_word_t)INT_MIN);
+        decaf_255_scalar_set_unsigned(s,(decaf_word_t)w - (decaf_word_t)INT_MIN);
         *this -= t;
         return *this;
     }

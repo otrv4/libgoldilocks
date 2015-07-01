@@ -15,9 +15,8 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include "decaf.h" /* TODO: orly? */
+#include "decaf_common.h"
 
-/* TODO: unify with other headers (maybe all into one??); add nonnull attributes */
 /** @cond internal */
 #define API_VIS __attribute__((visibility("default")))
 #define WARN_UNUSED __attribute__((warn_unused_result))
@@ -115,7 +114,7 @@ void sponge_hash (
     const struct kparams_s *params
 ) API_VIS;
 
-/* TODO: expand/doxygenate individual SHAKE/SHA3 instances? */
+/* FUTURE: expand/doxygenate individual SHAKE/SHA3 instances? */
 
 /** @cond internal */
 #define DECSHAKE(n) \

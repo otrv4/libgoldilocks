@@ -72,7 +72,7 @@ HEADERS= Makefile $(shell find src include test -name "*.h") $(shell find . -nam
 
 
 DECAFCOMPONENTS= build/$(DECAF).o build/shake.o build/decaf_crypto.o \
-	build/$(FIELD).o build/f_arithmetic.o # TODO
+	build/$(FIELD).o build/f_arithmetic.o build/utils.o
 ifeq ($(DECAF),decaf_fast)
 DECAFCOMPONENTS += build/decaf_tables.o
 endif
@@ -104,7 +104,7 @@ else
 	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/build -o $@ $< -Lbuild -ldecaf
 endif
 	
-build/shakesum: build/shakesum.o build/shake.o
+build/shakesum: build/shakesum.o build/shake.o build/utils.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 lib: build/libdecaf.so
@@ -127,7 +127,7 @@ build/timestamp:
 build/%.o: build/%.s
 	$(ASM) $(ASFLAGS) -c -o $@ $<
 
-build/decaf_gen_tables: build/decaf_gen_tables.o build/$(DECAF).o build/$(FIELD).o build/f_arithmetic.o
+build/decaf_gen_tables: build/decaf_gen_tables.o build/$(DECAF).o build/$(FIELD).o build/f_arithmetic.o build/utils.o
 	$(LD) $(LDFLAGS) -o $@ $^
 	
 build/decaf_tables.c: build/decaf_gen_tables

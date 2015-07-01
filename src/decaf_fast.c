@@ -438,7 +438,7 @@ snv sc_halve (
     out->limb[i] = out->limb[i]>>1 | chain<<(WBITS-1);
 }
 
-void API_NS(scalar_set) (
+void API_NS(scalar_set_unsigned) (
     scalar_t out,
     decaf_word_t w
 ) {
@@ -701,25 +701,6 @@ decaf_bool_t API_NS(scalar_decode)(
     
     return accum;
 }
-
-void decaf_bzero (
-    void *s,
-    size_t size
-) {
-#ifdef __STDC_LIB_EXT1__
-    memset_s(s, size, 0, size);
-#else
-    const size_t sw = sizeof(decaf_word_t);
-    volatile uint8_t *destroy = (volatile uint8_t *)s;
-    for (; size && ((uintptr_t)destroy)%sw; size--, destroy++)
-        *destroy = 0;
-    for (; size >= sw; size -= sw, destroy += sw)
-        *(volatile decaf_word_t *)destroy = 0;
-    for (; size; size--, destroy++)
-        *destroy = 0;
-#endif
-}
-
 
 void API_NS(scalar_destroy) (
     scalar_t scalar
@@ -1643,20 +1624,6 @@ void API_NS(point_destroy) (
   point_t point
 ) {
     decaf_bzero(point, sizeof(point_t));
-}
-
-decaf_bool_t decaf_memeq (
-   const void *data1_,
-   const void *data2_,
-   size_t size
-) {
-    const unsigned char *data1 = (const unsigned char *)data1_;
-    const unsigned char *data2 = (const unsigned char *)data2_;
-    unsigned char ret = 0;
-    for (; size; size--, data1++, data2++) {
-        ret |= *data1 ^ *data2;
-    }
-    return (((decaf_dword_t)ret) - 1) >> 8;
 }
 
 void API_NS(precomputed_destroy) (

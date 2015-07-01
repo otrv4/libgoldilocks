@@ -6,27 +6,15 @@
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
- * @brief A group of prime order p.
- *
- * The Decaf library implements cryptographic operations on a an elliptic curve
- * group of prime order p.  It accomplishes this by using a twisted Edwards
- * curve (isogenous to Ed448-Goldilocks) and wiping out the cofactor.
- *
- * The formulas are all complete and have no special cases, except that
- * decaf_448_decode can fail because not every sequence of bytes is a valid group
- * element.
- *
- * The formulas contain no data-dependent branches, timing or memory accesses,
- * except for decaf_448_base_double_scalarmul_non_secret.
- *
- * This library may support multiple curves eventually.  The Ed448-Goldilocks
- * specific identifiers are prefixed with DECAF_448 or decaf_448.
+ * @brief A group of prime order p, based on Ed448-Goldilocks.
  */
 #ifndef __DECAF_448_H__
 #define __DECAF_448_H__ 1
 
-#ifndef __DECAF_H__
-#error "include <decaf.h>, not <decaf_448.h>."
+#include "decaf_common.h"
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #define DECAF_448_LIMBS (512/DECAF_WORD_BITS)
@@ -73,11 +61,7 @@ extern const decaf_448_scalar_t decaf_448_scalar_zero API_VIS;
 /** The identity point on the curve. */
 extern const decaf_448_point_t decaf_448_point_identity API_VIS;
 
-/**
- * An arbitrarily chosen base point on the curve.
- * Equal to Ed448-Goldilocks base point defined by DJB, except of course that
- * it's on the twist in this case.  TODO: choose a base point with nice encoding?
- */
+/** An arbitrarily chosen base point on the curve. */
 extern const decaf_448_point_t decaf_448_point_base API_VIS;
 
 /** Precomputed table for the base point on the curve. */
@@ -199,9 +183,8 @@ static inline void NONNULL2 decaf_448_scalar_copy (
  * @brief Set a scalar to an integer.
  * @param [in] a An integer.
  * @param [out] out Will become equal to a.
- * @todo Make inline?
  */  
-void decaf_448_scalar_set(
+void decaf_448_scalar_set_unsigned (
     decaf_448_scalar_t out,
     decaf_word_t a
 ) API_VIS NONNULL1;
@@ -381,8 +364,6 @@ void decaf_448_precompute (
  * @param [out] scaled The scaled point base*scalar
  * @param [in] base The point to be scaled.
  * @param [in] scalar The scalar to multiply by.
- *
- * @todo precomputed dsmul? const or variable time?
  */
 void decaf_448_precomputed_scalarmul (
     decaf_448_point_t scaled,
@@ -505,9 +486,6 @@ decaf_448_point_from_hash_nonuniform (
  * @retval DECAF_SUCCESS The inverse succeeded.
  * @retval DECAF_FAILURE The pt isn't the image of 
  *    decaf_448_point_from_hash_nonuniform with the given hint.
- *
- * @warning The hinting system is subject to change, especially in corner cases.
- * @warning FIXME The hinting system doesn't work for certain inputs which have many 0xFF.
  */
 decaf_bool_t
 decaf_448_invert_elligator_nonuniform (
@@ -558,23 +536,6 @@ unsigned char decaf_448_point_from_hash_uniform (
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
- * @brief Overwrite data with zeros.  Uses memset_s if available.
- */
-void decaf_bzero (
-   void *data,
-   size_t size
-) NONNULL1 API_VIS NOINLINE;
-
-/**
- * @brief Compare two buffers, returning DECAF_TRUE if they are equal.
- */
-decaf_bool_t decaf_memeq (
-   const void *data1,
-   const void *data2,
-   size_t size
-) NONNULL2 WARN_UNUSED API_VIS NOINLINE;
-
-/**
  * @brief Overwrite scalar with zeros.
  */
 void decaf_448_scalar_destroy (
@@ -590,11 +551,14 @@ void decaf_448_point_destroy (
 ) NONNULL1 API_VIS;
 
 /**
- * @brief Overwrite point with zeros.
- * @todo Use this internally.
+ * @brief Overwrite precomputed table with zeros.
  */
 void decaf_448_precomputed_destroy (
   decaf_448_precomputed_s *pre
 ) NONNULL1 API_VIS;
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* __DECAF_448_H__ */

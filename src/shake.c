@@ -68,7 +68,6 @@ typedef struct keccak_sponge_s {
 
 #define INTERNAL_SPONGE_STRUCT 1
 #include "shake.h"
-#include "decaf.h"
 
 #define FLAG_ABSORBING 'A'
 #define FLAG_SQUEEZING 'Z'
@@ -98,16 +97,16 @@ static inline uint64_t rol(uint64_t x, int s) {
     return (x << s) | (x >> (64 - s));
 }
 
-/* Helper macros to unroll the permutation.  TODO: opt tradeoffs. */
+/* Helper macros to unroll the permutation. */
 #define REPEAT5(e) e e e e e
 #define FOR51(v, e) v = 0; REPEAT5(e; v += 1;)
-//#if (defined(__OPTIMIZE__) && !defined(__OPTIMIZE_SIZE__))
+#ifndef SHAKE_NO_UNROLL_LOOPS
 #    define FOR55(v, e) v = 0; REPEAT5(e; v += 5;)
 #    define REPEAT24(e) e e e e e e e e e e e e e e e e e e e e e e e e
-// #else
-// #    define FOR55(v, e) for (v=0; v<25; v+= 5) { e; }
-// #    define REPEAT24(e) {int _j=0; for (_j=0; _j<24; _j++) { e }}
-// #endif
+#else
+#    define FOR55(v, e) for (v=0; v<25; v+= 5) { e; }
+#    define REPEAT24(e) {int _j=0; for (_j=0; _j<24; _j++) { e }}
+#endif
 
 /*** The Keccak-f[1600] permutation ***/
 static void
@@ -213,23 +212,7 @@ void sha3_output (
     }
 }
 
-/** TODO: unify with decaf_bzero? */
-static void sponge_bzero(void *s, size_t size) {
-#ifdef __STDC_LIB_EXT1__
-    memset_s(s, size, 0, size);
-#else
-    const size_t sw = sizeof(decaf_word_t);
-    volatile uint8_t *destroy = (volatile uint8_t *)s;
-    for (; size && ((uintptr_t)destroy)%sw; size--, destroy++)
-        *destroy = 0;
-    for (; size >= sw; size -= sw, destroy += sw)
-        *(volatile decaf_word_t *)destroy = 0;
-    for (; size; size--, destroy++)
-        *destroy = 0;
-#endif
-}
-
-void sponge_destroy (keccak_sponge_t sponge) { sponge_bzero(sponge, sizeof(keccak_sponge_t)); }
+void sponge_destroy (keccak_sponge_t sponge) { decaf_bzero(sponge, sizeof(keccak_sponge_t)); }
 
 void sponge_init (
     keccak_sponge_t sponge,
@@ -509,7 +492,7 @@ static void strobe_forget (
         strobe_duplex(sponge,tmp,NULL,len);
         if (sponge->params->position) dokeccak(sponge);
         strobe_duplex(sponge,tmp,NULL,len);
-        sponge_bzero(tmp,len);
+        decaf_bzero(tmp,len);
     } else {
         if (sponge->params->rate < len + sponge->params->position) {
             dokeccak(sponge);
