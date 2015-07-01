@@ -39,14 +39,8 @@
 /** @cond internal */
 #if __cplusplus >= 201103L
 #define NOEXCEPT noexcept
-#define EXPLICIT_CON explicit
-#define FINAL final
-#define DELETE = delete
 #else
 #define NOEXCEPT throw()
-#define EXPLICIT_CON
-#define FINAL
-#define DELETE
 #endif
 /** @endcond */
 
@@ -139,7 +133,7 @@ public:
     }
     
     /** @brief Encode to fixed-length string */
-    inline EXPLICIT_CON operator SecureBuffer() const NOEXCEPT {
+    inline operator SecureBuffer() const NOEXCEPT {
         SecureBuffer buf(SER_BYTES); decaf_255_scalar_encode(buf,s); return buf;
     }
     
@@ -331,7 +325,7 @@ public:
     /**
      * @brief Encode to string.  The identity encodes to the all-zero string.
      */
-    inline EXPLICIT_CON operator SecureBuffer() const NOEXCEPT {
+    inline operator SecureBuffer() const NOEXCEPT {
         SecureBuffer buffer(SER_BYTES);
         decaf_255_point_encode(buffer, p);
         return buffer;
@@ -594,8 +588,6 @@ public:
 }; /* struct Decaf255 */
 
 #undef NOEXCEPT
-#undef EXPLICIT_CON
-#undef FINAL
 } /* namespace decaf */
 
 #endif /* __DECAF_255_HXX__ */

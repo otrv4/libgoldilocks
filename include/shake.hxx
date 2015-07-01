@@ -19,8 +19,10 @@
 /** @cond internal */
 #if __cplusplus >= 201103L
 #define NOEXCEPT noexcept
+#define DELETE = delete
 #else
 #define NOEXCEPT throw()
+#define DELETE
 #endif
 /** @endcond */
 
@@ -341,5 +343,6 @@ public:
 } /* namespace decaf */
 
 #undef NOEXCEPT
+#undef DELETE
 
 #endif /* __SHAKE_HXX__ */
