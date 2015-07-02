@@ -5,6 +5,10 @@
 #include "p25519.h"
 #include "x86-64-arith.h"
 
+static inline uint64_t shr(__uint128_t x, int n) {
+    return x>>n;
+}
+
 void
 p255_mul (
     p255_t *__restrict__ cs,
@@ -44,12 +48,12 @@ p255_mul (
     mac_rm(&accum2, ai, &b[3]);
     
     uint64_t c0 = accum0 & mask;
-    accum1 += accum0 >> 51;
+    accum1 += shr(accum0, 51);
     uint64_t c1 = accum1 & mask;
-    accum2 += accum1 >> 51;
+    accum2 += shr(accum1, 51);
     c[2] = accum2 & mask;
     
-    accum0 = accum2 >> 51;
+    accum0 = shr(accum2, 51);
 
     mac_rm(&accum0, ai, &b[4]);
     
@@ -73,7 +77,7 @@ p255_mul (
     mac_rm(&accum1, ai, &b[0]);
     
     c[3] = accum0 & mask;
-    accum1 += accum0 >> 51;
+    accum1 += shr(accum0, 51);
     c[4] = accum1 & mask;
     
     /* 2^102 * 16 * 5 * 19 * (1+ep) >> 64
@@ -81,10 +85,10 @@ p255_mul (
      * PERF: good enough to fit into uint64_t?
      */
     
-    uint64_t a1 = accum1>>51;
+    uint64_t a1 = shr(accum1,51);
     accum1 = (__uint128_t)a1 * 19 + c0;
     c[0] = accum1 & mask;
-    c[1] = c1 + (accum1>>51);
+    c[1] = c1 + shr(accum1,51);
 }
 
 void
@@ -118,9 +122,9 @@ p255_sqr (
     mac_rm(&accum2, ai, &a[4]);
     
     uint64_t c0 = accum0 & mask;
-    accum1 += accum0 >> 51;
+    accum1 += shr(accum0, 51);
     uint64_t c1 = accum1 & mask;
-    accum2 += accum1 >> 51;
+    accum2 += shr(accum1, 51);
     c[2] = accum2 & mask;
     
     accum0 = accum2 >> 51;
@@ -137,7 +141,7 @@ p255_sqr (
     mac_rr(&accum1, a[2], a[2]);
     
     c[3] = accum0 & mask;
-    accum1 += accum0 >> 51;
+    accum1 += shr(accum0, 51);
     c[4] = accum1 & mask;
     
     /* 2^102 * 16 * 5 * 19 * (1+ep) >> 64
@@ -145,10 +149,10 @@ p255_sqr (
      * PERF: good enough to fit into uint64_t?
      */
     
-    uint64_t a1 = accum1>>51;
+    uint64_t a1 = shr(accum1,51);
     accum1 = (__uint128_t)a1 * 19 + c0;
     c[0] = accum1 & mask;
-    c[1] = c1 + (accum1>>51);
+    c[1] = c1 + shr(accum1,51);
 }
 
 void
@@ -162,28 +166,28 @@ p255_mulw (
 
     __uint128_t accum = widemul_rm(b, &a[0]);
     uint64_t c0 = accum & mask;
-    accum >>= 51;
+    accum = shr(accum,51);
     
     mac_rm(&accum, b, &a[1]);
     uint64_t c1 = accum & mask;
-    accum >>= 51;
+    accum = shr(accum,51);
     
     mac_rm(&accum, b, &a[2]);
     c[2] = accum & mask;
-    accum >>= 51;
+    accum = shr(accum,51);
     
     mac_rm(&accum, b, &a[3]);
     c[3] = accum & mask;
-    accum >>= 51;
+    accum = shr(accum,51);
     
     mac_rm(&accum, b, &a[4]);
     c[4] = accum & mask;
-    
-    uint64_t a1 = accum>>51;
-    accum = (__uint128_t)a1 * 19 + c0;
+
+    accum = shr(accum,51);
+    accum = accum * 19 + c0;
     
     c[0] = accum & mask;
-    c[1] = c1 + (accum>>51);
+    c[1] = c1 + shr(accum,51);
 }
 
 void
