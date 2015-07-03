@@ -23,7 +23,6 @@
 #define field_mulw           p521_mulw
 #define field_bias           p521_bias
 #define field_isr            p521_isr
-#define field_inverse        p521_inverse
 #define field_weak_reduce    p521_weak_reduce
 #define field_strong_reduce  p521_strong_reduce
 #define field_serialize      p521_serialize

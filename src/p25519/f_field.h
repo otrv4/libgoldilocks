@@ -23,7 +23,6 @@
 #define field_mulw           p255_mulw
 #define field_bias           p255_bias
 #define field_isr            p255_isr
-#define field_inverse        p255_inverse
 #define field_weak_reduce    p255_weak_reduce
 #define field_strong_reduce  p255_strong_reduce
 #define field_serialize      p255_serialize

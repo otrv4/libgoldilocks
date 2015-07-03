@@ -23,7 +23,6 @@
 #define field_mulw           p448_mulw
 #define field_bias           p448_bias
 #define field_isr            p448_isr
-#define field_inverse        p448_inverse
 #define field_weak_reduce    p448_weak_reduce
 #define field_strong_reduce  p448_strong_reduce
 #define field_serialize      p448_serialize

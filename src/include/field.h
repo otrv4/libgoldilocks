@@ -37,21 +37,6 @@ field_isr (
     field_a_t       a,
     const field_a_t x
 );
-
-/**
- * Returns 1/x.
- * 
- * If x=0, returns 0.
- *
- * TODO: this is currently unused in Decaf, but I've left a decl
- * for it because field_inverse is different (and simpler) than
- * field_isqrt for 5-mod-8 fields.
- */
-void
-field_inverse (
-    field_a_t       a,
-    const field_a_t x
-);
     
 /**
  * Square x, n times.
