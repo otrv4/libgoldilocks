@@ -67,7 +67,7 @@ extern const point_t API_NS(point_base);
 
 /* Projective Niels coordinates */
 typedef struct { gf a, b, c; } niels_s, niels_t[1];
-typedef struct { niels_t n; gf z; } pniels_s, pniels_t[1];
+typedef struct { niels_t n; gf z; } __attribute__((aligned(32))) pniels_s, pniels_t[1]; /* MAGIC alignment */
 
 /* Precomputed base */
 struct precomputed_s { niels_t table [DECAF_COMBS_N<<(DECAF_COMBS_T-1)]; };
@@ -1387,7 +1387,7 @@ void API_NS(precomputed_scalarmul) (
             constant_time_lookup_xx_niels(ni, &table->table[j<<(t-1)], 1<<(t-1), tab);
 
             cond_neg_niels(ni, invert);
-            if ((i!=s-1)||j) {
+            if ((i!=(int)s-1)||j) {
                 add_niels_to_pt(out, ni, j==n-1 && i);
             } else {
                 niels_to_pt(out, ni);

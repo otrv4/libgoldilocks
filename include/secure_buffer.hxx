@@ -66,7 +66,7 @@ protected:
     
 public:
     /** @brief Read into a Buffer */
-    virtual inline void read(Buffer &buffer) NOEXCEPT = 0;
+    virtual void read(Buffer &buffer) NOEXCEPT = 0;
     
     /** @brief Read into a value-passed (eg temporary) TmpBuffer. */
     inline void read(TmpBuffer buffer) NOEXCEPT;
@@ -141,7 +141,7 @@ public:
     
     /* Content-wise comparison; constant-time if they are the same length. */ 
     inline decaf_bool_t operator==(const Block &b) const NOEXCEPT {
-        return ~(*this == b);
+        return ~(*this != b);
     }
 
     /** Virtual destructor for SecureBlock. TODO: probably means vtable?  Make bool? */

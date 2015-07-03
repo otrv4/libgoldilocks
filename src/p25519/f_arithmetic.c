@@ -54,7 +54,7 @@ field_isr (
     st[0][0] = st[1][0] = st[2][0] = x[0];
     unsigned int i;
     for (i=0; i<sizeof(ops)/sizeof(ops[0]); i++) {
-        field_sqrn(tmp1, st[1^i&1], ops[i].sh);
+        field_sqrn(tmp1, st[1^(i&1)], ops[i].sh);
         field_mul(tmp2, tmp1, st[ops[i].idx]);
         st[i&1][0] = tmp2[0];
     }
