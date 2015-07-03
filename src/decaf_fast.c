@@ -483,7 +483,8 @@ static void deisogenize (
     gf_mul ( a, p->z, t ); /* "tz" = T*Z */
     gf_sqr ( b, a );
     gf_mul ( d, b, c ); /* (TZ)^2 * (Z^2-X^2) */
-    gf_isqrt ( b, d );
+    decaf_bool_t ok = gf_isqrt_chk ( b, d, DECAF_TRUE );
+    (void)ok; assert(ok);
     gf_mul ( d, b, a ); /* "osx" = 1 / sqrt(z^2-x^2) */
     gf_mul ( a, b, c ); 
     gf_mul ( b, a, d ); /* 1/tz */

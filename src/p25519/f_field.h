@@ -27,5 +27,6 @@
 #define field_strong_reduce  p255_strong_reduce
 #define field_serialize      p255_serialize
 #define field_deserialize    p255_deserialize
+#define SQRT_MINUS_ONE P25519_SQRT_MINUS_ONE
 
 #endif /* __F_FIELD_H__ */
