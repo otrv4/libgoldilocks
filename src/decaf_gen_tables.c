@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "decaf.h"
-#include "decaf_255_config.h" /* MAGIC */
+#include "decaf_config.h"
 #include "field.h"
 
 #define API_NS(_id) decaf_255_##_id

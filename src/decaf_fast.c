@@ -13,7 +13,7 @@
 #include "decaf.h"
 #include <string.h>
 #include "field.h"
-#include "decaf_255_config.h"
+#include "decaf_config.h"
 
 #define WBITS DECAF_WORD_BITS
 

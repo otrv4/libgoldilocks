@@ -8,8 +8,8 @@
  *
  * @brief Configuration for decaf_fast.c
  */
-#ifndef __DECAF_448_CONFIG_H__
-#define __DECAF_448_CONFIG_H__ 1
+#ifndef __DECAF_CONFIG_H__
+#define __DECAF_CONFIG_H__ 1
 
 /**
  * Use the Montgomery ladder for direct scalarmul.
@@ -20,19 +20,19 @@
  * kilobytes at the cost of perhaps 5-10% overhead in direct scalarmul
  * time.
  */
-#define DECAF_USE_MONTGOMERY_LADDER 1
+#define DECAF_USE_MONTGOMERY_LADDER 0 /* FUTURE */
 
 /** The number of comb tables for fixed base scalarmul. */
-#define DECAF_COMBS_N 5
+#define DECAF_COMBS_N 3
 
 /** The number of teeth per comb for fixed base scalarmul. */
 #define DECAF_COMBS_T 5
 
 /** The comb spacing fixed base scalarmul. */
-#define DECAF_COMBS_S 18
+#define DECAF_COMBS_S 17
 
 /** Performance tuning: the width of the fixed window for scalar mul. */
-#define DECAF_WINDOW_BITS 5
+#define DECAF_WINDOW_BITS 4
 
 /**
  * The number of bits used for the precomputed table in variable-time
@@ -47,4 +47,4 @@
 #define DECAF_WNAF_VAR_TABLE_BITS 3
 
 
-#endif /* __DECAF_448_CONFIG_H__ */
+#endif /* __DECAF_CONFIG_H__ */
