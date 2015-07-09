@@ -76,7 +76,7 @@ public:
 };
 
 /**
- * Securely zeorize contents of memory.
+ * Securely zeroize contents of memory.
  */
 static inline void really_bzero(void *data, size_t size) { decaf_bzero(data,size); }
 
@@ -173,7 +173,7 @@ public:
     inline TmpBuffer slice(size_t off, size_t length) throw(LengthException);
     
     /** Securely set the buffer to 0. */
-    inline void zeorize() NOEXCEPT { really_bzero(data(),size()); }
+    inline void zeroize() NOEXCEPT { really_bzero(data(),size()); }
 };
 
 /** A temporary reference to a writeable buffer, for converting C to C++. */
@@ -198,7 +198,7 @@ public:
     inline StackBuffer(Rng &r) NOEXCEPT  : Buffer(storage, Size) { r.read(*this); }
     
     /** Destroy the buffer */
-    ~StackBuffer() NOEXCEPT { zeorize(); }
+    ~StackBuffer() NOEXCEPT { zeroize(); }
 };
 
 /** @cond internal */
@@ -250,13 +250,13 @@ public:
         return *this;
     }
 
-    /** Destructor zeorizes data */
+    /** Destructor zeroizes data */
     ~SecureBuffer() NOEXCEPT { clear(); }
 
     /** Clear data */
     inline void clear() NOEXCEPT {
         if (data_ == NULL) return;
-        zeorize();
+        zeroize();
         delete[] data_;
         data_ = NULL;
         size_ = 0;
@@ -291,6 +291,75 @@ TmpBuffer Buffer::slice(size_t off, size_t length) throw(LengthException) {
 inline SecureBuffer Rng::read(size_t length) throw(std::bad_alloc) {
     SecureBuffer out(length); read(out); return out;
 }
+/** @endcond */
+
+/** @cond internal */
+/** A secure buffer which stores an owned or unowned underlying value.
+ * If it is owned, it will be securely zeroed.
+ */
+template <class T, class Underlying>
+class OwnedOrUnowned {
+protected:
+    union {
+        Underlying *mine;
+        const Underlying *yours;
+    } ours;
+    bool isMine;
+
+    inline void clear() NOEXCEPT {
+        if (isMine) {
+            really_bzero(ours.mine, T::size());
+            free(ours.mine);
+            ours.yours = T::defaultValue();
+            isMine = false;
+        }
+    }
+    inline void alloc() throw(std::bad_alloc) {
+        if (isMine) return;
+        int ret = posix_memalign((void**)&ours.mine, T::alignment(), T::size());
+        if (ret || !ours.mine) {
+            isMine = false;
+            throw std::bad_alloc();
+        }
+        isMine = true;
+    }
+    inline const Underlying *get() const NOEXCEPT { return isMine ? ours.mine : ours.yours; }
+
+    inline OwnedOrUnowned(
+        const Underlying &yours = *T::defaultValue()
+    ) NOEXCEPT {
+        ours.yours = &yours;
+        isMine = false;
+    }
+
+   /**
+    * @brief Assign.  This may require an allocation and memcpy.
+    */ 
+   inline T &operator=(const OwnedOrUnowned &it) throw(std::bad_alloc) {
+       if (this == &it) return *(T*)this;
+       if (it.isMine) {
+           alloc();
+           memcpy(ours.mine,it.ours.mine,T::size());
+       } else {
+           clear();
+           ours.yours = it.ours.yours;
+       }
+       isMine = it.isMine;
+       return *(T*)this;
+   }
+
+#if __cplusplus >= 201103L
+    inline T &operator=(OwnedOrUnowned &&it) NOEXCEPT {
+        if (this == &it) return *(T*)this;
+        clear();
+        ours = it.ours;
+        isMine = it.isMine;
+        it.isMine = false;
+        it.ours.yours = T::defaultValue;
+        return *this;
+    }
+#endif
+};
 /** @endcond */
 
 } /* namespace decaf */

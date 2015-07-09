@@ -476,35 +476,17 @@ public:
  * Therefore we have to call malloc() or friends, but that's probably for the best, because you don't want to
  * stack-allocate a 15kiB object anyway.
  */
-class Precomputed {
-private:
+
+/** @cond internal */
+typedef decaf_255_precomputed_s Precomputed_U;
+/** @endcond */
+class Precomputed
     /** @cond internal */
-    union {
-        decaf_255_precomputed_s *mine;
-        const decaf_255_precomputed_s *yours;
-    } ours;
-    bool isMine;
-    
-    inline void clear() NOEXCEPT {
-        if (isMine) {
-            decaf_255_precomputed_destroy(ours.mine);
-            free(ours.mine);
-            ours.yours = decaf_255_precomputed_base;
-            isMine = false;
-        }
-    }
-    inline void alloc() throw(std::bad_alloc) {
-        if (isMine) return;
-        int ret = posix_memalign((void**)&ours.mine, alignof_decaf_255_precomputed_s,sizeof_decaf_255_precomputed_s);
-        if (ret || !ours.mine) {
-            isMine = false;
-            throw std::bad_alloc();
-        }
-        isMine = true;
-    }
-    inline const decaf_255_precomputed_s *get() const NOEXCEPT { return isMine ? ours.mine : ours.yours; }
+    : protected OwnedOrUnowned<Precomputed,Precomputed_U>
     /** @endcond */
+{
 public:
+    
     /** Destructor securely zeorizes the memory. */
     inline ~Precomputed() NOEXCEPT { clear(); }
     
@@ -519,28 +501,29 @@ public:
      * @warning The empty initializer makes this equal to base, unlike the empty
      * initializer for points which makes this equal to the identity.
      */ 
-    inline Precomputed(
-        const decaf_255_precomputed_s &yours = *decaf_255_precomputed_base
-    ) NOEXCEPT {
-        ours.yours = &yours;
-        isMine = false;
-    }
+    inline Precomputed (
+        const Precomputed_U &yours = *defaultValue()
+    ) NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>(yours) {}
     
-    /**
-     * @brief Assign.  This may require an allocation and memcpy.
-     */ 
-    inline Precomputed &operator=(const Precomputed &it) throw(std::bad_alloc) {
-        if (this == &it) return *this;
-        if (it.isMine) {
-            alloc();
-            memcpy(ours.mine,it.ours.mine,sizeof_decaf_255_precomputed_s);
-        } else {
-            clear();
-            ours.yours = it.ours.yours;
-        }
-        isMine = it.isMine;
+
+#if __cplusplus >= 201103L
+    /** @brief Move-assign operator */
+    inline Precomputed &operator=(Precomputed &&it) NOEXCEPT {
+        OwnedOrUnowned<Precomputed,Precomputed_U>::operator= (it);
         return *this;
     }
+    
+    /** @brief Move constructor */
+    inline Precomputed(Precomputed &&it) NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>() {
+        *this = it;
+    }
+    
+    /** @brief Undelete copy operator */
+    inline Precomputed &operator=(const Precomputed &it) NOEXCEPT {
+        OwnedOrUnowned<Precomputed,Precomputed_U>::operator= (it);
+        return *this;
+    }
+#endif
     
     /**
      * @brief Initilaize from point.  Must allocate memory, and may throw.
@@ -554,25 +537,14 @@ public:
     /**
      * @brief Copy constructor.
      */
-    inline Precomputed(const Precomputed &it) throw(std::bad_alloc) : isMine(false) { *this = it; }
+    inline Precomputed(const Precomputed &it) throw(std::bad_alloc) 
+        : OwnedOrUnowned<Precomputed,Precomputed_U>() { *this = it; }
    
     /**
      * @brief Constructor which initializes from point.
      */
-    inline explicit Precomputed(const Point &it) throw(std::bad_alloc) : isMine(false) { *this = it; }
-    
-#if __cplusplus >= 201103L
-    inline Precomputed &operator=(Precomputed &&it) NOEXCEPT {
-        if (this == &it) return *this;
-        clear();
-        ours = it.ours;
-        isMine = it.isMine;
-        it.isMine = false;
-        it.ours.yours = decaf_255_precomputed_base;
-        return *this;
-    }
-    inline Precomputed(Precomputed &&it) NOEXCEPT : isMine(false) { *this = it; }
-#endif
+    inline explicit Precomputed(const Point &it) throw(std::bad_alloc)
+        : OwnedOrUnowned<Precomputed,Precomputed_U>() { *this = it; }
     
     /** @brief Fixed base scalarmul. */
     inline Point operator* (const Scalar &s) const NOEXCEPT { Point r; decaf_255_precomputed_scalarmul(r.p,get(),s.s); return r; }
@@ -581,7 +553,15 @@ public:
     inline Point operator/ (const Scalar &s) const NOEXCEPT { return (*this) * s.inverse(); }
     
     /** @brief Return the table for the base point. */
-    static inline const Precomputed base() NOEXCEPT { return Precomputed(*decaf_255_precomputed_base); }
+    static inline const Precomputed base() NOEXCEPT { return Precomputed(); }
+
+public:
+    /** @cond internal */
+    friend class OwnedOrUnowned<Precomputed,Precomputed_U>;
+    static inline size_t size() NOEXCEPT { return sizeof_decaf_255_precomputed_s; }
+    static inline size_t alignment() NOEXCEPT { return alignof_decaf_255_precomputed_s; }
+    static inline const Precomputed_U * defaultValue() NOEXCEPT { return decaf_255_precomputed_base; }
+    /** @endcond */
 };
 
 }; /* struct Decaf255 */
