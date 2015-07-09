@@ -1,5 +1,5 @@
 /**
- * @file decaf_255.h
+ * @file decaf/decaf_255.h
  * @author Mike Hamburg
  *
  * @copyright
@@ -11,7 +11,7 @@
 #ifndef __DECAF_255_H__
 #define __DECAF_255_H__ 1
 
-#include "decaf_common.h"
+#include <decaf/common.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -467,7 +467,7 @@ void decaf_255_point_debugging_pscale (
  *   A factor of 2 due to the isogeny.
  *   A factor of 2 because we quotient out the 2-torsion.
  *
- * This makes it about 8:1 overall.
+ * This makes it about 8:1 overall, or 16:1 overall on curves with cofactor 8.
  *
  * Negating the input (mod q) results in the same point.  Inverting the input
  * (mod q) results in the negative point.  This is the same as Elligator.
@@ -487,49 +487,6 @@ decaf_255_point_from_hash_nonuniform (
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
- * @brief Inverse of elligator-like hash to curve.
- *
- * This function writes to the buffer, to make it so that
- * decaf_255_point_from_hash_nonuniform(buffer) = pt if possible.
- *
- * @param [out] recovered_hash Encoded data.
- * @param [in] pt The point to encode.
- * @param [in] which A "hint" that indicates which inverse to return.
- *
- * @retval DECAF_SUCCESS The inverse succeeded.
- * @retval DECAF_FAILURE The pt isn't the image of 
- *    decaf_255_point_from_hash_nonuniform with the given hint.
- */
-decaf_bool_t
-decaf_255_invert_elligator_nonuniform (
-    unsigned char recovered_hash[DECAF_255_SER_BYTES],
-    const decaf_255_point_t pt,
-    uint16_t which
-) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
-
-/**
- * @brief Inverse of elligator-like hash to curve, uniform.
- *
- * This function modifies the first DECAF_255_SER_BYTES of the
- * buffer, to make it so that
- * decaf_255_point_from_hash_uniform(buffer) = pt if possible.
- *
- * @param [out] recovered_hash Encoded data.
- * @param [in] pt The point to encode.
- * @param [in] which A "hint" that indicates which inverse to return.
- *
- * @retval DECAF_SUCCESS The inverse succeeded.
- * @retval DECAF_FAILURE The pt isn't the image of 
- *    decaf_255_point_from_hash_uniform with the given hint.
- */
-decaf_bool_t
-decaf_255_invert_elligator_uniform (
-    unsigned char recovered_hash[2*DECAF_255_SER_BYTES],
-    const decaf_255_point_t pt,
-    uint16_t which
-) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
-
-/**
  * @brief Indifferentiable hash function encoding to curve.
  *
  * Equivalent to calling decaf_255_point_from_hash_nonuniform twice and adding.
@@ -541,6 +498,56 @@ void decaf_255_point_from_hash_uniform (
     decaf_255_point_t pt,
     const unsigned char hashed_data[2*DECAF_255_SER_BYTES]
 ) API_VIS NONNULL2 NOINLINE;
+
+/**
+ * @brief Inverse of elligator-like hash to curve.
+ *
+ * This function writes to the buffer, to make it so that
+ * decaf_255_point_from_hash_nonuniform(buffer) = pt if
+ * possible.  Since there may be multiple preimages, the
+ * "which" parameter chooses between them.  To ensure uniform
+ * inverse sampling, this function succeeds or fails
+ * independently for different "which" values.
+ *
+ * @param [out] recovered_hash Encoded data.
+ * @param [in] pt The point to encode.
+ * @param [in] which A value determining which inverse point
+ * to return.
+ *
+ * @retval DECAF_SUCCESS The inverse succeeded.
+ * @retval DECAF_FAILURE The inverse failed.
+ */
+decaf_bool_t
+decaf_255_invert_elligator_nonuniform (
+    unsigned char recovered_hash[DECAF_255_SER_BYTES],
+    const decaf_255_point_t pt,
+    uint16_t which
+) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
+
+/**
+ * @brief Inverse of elligator-like hash to curve.
+ *
+ * This function writes to the buffer, to make it so that
+ * decaf_255_point_from_hash_uniform(buffer) = pt if
+ * possible.  Since there may be multiple preimages, the
+ * "which" parameter chooses between them.  To ensure uniform
+ * inverse sampling, this function succeeds or fails
+ * independently for different "which" values.
+ *
+ * @param [out] recovered_hash Encoded data.
+ * @param [in] pt The point to encode.
+ * @param [in] which A value determining which inverse point
+ * to return.
+ *
+ * @retval DECAF_SUCCESS The inverse succeeded.
+ * @retval DECAF_FAILURE The inverse failed.
+ */
+decaf_bool_t
+decaf_255_invert_elligator_uniform (
+    unsigned char recovered_hash[2*DECAF_255_SER_BYTES],
+    const decaf_255_point_t pt,
+    uint16_t which
+) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
 
 /**
  * @brief Overwrite scalar with zeros.

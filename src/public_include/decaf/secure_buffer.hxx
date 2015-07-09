@@ -1,5 +1,5 @@
 /**
- * @file secure_buffer.hxx
+ * @file decaf/secure_buffer.hxx
  * @author Mike Hamburg
  *
  * @copyright

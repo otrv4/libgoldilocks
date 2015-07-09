@@ -1,5 +1,5 @@
 /**
- * @file decaf_255.hxx
+ * @file decaf/decaf_255.hxx
  * @author Mike Hamburg
  *
  * @copyright
@@ -27,8 +27,8 @@
 #include <stdlib.h>
 #include <string.h> /* for memcpy */
 
-#include "decaf.h"
-#include "secure_buffer.hxx"
+#include <decaf.h>
+#include <decaf/secure_buffer.hxx>
 #include <string>
 #include <sys/types.h>
 #include <limits.h>

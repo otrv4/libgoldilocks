@@ -1,5 +1,5 @@
 /**
- * @file decaf_448.h
+ * @file decaf/decaf_448.h
  * @author Mike Hamburg
  *
  * @copyright
@@ -11,7 +11,7 @@
 #ifndef __DECAF_448_H__
 #define __DECAF_448_H__ 1
 
-#include "decaf_common.h"
+#include <decaf/common.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,9 +22,9 @@ extern "C" {
 #define DECAF_448_SCALAR_LIMBS (448/DECAF_WORD_BITS)
 
 /** Galois field element internal structure */
-typedef struct gf_s {
+typedef struct gf_448_s {
     decaf_word_t limb[DECAF_448_LIMBS];
-} __attribute__((aligned(32))) gf_s, gf[1];
+} __attribute__((aligned(32))) gf_448_s, gf_448_t[1];
 /** @endcond */
 
 /** Number of bytes in a serialized point. */
@@ -34,7 +34,7 @@ typedef struct gf_s {
 #define DECAF_448_SCALAR_BYTES 56
 
 /** Twisted Edwards (-1,d-1) extended homogeneous coordinates */
-typedef struct decaf_448_point_s { /**@cond internal*/gf x,y,z,t;/**@endcond*/ } decaf_448_point_t[1];
+typedef struct decaf_448_point_s { /**@cond internal*/gf_448_t x,y,z,t;/**@endcond*/ } decaf_448_point_t[1];
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
 struct decaf_448_precomputed_s;
@@ -451,7 +451,7 @@ void decaf_448_point_debugging_torque (
  *   A factor of 2 due to the isogeny.
  *   A factor of 2 because we quotient out the 2-torsion.
  *
- * This makes it about 8:1 overall.
+ * This makes it about 8:1 overall, or 16:1 overall on curves with cofactor 8.
  *
  * Negating the input (mod q) results in the same point.  Inverting the input
  * (mod q) results in the negative point.  This is the same as Elligator.
@@ -463,62 +463,12 @@ void decaf_448_point_debugging_torque (
  *
  * @param [in] hashed_data Output of some hash function.
  * @param [out] pt The data hashed to the curve.
- * @return A "hint" value which can be used to help invert the encoding.
  */
-unsigned char
+void
 decaf_448_point_from_hash_nonuniform (
     decaf_448_point_t pt,
     const unsigned char hashed_data[DECAF_448_SER_BYTES]
 ) API_VIS NONNULL2 NOINLINE;
-
-/**
- * @brief Inverse of elligator-like hash to curve.
- *
- * This function writes to the buffer, to make it so that
- * decaf_448_point_from_hash_nonuniform(buffer) = pt,hint
- * if possible.
- *
- * @param [out] recovered_hash Encoded data.
- * @param [in] pt The point to encode.
- * @param [in] hint The hint value returned from 
- *   decaf_448_point_from_hash_nonuniform.
- *
- * @retval DECAF_SUCCESS The inverse succeeded.
- * @retval DECAF_FAILURE The pt isn't the image of 
- *    decaf_448_point_from_hash_nonuniform with the given hint.
- */
-decaf_bool_t
-decaf_448_invert_elligator_nonuniform (
-    unsigned char recovered_hash[DECAF_448_SER_BYTES],
-    const decaf_448_point_t pt,
-    unsigned char hint
-) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
-
-/**
- * @brief Inverse of elligator-like hash to curve, uniform.
- *
- * This function modifies the first DECAF_448_SER_BYTES of the
- * buffer, to make it so that
- * decaf_448_point_from_hash_uniform(buffer) = pt,hint
- * if possible.
- *
- * @param [out] recovered_hash Encoded data.
- * @param [in] pt The point to encode.
- * @param [in] hint The hint value returned from 
- *   decaf_448_point_from_hash_nonuniform.
- *
- * @retval DECAF_SUCCESS The inverse succeeded.
- * @retval DECAF_FAILURE The pt isn't the image of 
- *    decaf_448_point_from_hash_uniform with the given hint.
- *
- * @warning The hinting system is subject to change, especially in corner cases.
- */
-decaf_bool_t
-decaf_448_invert_elligator_uniform (
-    unsigned char recovered_hash[2*DECAF_448_SER_BYTES],
-    const decaf_448_point_t pt,
-    unsigned char hint
-) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
 
 /**
  * @brief Indifferentiable hash function encoding to curve.
@@ -527,12 +477,61 @@ decaf_448_invert_elligator_uniform (
  *
  * @param [in] hashed_data Output of some hash function.
  * @param [out] pt The data hashed to the curve.
- * @return A "hint" value which can be used to help invert the encoding.
  */ 
-unsigned char decaf_448_point_from_hash_uniform (
+void decaf_448_point_from_hash_uniform (
     decaf_448_point_t pt,
     const unsigned char hashed_data[2*DECAF_448_SER_BYTES]
 ) API_VIS NONNULL2 NOINLINE;
+
+/**
+ * @brief Inverse of elligator-like hash to curve.
+ *
+ * This function writes to the buffer, to make it so that
+ * decaf_448_point_from_hash_nonuniform(buffer) = pt if
+ * possible.  Since there may be multiple preimages, the
+ * "which" parameter chooses between them.  To ensure uniform
+ * inverse sampling, this function succeeds or fails
+ * independently for different "which" values.
+ *
+ * @param [out] recovered_hash Encoded data.
+ * @param [in] pt The point to encode.
+ * @param [in] which A value determining which inverse point
+ * to return.
+ *
+ * @retval DECAF_SUCCESS The inverse succeeded.
+ * @retval DECAF_FAILURE The inverse failed.
+ */
+decaf_bool_t
+decaf_448_invert_elligator_nonuniform (
+    unsigned char recovered_hash[DECAF_448_SER_BYTES],
+    const decaf_448_point_t pt,
+    uint16_t which
+) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
+
+/**
+ * @brief Inverse of elligator-like hash to curve.
+ *
+ * This function writes to the buffer, to make it so that
+ * decaf_448_point_from_hash_uniform(buffer) = pt if
+ * possible.  Since there may be multiple preimages, the
+ * "which" parameter chooses between them.  To ensure uniform
+ * inverse sampling, this function succeeds or fails
+ * independently for different "which" values.
+ *
+ * @param [out] recovered_hash Encoded data.
+ * @param [in] pt The point to encode.
+ * @param [in] which A value determining which inverse point
+ * to return.
+ *
+ * @retval DECAF_SUCCESS The inverse succeeded.
+ * @retval DECAF_FAILURE The inverse failed.
+ */
+decaf_bool_t
+decaf_448_invert_elligator_uniform (
+    unsigned char recovered_hash[2*DECAF_448_SER_BYTES],
+    const decaf_448_point_t pt,
+    uint16_t which
+) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
 
 /**
  * @brief Overwrite scalar with zeros.

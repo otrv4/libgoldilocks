@@ -9,9 +9,9 @@
  * @brief C++ tests, because that's easier.
  */
 
-#include "decaf.hxx"
-#include "shake.hxx"
-#include "decaf_crypto.h"
+#include <decaf.hxx>
+#include <decaf/shake.hxx>
+#include <decaf/crypto.h>
 #include <stdio.h>
 
 

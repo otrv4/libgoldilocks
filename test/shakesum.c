@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "shake.h"
+#include <decaf/shake.h>
 
 int main(int argc, char **argv) {
     (void)argc; (void)argv;

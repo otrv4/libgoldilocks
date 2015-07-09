@@ -1,5 +1,5 @@
 /**
- * @file decaf_448.hxx
+ * @file decaf/decaf_448.hxx
  * @author Mike Hamburg
  *
  * @copyright
@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <string.h> /* for memcpy */
 
-#include "decaf.h"
+#include <decaf.h>
 #include <string>
 #include <sys/types.h>
 #include <limits.h>

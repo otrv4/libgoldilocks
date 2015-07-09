@@ -10,7 +10,7 @@
 
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #define __STDC_WANT_LIB_EXT1__ 1 /* for memset_s */
-#include "decaf.h"
+#include <decaf.h>
 #include <string.h>
 #include "field.h"
 #include "decaf_config.h"

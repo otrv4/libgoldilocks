@@ -8,7 +8,7 @@
  * @brief Decaf utility functions.
  */
 
-#include "decaf_common.h"
+#include <decaf/common.h>
 
 void decaf_bzero (
     void *s,

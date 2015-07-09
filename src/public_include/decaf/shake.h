@@ -1,5 +1,5 @@
 /**
- * @file shake.h
+ * @file decaf/shake.h
  * @copyright
  *   Based on CC0 code by David Leon Gil, 2015 \n
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include "decaf_common.h"
+#include <decaf/common.h>
 
 /** @cond internal */
 #define API_VIS __attribute__((visibility("default")))

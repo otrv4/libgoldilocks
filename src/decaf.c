@@ -9,7 +9,7 @@
  */
 
 #define __STDC_WANT_LIB_EXT1__ 1 /* for memset_s */
-#include "decaf.h"
+#include <decaf.h>
 #include <string.h>
 #include <assert.h>
 

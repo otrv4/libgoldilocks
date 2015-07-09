@@ -8,7 +8,7 @@
  * @brief Example Decaf cyrpto routines.
  */
 
-#include "decaf_crypto.h"
+#include <decaf/crypto.h>
 #include <string.h>
 
 static const unsigned int DECAF_255_SCALAR_OVERKILL_BYTES = DECAF_255_SCALAR_BYTES + 8;

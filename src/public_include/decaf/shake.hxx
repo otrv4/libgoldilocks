@@ -1,5 +1,5 @@
 /**
- * @file shake.hxx
+ * @file decaf/shake.hxx
  * @copyright
  *   Based on CC0 code by David Leon Gil, 2015 \n
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
@@ -12,7 +12,7 @@
 #ifndef __SHAKE_HXX__
 #define __SHAKE_HXX__
 
-#include "shake.h"
+#include <decaf/shake.h>
 #include <string>
 #include <sys/types.h>
 

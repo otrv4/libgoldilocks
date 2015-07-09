@@ -25,8 +25,8 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include "decaf_255.h"
-#include "decaf_448.h"
+#include <decaf/decaf_255.h>
+#include <decaf/decaf_448.h>
 
 #endif /* __DECAF_H__ */
 

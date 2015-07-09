@@ -1,5 +1,5 @@
 /**
- * @file decaf_crypto.h
+ * @file decaf/crypto.h
  * @copyright
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
@@ -14,8 +14,8 @@
 #ifndef __DECAF_CRYPTO_H__
 #define __DECAF_CRYPTO_H__ 1
 
-#include "decaf.h"
-#include "shake.h"
+#include <decaf.h>
+#include <decaf/shake.h>
 
 /** Number of bytes for a symmetric key (expanded to full key) */
 #define DECAF_255_SYMMETRIC_KEY_BYTES 32

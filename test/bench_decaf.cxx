@@ -9,10 +9,9 @@
  * @brief C++ benchmarks, because that's easier.
  */
 
-#include "decaf.hxx"
-#include "shake.hxx"
-#include "shake.h"
-#include "decaf_crypto.h"
+#include <decaf.hxx>
+#include <decaf/shake.hxx>
+#include <decaf/crypto.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include <assert.h>

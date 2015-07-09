@@ -1,5 +1,5 @@
 /**
- * @file decaf_common.h
+ * @file decaf/common.h
  * @author Mike Hamburg
  *
  * @copyright
