@@ -96,11 +96,9 @@ field_add (
     field_weak_reduce ( d );
 }
 
-/** Require the warning annotation on raw routines */
-#define ANALYZE_THIS_ROUTINE_CAREFULLY const int ANNOTATE___ANALYZE_THIS_ROUTINE_CAREFULLY = 0;
-#define MUST_BE_CAREFUL (void) ANNOTATE___ANALYZE_THIS_ROUTINE_CAREFULLY
-#define field_add_nr(a,b,c) { MUST_BE_CAREFUL; field_add_RAW(a,b,c); }
-#define field_sub_nr(a,b,c) { MUST_BE_CAREFUL; field_sub_RAW(a,b,c); }
-#define field_subx_nr(a,b,c) { MUST_BE_CAREFUL; field_subx_RAW(a,b,c); }
+/* FIXME: no warnings on RAW routines */
+#define field_add_nr field_add_RAW
+#define field_sub_nr field_add_RAW
+#define field_subx_nr field_add_RAW
 
 #endif // __FIELD_H__

@@ -171,7 +171,7 @@ static void test_elligator() {
     bool successes2[NHINTS];
 
     for (int i=0; i<NTESTS/10 && (test.passing_now || i < 100); i++) {
-        size_t len =  (i % (2*Point::HASH_BYTES + 3)); // FIXME: 0
+        size_t len =  (i % (2*Point::HASH_BYTES + 3));
         decaf::SecureBuffer b1(len);
         if (i!=Point::HASH_BYTES) rng.read(b1); /* special test case */
         if (i==1) b1[0] = 1; /* special case test */

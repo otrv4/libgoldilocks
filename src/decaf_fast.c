@@ -105,21 +105,6 @@ siv gf_sqr (gf c, const gf a) {
     field_sqr((field_t *)c, (const field_t *)a);
 }
 
-/** Inverse square root using addition chain. */
-siv gf_isqrt(gf y, const gf x) {
-    field_isr((field_t *)y, (const field_t *)x);
-}
-
-/** Inverse. */
-sv gf_invert(gf y, const gf x) {
-    gf t1, t2;
-    gf_sqr(t1, x); // o^2
-    gf_isqrt(t2, t1); // +-1/sqrt(o^2) = +-1/o
-    gf_sqr(t1, t2);
-    gf_mul(t2, t1, x); // not direct to y in case of alias.
-    gf_cpy(y, t2);
-}
-
 /** Add mod p.  Conservatively always weak-reduce. */
 snv gf_add ( gf_s *__restrict__ c, const gf a, const gf b ) {
     field_add((field_t *)c, (const field_t *)a, (const field_t *)b);
@@ -138,7 +123,6 @@ siv gf_bias ( gf c, int amt) {
 /** Subtract mod p.  Bias by 2 and don't reduce  */
 siv gf_sub_nr ( gf_s *__restrict__ c, const gf a, const gf b ) {
 //    FOR_LIMB_U(i, c->limb[i] = a->limb[i] - b->limb[i] + 2*P->limb[i] );
-    ANALYZE_THIS_ROUTINE_CAREFULLY; //TODO
     field_sub_nr((field_t *)c, (const field_t *)a, (const field_t *)b);
     gf_bias(c, 2);
     if (WBITS==32) field_weak_reduce((field_t*) c); // HACK
@@ -146,7 +130,6 @@ siv gf_sub_nr ( gf_s *__restrict__ c, const gf a, const gf b ) {
 
 /** Subtract mod p. Bias by amt but don't reduce.  */
 siv gf_sub_nr_x ( gf c, const gf a, const gf b, int amt ) {
-    ANALYZE_THIS_ROUTINE_CAREFULLY; //TODO
     field_sub_nr((field_t *)c, (const field_t *)a, (const field_t *)b);
     gf_bias(c, amt);
     if (WBITS==32) field_weak_reduce((field_t*) c); // HACK
@@ -155,7 +138,6 @@ siv gf_sub_nr_x ( gf c, const gf a, const gf b, int amt ) {
 /** Add mod p.  Don't reduce. */
 siv gf_add_nr ( gf c, const gf a, const gf b ) {
 //    FOR_LIMB_U(i, c->limb[i] = a->limb[i] + b->limb[i]);
-    ANALYZE_THIS_ROUTINE_CAREFULLY; //TODO
     field_add_nr((field_t *)c, (const field_t *)a, (const field_t *)b);
 }
 
@@ -216,6 +198,17 @@ static decaf_bool_t gf_isqrt_chk(gf y, const gf x, decaf_bool_t allow_zero) {
     gf_sqr(tmp0,y);
     gf_mul(tmp1,tmp0,x);
     return gf_eq(tmp1,ONE) | (allow_zero & gf_eq(tmp1,ZERO));
+}
+
+/** Inverse. */
+sv gf_invert(gf y, const gf x) {
+    gf t1, t2;
+    gf_sqr(t1, x); // o^2
+    decaf_bool_t ret = gf_isqrt_chk(t2, t1, 0); // +-1/sqrt(o^2) = +-1/o
+    (void)ret; assert(ret);
+    gf_sqr(t1, t2);
+    gf_mul(t2, t1, x); // not direct to y in case of alias.
+    gf_cpy(y, t2);
 }
 
 /** Return high bit of x = low bit of 2x mod p */
@@ -321,7 +314,7 @@ decaf_bool_t API_NS(scalar_invert) (
     const scalar_t a
 ) {
 #if 0
-    /* FIELD MAGIC.  FIXME: not updated for 25519 */
+    /* FIELD MAGIC.  TODO PERF: not updated for 25519 */
     scalar_t chain[7], tmp;
     sc_montmul(chain[0],a,sc_r2);
     
