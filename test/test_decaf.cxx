@@ -49,7 +49,7 @@ typedef typename Group::Precomputed Precomputed;
 
 static void print(const char *name, const Scalar &x) {
     unsigned char buffer[Scalar::SER_BYTES];
-    x.encode(buffer);
+    x.encode(decaf::FixedBuffer<Scalar::SER_BYTES>(buffer));
     printf("  %s = 0x", name);
     for (int i=sizeof(buffer)-1; i>=0; i--) {
         printf("%02x", buffer[i]);
@@ -66,10 +66,10 @@ static void hexprint(const char *name, const decaf::SecureBuffer &buffer) {
 }
 
 static void print(const char *name, const Point &x) {
-    unsigned char buffer[Point::SER_BYTES];
+    decaf::StackBuffer<Point::SER_BYTES> buffer;
     x.encode(buffer);
     printf("  %s = 0x", name);
-    for (int i=sizeof(buffer)-1; i>=0; i--) {
+    for (int i=Point::SER_BYTES-1; i>=0; i--) {
         printf("%02x", buffer[i]);
     }
     printf("\n");

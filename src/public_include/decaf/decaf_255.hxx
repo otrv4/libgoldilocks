@@ -10,7 +10,7 @@
  *
  * The Decaf library implements cryptographic operations on a an elliptic curve
  * group of prime order p.  It accomplishes this by using a twisted Edwards
- * curve (isogenous to Ed255-Goldilocks) and wiping out the cofactor.
+ * curve (isogenous to Curve25519) and wiping out the cofactor.
  *
  * The formulas are all complete and have no special cases, except that
  * decaf_255_decode can fail because not every sequence of bytes is a valid group
@@ -33,8 +33,6 @@
 #include <sys/types.h>
 #include <limits.h>
 
-/* TODO: attribute nonnull */
-
 /** @cond internal */
 #if __cplusplus >= 201103L
 #define NOEXCEPT noexcept
@@ -46,7 +44,7 @@
 namespace decaf {
 
 /**
- * @brief Ed255-Goldilocks/Decaf instantiation of group.
+ * @brief Curve25519/Decaf instantiation of group.
  */
 struct Ed255 {
 
@@ -60,12 +58,16 @@ class Precomputed;
  * Supports the usual arithmetic operations, all in constant time.
  */
 class Scalar {
+private:
+    /** @brief wrapped C type */
+    typedef decaf_255_scalar_t Wrapped;
+    
 public:
     /** @brief Size of a serialized element */
     static const size_t SER_BYTES = DECAF_255_SCALAR_BYTES;
     
     /** @brief access to the underlying scalar object */
-    decaf_255_scalar_t s;
+    Wrapped s;
     
     /** @brief Don't initialize. */
     inline Scalar(const NOINIT &) NOEXCEPT {}
@@ -83,7 +85,7 @@ public:
     }
     
     /** @brief Construct from decaf_scalar_t object. */
-    inline Scalar(const decaf_255_scalar_t &t = decaf_255_scalar_zero) NOEXCEPT {  decaf_255_scalar_copy(s,t); } 
+    inline Scalar(const Wrapped &t = decaf_255_scalar_zero) NOEXCEPT {  decaf_255_scalar_copy(s,t); } 
     
     /** @brief Copy constructor. */
     inline Scalar(const Scalar &x) NOEXCEPT {  *this = x; }
@@ -118,26 +120,18 @@ public:
      * @return DECAF_FAILURE if the scalar is greater than or equal to the group order q.
      */
     static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
-        Scalar &sc, const unsigned char buffer[SER_BYTES]
+        Scalar &sc, const FixedBlock<SER_BYTES> buffer
     ) NOEXCEPT {
-        return decaf_255_scalar_decode(sc.s,buffer);
-    }
-    
-    /** @brief Decode from correct-length little-endian byte sequence in C++ string. */
-    static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
-        Scalar &sc, const Block &buffer
-    ) NOEXCEPT {
-        if (buffer.size() != SER_BYTES) return DECAF_FAILURE;
         return decaf_255_scalar_decode(sc.s,buffer);
     }
     
     /** @brief Encode to fixed-length string */
     inline operator SecureBuffer() const NOEXCEPT {
-        SecureBuffer buf(SER_BYTES); decaf_255_scalar_encode(buf,s); return buf;
+        SecureBuffer buf(SER_BYTES); encode(buf); return buf;
     }
     
     /** @brief Encode to fixed-length buffer */
-    inline void encode(unsigned char buffer[SER_BYTES]) const NOEXCEPT{
+    inline void encode(FixedBuffer<SER_BYTES> buffer) const NOEXCEPT{
         decaf_255_scalar_encode(buffer, s);
     }
     
@@ -188,12 +182,7 @@ public:
         const Block &in,
         decaf_bool_t allow_identity=DECAF_FALSE,
         decaf_bool_t short_circuit=DECAF_TRUE    
-    ) const throw(CryptoException) {
-        SecureBuffer out(/*FIXME Point::*/SER_BYTES);
-        if (!decaf_255_direct_scalarmul(out, in.data(), s, allow_identity, short_circuit))
-            throw CryptoException();
-        return out;
-    }
+    ) const throw(CryptoException);
 };
 
 /**
@@ -201,23 +190,25 @@ public:
  */
 class Point {
 public:
+    typedef decaf_255_point_t Wrapped;
+    
     /** @brief Size of a serialized element */
     static const size_t SER_BYTES = DECAF_255_SER_BYTES;
     
-    /** @brief Size of a stegged element */
-    static const size_t STEG_BYTES = DECAF_255_SER_BYTES + 8;
-    
     /** @brief Bytes required for hash */
-    static const size_t HASH_BYTES = DECAF_255_SER_BYTES;
+    static const size_t HASH_BYTES = SER_BYTES;
+    
+    /** @brief Size of a stegged element */
+    static const size_t STEG_BYTES = HASH_BYTES * 2;
     
     /** The c-level object. */
-    decaf_255_point_t p;
+    Wrapped p;
     
     /** @brief Don't initialize. */
     inline Point(const NOINIT &) NOEXCEPT {}
     
     /** @brief Constructor sets to identity by default. */
-    inline Point(const decaf_255_point_t &q = decaf_255_point_identity) NOEXCEPT { decaf_255_point_copy(p,q); }
+    inline Point(const Wrapped &q = decaf_255_point_identity) NOEXCEPT { decaf_255_point_copy(p,q); }
     
     /** @brief Copy constructor. */
     inline Point(const Point &q) NOEXCEPT { *this = q; }
@@ -251,28 +242,14 @@ public:
     }
    
    /**
-    * @brief Initialize from C fixed-length byte string.
+    * @brief Initialize from a fixed-length byte string.
      * The all-zero string maps to the identity.
      *
     * @throw CryptoException the string was the wrong length, or wasn't the encoding of a point,
     * or was the identity and allow_identity was DECAF_FALSE.
     */
-    inline explicit Point(const unsigned char buffer[SER_BYTES], decaf_bool_t allow_identity=DECAF_TRUE)
+    inline explicit Point(const FixedBuffer<SER_BYTES> buffer, decaf_bool_t allow_identity=DECAF_TRUE)
         throw(CryptoException) { if (!decode(*this,buffer,allow_identity)) throw CryptoException(); }
-    
-    /**
-     * @brief Initialize from C fixed-length byte string.
-     * The all-zero string maps to the identity.
-     *
-     * @retval DECAF_SUCCESS the string was successfully decoded.
-     * @return DECAF_FAILURE the string wasn't the encoding of a point, or was the identity
-     * and allow_identity was DECAF_FALSE.  Contents of the buffer are undefined.
-     */
-    static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
-        Point &p, const unsigned char buffer[SER_BYTES], decaf_bool_t allow_identity=DECAF_TRUE
-    ) NOEXCEPT {
-        return decaf_255_point_decode(p.p,buffer,allow_identity);
-    }
     
     /**
      * @brief Initialize from C++ fixed-length byte string.
@@ -283,9 +260,8 @@ public:
      * or was the identity and allow_identity was DECAF_FALSE.  Contents of the buffer are undefined.
      */    
     static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
-        Point &p, const Block &buffer, decaf_bool_t allow_identity=DECAF_TRUE
+        Point &p, const FixedBlock<SER_BYTES> buffer, decaf_bool_t allow_identity=DECAF_TRUE
     ) NOEXCEPT {
-        if (buffer.size() != SER_BYTES) return DECAF_FAILURE;
         return decaf_255_point_decode(p.p,buffer.data(),allow_identity);
     }
    
@@ -325,15 +301,13 @@ public:
      * @brief Encode to string.  The identity encodes to the all-zero string.
      */
     inline operator SecureBuffer() const NOEXCEPT {
-        SecureBuffer buffer(SER_BYTES);
-        decaf_255_point_encode(buffer, p);
-        return buffer;
+        SecureBuffer buffer(SER_BYTES); encode(buffer); return buffer;
     }
    
    /**
     * @brief Encode to a C buffer.  The identity encodes to all zeros.
     */
-    inline void encode(unsigned char buffer[SER_BYTES]) const NOEXCEPT{
+    inline void encode(FixedBuffer<SER_BYTES> buffer) const NOEXCEPT {
         decaf_255_point_encode(buffer, p);
     }
     
@@ -393,7 +367,7 @@ public:
     static inline Point double_scalarmul (
         const Scalar &qs, const Point &q, const Scalar &rs, const Point &r
     ) NOEXCEPT {
-        Point p((NOINIT())); decaf_255_point_double_scalarmul(p.p,q.p,qs.s,r.p,rs.s); return p;
+        return double_scalarmul(q,qs,r,rs);
     }
     
     /**
@@ -407,22 +381,17 @@ public:
     
     /** @brief Return a point equal to *this, whose internal data is rotated by a torsion element. */
     inline Point debugging_torque() const NOEXCEPT {
-        Point q;
-        decaf_255_point_debugging_torque(q.p,p);
-        return q;
+        Point q; decaf_255_point_debugging_torque(q.p,p); return q;
     }
     
     /** @brief Return a point equal to *this, whose internal data has a modified representation. */
-    inline Point debugging_pscale(const uint8_t factor[/*SER_BYTES*/]) const NOEXCEPT {
-        Point q;
-        decaf_255_point_debugging_pscale(q.p,p,factor);
-        return q;
+    inline Point debugging_pscale(const FixedBlock<SER_BYTES> factor) const NOEXCEPT {
+        Point q; decaf_255_point_debugging_pscale(q.p,p,factor); return q;
     }
     
     /** @brief Return a point equal to *this, whose internal data has a randomized representation. */
     inline Point debugging_pscale(Rng &r) const NOEXCEPT {
-        StackBuffer<SER_BYTES> sb(r);
-        return debugging_pscale(sb);
+        StackBuffer<SER_BYTES> sb(r); return debugging_pscale(sb);
     }
     
     /**
@@ -564,7 +533,22 @@ public:
     /** @endcond */
 };
 
-}; /* struct Decaf255 */
+}; /* struct Ed255 */
+
+
+
+/** @cond internal */
+inline SecureBuffer Ed255::Scalar::direct_scalarmul (
+    const Block &in,
+    decaf_bool_t allow_identity,
+    decaf_bool_t short_circuit
+) const throw(CryptoException) {
+    SecureBuffer out(Ed255::Point::SER_BYTES);
+    if (!decaf_255_direct_scalarmul(out, in.data(), s, allow_identity, short_circuit))
+        throw CryptoException();
+    return out;
+}
+/** endcond */
 
 #undef NOEXCEPT
 } /* namespace decaf */

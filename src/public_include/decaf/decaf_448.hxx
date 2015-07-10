@@ -28,207 +28,20 @@
 #include <string.h> /* for memcpy */
 
 #include <decaf.h>
+#include <decaf/secure_buffer.hxx>
 #include <string>
 #include <sys/types.h>
 #include <limits.h>
 
-/* TODO: This is incomplete */
-/* TODO: attribute nonnull */
-
 /** @cond internal */
 #if __cplusplus >= 201103L
 #define NOEXCEPT noexcept
-#define EXPLICIT_CON explicit
-#define GET_DATA(str) ((const unsigned char *)&(str)[0])
 #else
 #define NOEXCEPT throw()
-#define EXPLICIT_CON
-#define GET_DATA(str) ((const unsigned char *)((str).data()))
 #endif
 /** @endcond */
 
 namespace decaf {
-
-/** @brief An exception for when crypto (ie point decode) has failed. */
-class CryptoException : public std::exception {
-public:
-    /** @return "CryptoException" */
-    virtual const char * what() const NOEXCEPT { return "CryptoException"; }
-};
-
-/** @brief An exception for when crypto (ie point decode) has failed. */
-class LengthException : public std::exception {
-public:
-    /** @return "CryptoException" */
-    virtual const char * what() const NOEXCEPT { return "LengthException"; }
-};
-
-/**
- * Securely erase contents of memory.
- */
-static inline void really_bzero(void *data, size_t size) { decaf_bzero(data,size); }
-
-/** Block object */
-class Block {
-protected:
-    unsigned char *data_;
-    size_t size_;
-
-public:
-    /** Empty init */
-    inline Block() NOEXCEPT : data_(NULL), size_(0) {}
-    
-    /** Init from C string */
-    inline Block(const char *data) NOEXCEPT : data_((unsigned char *)data), size_(strlen(data)) {}
-
-    /** Unowned init */
-    inline Block(const unsigned char *data, size_t size) NOEXCEPT : data_((unsigned char *)data), size_(size) {}
-    
-    /** Block from std::string */
-    inline Block(const std::string &s) : data_((unsigned char *)GET_DATA(s)), size_(s.size()) {}
-
-    /** Get const data */
-    inline const unsigned char *data() const NOEXCEPT { return data_; }
-
-    /** Get the size */
-    inline size_t size() const NOEXCEPT { return size_; }
-
-    /** Autocast to const unsigned char * */
-    inline operator const unsigned char*() const NOEXCEPT { return data_; }
-
-    /** Convert to C++ string */
-    inline std::string get_string() const {
-        return std::string((const char *)data_,size_);
-    }
-
-    /** Slice the buffer*/
-    inline Block slice(size_t off, size_t length) const throw(LengthException) {
-        if (off > size() || length > size() - off)
-            throw LengthException();
-        return Block(data()+off, length);
-    }
-
-    /** Virtual destructor for SecureBlock. TODO: probably means vtable?  Make bool? */
-    inline virtual ~Block() {};
-};
-
-class TmpBuffer;
-
-class Buffer : public Block {
-public:
-    /** Null init */
-    inline Buffer() NOEXCEPT : Block() {}
-
-    /** Unowned init */
-    inline Buffer(unsigned char *data, size_t size) NOEXCEPT : Block(data,size) {}
-
-    /** Get unconst data */
-    inline unsigned char *data() NOEXCEPT { return data_; }
-
-    /** Get const data */
-    inline const unsigned char *data() const NOEXCEPT { return data_; }
-
-    /** Autocast to const unsigned char * */
-    inline operator const unsigned char*() const NOEXCEPT { return data_; }
-
-    /** Autocast to unsigned char */
-    inline operator unsigned char*() NOEXCEPT { return data_; }
-
-    /** Slice the buffer*/
-    inline TmpBuffer slice(size_t off, size_t length) throw(LengthException);
-};
-
-class TmpBuffer : public Buffer {
-public:
-    /** Unowned init */
-    inline TmpBuffer(unsigned char *data, size_t size) NOEXCEPT : Buffer(data,size) {}
-};
-
-TmpBuffer Buffer::slice(size_t off, size_t length) throw(LengthException) {
-    if (off > size() || length > size() - off) throw LengthException();
-    return TmpBuffer(data()+off, length);
-}
-
-/** A self-erasing block of data */
-class SecureBuffer : public Buffer {
-public:
-    /** Null secure block */
-    inline SecureBuffer() NOEXCEPT : Buffer() {}
-
-    /** Construct empty from size */
-    inline SecureBuffer(size_t size) {
-        data_ = new unsigned char[size_ = size];
-        memset(data_,0,size);
-    }
-
-    /** Construct from data */
-    inline SecureBuffer(const unsigned char *data, size_t size){
-        data_ = new unsigned char[size_ = size];
-        memcpy(data_, data, size);
-    }
-
-    /** Copy constructor */
-    inline SecureBuffer(const Block &copy) : Buffer() { *this = copy; }
-
-    /** Copy-assign constructor */
-    inline SecureBuffer& operator=(const Block &copy) throw(std::bad_alloc) {
-        if (&copy == this) return *this;
-        clear();
-        data_ = new unsigned char[size_ = copy.size()];
-        memcpy(data_,copy.data(),size_);
-        return *this;
-    }
-
-    /** Copy-assign constructor */
-    inline SecureBuffer& operator=(const SecureBuffer &copy) throw(std::bad_alloc) {
-        if (&copy == this) return *this;
-        clear();
-        data_ = new unsigned char[size_ = copy.size()];
-        memcpy(data_,copy.data(),size_);
-        return *this;
-    }
-
-    /** Destructor erases data */
-    ~SecureBuffer() NOEXCEPT { clear(); }
-
-    /** Clear data */
-    inline void clear() NOEXCEPT {
-        if (data_ == NULL) return;
-        really_bzero(data_,size_);
-        delete[] data_;
-        data_ = NULL;
-        size_ = 0;
-    }
-
-#if __cplusplus >= 201103L
-    /** Move constructor */
-    inline SecureBuffer(SecureBuffer &&move) { *this = move; }
-
-    /** Move non-constructor */
-    inline SecureBuffer(Block &&move) { *this = (Block &)move; }
-
-    /** Move-assign constructor. TODO: check that this actually gets used.*/ 
-    inline SecureBuffer& operator=(SecureBuffer &&move) {
-        clear();
-        data_ = move.data_; move.data_ = NULL;
-        size_ = move.size_; move.size_ = 0;
-        return *this;
-    }
-
-    /** C++11-only explicit cast */
-    inline explicit operator std::string() const { return get_string(); }
-#endif
-};
-
-
-/** @brief Passed to constructors to avoid (conservative) initialization */
-struct NOINIT {};
-
-/**@cond internal*/
-/** Forward-declare sponge RNG object */
-class SpongeRng;
-/**@endcond*/
-
 
 /**
  * @brief Ed448-Goldilocks/Decaf instantiation of group.
@@ -245,12 +58,16 @@ class Precomputed;
  * Supports the usual arithmetic operations, all in constant time.
  */
 class Scalar {
+private:
+    /** @brief wrapped C type */
+    typedef decaf_448_scalar_t Wrapped;
+    
 public:
     /** @brief Size of a serialized element */
     static const size_t SER_BYTES = DECAF_448_SCALAR_BYTES;
     
     /** @brief access to the underlying scalar object */
-    decaf_448_scalar_t s;
+    Wrapped s;
     
     /** @brief Don't initialize. */
     inline Scalar(const NOINIT &) NOEXCEPT {}
@@ -262,7 +79,10 @@ public:
     inline Scalar(const int w) NOEXCEPT { *this = w; } 
     
     /** @brief Construct from RNG */
-    inline explicit Scalar(SpongeRng &rng) NOEXCEPT;
+    inline explicit Scalar(Rng &rng) NOEXCEPT {
+        StackBuffer<SER_BYTES> sb(rng);
+        *this = sb;
+    }
     
     /** @brief Construct from decaf_scalar_t object. */
     inline Scalar(const decaf_448_scalar_t &t = decaf_448_scalar_zero) NOEXCEPT {  decaf_448_scalar_copy(s,t); } 
@@ -287,7 +107,7 @@ public:
         return *this;
     }
     
-    /** Destructor securely erases the scalar. */
+    /** Destructor securely zeorizes the scalar. */
     inline ~Scalar() NOEXCEPT { decaf_448_scalar_destroy(s); }
     
     /** @brief Assign from arbitrary-length little-endian byte sequence in a Block. */
@@ -300,26 +120,18 @@ public:
      * @return DECAF_FAILURE if the scalar is greater than or equal to the group order q.
      */
     static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
-        Scalar &sc, const unsigned char buffer[SER_BYTES]
+        Scalar &sc, const FixedBlock<SER_BYTES> buffer
     ) NOEXCEPT {
-        return decaf_448_scalar_decode(sc.s,buffer);
-    }
-    
-    /** @brief Decode from correct-length little-endian byte sequence in C++ string. */
-    static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
-        Scalar &sc, const Block &buffer
-    ) NOEXCEPT {
-        if (buffer.size() != SER_BYTES) return DECAF_FAILURE;
         return decaf_448_scalar_decode(sc.s,buffer);
     }
     
     /** @brief Encode to fixed-length string */
-    inline EXPLICIT_CON operator SecureBuffer() const NOEXCEPT {
+    inline operator SecureBuffer() const NOEXCEPT {
         SecureBuffer buf(SER_BYTES); decaf_448_scalar_encode(buf,s); return buf;
     }
     
     /** @brief Encode to fixed-length buffer */
-    inline void encode(unsigned char buffer[SER_BYTES]) const NOEXCEPT{
+    inline void encode(FixedBuffer<SER_BYTES> buffer) const NOEXCEPT{
         decaf_448_scalar_encode(buffer, s);
     }
     
@@ -402,16 +214,24 @@ public:
     inline Point(const decaf_448_point_t &q = decaf_448_point_identity) NOEXCEPT { decaf_448_point_copy(p,q); }
     
     /** @brief Copy constructor. */
-    inline Point(const Point &q) NOEXCEPT { decaf_448_point_copy(p,q.p); }
+    inline Point(const Point &q) NOEXCEPT { *this = q; }
     
     /** @brief Assignment. */
     inline Point& operator=(const Point &q) NOEXCEPT { decaf_448_point_copy(p,q.p); return *this; }
     
-    /** @brief Destructor securely erases the point. */
+    /** @brief Destructor securely zeorizes the point. */
     inline ~Point() NOEXCEPT { decaf_448_point_destroy(p); }
     
     /** @brief Construct from RNG */
-    inline explicit Point(SpongeRng &rng, bool uniform = true) NOEXCEPT;
+    inline explicit Point(Rng &rng, bool uniform = true) NOEXCEPT {
+        if (uniform) {
+            StackBuffer<2*HASH_BYTES> b(rng);
+            set_to_hash(b);
+        } else {
+            StackBuffer<HASH_BYTES> b(rng);
+            set_to_hash(b);
+        }
+    }
     
     /**
      * @brief Initialize from C++ fixed-length byte string.
@@ -425,28 +245,14 @@ public:
     }
    
    /**
-    * @brief Initialize from C fixed-length byte string.
+    * @brief Initialize from a fixed-length byte string.
      * The all-zero string maps to the identity.
      *
     * @throw CryptoException the string was the wrong length, or wasn't the encoding of a point,
     * or was the identity and allow_identity was DECAF_FALSE.
     */
-    inline explicit Point(const unsigned char buffer[SER_BYTES], decaf_bool_t allow_identity=DECAF_TRUE)
+    inline explicit Point(const FixedBuffer<SER_BYTES> buffer, decaf_bool_t allow_identity=DECAF_TRUE)
         throw(CryptoException) { if (!decode(*this,buffer,allow_identity)) throw CryptoException(); }
-    
-    /**
-     * @brief Initialize from C fixed-length byte string.
-     * The all-zero string maps to the identity.
-     *
-     * @retval DECAF_SUCCESS the string was successfully decoded.
-     * @return DECAF_FAILURE the string wasn't the encoding of a point, or was the identity
-     * and allow_identity was DECAF_FALSE.  Contents of the buffer are undefined.
-     */
-    static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
-        Point &p, const unsigned char buffer[SER_BYTES], decaf_bool_t allow_identity=DECAF_TRUE
-    ) NOEXCEPT {
-        return decaf_448_point_decode(p.p,buffer,allow_identity);
-    }
     
     /**
      * @brief Initialize from C++ fixed-length byte string.
@@ -457,9 +263,8 @@ public:
      * or was the identity and allow_identity was DECAF_FALSE.  Contents of the buffer are undefined.
      */    
     static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
-        Point &p, const Block &buffer, decaf_bool_t allow_identity=DECAF_TRUE
+        Point &p, const FixedBlock<SER_BYTES> buffer, decaf_bool_t allow_identity=DECAF_TRUE
     ) NOEXCEPT {
-        if (buffer.size() != SER_BYTES) return DECAF_FAILURE;
         return decaf_448_point_decode(p.p,buffer.data(),allow_identity);
     }
    
@@ -479,26 +284,26 @@ public:
     * If the buffer is shorter than 2*HASH_BYTES, well, it won't be as uniform,
     * but the buffer will be zero-padded on the right.
     */
-    inline unsigned char set_to_hash( const Block &s ) NOEXCEPT {
+    inline void set_to_hash( const Block &s ) NOEXCEPT {
         if (s.size() < HASH_BYTES) {
             SecureBuffer b(HASH_BYTES);
             memcpy(b.data(), s.data(), s.size());
-            return decaf_448_point_from_hash_nonuniform(p,b);
+            decaf_448_point_from_hash_nonuniform(p,b);
         } else if (s.size() == HASH_BYTES) {
-            return decaf_448_point_from_hash_nonuniform(p,s);
+            decaf_448_point_from_hash_nonuniform(p,s);
         } else if (s.size() < 2*HASH_BYTES) {
             SecureBuffer b(2*HASH_BYTES);
             memcpy(b.data(), s.data(), s.size());
-            return decaf_448_point_from_hash_uniform(p,b);
+            decaf_448_point_from_hash_uniform(p,b);
         } else {
-            return decaf_448_point_from_hash_uniform(p,s);
+            decaf_448_point_from_hash_uniform(p,s);
         }
     }
     
     /**
      * @brief Encode to string.  The identity encodes to the all-zero string.
      */
-    inline EXPLICIT_CON operator SecureBuffer() const NOEXCEPT {
+    inline operator SecureBuffer() const NOEXCEPT {
         SecureBuffer buffer(SER_BYTES);
         decaf_448_point_encode(buffer, p);
         return buffer;
@@ -507,7 +312,7 @@ public:
    /**
     * @brief Encode to a C buffer.  The identity encodes to all zeros.
     */
-    inline void encode(unsigned char buffer[SER_BYTES]) const NOEXCEPT{
+    inline void encode(FixedBuffer<SER_BYTES> buffer) const NOEXCEPT{
         decaf_448_point_encode(buffer, p);
     }
     
@@ -579,13 +384,32 @@ public:
         Point r((NOINIT())); decaf_448_base_double_scalarmul_non_secret(r.p,s_base.s,p,s.s); return r;
     }
     
-    inline Point& debugging_torque_in_place() {
-        decaf_448_point_debugging_torque(p,p);
-        return *this;
+    /** @brief Return a point equal to *this, whose internal data is rotated by a torsion element. */
+    inline Point debugging_torque() const NOEXCEPT {
+        Point q;
+        decaf_448_point_debugging_torque(q.p,p);
+        return q;
     }
     
+    /** @brief Return a point equal to *this, whose internal data has a modified representation. */
+    inline Point debugging_pscale(const FixedBlock<SER_BYTES> factor) const NOEXCEPT {
+        Point q;
+        decaf_448_point_debugging_pscale(q.p,p,factor);
+        return q;
+    }
+    
+    /** @brief Return a point equal to *this, whose internal data has a randomized representation. */
+    inline Point debugging_pscale(Rng &r) const NOEXCEPT {
+        StackBuffer<SER_BYTES> sb(r);
+        return debugging_pscale(sb);
+    }
+    
+    /**
+     * Modify buffer so that Point::from_hash(Buffer) == *this, and return true;
+     * or leave buf unmodified and return false.
+     */
     inline bool invert_elligator (
-        Buffer &buf, unsigned char hint
+        Buffer &buf, uint16_t hint
     ) const NOEXCEPT {
         unsigned char buf2[2*HASH_BYTES];
         memset(buf2,0,sizeof(buf2));
@@ -599,13 +423,24 @@ public:
         if (buf.size() < HASH_BYTES) {
             ret &= decaf_memeq(&buf2[buf.size()], &buf2[HASH_BYTES], HASH_BYTES - buf.size());
         }
-        memcpy(buf,buf2,(buf.size() < HASH_BYTES) ? buf.size() : HASH_BYTES);
+        if (ret) {
+            /* TODO: make this constant time?? */
+            memcpy(buf,buf2,(buf.size() < HASH_BYTES) ? buf.size() : HASH_BYTES);
+        }
         decaf_bzero(buf2,sizeof(buf2));
         return !!ret;
     }
     
     /** @brief Steganographically encode this */
-    inline SecureBuffer steg_encode(SpongeRng &rng) const NOEXCEPT;
+    inline SecureBuffer steg_encode(Rng &rng) const throw(std::bad_alloc) {
+        SecureBuffer out(STEG_BYTES);
+        bool done;
+        do {
+            rng.read(out.slice(HASH_BYTES-1,STEG_BYTES-HASH_BYTES+1));
+            done = invert_elligator(out, out[HASH_BYTES-1]); 
+        } while (!done);
+        return out;
+    }
     
     /** @brief Return the base point */
     static inline const Point base() NOEXCEPT { return Point(decaf_448_point_base); }
@@ -619,7 +454,9 @@ public:
  * Minor difficulties arise here because the decaf API doesn't expose, as a constant, how big such an object is.
  * Therefore we have to call malloc() or friends, but that's probably for the best, because you don't want to
  * stack-allocate a 15kiB object anyway.
- *//** @cond internal */
+ */
+
+/** @cond internal */
 typedef decaf_448_precomputed_s Precomputed_U;
 /** @endcond */
 class Precomputed
@@ -709,8 +546,6 @@ public:
 }; /* struct Decaf448 */
 
 #undef NOEXCEPT
-#undef EXPLICIT_CON
-#undef GET_DATA
 } /* namespace decaf */
 
 #endif /* __DECAF_448_HXX__ */

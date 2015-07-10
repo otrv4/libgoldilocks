@@ -87,8 +87,8 @@ protected:
     size_t size_;
 
 public:
-    /** Empty init */
-    inline Block() NOEXCEPT : data_(NULL), size_(0) {}
+    /** Null initialization */
+    inline Block() : data_(NULL), size_(0) {}
     
     /** Init from C string */
     inline Block(const char *data) NOEXCEPT : data_((unsigned char *)data), size_(strlen(data)) {}
@@ -148,6 +148,18 @@ public:
     inline virtual ~Block() {};
 };
 
+/** A fixed-size block */
+template<size_t Size> class FixedBlock : public Block {
+public:
+    /** Check a block's length. */
+    inline FixedBlock(const Block &b) throw(LengthException) : Block(b,Size) {
+        if (Size != b.size()) throw LengthException();
+    }
+    
+    /** Explicitly pass a C buffer. */
+    inline explicit FixedBlock(const uint8_t data[Size]) NOEXCEPT : Block(data,Size) {}
+};
+
 /** A reference to a writable block of data */
 class Buffer : public Block {
 public:
@@ -176,6 +188,24 @@ public:
     inline void zeroize() NOEXCEPT { really_bzero(data(),size()); }
 };
 
+
+/** A fixed-size block */
+template<size_t Size> class FixedBuffer : public Buffer {
+public:
+    /** Check a block's length. */
+    inline FixedBuffer(Buffer &b) throw(LengthException) : Buffer(b,Size) {
+        if (Size != b.size()) throw LengthException();
+    }
+    
+    /** Explicitly pass a C buffer. */
+    inline explicit FixedBuffer(uint8_t dat[Size]) NOEXCEPT : Buffer(dat,Size) {}
+    
+    /** Cast to a FixedBlock. */
+    inline operator FixedBlock<Size>() const NOEXCEPT {
+        return FixedBlock<Size>(data());
+    }
+};
+
 /** A temporary reference to a writeable buffer, for converting C to C++. */
 class TmpBuffer : public Buffer {
 public:
@@ -184,18 +214,20 @@ public:
 };
 
 /** A fixed-size stack-allocated buffer (for NOEXCEPT semantics) */
-template<size_t Size> class StackBuffer : public Buffer {
+template<size_t Size> class StackBuffer : public FixedBuffer<Size> {
 private:
     uint8_t storage[Size];
 public:
+    using Buffer::zeroize;
+    
     /** New buffer initialized to zero. */
-    inline StackBuffer() NOEXCEPT : Buffer(storage, Size) { memset(storage,0,Size); }
+    inline explicit StackBuffer() NOEXCEPT : FixedBuffer<Size>(storage) { memset(storage,0,Size); }
 
     /** New uninitialized buffer. */
-    inline StackBuffer(const NOINIT &) NOEXCEPT : Buffer(storage, Size) { }
+    inline explicit StackBuffer(const NOINIT &) NOEXCEPT : FixedBuffer<Size>(storage) { }
     
     /** New random buffer */
-    inline StackBuffer(Rng &r) NOEXCEPT  : Buffer(storage, Size) { r.read(*this); }
+    inline explicit StackBuffer(Rng &r) NOEXCEPT : FixedBuffer<Size>(storage) { r.read(*this); }
     
     /** Destroy the buffer */
     ~StackBuffer() NOEXCEPT { zeroize(); }
@@ -212,13 +244,13 @@ public:
     inline SecureBuffer() NOEXCEPT : Buffer() {}
 
     /** Construct empty from size */
-    inline SecureBuffer(size_t size) {
+    inline SecureBuffer(size_t size) throw(std::bad_alloc) {
         data_ = new unsigned char[size_ = size];
         memset(data_,0,size);
     }
 
     /** Construct from data */
-    inline SecureBuffer(const unsigned char *data, size_t size) {
+    inline SecureBuffer(const unsigned char *data, size_t size) throw(std::bad_alloc) {
         data_ = new unsigned char[size_ = size];
         memcpy(data_, data, size);
     }
@@ -230,7 +262,7 @@ public:
     }
 
     /** Copy constructor */
-    inline SecureBuffer(const Block &copy) : Buffer() { *this = copy; }
+    inline SecureBuffer(const Block &copy) throw(std::bad_alloc) : Buffer() { *this = copy; }
 
     /** Copy-assign constructor */
     inline SecureBuffer& operator=(const Block &copy) throw(std::bad_alloc) {
@@ -297,12 +329,12 @@ inline SecureBuffer Rng::read(size_t length) throw(std::bad_alloc) {
 /** A secure buffer which stores an owned or unowned underlying value.
  * If it is owned, it will be securely zeroed.
  */
-template <class T, class Underlying>
+template <class T, class Wrapped>
 class OwnedOrUnowned {
 protected:
     union {
-        Underlying *mine;
-        const Underlying *yours;
+        Wrapped *mine;
+        const Wrapped *yours;
     } ours;
     bool isMine;
 
@@ -323,10 +355,10 @@ protected:
         }
         isMine = true;
     }
-    inline const Underlying *get() const NOEXCEPT { return isMine ? ours.mine : ours.yours; }
+    inline const Wrapped *get() const NOEXCEPT { return isMine ? ours.mine : ours.yours; }
 
     inline OwnedOrUnowned(
-        const Underlying &yours = *T::defaultValue()
+        const Wrapped &yours = *T::defaultValue()
     ) NOEXCEPT {
         ours.yours = &yours;
         isMine = false;

@@ -216,11 +216,12 @@ $(BATNAME): include/* src/* src/*/* test/batarch.map $(BUILD_C)/decaf_tables.c #
 	(cd $(BATNAME)/.. && tar czf $(BATBASE).tgz $(BATBASE) )
 	
 # Finds todo items in .h and .c files
+TODO_TYPES ?= HACK TODO FIXME BUG XXX PERF FUTURE REMOVE MAGIC
 todo::
 	@(find * -name '*.h' -or -name '*.c' -or -name '*.cxx' -or -name '*.hxx') | xargs egrep --color=auto -w \
-		'HACK|TODO|FIXME|BUG|XXX|PERF|FUTURE|REMOVE|MAGIC'
+		`echo $(TODO_TYPES) | tr ' ' '|'`
 	@echo '============================='
-	@(for i in FIXME BUG XXX TODO HACK PERF FUTURE REMOVE MAGIC; do \
+	@(for i in $(TODO_TYPES); do \
 	  (find * -name '*.h' -or -name '*.c' -or -name '*.cxx' -or -name '*.hxx') | xargs egrep -w $$i > /dev/null || continue; \
 	  /bin/echo -n $$i'       ' | head -c 10; \
 	  (find * -name '*.h' -or -name '*.c' -or -name '*.cxx' -or -name '*.hxx') | xargs egrep -w $$i| wc -l; \
@@ -228,7 +229,7 @@ todo::
 	@echo '============================='
 	@echo -n 'Total     '
 	@(find * -name '*.h' -or -name '*.c' -or -name '*.cxx' -or -name '*.hxx') | xargs egrep -w \
-		'HACK|TODO|FIXME|BUG|XXX|PERF|FUTURE|REMOVE|MAGIC' | wc -l
+		`echo $(TODO_TYPES) | tr ' ' '|'` | wc -l
 
 bench: $(BUILD_IBIN)/bench
 	./$<
