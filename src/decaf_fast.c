@@ -226,6 +226,14 @@ static decaf_word_t hibit(const gf x) {
     return -(y->limb[0]&1);
 }
 
+/** Return high bit of x = low bit of 2x mod p */
+static decaf_word_t lobit(const gf x) {
+    gf y;
+    gf_cpy(y,x);
+    gf_canon(y);
+    return -(y->limb[0]&1);
+}
+
 /** {extra,accum} - sub +? p
  * Must have extra <= 1
  */
@@ -492,8 +500,8 @@ static void deisogenize (
     decaf_bool_t rotate;
     {
         gf e;
-        gf_sqr(e, t);
-        gf_mul(a, e, b);
+        gf_sqr(e, p->z);
+        gf_mul(a, e, b); /* z^2 / tz = z/t = 1/xy */
         rotate = hibit(a) ^ toggle_rotation;
         /*
          * Curve25519: cond select between zx * 1/tz or sqrt(1-d); y=-x
@@ -540,30 +548,39 @@ decaf_bool_t API_NS(point_decode) (
     succ &= allow_identity | ~zero;
     succ &= ~hibit(s);
     gf_sqr ( a, s );
-    gf_add ( f, ONE, a ); /* 1+s^2 = 1+as^2 since a=1 */
+    gf_sub ( f, ONE, a ); /* f = 1-s^2 = 1-as^2 since a=1 */
     succ &= ~ gf_eq( f, ZERO );
     gf_sqr ( b, f ); 
-    gf_mlw ( c, a, -4*EDWARDS_D ); 
+    gf_mlw ( c, a, 4-4*EDWARDS_D ); 
     gf_add ( c, c, b ); /* t^2 */
-    gf_mul ( d, f, s ); /* s(1+s^2) for denoms */
+    gf_mul ( d, f, s ); /* s(1-s^2) for denoms */
     gf_sqr ( e, d );
     gf_mul ( b, c, e );
     
-    succ &= gf_isqrt_chk ( e, b, DECAF_TRUE ); /* e = "the" */
+    succ &= gf_isqrt_chk ( e, b, DECAF_TRUE ); /* e = 1/(t s (1-s^2)) */
     gf_mul ( b, e, d ); /* 1/t */
-    gf_mul ( d, e, c ); /* d = later "the" = t / (s(1+s^2)) */
+    gf_mul ( d, e, c ); /* d = t / (s(1-s^2)) */
     gf_mul ( e, d, f ); /* t/s */
-    gf_sub ( a, ONE, a); /* 1-s^2 */
+    decaf_bool_t negtos = hibit(e);
+    cond_neg(b, negtos);
+    cond_neg(d, negtos);
     
-    gf_mul ( p->y, a, b ); /* y = (1-s^2) / t */
-    gf_sub ( d, e, d ); /* t/s - t/ s(1+s^2) = st / (1+s^2) */
-    gf_mul ( c, d, b ); /* s/(1+s^2) */
-    gf_mul ( b, c, SQRT_MINUS_ONE ); /* is/(1+s^2) */
-    gf_add ( p->x, b, b ); /* 2is */
-    cond_neg ( p->x, hibit(e) );
-    gf_mul ( p->t, p->x, p->y );
+    gf_add ( p->z, ONE, a); /* Z = 1+s^2 */
+    succ &= ~gf_eq( p->z, ZERO ); /* FUTURE: unnecessary? */
     
-    gf_cpy ( p->z, ONE );
+    gf_mul ( a, p->z, d); /* t(1+s^2) / s(1-s^2) = 2/xy */
+    succ &= ~lobit(a); /* = ~hibit(a/2), since hibit(x) = lobit(2x) */
+    
+    gf_mul ( a, f, b ); /* y = (1-s^2) / t */
+    gf_mul ( p->y, p->z, a ); /* Y = yZ */
+    gf_add ( p->x, s, s );
+    gf_mul ( p->t, p->x, a ); /* T = 2s (1-as^2)/t */
+    
+    /* TODO: integrate */
+    gf_cpy(a, p->x);
+    gf_mul(p->x, a, SQRT_MINUS_ONE);
+    gf_cpy(a, p->t);
+    gf_mul(p->t, a, SQRT_MINUS_ONE);
     
     p->y->limb[0] -= zero;
     

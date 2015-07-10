@@ -33,8 +33,8 @@ def M_to_E(P):
 
 def decaf_encode_from_E(X,Y):
     assert X^2 + Y^2 == 1 + d*X^2*Y^2
-    if not (qpositive(X*Y) or doPinkBikeShed): X,Y = Y,-X
-    assert qpositive(X*Y)
+    if not (X==0 or Y==0 or qpositive(1/(X*Y)) or doPinkBikeShed): X,Y = Y,-X
+    assert X==0 or Y==0 or qpositive(1/(X*Y))
     
     assert (1-X^2).is_square()
     sx = sqrt(1-X^2)
@@ -76,7 +76,7 @@ def decaf_encode_from_E_c(X,Y):
     osx = ooAll * TZ # inf or 1 * 1/Z
     ooTZ = ooAll * zx * osx # inf * 1/Z^2
     
-    floop = qpositive(T^2 * ooTZ) or doPinkBikeShed # 0
+    floop = qpositive(Z^2 * ooTZ) or doPinkBikeShed # 0
     if floop:
         frob = zx * ooTZ # 0 or inf
         # Y = 0 or 1
@@ -103,7 +103,7 @@ def decaf_decode_to_E(s):
     t = sqrt(s^4 + (2-4*d)*s^2 + 1)
     if not qpositive(t/s): t = -t
     X,Y = 2*s / (1+s^2), (1-s^2) / t
-    assert qpositive(X*Y) or doPinkBikeShed
+    assert X==0 or Y==0 or qpositive(1/(X*Y)) or doPinkBikeShed
     return X,Y
     
 def decaf_decode_to_E_c(s):

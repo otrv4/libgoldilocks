@@ -69,7 +69,6 @@ static void printSI(double x, const char *unit, const char *spacer = " ") {
 class Benchmark {
     static const int NTESTS = 20, NSAMPLES=50, DISCARD=2;
     static double totalCy, totalS;
-    /* FIXME Tcy if get descheduled */
 public:
     int i, j, ntests, nsamples;
     double begin;

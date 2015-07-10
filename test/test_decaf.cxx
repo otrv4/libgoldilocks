@@ -306,7 +306,6 @@ static void test_ec() {
             "unih = hash+add"
         );
             
-
         point_check(test,p,q,r,x,0,Point(x.direct_scalarmul(decaf::SecureBuffer(p))),x*p,"direct mul");
     }
 }
