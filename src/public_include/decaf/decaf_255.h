@@ -21,11 +21,13 @@ extern "C" {
 #define DECAF_255_SCALAR_BITS 254 // Curve25519: 253
 #define DECAF_255_SCALAR_LIMBS (256/DECAF_WORD_BITS)
 
+#ifndef __DECAF_GF_ALREADY_DEFINED__
 /** Galois field element internal structure */
-typedef struct gf_255_s {
+typedef struct gf_25519_s {
     decaf_word_t limb[DECAF_255_LIMBS];
-} gf_255_s, gf_255_t[1];
+} gf_25519_s, gf_25519_t[1];
 /** @endcond */
+#endif /* __DECAF_GF_ALREADY_DEFINED__ */
 
 /** Number of bytes in a serialized point. */
 #define DECAF_255_SER_BYTES 32
@@ -34,7 +36,7 @@ typedef struct gf_255_s {
 #define DECAF_255_SCALAR_BYTES 32
 
 /** Twisted Edwards (-1,d-1) extended homogeneous coordinates */
-typedef struct decaf_255_point_s { /**@cond internal*/gf_255_t x,y,z,t;/**@endcond*/ } decaf_255_point_t[1];
+typedef struct decaf_255_point_s { /**@cond internal*/gf_25519_t x,y,z,t;/**@endcond*/ } decaf_255_point_t[1];
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
 struct decaf_255_precomputed_s;

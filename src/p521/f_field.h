@@ -13,19 +13,19 @@
 #include "constant_time.h"
 
 #include "p521.h"
-#define FIELD_LIT_LIMB_BITS  58
-#define FIELD_BITS           521
-#define field_t              p521_t
-#define field_mul            p521_mul
-#define field_sqr            p521_sqr
-#define field_add_RAW        p521_add_RAW
-#define field_sub_RAW        p521_sub_RAW
-#define field_mulw           p521_mulw
-#define field_bias           p521_bias
-#define field_isr            p521_isr
-#define field_weak_reduce    p521_weak_reduce
-#define field_strong_reduce  p521_strong_reduce
-#define field_serialize      p521_serialize
-#define field_deserialize    p521_deserialize
+#define GF_LIT_LIMB_BITS  58
+#define GF_BITS           521
+#define gf              p521_t
+#define gf_mul            p521_mul
+#define gf_sqr            p521_sqr
+#define gf_add_RAW        p521_add_RAW
+#define gf_sub_RAW        p521_sub_RAW
+#define gf_mulw           p521_mulw
+#define gf_bias           p521_bias
+#define gf_isr            p521_isr
+#define gf_weak_reduce    p521_weak_reduce
+#define gf_strong_reduce  p521_strong_reduce
+#define gf_serialize      p521_serialize
+#define gf_deserialize    p521_deserialize
 
 #endif /* __F_FIELD_H__ */

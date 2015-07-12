@@ -10,10 +10,10 @@ static inline uint64_t shr(__uint128_t x, int n) {
 }
 
 void
-p255_mul (
-    p255_t *__restrict__ cs,
-    const p255_t *as,
-    const p255_t *bs
+gf_25519_mul (
+    gf_25519_s *__restrict__ cs,
+    const gf_25519_t as,
+    const gf_25519_t bs
 ) {
     const uint64_t *a = as->limb, *b = bs->limb, mask = ((1ull<<51)-1);
     uint64_t *c = cs->limb;
@@ -92,9 +92,9 @@ p255_mul (
 }
 
 void
-p255_sqr (
-    p255_t *__restrict__ cs,
-    const p255_t *as
+gf_25519_sqr (
+    gf_25519_s *__restrict__ cs,
+    const gf_25519_t as
 ) {
     const uint64_t *a = as->limb, mask = ((1ull<<51)-1);
     uint64_t *c = cs->limb;
@@ -156,9 +156,9 @@ p255_sqr (
 }
 
 void
-p255_mulw (
-    p255_t *__restrict__ cs,
-    const p255_t *as,
+gf_25519_mulw (
+    gf_25519_s *__restrict__ cs,
+    const gf_25519_t as,
     uint64_t b
 ) {
     const uint64_t *a = as->limb, mask = ((1ull<<51)-1);
@@ -191,8 +191,8 @@ p255_mulw (
 }
 
 void
-p255_strong_reduce (
-    p255_t *a
+gf_25519_strong_reduce (
+    gf_25519_t a
 ) {
     uint64_t mask = (1ull<<51)-1;
 
@@ -232,15 +232,15 @@ p255_strong_reduce (
 }
 
 void
-p255_serialize (
+gf_25519_serialize (
     uint8_t serial[32],
-    const struct p255_t *x
+    const gf_25519_t x
 ) {
     int i,j;
-    p255_t red;
-    p255_copy(&red, x);
-    p255_strong_reduce(&red);
-    uint64_t *r = red.limb;
+    gf_25519_t red;
+    gf_25519_copy(red, x);
+    gf_25519_strong_reduce(red);
+    uint64_t *r = red->limb;
     uint64_t ser64[4] = {r[0] | r[1]<<51, r[1]>>13|r[2]<<38, r[2]>>26|r[3]<<25, r[3]>>39|r[4]<<12};
     for (i=0; i<4; i++) {
         for (j=0; j<8; j++) {
@@ -251,8 +251,8 @@ p255_serialize (
 }
 
 mask_t
-p255_deserialize (
-    p255_t *x,
+gf_25519_deserialize (
+    gf_25519_t x,
     const uint8_t serial[32]
 ) {
     int i,j;

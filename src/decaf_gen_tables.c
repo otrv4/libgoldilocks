@@ -19,7 +19,7 @@
 #define API_NS2(_pref,_id) _pref##_decaf_255_##_id
 
  /* To satisfy linker. */
-const field_t API_NS(precomputed_base_as_fe)[1];
+const gf API_NS(precomputed_base_as_fe)[1];
 const API_NS(scalar_t) API_NS(precomputed_scalarmul_adjustment);
 const API_NS(scalar_t) API_NS(point_scalarmul_adjustment);
 const API_NS(scalar_t) sc_r2 = {{{0}}};
@@ -29,7 +29,7 @@ const unsigned char base_point_ser_for_pregen[DECAF_255_SER_BYTES];
 const API_NS(point_t) API_NS(point_base);
 
 struct niels_s;
-const field_t *API_NS(precomputed_wnaf_as_fe);
+const gf_s *API_NS(precomputed_wnaf_as_fe);
 extern const size_t API_NS2(sizeof,precomputed_wnafs);
 
 void API_NS(precompute_wnafs) (
@@ -48,26 +48,26 @@ static void scalar_print(const char *name, const API_NS(scalar_t) sc) {
     printf("}}};\n\n");
 }
 
-static void field_print(const field_t *f) {
-    const int FIELD_SER_BYTES = (FIELD_BITS + 7) / 8;
-    unsigned char ser[FIELD_SER_BYTES];
-    field_serialize(ser,f);
+static void field_print(const gf f) {
+    const int GF_SER_BYTES = (GF_BITS + 7) / 8;
+    unsigned char ser[GF_SER_BYTES];
+    gf_serialize(ser,f);
     int b=0, i, comma=0;
     unsigned long long limb = 0;
-    printf("FIELD_LITERAL(");
-    for (i=0; i<FIELD_SER_BYTES; i++) {
+    printf("{FIELD_LITERAL(");
+    for (i=0; i<GF_SER_BYTES; i++) {
         limb |= ((uint64_t)ser[i])<<b;
         b += 8;
-        if (b >= FIELD_LIT_LIMB_BITS) {
-            limb &= (1ull<<FIELD_LIT_LIMB_BITS) -1;
-            b -= FIELD_LIT_LIMB_BITS;
+        if (b >= GF_LIT_LIMB_BITS) {
+            limb &= (1ull<<GF_LIT_LIMB_BITS) -1;
+            b -= GF_LIT_LIMB_BITS;
             if (comma) printf(",");
             comma = 1;
             printf("0x%016llx", limb);
             limb = ((uint64_t)ser[i])>>(8-b);
         }
     }
-    printf(")");
+    printf(")}");
     assert(b<8);
 }
 
@@ -88,41 +88,39 @@ int main(int argc, char **argv) {
     if (ret || !preWnaf) return 1;
     API_NS(precompute_wnafs)(preWnaf, real_point_base);
 
-    const field_t *output;
+    const gf_s *output;
     unsigned i;
     
     printf("/** @warning: this file was automatically generated. */\n");
+    printf("#include <decaf.h>\n\n");
     printf("#include \"field.h\"\n\n");
-    printf("#include \"decaf.h\"\n\n");
     printf("#define API_NS(_id) decaf_255_##_id\n");
     printf("#define API_NS2(_pref,_id) _pref##_decaf_255_##_id\n");
     
-    output = (const field_t *)real_point_base;
+    output = (const gf_s *)real_point_base;
     printf("const API_NS(point_t) API_NS(point_base) = {{\n");
-    for (i=0; i < sizeof(API_NS(point_t)); i+=sizeof(field_t)) {
+    for (i=0; i < sizeof(API_NS(point_t)); i+=sizeof(gf)) {
         if (i) printf(",\n  ");
-        printf("{");
         field_print(output++);
-        printf("}");
     }
     printf("\n}};\n");
     
-    output = (const field_t *)pre;
-    printf("const field_t API_NS(precomputed_base_as_fe)[%d]\n", 
-        (int)(API_NS2(sizeof,precomputed_s) / sizeof(field_t)));
+    output = (const gf_s *)pre;
+    printf("const gf API_NS(precomputed_base_as_fe)[%d]\n", 
+        (int)(API_NS2(sizeof,precomputed_s) / sizeof(gf)));
     printf("__attribute__((aligned(%d),visibility(\"hidden\"))) = {\n  ", (int)API_NS2(alignof,precomputed_s));
     
-    for (i=0; i < API_NS2(sizeof,precomputed_s); i+=sizeof(field_t)) {
+    for (i=0; i < API_NS2(sizeof,precomputed_s); i+=sizeof(gf)) {
         if (i) printf(",\n  ");
         field_print(output++);
     }
     printf("\n};\n");
     
-    output = (const field_t *)preWnaf;
-    printf("const field_t API_NS(precomputed_wnaf_as_fe)[%d]\n", 
-        (int)(API_NS2(sizeof,precomputed_wnafs) / sizeof(field_t)));
+    output = (const gf_s *)preWnaf;
+    printf("const gf API_NS(precomputed_wnaf_as_fe)[%d]\n", 
+        (int)(API_NS2(sizeof,precomputed_wnafs) / sizeof(gf)));
     printf("__attribute__((aligned(%d),visibility(\"hidden\"))) = {\n  ", (int)API_NS2(alignof,precomputed_s));
-    for (i=0; i < API_NS2(sizeof,precomputed_wnafs); i+=sizeof(field_t)) {
+    for (i=0; i < API_NS2(sizeof,precomputed_wnafs); i+=sizeof(gf)) {
         if (i) printf(",\n  ");
         field_print(output++);
     }

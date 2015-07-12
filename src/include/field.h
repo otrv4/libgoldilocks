@@ -1,23 +1,20 @@
 /**
  * @file field.h
- * @brief Generic field header.
+ * @brief Generic gf header.
  * @copyright
  *   Copyright (c) 2014 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  * @author Mike Hamburg
  */
 
-#ifndef __FIELD_H__
-#define __FIELD_H__
+#ifndef __GF_H__
+#define __GF_H__
 
 #include "constant_time.h"
 #include "f_field.h"
 #include <string.h>
 
-typedef struct field_t field_a_t[1];
-#define field_a_restrict_t struct field_t *__restrict__
-
-#define is32 (GOLDI_BITS == 32 || FIELD_BITS != 448)
+#define is32 (GOLDI_BITS == 32 || GF_BITS != 448)
 #if (is32)
 #define IF32(s) (s)
 #else
@@ -33,9 +30,9 @@ typedef struct field_t field_a_t[1];
  * If x=0, returns 0.
  */
 void
-field_isr (
-    field_a_t       a,
-    const field_a_t x
+gf_isr (
+    gf       a,
+    const gf x
 );
     
 /**
@@ -43,62 +40,75 @@ field_isr (
  */
 static __inline__ void
 __attribute__((unused,always_inline))
-field_sqrn (
-    field_a_restrict_t y,
-    const field_a_t x,
+gf_sqrn (
+    gf_s *__restrict__ y,
+    const gf x,
     int n
 ) {
-    field_a_t tmp;
+    gf tmp;
     assert(n>0);
     if (n&1) {
-        field_sqr(y,x);
+        gf_sqr(y,x);
         n--;
     } else {
-        field_sqr(tmp,x);
-        field_sqr(y,tmp);
+        gf_sqr(tmp,x);
+        gf_sqr(y,tmp);
         n-=2;
     }
     for (; n; n-=2) {
-        field_sqr(tmp,y);
-        field_sqr(y,tmp);
+        gf_sqr(tmp,y);
+        gf_sqr(y,tmp);
     }
 }
 
 static __inline__ void
-field_subx_RAW (
-    field_a_t d,
-    const field_a_t a,
-    const field_a_t b
+gf_subx_RAW (
+    gf d,
+    const gf a,
+    const gf b
 ) {
-    field_sub_RAW ( d, a, b );
-    field_bias( d, 2 );
-    IF32( field_weak_reduce ( d ) );
+    gf_sub_RAW ( d, a, b );
+    gf_bias( d, 2 );
+    IF32( gf_weak_reduce ( d ) );
 }
 
 static __inline__ void
-field_sub (
-    field_a_t d,
-    const field_a_t a,
-    const field_a_t b
+gf_sub (
+    gf d,
+    const gf a,
+    const gf b
 ) {
-    field_sub_RAW ( d, a, b );
-    field_bias( d, 2 );
-    field_weak_reduce ( d );
+    gf_sub_RAW ( d, a, b );
+    gf_bias( d, 2 );
+    gf_weak_reduce ( d );
 }
 
 static __inline__ void
-field_add (
-    field_a_t d,
-    const field_a_t a,
-    const field_a_t b
+gf_add (
+    gf d,
+    const gf a,
+    const gf b
 ) {
-    field_add_RAW ( d, a, b );
-    field_weak_reduce ( d );
+    gf_add_RAW ( d, a, b );
+    gf_weak_reduce ( d );
 }
 
-/* FIXME: no warnings on RAW routines */
-#define field_add_nr field_add_RAW
-#define field_sub_nr field_sub_RAW
-#define field_subx_nr field_subx_RAW
+#define gf_add_nr gf_add_RAW
 
-#endif // __FIELD_H__
+/** Subtract mod p.  Bias by 2 and don't reduce  */
+static inline void gf_sub_nr ( gf c, const gf a, const gf b ) {
+//    FOR_LIMB_U(i, c->limb[i] = a->limb[i] - b->limb[i] + 2*P->limb[i] );
+    gf_sub_RAW(c,a,b);
+    gf_bias(c, 2);
+    if (DECAF_WORD_BITS==32) gf_weak_reduce(c); // HACK
+}
+
+/** Subtract mod p. Bias by amt but don't reduce.  */
+static inline void gf_subx_nr ( gf c, const gf a, const gf b, int amt ) {
+    gf_sub_RAW(c,a,b);
+    gf_bias(c, amt);
+    if (DECAF_WORD_BITS==32) gf_weak_reduce(c); // HACK
+}
+
+
+#endif // __GF_H__

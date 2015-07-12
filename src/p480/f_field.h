@@ -13,19 +13,19 @@
 #include <string.h>
 
 #include "p480.h"
-#define FIELD_LIT_LIMB_BITS  60
-#define FIELD_BITS           480
-#define field_t              p480_t
-#define field_mul            p480_mul
-#define field_sqr            p480_sqr
-#define field_add_RAW        p480_add_RAW
-#define field_sub_RAW        p480_sub_RAW
-#define field_mulw           p480_mulw
-#define field_bias           p480_bias
-#define field_isr            p480_isr
-#define field_weak_reduce    p480_weak_reduce
-#define field_strong_reduce  p480_strong_reduce
-#define field_serialize      p480_serialize
-#define field_deserialize    p480_deserialize
+#define GF_LIT_LIMB_BITS  60
+#define GF_BITS           480
+#define gf              p480_t
+#define gf_mul            p480_mul
+#define gf_sqr            p480_sqr
+#define gf_add_RAW        p480_add_RAW
+#define gf_sub_RAW        p480_sub_RAW
+#define gf_mulw           p480_mulw
+#define gf_bias           p480_bias
+#define gf_isr            p480_isr
+#define gf_weak_reduce    p480_weak_reduce
+#define gf_strong_reduce  p480_strong_reduce
+#define gf_serialize      p480_serialize
+#define gf_deserialize    p480_deserialize
 
 #endif /* __F_FIELD_H__ */

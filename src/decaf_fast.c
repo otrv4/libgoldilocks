@@ -27,8 +27,6 @@
 #define point_t decaf_255_point_t
 #define precomputed_s decaf_255_precomputed_s
 #define SER_BYTES DECAF_255_SER_BYTES
-#define gf_s gf_255_s
-#define gf gf_255_t
 
 #if WBITS == 64
 typedef __int128_t decaf_sdword_t;
@@ -72,7 +70,7 @@ typedef struct { niels_t n; gf z; } __attribute__((aligned(32))) pniels_s, pniel
 /* Precomputed base */
 struct precomputed_s { niels_t table [DECAF_COMBS_N<<(DECAF_COMBS_T-1)]; };
 
-extern const field_t API_NS(precomputed_base_as_fe)[];
+extern const gf API_NS(precomputed_base_as_fe)[];
 const precomputed_s *API_NS(precomputed_base) =
     (const precomputed_s *) &API_NS(precomputed_base_as_fe);
 
@@ -95,52 +93,6 @@ const size_t API_NS2(alignof,precomputed_s) = 32;
 /** Copy x = y */
 siv gf_cpy(gf x, const gf y) { x[0] = y[0]; }
 
-/** Mostly-unoptimized multiply, but at least it's unrolled. */
-siv gf_mul (gf c, const gf a, const gf b) {
-    field_mul((field_t *)c, (const field_t *)a, (const field_t *)b);
-}
-
-/** Dedicated square */
-siv gf_sqr (gf c, const gf a) {
-    field_sqr((field_t *)c, (const field_t *)a);
-}
-
-/** Add mod p.  Conservatively always weak-reduce. */
-snv gf_add ( gf_s *__restrict__ c, const gf a, const gf b ) {
-    field_add((field_t *)c, (const field_t *)a, (const field_t *)b);
-}
-
-/** Subtract mod p.  Conservatively always weak-reduce. */
-snv gf_sub ( gf c, const gf a, const gf b ) {
-    field_sub((field_t *)c, (const field_t *)a, (const field_t *)b);
-}
-
-/** Add mod p.  Conservatively always weak-reduce.) */
-siv gf_bias ( gf c, int amt) {
-    field_bias((field_t *)c, amt);
-}
-
-/** Subtract mod p.  Bias by 2 and don't reduce  */
-siv gf_sub_nr ( gf_s *__restrict__ c, const gf a, const gf b ) {
-//    FOR_LIMB_U(i, c->limb[i] = a->limb[i] - b->limb[i] + 2*P->limb[i] );
-    field_sub_nr((field_t *)c, (const field_t *)a, (const field_t *)b);
-    gf_bias(c, 2);
-    if (WBITS==32) field_weak_reduce((field_t*) c); // HACK
-}
-
-/** Subtract mod p. Bias by amt but don't reduce.  */
-siv gf_sub_nr_x ( gf c, const gf a, const gf b, int amt ) {
-    field_sub_nr((field_t *)c, (const field_t *)a, (const field_t *)b);
-    gf_bias(c, amt);
-    if (WBITS==32) field_weak_reduce((field_t*) c); // HACK
-}
-
-/** Add mod p.  Don't reduce. */
-siv gf_add_nr ( gf c, const gf a, const gf b ) {
-//    FOR_LIMB_U(i, c->limb[i] = a->limb[i] + b->limb[i]);
-    field_add_nr((field_t *)c, (const field_t *)a, (const field_t *)b);
-}
-
 /** Constant time, x = is_z ? z : y */
 siv cond_sel(gf x, const gf y, const gf z, decaf_bool_t is_z) {
     constant_time_select(x,z,y,sizeof(gf),is_z);
@@ -162,29 +114,11 @@ siv cond_swap(gf x, gf_s *__restrict__ y, decaf_bool_t swap) {
     });
 }
 
-/**
- * Mul by signed int.  Not constant-time WRT the sign of that int.
- * Just uses a full mul (PERF)
- */
-siv gf_mlw(gf c, const gf a, int w) {
-    if (w>0) {
-        field_mulw((field_t *)c, (const field_t *)a, w);
-    } else {
-        field_mulw((field_t *)c, (const field_t *)a, -w);
-        gf_sub(c,ZERO,c);
-    }
-}
-
-/** Canonicalize */
-siv gf_canon ( gf a ) {
-    field_strong_reduce((field_t *)a);
-}
-
 /** Compare a==b */
 static decaf_word_t __attribute__((noinline)) gf_eq(const gf a, const gf b) {
     gf c;
     gf_sub(c,a,b);
-    gf_canon(c);
+    gf_strong_reduce(c);
     decaf_word_t ret=0;
     FOR_LIMB(i, ret |= c->limb[i] );
     /* Hope the compiler is too dumb to optimize this, thus noinline */
@@ -194,7 +128,7 @@ static decaf_word_t __attribute__((noinline)) gf_eq(const gf a, const gf b) {
 /** Inverse square root using addition chain. */
 static decaf_bool_t gf_isqrt_chk(gf y, const gf x, decaf_bool_t allow_zero) {
     gf tmp0, tmp1;
-    field_isr((field_t *)y, (const field_t *)x);
+    gf_isr((gf_s *)y, (const gf_s *)x);
     gf_sqr(tmp0,y);
     gf_mul(tmp1,tmp0,x);
     return gf_eq(tmp1,ONE) | (allow_zero & gf_eq(tmp1,ZERO));
@@ -211,11 +145,24 @@ sv gf_invert(gf y, const gf x) {
     gf_cpy(y, t2);
 }
 
+/**
+ * Mul by signed int.  Not constant-time WRT the sign of that int.
+ * Just uses a full mul (PERF)
+ */
+static inline void gf_mulw_sgn(gf c, const gf a, int w) {
+    if (w>0) {
+        gf_mulw(c, a, w);
+    } else {
+        gf_mulw(c, a, -w);
+        gf_sub(c,ZERO,c);
+    }
+}
+
 /** Return high bit of x = low bit of 2x mod p */
 static decaf_word_t hibit(const gf x) {
     gf y;
     gf_add(y,x,x);
-    gf_canon(y);
+    gf_strong_reduce(y);
     return -(y->limb[0]&1);
 }
 
@@ -223,7 +170,7 @@ static decaf_word_t hibit(const gf x) {
 static decaf_word_t lobit(const gf x) {
     gf y;
     gf_cpy(y,x);
-    gf_canon(y);
+    gf_strong_reduce(y);
     return -(y->limb[0]&1);
 }
 
@@ -454,7 +401,7 @@ decaf_bool_t API_NS(scalar_eq) (
 const point_t API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 
 static void gf_encode ( unsigned char ser[SER_BYTES], gf a ) {
-    field_serialize(ser, (field_t *)a);
+    gf_serialize(ser, (gf_s *)a);
 }
  
 extern const gf SQRT_MINUS_ONE, SQRT_ONE_MINUS_D; /* Intern this? */
@@ -528,7 +475,7 @@ void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
  * Deserialize a bool, return TRUE if < p.
  */
 static decaf_bool_t gf_deser(gf s, const unsigned char ser[SER_BYTES]) {
-    return field_deserialize((field_t *)s, ser);
+    return gf_deserialize((gf_s *)s, ser);
 }
    
 decaf_bool_t API_NS(point_decode) (
@@ -544,7 +491,7 @@ decaf_bool_t API_NS(point_decode) (
     gf_sub ( f, ONE, a ); /* f = 1-s^2 = 1-as^2 since a=1 */
     succ &= ~ gf_eq( f, ZERO );
     gf_sqr ( b, f ); 
-    gf_mlw ( c, a, 4-4*EDWARDS_D ); 
+    gf_mulw_sgn ( c, a, 4-4*EDWARDS_D ); 
     gf_add ( c, c, b ); /* t^2 */
     gf_mul ( d, f, s ); /* s(1-s^2) for denoms */
     gf_sqr ( e, d );
@@ -596,7 +543,7 @@ void API_NS(point_sub) (
     gf_add_nr ( b, q->y, q->x );
     gf_mul ( p->y, d, b );
     gf_mul ( b, r->t, q->t );
-    gf_mlw ( p->x, b, -2*EDWARDS_D );
+    gf_mulw_sgn ( p->x, b, -2*EDWARDS_D );
     gf_add_nr ( b, a, p->y );
     gf_sub_nr ( c, p->y, a );
     gf_mul ( a, q->z, r->z );
@@ -622,7 +569,7 @@ void API_NS(point_add) (
     gf_add_nr ( b, q->y, q->x );
     gf_mul ( p->y, d, b );
     gf_mul ( b, r->t, q->t );
-    gf_mlw ( p->x, b, -2*EDWARDS_D );
+    gf_mulw_sgn ( p->x, b, -2*EDWARDS_D );
     gf_add_nr ( b, a, p->y );
     gf_sub_nr ( c, p->y, a );
     gf_mul ( a, q->z, r->z );
@@ -646,11 +593,11 @@ snv point_double_internal (
     gf_add_nr ( d, c, a );
     gf_add_nr ( p->t, q->y, q->x );
     gf_sqr ( b, p->t );
-    gf_sub_nr_x ( b, b, d, 3 );
+    gf_subx_nr ( b, b, d, 3 );
     gf_sub_nr ( p->t, a, c );
     gf_sqr ( p->x, q->z );
     gf_add_nr ( p->z, p->x, p->x );
-    gf_sub_nr_x ( a, p->z, p->t, 4 );
+    gf_subx_nr ( a, p->z, p->t, 4 );
     gf_mul ( p->x, a, b );
     gf_mul ( p->z, p->t, a );
     gf_mul ( p->y, p->t, d );
@@ -777,7 +724,7 @@ static void pt_to_pniels (
 ) {
     gf_sub ( b->n->a, a->y, a->x );
     gf_add ( b->n->b, a->x, a->y );
-    gf_mlw ( b->n->c, a->t, -2*EDWARDS_D );
+    gf_mulw_sgn ( b->n->c, a->t, -2*EDWARDS_D );
     gf_add ( b->z, a->z, a->z );
 }
 
@@ -1047,12 +994,12 @@ void API_NS(point_from_hash_nonuniform) (
     // TODO: simplify since we don't return a hint anymore
     gf r0,r,a,b,c,dee,D,N,rN,e;
     gf_deser(r0,ser);
-    gf_canon(r0);
+    gf_strong_reduce(r0);
     gf_sqr(a,r0);
-    //gf_sub(r,ZERO,a); /*gf_mlw(r,a,QUADRATIC_NONRESIDUE);*/
+    //gf_sub(r,ZERO,a); /*gf_mulw_sgn(r,a,QUADRATIC_NONRESIDUE);*/
         gf_mul(r,a,SQRT_MINUS_ONE);
-    gf_mlw(dee,ONE,EDWARDS_D);
-    gf_mlw(c,r,EDWARDS_D);
+    gf_mulw_sgn(dee,ONE,EDWARDS_D);
+    gf_mulw_sgn(c,r,EDWARDS_D);
     
     /* Compute D := (dr+a-d)(dr-ar-d) with a=1 */
     gf_sub(a,c,dee);
@@ -1064,7 +1011,7 @@ void API_NS(point_from_hash_nonuniform) (
     
     /* compute N := (r+1)(a-2d) */
     gf_add(a,r,ONE);
-    gf_mlw(N,a,1-2*EDWARDS_D);
+    gf_mulw_sgn(N,a,1-2*EDWARDS_D);
     
     /* e = +-1/sqrt(+-ND) */
     gf_mul(rN,r,N);
@@ -1078,8 +1025,8 @@ void API_NS(point_from_hash_nonuniform) (
     /* b <- t/s */
     cond_sel(c,r0,r,square); /* r? = sqr ? r : 1 */
     /* In two steps to avoid overflow on 32-bit arch */
-    gf_mlw(a,c,1-2*EDWARDS_D);
-    gf_mlw(b,a,1-2*EDWARDS_D);
+    gf_mulw_sgn(a,c,1-2*EDWARDS_D);
+    gf_mulw_sgn(b,a,1-2*EDWARDS_D);
     gf_sub(c,r,ONE);
     gf_mul(a,b,c); /* = r? * (r-1) * (a-2d)^2 with a=1 */
     gf_mul(b,a,e);
@@ -1148,7 +1095,7 @@ API_NS(invert_elligator_nonuniform) (
         cond_sel(b,b,ZERO,is_identity & ~sgn_t_over_s & ~sgn_s); /* identity adjust */
         
     }
-    gf_mlw(d,c,2*EDWARDS_D-1); /* $d = (2d-a)s^2 */
+    gf_mulw_sgn(d,c,2*EDWARDS_D-1); /* $d = (2d-a)s^2 */
     gf_add(a,d,b); /* num? */
     gf_sub(d,d,b); /* den? */
     gf_mul(b,a,d); /* n*d */
@@ -1199,7 +1146,7 @@ decaf_bool_t API_NS(point_valid) (
     gf_sqr(b,p->y);
     gf_sub(a,b,a);
     gf_sqr(b,p->t);
-    gf_mlw(c,b,-EDWARDS_D);
+    gf_mulw_sgn(c,b,-EDWARDS_D);
     gf_sqr(b,p->z);
     gf_add(b,b,c);
     out &= gf_eq(a,b);
@@ -1281,15 +1228,15 @@ static void batch_normalize_niels (
 
     for (i=0; i<n; i++) {
         gf_mul(product, table[i]->a, zis[i]);
-        gf_canon(product);
+        gf_strong_reduce(product);
         gf_cpy(table[i]->a, product);
         
         gf_mul(product, table[i]->b, zis[i]);
-        gf_canon(product);
+        gf_strong_reduce(product);
         gf_cpy(table[i]->b, product);
         
         gf_mul(product, table[i]->c, zis[i]);
-        gf_canon(product);
+        gf_strong_reduce(product);
         gf_cpy(table[i]->c, product);
     }
 }
@@ -1510,7 +1457,7 @@ sv prepare_wnaf_table(
     }
 }
 
-extern const field_t API_NS(precomputed_wnaf_as_fe)[];
+extern const gf API_NS(precomputed_wnaf_as_fe)[];
 static const niels_t *API_NS(wnaf_base) = (const niels_t *)API_NS(precomputed_wnaf_as_fe);
 const size_t API_NS2(sizeof,precomputed_wnafs) __attribute((visibility("hidden")))
     = sizeof(niels_t)<<DECAF_WNAF_FIXED_TABLE_BITS;

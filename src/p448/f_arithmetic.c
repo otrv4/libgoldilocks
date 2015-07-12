@@ -11,33 +11,33 @@
 #include "field.h"
 
 void 
-field_isr (
-    field_a_t a,
-    const field_a_t x
+gf_isr (
+    gf_a_t a,
+    const gf_a_t x
 ) {
-    field_a_t L0, L1, L2;
-    field_sqr  (   L1,     x );
-    field_mul  (   L2,     x,   L1 );
-    field_sqr  (   L1,   L2 );
-    field_mul  (   L2,     x,   L1 );
-    field_sqrn (   L1,   L2,     3 );
-    field_mul  (   L0,   L2,   L1 );
-    field_sqrn (   L1,   L0,     3 );
-    field_mul  (   L0,   L2,   L1 );
-    field_sqrn (   L2,   L0,     9 );
-    field_mul  (   L1,   L0,   L2 );
-    field_sqr  (   L0,   L1 );
-    field_mul  (   L2,     x,   L0 );
-    field_sqrn (   L0,   L2,    18 );
-    field_mul  (   L2,   L1,   L0 );
-    field_sqrn (   L0,   L2,    37 );
-    field_mul  (   L1,   L2,   L0 );
-    field_sqrn (   L0,   L1,    37 );
-    field_mul  (   L1,   L2,   L0 );
-    field_sqrn (   L0,   L1,   111 );
-    field_mul  (   L2,   L1,   L0 );
-    field_sqr  (   L0,   L2 );
-    field_mul  (   L1,     x,   L0 );
-    field_sqrn (   L0,   L1,   223 );
-    field_mul  (     a,   L2,   L0 );
+    gf_a_t L0, L1, L2;
+    gf_sqr  (   L1,     x );
+    gf_mul  (   L2,     x,   L1 );
+    gf_sqr  (   L1,   L2 );
+    gf_mul  (   L2,     x,   L1 );
+    gf_sqrn (   L1,   L2,     3 );
+    gf_mul  (   L0,   L2,   L1 );
+    gf_sqrn (   L1,   L0,     3 );
+    gf_mul  (   L0,   L2,   L1 );
+    gf_sqrn (   L2,   L0,     9 );
+    gf_mul  (   L1,   L0,   L2 );
+    gf_sqr  (   L0,   L1 );
+    gf_mul  (   L2,     x,   L0 );
+    gf_sqrn (   L0,   L2,    18 );
+    gf_mul  (   L2,   L1,   L0 );
+    gf_sqrn (   L0,   L2,    37 );
+    gf_mul  (   L1,   L2,   L0 );
+    gf_sqrn (   L0,   L1,    37 );
+    gf_mul  (   L1,   L2,   L0 );
+    gf_sqrn (   L0,   L1,   111 );
+    gf_mul  (   L2,   L1,   L0 );
+    gf_sqr  (   L0,   L2 );
+    gf_mul  (   L1,     x,   L0 );
+    gf_sqrn (   L0,   L1,   223 );
+    gf_mul  (     a,   L2,   L0 );
 }
