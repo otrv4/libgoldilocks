@@ -58,7 +58,7 @@ extern const decaf_word_t MONTGOMERY_FACTOR;
 
 /* sqrt(9) = 3 from the curve spec.  Not exported, but used by pregen tool. */
 const unsigned char base_point_ser_for_pregen[SER_BYTES] = {
-    3 /*PinkBikeShed: 5 */, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 };
 
 extern const point_t API_NS(point_base);
@@ -417,7 +417,6 @@ static void deisogenize (
     gf c, d, x, t;
     gf_s *b = s, *a = minus_t_over_s;
     
-    /* TODO: intern below */
     gf_mul ( x, p->x, SQRT_MINUS_ONE);
     gf_mul ( t, p->t, SQRT_MINUS_ONE);
     gf_sub ( x, ZERO, x );
@@ -443,11 +442,8 @@ static void deisogenize (
         gf_sqr(e, p->z);
         gf_mul(a, e, b); /* z^2 / tz = z/t = 1/xy */
         rotate = hibit(a) ^ toggle_rotation;
-        /*
-         * Curve25519: cond select between zx * 1/tz or sqrt(1-d); y=-x
-         * Pink bike shed: frob = zx * 1/tz
-         */
-        gf_mul ( a, b, c ); /* this is the case for PinkBikeShed */
+        /* Curve25519: cond select between zx * 1/tz or sqrt(1-d); y=-x */
+        gf_mul ( a, b, c ); 
         cond_sel ( a, a, SQRT_ONE_MINUS_D, rotate );
         cond_sel ( x, p->y, x, rotate );
     }
@@ -472,7 +468,7 @@ void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
 }
 
 /**
- * Deserialize a bool, return TRUE if < p.
+ * Deserialize a field element, return TRUE if < p.
  */
 static decaf_bool_t gf_deser(gf s, const unsigned char ser[SER_BYTES]) {
     return gf_deserialize((gf_s *)s, ser);
@@ -513,18 +509,13 @@ decaf_bool_t API_NS(point_decode) (
     
     gf_mul ( a, f, b ); /* y = (1-s^2) / t */
     gf_mul ( p->y, p->z, a ); /* Y = yZ */
-    gf_add ( p->x, s, s );
+    gf_add ( a, s, s );
+    gf_mul(p->x, a, SQRT_MINUS_ONE); /* Curve25519 */
     gf_mul ( p->t, p->x, a ); /* T = 2s (1-as^2)/t */
-    
-    /* TODO: integrate */
-    gf_cpy(a, p->x);
-    gf_mul(p->x, a, SQRT_MINUS_ONE);
-    gf_cpy(a, p->t);
-    gf_mul(p->t, a, SQRT_MINUS_ONE);
     
     p->y->limb[0] -= zero;
     
-    /* Curve25519: succ &= ~hibit(p->t); except there is a *i somewhere here */
+    /* Curve25519 */
     assert(API_NS(point_valid)(p) | ~succ);
     
     return succ;
