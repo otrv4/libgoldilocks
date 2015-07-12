@@ -98,7 +98,7 @@ field_add (
 
 /* FIXME: no warnings on RAW routines */
 #define field_add_nr field_add_RAW
-#define field_sub_nr field_add_RAW
-#define field_subx_nr field_add_RAW
+#define field_sub_nr field_sub_RAW
+#define field_subx_nr field_subx_RAW
 
 #endif // __FIELD_H__
