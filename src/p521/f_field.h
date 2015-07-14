@@ -12,7 +12,7 @@
 #include <string.h>
 #include "constant_time.h"
 
-#include "p521.h"
+#include "f_impl.h"
 #define GF_LIT_LIMB_BITS  58
 #define GF_BITS           521
 #define gf              p521_t

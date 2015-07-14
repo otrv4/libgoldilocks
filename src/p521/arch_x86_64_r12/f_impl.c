@@ -2,7 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
-#include "p521.h"
+#include "f_impl.h"
 
 typedef struct {
   uint64x3_t lo, hi, hier;

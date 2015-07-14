@@ -2,7 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
-#include "p25519.h"
+#include "f_impl.h"
 #include "x86-64-arith.h"
 
 static inline uint64_t shr(__uint128_t x, int n) {

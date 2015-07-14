@@ -22,8 +22,8 @@
 const gf API_NS(precomputed_base_as_fe)[1];
 const API_NS(scalar_t) API_NS(precomputed_scalarmul_adjustment);
 const API_NS(scalar_t) API_NS(point_scalarmul_adjustment);
-const API_NS(scalar_t) sc_r2 = {{{0}}};
-const decaf_word_t MONTGOMERY_FACTOR = 0;
+const API_NS(scalar_t) API_NS(sc_r2) = {{{0}}};
+const decaf_word_t API_NS(MONTGOMERY_FACTOR) = 0;
 const unsigned char base_point_ser_for_pregen[DECAF_255_SER_BYTES];
 
 const API_NS(point_t) API_NS(point_base);
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
     for (i=0; i<sizeof(API_NS(scalar_t))*8*2; i++) {
         API_NS(scalar_add)(smadj,smadj,smadj);
     }
-    scalar_print("sc_r2", smadj);
+    scalar_print("API_NS(sc_r2)", smadj);
     
     
     API_NS(scalar_sub)(smadj,API_NS(scalar_zero),API_NS(scalar_one)); /* get p-1 */
@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
     for (i=0; i<6; i++) {
         w *= w*plo + 2;
     }
-    printf("const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x%016llxull;\n\n", w);
+    printf("const decaf_word_t API_NS(MONTGOMERY_FACTOR) = (decaf_word_t)0x%016llxull;\n\n", w);
     
     return 0;
 }

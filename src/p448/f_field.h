@@ -12,7 +12,7 @@
 #include "constant_time.h"
 #include <string.h>
 
-#include "p448.h"
+#include "f_impl.h"
 #define GF_LIT_LIMB_BITS  56
 #define GF_BITS           448
 #define gf              p448_t

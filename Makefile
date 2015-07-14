@@ -44,7 +44,7 @@ FIELD ?= p25519
 WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 	 -Wmissing-declarations -Wunused-function -Wno-overlength-strings $(EXWARN)
 
-INCFLAGS = -Isrc/include -Isrc/public_include -Isrc/$(FIELD) -Isrc/$(FIELD)/$(ARCH)
+INCFLAGS = -Isrc/include -Isrc/public_include
 LANGFLAGS = -std=c99 -fno-strict-aliasing
 LANGXXFLAGS = -fno-strict-aliasing
 GENFLAGS = -ffunction-sections -fdata-sections -fvisibility=hidden -fomit-frame-pointer -fPIC
@@ -83,10 +83,16 @@ BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 
 HEADERS= Makefile $(shell find src test -name "*.h") $(shell find . -name "*.hxx") $(BUILD_OBJ)/timestamp
 
-DECAFCOMPONENTS= $(BUILD_OBJ)/$(DECAF).o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/decaf_crypto.o \
-	$(BUILD_OBJ)/$(FIELD).o $(BUILD_OBJ)/f_arithmetic.o $(BUILD_OBJ)/utils.o
+# components needed by the table generators
+GENCOMPONENTS=  \
+	$(BUILD_OBJ)/$(DECAF)_ed25519.o $(BUILD_OBJ)/p25519_impl.o  $(BUILD_OBJ)/p25519_arithmetic.o \
+	$(BUILD_OBJ)/utils.o \
+	#$(BUILD_OBJ)/p448_impl.o $(BUILD_OBJ)/p448_arithmetic.o
+
+# components needed by the lib
+DECAFCOMPONENTS= $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/decaf_crypto.o $(GENCOMPONENTS)
 ifeq ($(DECAF),decaf_fast)
-DECAFCOMPONENTS += $(BUILD_OBJ)/decaf_tables.o
+DECAFCOMPONENTS += $(BUILD_OBJ)/decaf_tables_ed25519.o
 endif
 
 BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o
@@ -143,15 +149,39 @@ $(BUILD_OBJ)/timestamp:
 $(BUILD_OBJ)/%.o: $(BUILD_ASM)/%.s
 	$(ASM) $(ASFLAGS) -c -o $@ $<
 
-$(BUILD_IBIN)/decaf_gen_tables: $(BUILD_OBJ)/decaf_gen_tables.o \
-		$(BUILD_OBJ)/$(DECAF).o $(BUILD_OBJ)/$(FIELD).o $(BUILD_OBJ)/f_arithmetic.o $(BUILD_OBJ)/utils.o
+# I don't know why this rule is necessary... bug in make, or obscure pattern matching rule?
+$(BUILD_OBJ)/decaf_gen_tables_%.o: $(BUILD_ASM)/decaf_gen_tables_%.s
+	$(ASM) $(ASFLAGS) -c -o $@ $<
+
+$(BUILD_IBIN)/decaf_gen_tables_%: $(BUILD_OBJ)/decaf_gen_tables_%.o $(GENCOMPONENTS)
 	$(LD) $(LDFLAGS) -o $@ $^
 	
-$(BUILD_C)/decaf_tables.c: $(BUILD_IBIN)/decaf_gen_tables
+$(BUILD_C)/decaf_tables_%.c: $(BUILD_IBIN)/decaf_gen_tables_%
 	./$< > $@
 	
-$(BUILD_ASM)/decaf_tables.s: $(BUILD_C)/decaf_tables.c $(HEADERS)
-	$(CC) $(CFLAGS) -S -c -o $@ $<
+$(BUILD_ASM)/decaf_tables_%.s: $(BUILD_C)/decaf_tables_%.c $(HEADERS)
+	$(CC) $(CFLAGS) -S -c -o $@ $< \
+		-I src/curve_$*/ -I src/curve_$*/field -I src/curve_$*/field/$(ARCH) \
+	
+$(BUILD_ASM)/decaf_gen_tables_%.s: src/decaf_gen_tables.c $(HEADERS)
+	$(CC) $(CFLAGS) \
+		-I src/curve_$*/ -I src/curve_$*/field -I src/curve_$*/field/$(ARCH) \
+		-S -c -o $@ $<
+	
+$(BUILD_ASM)/decaf_fast_%.s: src/decaf_fast.c $(HEADERS)
+	$(CC) $(CFLAGS) \
+		-I src/curve_$*/ -I src/curve_$*/field -I src/curve_$*/field/$(ARCH) \
+		-S -c -o $@ $<
+	
+$(BUILD_ASM)/%_arithmetic.s: src/%/f_arithmetic.c $(HEADERS)
+	$(CC) $(CFLAGS) \
+		-I src/$* -I src/$*/$(ARCH) \
+		-S -c -o $@ $<
+	
+$(BUILD_ASM)/%_impl.s: src/%/$(ARCH)/f_impl.c $(HEADERS)
+	$(CC) $(CFLAGS) \
+		-I src/$* -I src/$*/$(ARCH) \
+		-S -c -o $@ $<
 	
 $(BUILD_ASM)/%.s: src/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -S -c -o $@ $<
@@ -164,12 +194,6 @@ $(BUILD_ASM)/%.s: test/%.c $(HEADERS)
 
 $(BUILD_ASM)/%.s: test/%.cxx $(HEADERS)
 	$(CXX) $(CXXFLAGS) -S -c -o $@ $<
-
-$(BUILD_ASM)/%.s: src/$(FIELD)/$(ARCH)/%.c $(HEADERS)
-	$(CC) $(CFLAGS) -S -c -o $@ $<
-
-$(BUILD_ASM)/%.s: src/$(FIELD)/%.c $(HEADERS)
-	$(CC) $(CFLAGS) -S -c -o $@ $<
 
 # The sage test scripts
 sage: $(BUILDPYS)
@@ -191,29 +215,29 @@ $(BUILDPYS): $(SAGES) $(BUILD_OBJ)/timestamp
 $(BUILD_DOC)/timestamp:
 	mkdir -p `dirname $@`
 	touch $@
+#
+# doc: Doxyfile $(BUILD_OBJ)/timestamp $(HEADERS) src/*.c src/$(FIELD)/$(ARCH)/*.c src/$(FIELD)/$(ARCH)/*.h
+# 	doxygen > /dev/null
 
-doc: Doxyfile $(BUILD_OBJ)/timestamp $(HEADERS) src/*.c src/$(FIELD)/$(ARCH)/*.c src/$(FIELD)/$(ARCH)/*.h
-	doxygen > /dev/null
-
-# The eBATS benchmarking script
-bat: $(BATNAME)
-
-$(BATNAME): include/* src/* src/*/* test/batarch.map $(BUILD_C)/decaf_tables.c # TODO tables some other way
-	rm -fr $@
-	for prim in dh sign; do \
-          targ="$@/crypto_$$prim/ed448goldilocks_decaf"; \
-	  (while read arch where; do \
-	    mkdir -p $$targ/`basename $$arch`; \
-	    cp include/*.h $(BUILD_C)/decaf_tables.c src/decaf_fast.c src/decaf_crypto.c src/shake.c src/include/*.h src/bat/$$prim.c src/p448/$$where/*.c src/p448/$$where/*.h src/p448/*.c src/p448/*.h $$targ/`basename $$arch`; \
-	    cp src/bat/api_$$prim.h $$targ/`basename $$arch`/api.h; \
-	    perl -p -i -e 's/SYSNAME/'`basename $(BATNAME)`_`basename $$arch`'/g' $$targ/`basename $$arch`/api.h;  \
-	    perl -p -i -e 's/__TODAY__/'$(TODAY)'/g' $$targ/`basename $$arch`/api.h;  \
-	    done \
-	  ) < test/batarch.map; \
-	  echo 'Mike Hamburg' > $$targ/designers; \
-	  echo 'Ed448-Goldilocks Decaf sign and dh' > $$targ/description; \
-        done
-	(cd $(BATNAME)/.. && tar czf $(BATBASE).tgz $(BATBASE) )
+# # The eBATS benchmarking script
+# bat: $(BATNAME)
+#
+# $(BATNAME): include/* src/* src/*/* test/batarch.map $(BUILD_C)/decaf_tables.c # TODO tables some other way
+# 	rm -fr $@
+# 	for prim in dh sign; do \
+#           targ="$@/crypto_$$prim/ed448goldilocks_decaf"; \
+# 	  (while read arch where; do \
+# 	    mkdir -p $$targ/`basename $$arch`; \
+# 	    cp include/*.h $(BUILD_C)/decaf_tables.c src/decaf_fast.c src/decaf_crypto.c src/shake.c src/include/*.h src/bat/$$prim.c src/p448/$$where/*.c src/p448/$$where/*.h src/p448/*.c src/p448/*.h $$targ/`basename $$arch`; \
+# 	    cp src/bat/api_$$prim.h $$targ/`basename $$arch`/api.h; \
+# 	    perl -p -i -e 's/SYSNAME/'`basename $(BATNAME)`_`basename $$arch`'/g' $$targ/`basename $$arch`/api.h;  \
+# 	    perl -p -i -e 's/__TODAY__/'$(TODAY)'/g' $$targ/`basename $$arch`/api.h;  \
+# 	    done \
+# 	  ) < test/batarch.map; \
+# 	  echo 'Mike Hamburg' > $$targ/designers; \
+# 	  echo 'Ed448-Goldilocks Decaf sign and dh' > $$targ/description; \
+#         done
+# 	(cd $(BATNAME)/.. && tar czf $(BATBASE).tgz $(BATBASE) )
 	
 # Finds todo items in .h and .c files
 TODO_TYPES ?= HACK TODO FIXME BUG XXX PERF FUTURE REMOVE MAGIC

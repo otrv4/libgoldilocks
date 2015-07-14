@@ -3,7 +3,7 @@
  */
 
 #include "word.h"
-#include "p448.h"
+#include "f_impl.h"
 
 static inline mask_t __attribute__((always_inline))
 is_zero (

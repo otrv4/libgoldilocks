@@ -12,7 +12,7 @@
 #include "constant_time.h"
 #include <string.h>
 
-#include "p25519.h"
+#include "f_impl.h"
 #define GF_LIT_LIMB_BITS  51
 #define GF_BITS           255
 #define gf              gf_25519_t

@@ -2,7 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
-#include "p521.h"
+#include "f_impl.h"
 
 static __inline__ __uint128_t widemul(
     const uint64_t a,

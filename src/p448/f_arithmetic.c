@@ -12,10 +12,10 @@
 
 void 
 gf_isr (
-    gf_a_t a,
-    const gf_a_t x
+    gf a,
+    const gf x
 ) {
-    gf_a_t L0, L1, L2;
+    gf L0, L1, L2;
     gf_sqr  (   L1,     x );
     gf_mul  (   L2,     x,   L1 );
     gf_sqr  (   L1,   L2 );
