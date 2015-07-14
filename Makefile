@@ -79,7 +79,8 @@ SAGES= $(shell ls test/*.sage)
 BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 
 .PHONY: clean all test bench todo doc lib bat sage sagetest
-.PRECIOUS: $(BUILD_ASM)/%.s
+.PRECIOUS: $(BUILD_ASM)/%.s $(BUILD_ASM)/%_impl.s $(BUILD_ASM)/$(DECAF)_%.s $(BUILD_ASM)/decaf_tables_%.c \
+	$(BUILD_IBIN)/decaf_gen_tables_%
 
 HEADERS= Makefile $(shell find src test -name "*.h") $(shell find . -name "*.hxx") $(BUILD_OBJ)/timestamp
 
