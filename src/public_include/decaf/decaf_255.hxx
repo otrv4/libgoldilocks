@@ -23,7 +23,9 @@
 #define __DECAF_255_HXX__ 1
 
 /** This code uses posix_memalign. */
+#ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 600 
+#endif
 #include <stdlib.h>
 #include <string.h> /* for memcpy */
 
