@@ -15,7 +15,7 @@
 #include "f_impl.h"
 #define GF_LIT_LIMB_BITS  51
 #define GF_BITS           255
-#define gf              gf_25519_t
+#define gf                gf_25519_t
 #define gf_s              gf_25519_s
 #define gf_mul            gf_25519_mul
 #define gf_sqr            gf_25519_sqr

@@ -10,9 +10,9 @@
 
 #include "word.h"
 
-typedef struct p448_t {
+typedef struct gf_448_s {
   uint64_t limb[8];
-} __attribute__((aligned(32))) p448_t;
+} __attribute__((aligned(32))) gf_448_s, gf_448_t[1];
 
 #define LBITS 56
 #define FIELD_LITERAL(a,b,c,d,e,f,g,h) {{a,b,c,d,e,f,g,h}}
@@ -23,69 +23,69 @@ extern "C" {
 
 static __inline__ void
 p448_add_RAW (
-    p448_t *out,
-    const p448_t *a,
-    const p448_t *b
+    gf_448_t out,
+    const gf_448_t a,
+    const gf_448_t b
 ) __attribute__((unused));
              
 static __inline__ void
 p448_sub_RAW (
-    p448_t *out,
-    const p448_t *a,
-    const p448_t *b
+    gf_448_t out,
+    const gf_448_t a,
+    const gf_448_t b
 ) __attribute__((unused));
              
 static __inline__ void
 p448_copy (
-    p448_t *out,
-    const p448_t *a
+    gf_448_t out,
+    const gf_448_t a
 ) __attribute__((unused));
              
 static __inline__ void
 p448_weak_reduce (
-    p448_t *inout
+    gf_448_t inout
 ) __attribute__((unused));
              
 void
 p448_strong_reduce (
-    p448_t *inout
+    gf_448_t inout
 );
 
 static __inline__ void
 p448_bias (
-    p448_t *inout,
+    gf_448_t inout,
     int amount
 ) __attribute__((unused));
          
 void
 p448_mul (
-    p448_t *__restrict__ out,
-    const p448_t *a,
-    const p448_t *b
+    gf_448_s *__restrict__ out,
+    const gf_448_t a,
+    const gf_448_t b
 );
 
 void
 p448_mulw (
-    p448_t *__restrict__ out,
-    const p448_t *a,
+    gf_448_s *__restrict__ out,
+    const gf_448_t a,
     uint64_t b
 );
 
 void
 p448_sqr (
-    p448_t *__restrict__ out,
-    const p448_t *a
+    gf_448_s *__restrict__ out,
+    const gf_448_t a
 );
 
 void
 p448_serialize (
     uint8_t *serial,
-    const struct p448_t *x
+    const gf_448_t x
 );
 
 mask_t
 p448_deserialize (
-    p448_t *x,
+    gf_448_t x,
     const uint8_t serial[56]
 );
 
@@ -93,9 +93,9 @@ p448_deserialize (
 
 void
 p448_add_RAW (
-    p448_t *out,
-    const p448_t *a,
-    const p448_t *b
+    gf_448_t out,
+    const gf_448_t a,
+    const gf_448_t b
 ) {
     unsigned int i;
     for (i=0; i<8; i++) {
@@ -106,9 +106,9 @@ p448_add_RAW (
 
 void
 p448_sub_RAW (
-    p448_t *out,
-    const p448_t *a,
-    const p448_t *b
+    gf_448_t out,
+    const gf_448_t a,
+    const gf_448_t b
 ) {
     unsigned int i;
     uint64_t co1 = ((1ull<<56)-1)*2, co2 = co1-2;
@@ -120,15 +120,15 @@ p448_sub_RAW (
 
 void
 p448_copy (
-    p448_t *out,
-    const p448_t *a
+    gf_448_t out,
+    const gf_448_t a
 ) {
     memcpy(out,a,sizeof(*a));
 }
 
 void
 p448_bias (
-    p448_t *a,
+    gf_448_t a,
     int amt
 ) {
     (void) a;
@@ -137,7 +137,7 @@ p448_bias (
 
 void
 p448_weak_reduce (
-    p448_t *a
+    gf_448_t a
 ) {
     uint64_t mask = (1ull<<56) - 1;
     uint64_t tmp = a->limb[7] >> 56;

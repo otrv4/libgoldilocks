@@ -13,22 +13,6 @@
 #include <string.h>
 #include <assert.h>
 
-#define WBITS DECAF_WORD_BITS
-
-#if WBITS == 64
-#define LBITS 56
-typedef __int128_t decaf_sdword_t;
-#define LIMB(x) (x##ull)
-#define SC_LIMB(x) (x##ull)
-#elif WBITS == 32
-typedef int64_t decaf_sdword_t;
-#define LBITS 28
-#define LIMB(x) (x##ull)&((1ull<<LBITS)-1), (x##ull)>>LBITS
-#define SC_LIMB(x) (x##ull)&((1ull<<32)-1), (x##ull)>>32
-#else
-#error "Only supporting 32- and 64-bit platforms right now"
-#endif
-
 #define sv static void
 #define snv static void __attribute__((noinline))
 #define siv static inline void __attribute__((always_inline))

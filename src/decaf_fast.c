@@ -15,21 +15,13 @@
 #include "field.h"
 #include "decaf_config.h"
 
-#define WBITS DECAF_WORD_BITS
-#if WBITS == 64
-    typedef __int128_t decaf_sdword_t;
-    #define SC_LIMB(x) (x##ull)
-#elif WBITS == 32
-    typedef int64_t decaf_sdword_t;
-    #define SC_LIMB(x) (x##ull)&((1ull<<32)-1), (x##ull)>>32
-#else
-    #error "Only supporting 32- and 64-bit platforms right now"
-#endif
-
-
 /* Include the curve data here */
 #include "curve_data.inc.c"
 
+#if (COFACTOR == 8) && !IMAGINE_TWIST
+/* FUTURE: Curve41417 doesn't have these properties. */
+#error "Currently require IMAGINE_TWIST (and thus p=5 mod 8) for cofactor 8"
+#endif
 
 #if IMAGINE_TWIST && (P_MOD_8 != 5)
 #error "Cannot use IMAGINE_TWIST except for p == 5 mod 8"
@@ -162,6 +154,7 @@ static decaf_word_t hibit(const gf x) {
     return -(y->limb[0]&1);
 }
 
+#if COFACTOR==8
 /** Return high bit of x = low bit of 2x mod p */
 static decaf_word_t lobit(const gf x) {
     gf y;
@@ -169,6 +162,7 @@ static decaf_word_t lobit(const gf x) {
     gf_strong_reduce(y);
     return -(y->limb[0]&1);
 }
+#endif
 
 /** {extra,accum} - sub +? p
  * Must have extra <= 1
@@ -408,27 +402,64 @@ static void deisogenize (
     decaf_bool_t toggle_hibit_t_over_s,
     decaf_bool_t toggle_rotation
 ) {
-    gf c, d, x, t;
+#if COFACTOR == 4 && !IMAGINE_TWIST
+    (void) toggle_rotation;
+    
+    /* TODO: Can shave off one mul here; not important but makes consistent with paper */
+    gf b, d;
+    gf_s *a = s, *c = minus_t_over_s;
+    gf_mulw_sgn ( a, p->y, 1-EDWARDS_D );
+    gf_mul ( c, a, p->t );     /* -dYT, with EDWARDS_D = d-1 */
+    gf_mul ( a, p->x, p->z ); 
+    gf_sub ( d, c, a );  /* aXZ-dYT with a=-1 */
+    gf_add ( a, p->z, p->y ); 
+    gf_sub ( b, p->z, p->y ); 
+    gf_mul ( c, b, a );
+    gf_mulw_sgn ( b, c, -EDWARDS_D ); /* (a-d)(Z+Y)(Z-Y) */
+    decaf_bool_t ok = gf_isqrt_chk ( a, b, DECAF_TRUE ); /* r in the paper */
+    (void)ok; assert(ok);
+    gf_mulw_sgn ( b, a, -EDWARDS_D ); /* u in the paper */
+    gf_mul ( c, b, a ); /* ur */
+    gf_mul ( a, c, d ); /* ur (aZX-dYT) */
+    gf_add ( d, b, b );  /* 2u = -2au since a=-1 */
+    gf_mul ( c, d, p->z ); /* 2uZ */
+    cond_neg ( b, toggle_hibit_t_over_s ^ ~hibit(c) ); /* u <- -u if negative. */
+    cond_neg ( c, toggle_hibit_t_over_s ^ ~hibit(c) ); /* u <- -u if negative. */
+    gf_mul ( d, b, p->y ); 
+    gf_add ( s, a, d );
+    cond_neg ( s, toggle_hibit_s ^ hibit(s) );
+#else
+    /* More complicated because of rotation */
+    /* FIXME This code is wrong for certain non-Curve25519 curves; check if it's because of Cofactor==8 or IMAGINE_ROTATION */
+    
+    gf c, d;
     gf_s *b = s, *a = minus_t_over_s;
 
 #if IMAGINE_TWIST
+    gf x, t;
     gf_mul ( x, p->x, SQRT_MINUS_ONE);
     gf_mul ( t, p->t, SQRT_MINUS_ONE);
     gf_sub ( x, ZERO, x );
     gf_sub ( t, ZERO, t );
-#endif
     
-    gf DEBUG;
     gf_add ( a, p->z, x );
     gf_sub ( b, p->z, x );
-    gf_mul ( c, a, b ); /* "zx" = Z^2 - X^2 */
-    gf_cpy(DEBUG,c);
+    gf_mul ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 - X^2 */
+#else
+    const gf_s *x = p->x, *t = p->t;
+    /* Won't hit the cond_sel below because COFACTOR==8 requires IMAGINE_TWIST for now. */
+    
+    gf_sqr ( a, p->z );
+    gf_sqr ( b, p->x );
+    gf_add ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 + X^2 */
+#endif
+    
     gf_mul ( a, p->z, t ); /* "tz" = T*Z */
     gf_sqr ( b, a );
-    gf_mul ( d, b, c ); /* (TZ)^2 * (Z^2-X^2) */
+    gf_mul ( d, b, c ); /* (TZ)^2 * (Z^2-aX^2) */
     decaf_bool_t ok = gf_isqrt_chk ( b, d, DECAF_TRUE );
     (void)ok; assert(ok);
-    gf_mul ( d, b, a ); /* "osx" = 1 / sqrt(z^2-x^2) */
+    gf_mul ( d, b, a ); /* "osx" = 1 / sqrt(z^2-ax^2) */
     gf_mul ( a, b, c ); 
     gf_mul ( b, a, d ); /* 1/tz */
 
@@ -445,6 +476,7 @@ static void deisogenize (
         cond_sel ( x, p->y, x, rotate );
     }
 #else
+    (void)toggle_rotation;
     rotate = 0;
 #endif
     
@@ -458,6 +490,8 @@ static void deisogenize (
     gf_add ( d, d, c );
     gf_mul ( b, d, x ); /* here "x" = y unless rotate */
     cond_neg ( b, toggle_hibit_s ^ hibit(b) );
+    
+#endif
 }
 
 void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
@@ -472,7 +506,7 @@ void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
 static decaf_bool_t gf_deser(gf s, const unsigned char ser[SER_BYTES]) {
     return gf_deserialize((gf_s *)s, ser);
 }
-   
+
 decaf_bool_t API_NS(point_decode) (
     point_t p,
     const unsigned char ser[SER_BYTES],
@@ -483,25 +517,32 @@ decaf_bool_t API_NS(point_decode) (
     succ &= allow_identity | ~zero;
     succ &= ~hibit(s);
     gf_sqr ( a, s );
-    gf_sub ( f, ONE, a ); /* f = 1-s^2 = 1-as^2 since a=1 */
+#if IMAGINE_TWIST
+    gf_sub ( f, ONE, a ); /* f = 1-as^2 = 1-s^2*/
+#else
+    gf_add ( f, ONE, a ); /* f = 1-as^2 = 1+s^2 */
+#endif
     succ &= ~ gf_eq( f, ZERO );
     gf_sqr ( b, f ); 
-    gf_mulw_sgn ( c, a, 4-4*EDWARDS_D ); 
+    gf_mulw_sgn ( c, a, 4*IMAGINE_TWIST-4*EDWARDS_D ); 
     gf_add ( c, c, b ); /* t^2 */
-    gf_mul ( d, f, s ); /* s(1-s^2) for denoms */
+    gf_mul ( d, f, s ); /* s(1-as^2) for denoms */
     gf_sqr ( e, d );
     gf_mul ( b, c, e );
     
-    succ &= gf_isqrt_chk ( e, b, DECAF_TRUE ); /* e = 1/(t s (1-s^2)) */
+    succ &= gf_isqrt_chk ( e, b, DECAF_TRUE ); /* e = 1/(t s (1-as^2)) */
     gf_mul ( b, e, d ); /* 1/t */
-    gf_mul ( d, e, c ); /* d = t / (s(1-s^2)) */
+    gf_mul ( d, e, c ); /* d = t / (s(1-as^2)) */
     gf_mul ( e, d, f ); /* t/s */
     decaf_bool_t negtos = hibit(e);
     cond_neg(b, negtos);
     cond_neg(d, negtos);
-    
-    gf_add ( p->z, ONE, a); /* Z = 1+s^2 */
-    succ &= ~gf_eq( p->z, ZERO ); /* FUTURE: unnecessary? */
+
+#if IMAGINE_TWIST
+    gf_add ( p->z, ONE, a); /* Z = 1+as^2 = 1-s^2 */
+#else
+    gf_sub ( p->z, ONE, a); /* Z = 1+as^2 = 1-s^2 */
+#endif
 
 #if COFACTOR == 8
     gf_mul ( a, p->z, d); /* t(1+s^2) / s(1-s^2) = 2/xy */
@@ -745,7 +786,7 @@ static void pt_to_pniels (
 ) {
     gf_sub ( b->n->a, a->y, a->x );
     gf_add ( b->n->b, a->x, a->y );
-    gf_mulw_sgn ( b->n->c, a->t, 2*EFF_D );
+    gf_mulw_sgn ( b->n->c, a->t, 2*TWISTED_D );
     gf_add ( b->z, a->z, a->z );
 }
 

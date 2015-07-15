@@ -15,7 +15,8 @@
 #include "f_impl.h"
 #define GF_LIT_LIMB_BITS  56
 #define GF_BITS           448
-#define gf              p448_t
+#define gf                gf_448_t
+#define gf_s              gf_448_s
 #define gf_mul            p448_mul
 #define gf_sqr            p448_sqr
 #define gf_add_RAW        p448_add_RAW

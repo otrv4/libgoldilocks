@@ -426,7 +426,7 @@ decaf_bool_t decaf_448_point_valid (
 ) API_VIS WARN_UNUSED NONNULL1 NOINLINE;
 
 /**
- * @brief 2-torque a point, for debugging purposes.
+ * @brief Torque a point, for debugging purposes.
  *
  * @param [out] q The point to torque.
  * @param [in] p The point to torque.
@@ -434,6 +434,21 @@ decaf_bool_t decaf_448_point_valid (
 void decaf_448_point_debugging_torque (
      decaf_448_point_t q,
      const decaf_448_point_t p
+) API_VIS NONNULL2 NOINLINE;
+
+/**
+ * @brief Projectively scale a point, for debugging purposes.
+ * The output will be equal to the input, and will be valid
+ * even if the factor is zero.
+ *
+ * @param [out] q The point to scale.
+ * @param [in] p The point to scale.
+ * @param [in] factor Serialized GF factor to scale.
+ */
+void decaf_448_point_debugging_pscale (
+     decaf_448_point_t q,
+     const decaf_448_point_t p,
+     const unsigned char factor[DECAF_448_SER_BYTES]
 ) API_VIS NONNULL2 NOINLINE;
 
 /**

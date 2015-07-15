@@ -70,9 +70,9 @@ smull2 (
 
 void
 p448_mul (
-    p448_t *__restrict__ cs,
-    const p448_t *as,
-    const p448_t *bs
+    gf_448_s *__restrict__ cs,
+    const gf_448_t as,
+    const gf_448_t bs
 ) {
     #define _bl0 "q0"
     #define _bl0_0 "d0"
@@ -369,8 +369,8 @@ p448_mul (
 
 void
 p448_sqr (
-    p448_t *__restrict__ cs,
-    const p448_t *bs
+    gf_448_s *__restrict__ cs,
+    const gf_448_t bs
 ) {
     int32x2_t *vc = (int32x2_t*) cs->limb;
 
@@ -570,8 +570,8 @@ p448_sqr (
 
 void
 p448_mulw (
-    p448_t *__restrict__ cs,
-    const p448_t *as,
+    gf_448_s *__restrict__ cs,
+    const gf_448_t as,
     uint64_t b
 ) { 
     uint32x2_t vmask = {(1<<28) - 1, (1<<28)-1};
@@ -621,7 +621,7 @@ p448_mulw (
 /* PERF: vectorize? */
 void
 p448_strong_reduce (
-    p448_t *a
+    gf_448_t a
 ) { 
     word_t mask = (1ull<<28)-1;
 
@@ -665,15 +665,15 @@ p448_strong_reduce (
 void
 p448_serialize (
     uint8_t *serial,
-    const struct p448_t *x
+    const gf_448_t x
 ) {
     int i,j;
-    p448_t red;
-    p448_copy(&red, x);
-    p448_strong_reduce(&red);
+    gf_448_t red;
+    p448_copy(red, x);
+    p448_strong_reduce(red);
     
     for (i=0; i<8; i++) {
-        uint64_t limb = red.limb[LIMBPERM(2*i)] + (((uint64_t)red.limb[LIMBPERM(2*i+1)])<<28);
+        uint64_t limb = red->limb[LIMBPERM(2*i)] + (((uint64_t)red->limb[LIMBPERM(2*i+1)])<<28);
         for (j=0; j<7; j++) {
             serial[7*i+j] = limb;
             limb >>= 8;
@@ -684,7 +684,7 @@ p448_serialize (
 
 mask_t
 p448_deserialize (
-    p448_t *x,
+    gf_448_t x,
     const uint8_t serial[56]
 ) {
     int i,j;

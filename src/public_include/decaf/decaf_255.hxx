@@ -46,7 +46,13 @@ namespace decaf {
 /**
  * @brief Curve25519/Decaf instantiation of group.
  */
-struct Ed255 {
+struct IsoEd25519 {
+    
+/** The name of the curve */
+static inline const char *name() { return "IsoEd25519"; }
+
+/** The curve's cofactor (removed, but useful for testing) */
+static const int REMOVED_COFACTOR = 8;
 
 /** @cond internal */
 class Point;
@@ -533,17 +539,17 @@ public:
     /** @endcond */
 };
 
-}; /* struct Ed255 */
+}; /* struct IsoEd25519 */
 
 
 
 /** @cond internal */
-inline SecureBuffer Ed255::Scalar::direct_scalarmul (
+inline SecureBuffer IsoEd25519::Scalar::direct_scalarmul (
     const Block &in,
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
 ) const throw(CryptoException) {
-    SecureBuffer out(Ed255::Point::SER_BYTES);
+    SecureBuffer out(IsoEd25519::Point::SER_BYTES);
     if (!decaf_255_direct_scalarmul(out, in.data(), s, allow_identity, short_circuit))
         throw CryptoException();
     return out;

@@ -46,7 +46,13 @@ namespace decaf {
 /**
  * @brief Ed448-Goldilocks/Decaf instantiation of group.
  */
-struct Ed448 {
+struct Ed448Goldilocks {
+    
+/** The name of the curve */
+static inline const char *name() { return "Ed448-Goldilocks"; }
+
+/** The curve's cofactor (removed, but useful for testing) */
+static const int REMOVED_COFACTOR = 4;
 
 /** @cond internal */
 class Point;

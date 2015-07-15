@@ -39,8 +39,6 @@ else
 ARCH ?= arch_ref32
 endif
 
-FIELD ?= p25519
-
 WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 	 -Wmissing-declarations -Wunused-function -Wno-overlength-strings $(EXWARN)
 
@@ -79,22 +77,13 @@ SAGES= $(shell ls test/*.sage)
 BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 
 .PHONY: clean all test bench todo doc lib bat sage sagetest
-.PRECIOUS: $(BUILD_ASM)/%.s $(BUILD_ASM)/%_impl.s $(BUILD_ASM)/$(DECAF)_%.s $(BUILD_ASM)/decaf_tables_%.c \
-	$(BUILD_IBIN)/decaf_gen_tables_%
+.PRECIOUS: $(BUILD_ASM)/%.s $(BUILD_C)/%.c $(BUILD_IBIN)/%
 
-HEADERS= Makefile $(shell find src test -name "*.h") $(shell find . -name "*.hxx") $(BUILD_OBJ)/timestamp
-
-# components needed by the table generators
-GENCOMPONENTS=  \
-	$(BUILD_OBJ)/$(DECAF)_ed25519.o $(BUILD_OBJ)/p25519_impl.o  $(BUILD_OBJ)/p25519_arithmetic.o \
-	$(BUILD_OBJ)/utils.o \
-	#$(BUILD_OBJ)/p448_impl.o $(BUILD_OBJ)/p448_arithmetic.o
+HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp
+HEADERSXX = $(HEADERS) $(shell find . -name "*.hxx") 
 
 # components needed by the lib
-DECAFCOMPONENTS= $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/decaf_crypto.o $(GENCOMPONENTS)
-ifeq ($(DECAF),decaf_fast)
-DECAFCOMPONENTS += $(BUILD_OBJ)/decaf_tables_ed25519.o
-endif
+LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/decaf_crypto.o # and per-field components
 
 BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o
 
@@ -105,26 +94,7 @@ scan: clean
 		 -enable-checker deadcode -enable-checker llvm \
 		 -enable-checker osx -enable-checker security -enable-checker unix \
 		make all
-		
-# The shakesum utility is in the public bin directory.
-$(BUILD_BIN)/shakesum: $(BUILD_OBJ)/shakesum.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/utils.o
-	$(LD) $(LDFLAGS) -o $@ $^
 
-# The main decaf library, and its symlinks.
-lib: $(BUILD_LIB)/libdecaf.so
-
-$(BUILD_LIB)/libdecaf.so: $(BUILD_LIB)/libdecaf.so.1
-	ln -sf `basename $^` $@
-
-$(BUILD_LIB)/libdecaf.so.1: $(DECAFCOMPONENTS)
-	rm -f $@
-ifeq ($(UNAME),Darwin)
-	libtool -macosx_version_min 10.6 -dynamic -dead_strip -lc -x -o $@ \
-		  $(DECAFCOMPONENTS)
-else
-	$(LD) $(LDFLAGS) -shared -Wl,-soname,`basename $@` -Wl,--gc-sections -o $@ $(DECAFCOMPONENTS)
-	strip --discard-all $@
-endif
 
 # Internal test programs, which are not part of the final build/bin directory.
 $(BUILD_IBIN)/test: $(BUILD_OBJ)/test_decaf.o lib
@@ -150,50 +120,86 @@ $(BUILD_OBJ)/timestamp:
 $(BUILD_OBJ)/%.o: $(BUILD_ASM)/%.s
 	$(ASM) $(ASFLAGS) -c -o $@ $<
 
-# I don't know why this rule is necessary... bug in make, or obscure pattern matching rule?
-$(BUILD_OBJ)/decaf_gen_tables_%.o: $(BUILD_ASM)/decaf_gen_tables_%.s
-	$(ASM) $(ASFLAGS) -c -o $@ $<
+################################################################
+# Per-field code: call with field, arch
+################################################################
+define define_field
+ARCH_FOR_$(1) = $(2)
+COMPONENTS_OF_$(1) = $$(BUILD_OBJ)/$(1)_impl.o $$(BUILD_OBJ)/$(1)_arithmetic.o
+LIBCOMPONENTS += $$(COMPONENTS_OF_$(1))
 
-$(BUILD_IBIN)/decaf_gen_tables_%: $(BUILD_OBJ)/decaf_gen_tables_%.o $(GENCOMPONENTS)
+$$(BUILD_ASM)/$(1)_arithmetic.s: src/$(1)/f_arithmetic.c $$(HEADERS)
+	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$(2) -S -c -o $$@ $$<
+
+$$(BUILD_ASM)/$(1)_impl.s: src/$(1)/$(2)/f_impl.c $$(HEADERS)
+	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$(2) -S -c -o $$@ $$<
+endef
+
+################################################################
+# Per-field, per-curve code: call with curve, field
+################################################################
+define define_curve
+$$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/decaf_gen_tables_$(1).o $$(BUILD_OBJ)/decaf_fast_$(1).o $$(BUILD_OBJ)/utils.o \
+		$$(COMPONENTS_OF_$(2))
+	$$(LD) $$(LDFLAGS) -o $$@ $$^
+
+$$(BUILD_C)/decaf_tables_$(1).c: $$(BUILD_IBIN)/decaf_gen_tables_$(1)
+	./$$< > $$@ || (rm $$@; exit 1)
+
+$$(BUILD_ASM)/decaf_tables_$(1).s: $$(BUILD_C)/decaf_tables_$(1).c $$(HEADERS)
+	$$(CC) $$(CFLAGS) -S -c -o $$@ $$< \
+		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) \
+
+$$(BUILD_ASM)/decaf_gen_tables_$(1).s: src/decaf_gen_tables.c $$(HEADERS)
+	$$(CC) $$(CFLAGS) \
+		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) \
+		-S -c -o $$@ $$<
+
+$$(BUILD_ASM)/decaf_fast_$(1).s: src/decaf_fast.c $$(HEADERS)
+	$$(CC) $$(CFLAGS) \
+		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) \
+		-S -c -o $$@ $$<
+
+LIBCOMPONENTS += $$(BUILD_OBJ)/decaf_fast_$(1).o $$(BUILD_OBJ)/decaf_tables_$(1).o
+endef
+
+################################################################
+# call code above to generate curves and fields
+$(eval $(call define_field,p25519,arch_x86_64))
+$(eval $(call define_curve,ed25519,p25519))
+$(eval $(call define_field,p448,arch_x86_64))
+$(eval $(call define_curve,ed448goldilocks,p448))
+
+		
+# The shakesum utility is in the public bin directory.
+$(BUILD_BIN)/shakesum: $(BUILD_OBJ)/shakesum.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/utils.o
 	$(LD) $(LDFLAGS) -o $@ $^
-	
-$(BUILD_C)/decaf_tables_%.c: $(BUILD_IBIN)/decaf_gen_tables_%
-	./$< > $@
-	
-$(BUILD_ASM)/decaf_tables_%.s: $(BUILD_C)/decaf_tables_%.c $(HEADERS)
-	$(CC) $(CFLAGS) -S -c -o $@ $< \
-		-I src/curve_$*/ -I src/curve_$*/field -I src/curve_$*/field/$(ARCH) \
-	
-$(BUILD_ASM)/decaf_gen_tables_%.s: src/decaf_gen_tables.c $(HEADERS)
-	$(CC) $(CFLAGS) \
-		-I src/curve_$*/ -I src/curve_$*/field -I src/curve_$*/field/$(ARCH) \
-		-S -c -o $@ $<
-	
-$(BUILD_ASM)/decaf_fast_%.s: src/decaf_fast.c $(HEADERS)
-	$(CC) $(CFLAGS) \
-		-I src/curve_$*/ -I src/curve_$*/field -I src/curve_$*/field/$(ARCH) \
-		-S -c -o $@ $<
-	
-$(BUILD_ASM)/%_arithmetic.s: src/%/f_arithmetic.c $(HEADERS)
-	$(CC) $(CFLAGS) \
-		-I src/$* -I src/$*/$(ARCH) \
-		-S -c -o $@ $<
-	
-$(BUILD_ASM)/%_impl.s: src/%/$(ARCH)/f_impl.c $(HEADERS)
-	$(CC) $(CFLAGS) \
-		-I src/$* -I src/$*/$(ARCH) \
-		-S -c -o $@ $<
-	
+
+# The main decaf library, and its symlinks.
+lib: $(BUILD_LIB)/libdecaf.so
+
+$(BUILD_LIB)/libdecaf.so: $(BUILD_LIB)/libdecaf.so.1
+	ln -sf `basename $^` $@
+
+$(BUILD_LIB)/libdecaf.so.1: $(LIBCOMPONENTS)
+	rm -f $@
+ifeq ($(UNAME),Darwin)
+	libtool -macosx_version_min 10.6 -dynamic -dead_strip -lc -x -o $@ \
+		  $(LIBCOMPONENTS)
+else
+	$(LD) $(LDFLAGS) -shared -Wl,-soname,`basename $@` -Wl,--gc-sections -o $@ $(LIBCOMPONENTS)
+	strip --discard-all $@
+endif
+
+
+
 $(BUILD_ASM)/%.s: src/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -S -c -o $@ $<
 	
-$(BUILD_ASM)/%.s: src/%.cxx $(HEADERS)
-	$(CXX) $(CXXFLAGS) -S -c -o $@ $<
-
 $(BUILD_ASM)/%.s: test/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -S -c -o $@ $<
 
-$(BUILD_ASM)/%.s: test/%.cxx $(HEADERS)
+$(BUILD_ASM)/%.s: test/%.cxx $(HEADERSXX)
 	$(CXX) $(CXXFLAGS) -S -c -o $@ $<
 
 # The sage test scripts

@@ -164,7 +164,7 @@ static void test_elligator() {
     decaf::SpongeRng rng(decaf::Block("test_elligator"));
     Test test("Elligator");
     
-    const int NHINTS = 1<<4;
+    const int NHINTS = Group::REMOVED_COFACTOR * 2;
     decaf::SecureBuffer *alts[NHINTS];
     bool successes[NHINTS];
     decaf::SecureBuffer *alts2[NHINTS];
@@ -312,7 +312,7 @@ static void test_ec() {
 
 }; // template<decaf::GroupId GROUP>
 
-
+// FIXME cross-field
 static void test_decaf() {
     Test test("Sample crypto");
     decaf::SpongeRng rng(decaf::Block("test_decaf"));
@@ -350,10 +350,17 @@ static void test_decaf() {
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
     
-    Tests<decaf::Ed255>::test_arithmetic();
-    Tests<decaf::Ed255>::test_elligator();
-    Tests<decaf::Ed255>::test_ec();
+    printf("Testing %s:\n", decaf::IsoEd25519::name());
+    Tests<decaf::IsoEd25519>::test_arithmetic();
+    Tests<decaf::IsoEd25519>::test_elligator();
+    Tests<decaf::IsoEd25519>::test_ec();
     test_decaf();
+    
+    printf("\n");
+    printf("Testing %s:\n", decaf::Ed448Goldilocks::name());
+    Tests<decaf::Ed448Goldilocks>::test_arithmetic();
+    Tests<decaf::Ed448Goldilocks>::test_elligator();
+    Tests<decaf::Ed448Goldilocks>::test_ec();
     
     if (passing) printf("Passed all tests.\n");
     

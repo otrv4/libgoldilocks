@@ -20,9 +20,6 @@
 #include <algorithm>
 
 using namespace decaf;
-typedef Ed255::Scalar Scalar;
-typedef Ed255::Point Point;
-typedef Ed255::Precomputed Precomputed;
 
 
 static __inline__ void __attribute__((unused)) ignore_result ( int result ) { (void)result; }
@@ -139,6 +136,13 @@ public:
 };
 
 double Benchmark::totalCy = 0, Benchmark::totalS = 0;
+
+
+template<typename Group> struct Benches {
+
+typedef typename Group::Scalar Scalar;
+typedef typename Group::Point Point;
+typedef typename Group::Precomputed Precomputed;
 
 static void tdh (
     SpongeRng &clientRng,
@@ -274,6 +278,62 @@ static void spake2ee(
     server.respec(STROBE_KEYED_128);
 }
 
+static void macro() {
+    printf("\nMacro-benchmarks for %s:\n", Group::name());
+    printf("Protocol benchmarks:\n");
+    SpongeRng clientRng(Block("client rng seed"));
+    SpongeRng serverRng(Block("server rng seed"));
+    SecureBuffer hashedPassword("hello world");
+    for (Benchmark b("Spake2ee c+s",0.1); b.iter(); ) {
+        spake2ee(clientRng, serverRng, hashedPassword,false);
+    }
+    
+    for (Benchmark b("Spake2ee c+s aug",0.1); b.iter(); ) {
+        spake2ee(clientRng, serverRng, hashedPassword,true);
+    }
+    
+    Scalar x(clientRng);
+    SecureBuffer gx(Precomputed::base() * x);
+    Scalar y(serverRng);
+    SecureBuffer gy(Precomputed::base() * y);
+    
+    for (Benchmark b("FHMQV c+s",0.1); b.iter(); ) {
+        fhmqv(clientRng, serverRng,x,gx,y,gy);
+    }
+    
+    for (Benchmark b("TripleDH anon c+s",0.1); b.iter(); ) {
+        tdh(clientRng, serverRng, x,gx,y,gy);
+    }
+}
+
+static void micro() {
+    SpongeRng rng(Block("per-curve-benchmarks"));
+    Precomputed pBase;
+    Point p,q;
+    Scalar s,t;
+    SecureBuffer ep, ep2(Point::SER_BYTES*2);
+    
+    printf("\nMicro-benchmarks for %s:\n", Group::name());
+    for (Benchmark b("Scalar add", 1000); b.iter(); ) { s+=t; }
+    for (Benchmark b("Scalar times", 100); b.iter(); ) { s*=t; }
+    for (Benchmark b("Scalar inv", 1); b.iter(); ) { s.inverse(); }
+    for (Benchmark b("Point add", 100); b.iter(); ) { p += q; }
+    for (Benchmark b("Point double", 100); b.iter(); ) { p.double_in_place(); }
+    for (Benchmark b("Point scalarmul"); b.iter(); ) { p * s; }
+    for (Benchmark b("Point encode"); b.iter(); ) { ep = SecureBuffer(p); }
+    for (Benchmark b("Point decode"); b.iter(); ) { p = Point(ep); }
+    for (Benchmark b("Point create/destroy"); b.iter(); ) { Point r; }
+    for (Benchmark b("Point hash nonuniform"); b.iter(); ) { Point::from_hash(ep); }
+    for (Benchmark b("Point hash uniform"); b.iter(); ) { Point::from_hash(ep2); }
+    for (Benchmark b("Point unhash nonuniform"); b.iter(); ) { ignore_result(p.invert_elligator(ep,0)); }
+    for (Benchmark b("Point unhash uniform"); b.iter(); ) { ignore_result(p.invert_elligator(ep2,0)); }
+    for (Benchmark b("Point steg"); b.iter(); ) { p.steg_encode(rng); }
+    for (Benchmark b("Point double scalarmul"); b.iter(); ) { Point::double_scalarmul(p,s,q,t); }
+    for (Benchmark b("Point precmp scalarmul"); b.iter(); ) { pBase * s; }
+}
+
+}; /* template <typename group> struct Benches */
+
 int main(int argc, char **argv) {
     bool micro = false;
     if (argc >= 2 && !strcmp(argv[1], "--micro"))
@@ -293,10 +353,6 @@ int main(int argc, char **argv) {
 
 
     if (micro) {
-        Precomputed pBase;
-        Point p,q;
-        Scalar s,t;
-        SecureBuffer ep, ep2(Point::SER_BYTES*2);
         SpongeRng rng(Block("micro-benchmarks"));
         
         printf("\nMicro-benchmarks:\n");
@@ -325,25 +381,12 @@ int main(int argc, char **argv) {
         for (Benchmark b("STROBEk256 1kiB", 10); b.iter(); ) {
             strobe.encrypt_no_auth(TmpBuffer(b1024,1024),TmpBuffer(b1024,1024),b.i>1);
         }
-        for (Benchmark b("Scalar add", 1000); b.iter(); ) { s+=t; }
-        for (Benchmark b("Scalar times", 100); b.iter(); ) { s*=t; }
-        for (Benchmark b("Scalar inv", 1); b.iter(); ) { s.inverse(); }
-        for (Benchmark b("Point add", 100); b.iter(); ) { p += q; }
-        for (Benchmark b("Point double", 100); b.iter(); ) { p.double_in_place(); }
-        for (Benchmark b("Point scalarmul"); b.iter(); ) { p * s; }
-        for (Benchmark b("Point encode"); b.iter(); ) { ep = SecureBuffer(p); }
-        for (Benchmark b("Point decode"); b.iter(); ) { p = Point(ep); }
-        for (Benchmark b("Point create/destroy"); b.iter(); ) { Point r; }
-        for (Benchmark b("Point hash nonuniform"); b.iter(); ) { Point::from_hash(ep); }
-        for (Benchmark b("Point hash uniform"); b.iter(); ) { Point::from_hash(ep2); }
-        for (Benchmark b("Point unhash nonuniform"); b.iter(); ) { ignore_result(p.invert_elligator(ep,0)); }
-        for (Benchmark b("Point unhash uniform"); b.iter(); ) { ignore_result(p.invert_elligator(ep2,0)); }
-        for (Benchmark b("Point steg"); b.iter(); ) { p.steg_encode(rng); }
-        for (Benchmark b("Point double scalarmul"); b.iter(); ) { Point::double_scalarmul(p,s,q,t); }
-        for (Benchmark b("Point precmp scalarmul"); b.iter(); ) { pBase * s; }
         /* TODO: scalarmul for verif, etc */
+        Benches<IsoEd25519>::micro();
+        Benches<Ed448Goldilocks>::micro();
     }
 
+    /* TODO: 255->448 */
     printf("\nMacro-benchmarks:\n");
     for (Benchmark b("Keygen"); b.iter(); ) {
         decaf_255_derive_private_key(s1,r1);
@@ -369,31 +412,9 @@ int main(int argc, char **argv) {
         umessage[1]^=umessage[0];
         ignore_result(ret);
     }
-
-    printf("\nProtocol benchmarks:\n");
-    SpongeRng clientRng(Block("client rng seed"));
-    SpongeRng serverRng(Block("server rng seed"));
-    SecureBuffer hashedPassword("hello world");
-    for (Benchmark b("Spake2ee c+s",0.1); b.iter(); ) {
-        spake2ee(clientRng, serverRng, hashedPassword,false);
-    }
     
-    for (Benchmark b("Spake2ee c+s aug",0.1); b.iter(); ) {
-        spake2ee(clientRng, serverRng, hashedPassword,true);
-    }
-    
-    Scalar x(clientRng);
-    SecureBuffer gx(Precomputed::base() * x);
-    Scalar y(serverRng);
-    SecureBuffer gy(Precomputed::base() * y);
-    
-    for (Benchmark b("FHMQV c+s",0.1); b.iter(); ) {
-        fhmqv(clientRng, serverRng,x,gx,y,gy);
-    }
-    
-    for (Benchmark b("TripleDH anon c+s",0.1); b.iter(); ) {
-        tdh(clientRng, serverRng, x,gx,y,gy);
-    }
+    Benches<IsoEd25519>::macro();
+    Benches<Ed448Goldilocks>::macro();
     
     printf("\n");
     Benchmark::calib();
