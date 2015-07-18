@@ -13,6 +13,7 @@
 
 #include <string>
 #include <sys/types.h>
+#include <stdio.h>
 
 /** @cond internal */
 #if __cplusplus >= 201103L
@@ -146,6 +147,13 @@ public:
 
     /** Virtual destructor for SecureBlock. TODO: probably means vtable?  Make bool? */
     inline virtual ~Block() {};
+    
+    /** Debugging print in hex */
+    inline void debug_print(const char *name = NULL) {
+        if (name) printf("%s = ", name);
+        for (size_t s = 0; s < size(); s++) printf("%02x", data_[s]);
+        printf("\n");
+    }
 };
 
 /** A fixed-size block */
@@ -184,6 +192,12 @@ public:
     /** Slice the buffer*/
     inline TmpBuffer slice(size_t off, size_t length) throw(LengthException);
     
+    /** Copy from another block */
+    inline void assign(const Block b) throw(LengthException) {
+        if (b.size() != size()) throw LengthException();
+        memmove(*this,b,size());
+    }
+    
     /** Securely set the buffer to 0. */
     inline void zeroize() NOEXCEPT { really_bzero(data(),size()); }
 };
@@ -214,23 +228,39 @@ public:
 };
 
 /** A fixed-size stack-allocated buffer (for NOEXCEPT semantics) */
-template<size_t Size> class StackBuffer : public FixedBuffer<Size> {
+template<size_t Size> class FixedArrayBuffer : public FixedBuffer<Size> {
 private:
     uint8_t storage[Size];
 public:
     using Buffer::zeroize;
     
     /** New buffer initialized to zero. */
-    inline explicit StackBuffer() NOEXCEPT : FixedBuffer<Size>(storage) { memset(storage,0,Size); }
+    inline explicit FixedArrayBuffer() NOEXCEPT : FixedBuffer<Size>(storage) { memset(storage,0,Size); }
 
     /** New uninitialized buffer. */
-    inline explicit StackBuffer(const NOINIT &) NOEXCEPT : FixedBuffer<Size>(storage) { }
+    inline explicit FixedArrayBuffer(const NOINIT &) NOEXCEPT : FixedBuffer<Size>(storage) { }
     
     /** New random buffer */
-    inline explicit StackBuffer(Rng &r) NOEXCEPT : FixedBuffer<Size>(storage) { r.read(*this); }
+    inline explicit FixedArrayBuffer(Rng &r) NOEXCEPT : FixedBuffer<Size>(storage) { r.read(*this); }
+    
+    /** Copy constructor */
+    inline explicit FixedArrayBuffer(const FixedBlock<Size> &b) NOEXCEPT : FixedBuffer<Size>(storage) {
+        memcpy(storage,b,Size);
+    }
+    
+    /** Copy constructor */
+    inline explicit FixedArrayBuffer(const Block &b) throw(LengthException) : FixedBuffer<Size>(storage) {
+        if (b.size() != Size) throw LengthException();
+        memcpy(storage,b,Size);
+    }
+    
+    /** Copy constructor */
+    inline explicit FixedArrayBuffer(const FixedArrayBuffer<Size> &b) NOEXCEPT : FixedBuffer<Size>(storage) {
+        memcpy(storage,b,Size);
+    }
     
     /** Destroy the buffer */
-    ~StackBuffer() NOEXCEPT { zeroize(); }
+    ~FixedArrayBuffer() NOEXCEPT { zeroize(); }
 };
 
 /** @cond internal */

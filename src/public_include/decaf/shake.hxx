@@ -108,6 +108,12 @@ public:
 
     /** Reset the hash to the empty string */
     inline void reset() NOEXCEPT { sponge_init(sp, get_params()); }
+
+    
+    /** Hash bytes with this SHA3 instance.  TODO: output length? */
+    static inline SecureBuffer hash(const Block &b) throw(std::bad_alloc) {
+        SHA3 s; s += b; return s.output();
+    }
 };
 
 /** Variable-output-length SHAKE */
@@ -122,6 +128,11 @@ public:
 
     /** Reset the hash to the empty string */
     inline void reset() NOEXCEPT { sponge_init(sp, get_params()); }
+    
+    /** Hash bytes with this SHAKE instance */
+    static inline SecureBuffer hash(const Block &b, size_t outlen) throw(std::bad_alloc) {
+        SHAKE s; s += b; return s.output(outlen);
+    }
 };
 
 /** @cond internal */

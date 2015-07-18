@@ -88,7 +88,7 @@ public:
     
     /** @brief Construct from RNG */
     inline explicit Scalar(Rng &rng) NOEXCEPT {
-        StackBuffer<SER_BYTES> sb(rng);
+        FixedArrayBuffer<SER_BYTES> sb(rng);
         *this = sb;
     }
     
@@ -230,10 +230,10 @@ public:
     /** @brief Construct from RNG */
     inline explicit Point(Rng &rng, bool uniform = true) NOEXCEPT {
         if (uniform) {
-            StackBuffer<2*HASH_BYTES> b(rng);
+            FixedArrayBuffer<2*HASH_BYTES> b(rng);
             set_to_hash(b);
         } else {
-            StackBuffer<HASH_BYTES> b(rng);
+            FixedArrayBuffer<HASH_BYTES> b(rng);
             set_to_hash(b);
         }
     }
@@ -399,7 +399,7 @@ public:
     
     /** @brief Return a point equal to *this, whose internal data has a randomized representation. */
     inline Point debugging_pscale(Rng &r) const NOEXCEPT {
-        StackBuffer<SER_BYTES> sb(r); return debugging_pscale(sb);
+        FixedArrayBuffer<SER_BYTES> sb(r); return debugging_pscale(sb);
     }
     
     /**
@@ -430,7 +430,8 @@ public:
     }
     
     /** @brief Steganographically encode this */
-    inline SecureBuffer steg_encode(Rng &rng) const throw(std::bad_alloc) {
+    inline SecureBuffer steg_encode(Rng &rng, size_t size=STEG_BYTES) const throw(std::bad_alloc, LengthException) {
+        if (size <= HASH_BYTES + 4 || size > 2*HASH_BYTES) throw LengthException();
         SecureBuffer out(STEG_BYTES);
         bool done;
         do {

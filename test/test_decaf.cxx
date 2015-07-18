@@ -12,8 +12,10 @@
 #include <decaf.hxx>
 #include <decaf/shake.hxx>
 #include <decaf/crypto.h>
+#include <decaf/crypto.hxx>
 #include <stdio.h>
 
+using namespace decaf;
 
 static bool passing = true;
 static const long NTESTS = 10000;
@@ -49,7 +51,7 @@ typedef typename Group::Precomputed Precomputed;
 
 static void print(const char *name, const Scalar &x) {
     unsigned char buffer[Scalar::SER_BYTES];
-    x.encode(decaf::FixedBuffer<Scalar::SER_BYTES>(buffer));
+    x.encode(FixedBuffer<Scalar::SER_BYTES>(buffer));
     printf("  %s = 0x", name);
     for (int i=sizeof(buffer)-1; i>=0; i--) {
         printf("%02x", buffer[i]);
@@ -57,7 +59,7 @@ static void print(const char *name, const Scalar &x) {
     printf("\n");
 }
 
-static void hexprint(const char *name, const decaf::SecureBuffer &buffer) {
+static void hexprint(const char *name, const SecureBuffer &buffer) {
     printf("  %s = 0x", name);
     for (int i=buffer.size()-1; i>=0; i--) {
         printf("%02x", buffer[i]);
@@ -66,7 +68,7 @@ static void hexprint(const char *name, const decaf::SecureBuffer &buffer) {
 }
 
 static void print(const char *name, const Point &x) {
-    decaf::StackBuffer<Point::SER_BYTES> buffer;
+    FixedArrayBuffer<Point::SER_BYTES> buffer;
     x.encode(buffer);
     printf("  %s = 0x", name);
     for (int i=Point::SER_BYTES-1; i>=0; i--) {
@@ -126,7 +128,7 @@ static bool point_check(
 }
 
 static void test_arithmetic() {
-    decaf::SpongeRng rng(decaf::Block("test_arithmetic"));
+    SpongeRng rng(Block("test_arithmetic"));
     
     Test test("Arithmetic");
     Scalar x(0),y(0),z(0);
@@ -161,18 +163,18 @@ static void test_arithmetic() {
 }
 
 static void test_elligator() {
-    decaf::SpongeRng rng(decaf::Block("test_elligator"));
+    SpongeRng rng(Block("test_elligator"));
     Test test("Elligator");
     
     const int NHINTS = Group::REMOVED_COFACTOR * 2;
-    decaf::SecureBuffer *alts[NHINTS];
+    SecureBuffer *alts[NHINTS];
     bool successes[NHINTS];
-    decaf::SecureBuffer *alts2[NHINTS];
+    SecureBuffer *alts2[NHINTS];
     bool successes2[NHINTS];
 
     for (int i=0; i<NTESTS/10 && (test.passing_now || i < 100); i++) {
         size_t len =  (i % (2*Point::HASH_BYTES + 3));
-        decaf::SecureBuffer b1(len);
+        SecureBuffer b1(len);
         if (i!=Point::HASH_BYTES) rng.read(b1); /* special test case */
         if (i==1) b1[0] = 1; /* special case test */
         if (len >= Point::HASH_BYTES) b1[Point::HASH_BYTES-1] &= 0x7F; // FIXME MAGIC
@@ -184,8 +186,8 @@ static void test_elligator() {
         
         bool good = false;
         for (int j=0; j<NHINTS; j++) {
-            alts[j] = new decaf::SecureBuffer(len);
-            alts2[j] = new decaf::SecureBuffer(len);
+            alts[j] = new SecureBuffer(len);
+            alts2[j] = new SecureBuffer(len);
 
             if (len > Point::HASH_BYTES)
                 memcpy(&(*alts[j])[Point::HASH_BYTES], &b1[Point::HASH_BYTES], len-Point::HASH_BYTES);
@@ -263,7 +265,7 @@ static void test_elligator() {
 }
 
 static void test_ec() {
-    decaf::SpongeRng rng(decaf::Block("test_ec"));
+    SpongeRng rng(Block("test_ec"));
     
     Test test("EC");
 
@@ -278,13 +280,13 @@ static void test_ec() {
         Point p(rng);
         Point q(rng);
         
-        decaf::SecureBuffer buffer(2*Point::HASH_BYTES);
+        SecureBuffer buffer(2*Point::HASH_BYTES);
         rng.read(buffer);
         Point r = Point::from_hash(buffer);
         
-        point_check(test,p,q,r,0,0,p,Point((decaf::SecureBuffer)p),"round-trip");
+        point_check(test,p,q,r,0,0,p,Point((SecureBuffer)p),"round-trip");
         Point pp = p.debugging_torque().debugging_pscale(rng);
-        if (decaf::SecureBuffer(pp) != decaf::SecureBuffer(p)) {
+        if (SecureBuffer(pp) != SecureBuffer(p)) {
             test.fail();
             printf("Fail torque seq test\n");
         }
@@ -306,16 +308,30 @@ static void test_ec() {
             "unih = hash+add"
         );
             
-        point_check(test,p,q,r,x,0,Point(x.direct_scalarmul(decaf::SecureBuffer(p))),x*p,"direct mul");
+        point_check(test,p,q,r,x,0,Point(x.direct_scalarmul(SecureBuffer(p))),x*p,"direct mul");
     }
 }
 
-}; // template<decaf::GroupId GROUP>
+static void test_crypto() {
+    Test test("Sample crypto");
+    SpongeRng rng(Block("test_decaf_crypto"));
+
+    for (int i=0; i<NTESTS && test.passing_now; i++) {
+        PrivateKey<Group> priv1(rng), priv2(rng);
+        PublicKey<Group> pub1(priv1), pub2(priv2);
+        
+        SecureBuffer message(rng, i);
+        FixedArrayBuffer<PublicKey<Group>::SIG_BYTES> sig(priv1.sign(message));
+        pub1.verify(message, sig);
+    }
+}
+
+}; // template<GroupId GROUP>
 
 // FIXME cross-field
 static void test_decaf() {
     Test test("Sample crypto");
-    decaf::SpongeRng rng(decaf::Block("test_decaf"));
+    SpongeRng rng(Block("test_decaf"));
 
     decaf_255_symmetric_key_t proto1,proto2;
     decaf_255_private_key_t s1,s2;
@@ -325,8 +341,8 @@ static void test_decaf() {
     const char *message = "Hello, world!";
 
     for (int i=0; i<NTESTS && test.passing_now; i++) {
-        rng.read(decaf::TmpBuffer(proto1,sizeof(proto1)));
-        rng.read(decaf::TmpBuffer(proto2,sizeof(proto2)));
+        rng.read(TmpBuffer(proto1,sizeof(proto1)));
+        rng.read(TmpBuffer(proto2,sizeof(proto2)));
         decaf_255_derive_private_key(s1,proto1);
         decaf_255_private_to_public(p1,s1);
         decaf_255_derive_private_key(s2,proto2);
@@ -350,17 +366,19 @@ static void test_decaf() {
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
     
-    printf("Testing %s:\n", decaf::IsoEd25519::name());
-    Tests<decaf::IsoEd25519>::test_arithmetic();
-    Tests<decaf::IsoEd25519>::test_elligator();
-    Tests<decaf::IsoEd25519>::test_ec();
+    printf("Testing %s:\n",IsoEd25519::name());
+    Tests<IsoEd25519>::test_arithmetic();
+    Tests<IsoEd25519>::test_elligator();
+    Tests<IsoEd25519>::test_ec();
+    Tests<IsoEd25519>::test_crypto();
     test_decaf();
     
     printf("\n");
-    printf("Testing %s:\n", decaf::Ed448Goldilocks::name());
-    Tests<decaf::Ed448Goldilocks>::test_arithmetic();
-    Tests<decaf::Ed448Goldilocks>::test_elligator();
-    Tests<decaf::Ed448Goldilocks>::test_ec();
+    printf("Testing %s:\n", Ed448Goldilocks::name());
+    Tests<Ed448Goldilocks>::test_arithmetic();
+    Tests<Ed448Goldilocks>::test_elligator();
+    Tests<Ed448Goldilocks>::test_ec();
+    Tests<Ed448Goldilocks>::test_crypto();
     
     if (passing) printf("Passed all tests.\n");
     
