@@ -303,8 +303,8 @@ static void test_ec() {
         point_check(test,base,q,r,x,y,x*base+y*q,q.non_secret_combo_with_base(y,x),"ds vt mul");
         point_check(test,p,q,r,x,0,Precomputed(p)*x,p*x,"precomp mul");
         point_check(test,p,q,r,0,0,r,
-            Point::from_hash(buffer.slice(0,Point::HASH_BYTES))
-            + Point::from_hash(buffer.slice(Point::HASH_BYTES,Point::HASH_BYTES)),
+            Point::from_hash(Buffer(buffer).slice(0,Point::HASH_BYTES))
+            + Point::from_hash(Buffer(buffer).slice(Point::HASH_BYTES,Point::HASH_BYTES)),
             "unih = hash+add"
         );
             
@@ -320,8 +320,8 @@ static void test_crypto() {
         PrivateKey<Group> priv1(rng), priv2(rng);
         PublicKey<Group> pub1(priv1), pub2(priv2);
         
-        SecureBuffer message(rng, i);
-        FixedArrayBuffer<PublicKey<Group>::SIG_BYTES> sig(priv1.sign(message));
+        SecureBuffer message = rng.read(i);
+        SecureBuffer sig(priv1.sign(message));
         pub1.verify(message, sig);
     }
 }
@@ -341,8 +341,8 @@ static void test_decaf() {
     const char *message = "Hello, world!";
 
     for (int i=0; i<NTESTS && test.passing_now; i++) {
-        rng.read(TmpBuffer(proto1,sizeof(proto1)));
-        rng.read(TmpBuffer(proto2,sizeof(proto2)));
+        rng.read(Buffer(proto1,sizeof(proto1)));
+        rng.read(Buffer(proto2,sizeof(proto2)));
         decaf_255_derive_private_key(s1,proto1);
         decaf_255_private_to_public(p1,s1);
         decaf_255_derive_private_key(s2,proto2);

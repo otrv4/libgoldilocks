@@ -361,25 +361,25 @@ int main(int argc, char **argv) {
         SHA3<512> sha5;
         Strobe strobe(Strobe::CLIENT);
         unsigned char b1024[1024] = {1};
-        for (Benchmark b("SHAKE128 1kiB", 30); b.iter(); ) { shake1 += TmpBuffer(b1024,1024); }
-        for (Benchmark b("SHAKE256 1kiB", 30); b.iter(); ) { shake2 += TmpBuffer(b1024,1024); }
-        for (Benchmark b("SHA3-512 1kiB", 30); b.iter(); ) { sha5 += TmpBuffer(b1024,1024); }
-        strobe.key(TmpBuffer(b1024,1024));
+        for (Benchmark b("SHAKE128 1kiB", 30); b.iter(); ) { shake1 += Buffer(b1024,1024); }
+        for (Benchmark b("SHAKE256 1kiB", 30); b.iter(); ) { shake2 += Buffer(b1024,1024); }
+        for (Benchmark b("SHA3-512 1kiB", 30); b.iter(); ) { sha5 += Buffer(b1024,1024); }
+        strobe.key(Buffer(b1024,1024));
         strobe.respec(STROBE_128);
         for (Benchmark b("STROBE128 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(TmpBuffer(b1024,1024),TmpBuffer(b1024,1024),b.i>1);
+            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024),b.i>1);
         }
         strobe.respec(STROBE_256);
         for (Benchmark b("STROBE256 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(TmpBuffer(b1024,1024),TmpBuffer(b1024,1024),b.i>1);
+            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024),b.i>1);
         }
         strobe.respec(STROBE_KEYED_128);
         for (Benchmark b("STROBEk128 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(TmpBuffer(b1024,1024),TmpBuffer(b1024,1024),b.i>1);
+            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024),b.i>1);
         }
         strobe.respec(STROBE_KEYED_256);
         for (Benchmark b("STROBEk256 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(TmpBuffer(b1024,1024),TmpBuffer(b1024,1024),b.i>1);
+            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024),b.i>1);
         }
         /* TODO: scalarmul for verif, etc */
         Benches<IsoEd25519>::micro();

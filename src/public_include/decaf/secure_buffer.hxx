@@ -14,6 +14,7 @@
 #include <string>
 #include <sys/types.h>
 #include <stdio.h>
+#include <vector>
 
 /** @cond internal */
 #if __cplusplus >= 201103L
@@ -27,11 +28,67 @@
 
 namespace decaf {
 
+/**
+* Securely zeroize contents of memory.
+*/
+static inline void really_bzero(void *data, size_t size) { decaf_bzero(data,size); }
+
+/** @brief An allocator which zeros its memory on free */
+template<typename T, size_t alignment = 0> class SanitizingAllocator {
+/** @cond internal */
+/* Based on http://www.codeproject.com/Articles/4795/C-Standard-Allocator-An-Introduction-and-Implement */
+public: 
+   typedef T value_type;
+   typedef T* pointer;
+   typedef const T* const_pointer;
+   typedef T& reference;
+   typedef const T& const_reference;
+   typedef size_t size_type;
+   typedef ptrdiff_t difference_type;
+
+   template<typename U> struct rebind { typedef SanitizingAllocator<U> other; };
+   inline SanitizingAllocator() NOEXCEPT {}
+   inline ~SanitizingAllocator() NOEXCEPT {}
+   inline SanitizingAllocator(const SanitizingAllocator &) NOEXCEPT {}
+   template<typename U, size_t a> inline SanitizingAllocator(const SanitizingAllocator<U, a> &) NOEXCEPT {}
+
+   inline T* address(T& r) const NOEXCEPT { return &r; }
+   inline const T* address(const T& r) const NOEXCEPT { return &r; }
+
+   inline T* allocate (
+       size_type cnt, 
+       typename std::allocator<void>::const_pointer = 0
+   ) throw(std::bad_alloc) { 
+       void *v;
+       int ret = 0;
+    
+       if (alignment) ret = posix_memalign(&v, alignment, cnt * sizeof(T));
+       else v = malloc(cnt * sizeof(T));
+    
+       if (ret || v==NULL) throw(std::bad_alloc());
+       return reinterpret_cast<T*>(v);
+   }
+
+   inline void deallocate(T* p, size_t size) NOEXCEPT {
+       if (p==NULL) return;
+       really_bzero(reinterpret_cast<void*>(p), size);
+       free(reinterpret_cast<void*>(p));
+   }
+
+   inline size_t max_size() const NOEXCEPT { return std::numeric_limits<size_t>::max() / sizeof(T); }
+
+   inline void construct(T* p, const T& t) { new(p) T(t); }
+   inline void destroy(T* p) { p->~T(); }
+
+   inline bool operator==(SanitizingAllocator const&) const NOEXCEPT { return true; }
+   inline bool operator!=(SanitizingAllocator const&) const NOEXCEPT { return false; }
+/** @endcond */
+};
+
+typedef std::vector<unsigned char, SanitizingAllocator<unsigned char, 0> > SecureBuffer;
+
 /**@cond internal*/
-/** Forward-declare sponge RNG object */
 class Buffer;
-class TmpBuffer;
-class SecureBuffer;
 /**@endcond*/
     
 /** @brief An exception for when crypto (ie point decode) has failed. */
@@ -67,19 +124,12 @@ protected:
     
 public:
     /** @brief Read into a Buffer */
-    virtual void read(Buffer &buffer) NOEXCEPT = 0;
-    
-    /** @brief Read into a value-passed (eg temporary) TmpBuffer. */
-    inline void read(TmpBuffer buffer) NOEXCEPT;
+    virtual void read(Buffer buffer) NOEXCEPT = 0;
 
     /** @brief Read into a SecureBuffer. */
     inline SecureBuffer read(size_t length) throw(std::bad_alloc);
 };
 
-/**
- * Securely zeroize contents of memory.
- */
-static inline void really_bzero(void *data, size_t size) { decaf_bzero(data,size); }
 
 /** A reference to a block of data, which (when accessed through this base class) is const. */
 class Block {
@@ -105,15 +155,22 @@ public:
         ((unsigned char *)(s.data()))
     #endif
     ), size_(s.size()) {}
+    
+    /** Block from std::vector */
+    template<class alloc> inline Block(const std::vector<unsigned char,alloc> &s)
+        : data_(((unsigned char *)&(s)[0])), size_(s.size()) {}
 
     /** Get const data */
     inline const unsigned char *data() const NOEXCEPT { return data_; }
+    
+    /** Subscript */
+    inline const unsigned char &operator[](size_t off) const throw(std::out_of_range) {
+        if (off >= size()) throw(std::out_of_range("decaf::Block"));
+        return data_[off];
+    }
 
     /** Get the size */
     inline size_t size() const NOEXCEPT { return size_; }
-
-    /** Autocast to const unsigned char * */
-    inline operator const unsigned char*() const NOEXCEPT { return data_; }
 
     /** Convert to C++ string */
     inline std::string get_string() const {
@@ -122,46 +179,46 @@ public:
 
     /** Slice the buffer*/
     inline Block slice(size_t off, size_t length) const throw(LengthException) {
-        if (off > size() || length > size() - off)
-            throw LengthException();
+        if (off > size() || length > size() - off) throw LengthException();
         return Block(data()+off, length);
     }
     
-    /** @cond internal */
-    inline decaf_bool_t operator>=(const Block &b) const NOEXCEPT DELETE;
-    inline decaf_bool_t operator<=(const Block &b) const NOEXCEPT DELETE;
-    inline decaf_bool_t operator> (const Block &b) const NOEXCEPT DELETE;
-    inline decaf_bool_t operator< (const Block &b) const NOEXCEPT DELETE;
-    /** @endcond */
-    
     /* Content-wise comparison; constant-time if they are the same length. */ 
-    inline decaf_bool_t operator!=(const Block &b) const NOEXCEPT {
-        if (b.size() != size()) return true;
-        return ~decaf_memeq(b,*this,size());
-    }
-    
-    /* Content-wise comparison; constant-time if they are the same length. */ 
-    inline decaf_bool_t operator==(const Block &b) const NOEXCEPT {
-        return ~(*this != b);
+    inline decaf_bool_t contents_equal(const Block &b) const NOEXCEPT {
+        if (b.size() != size()) return false;
+        return decaf_memeq(b.data(),data(),size());
     }
 
     /** Virtual destructor for SecureBlock. TODO: probably means vtable?  Make bool? */
     inline virtual ~Block() {};
     
     /** Debugging print in hex */
-    inline void debug_print(const char *name = NULL) {
+    inline void debug_print_hex(const char *name = NULL) {
         if (name) printf("%s = ", name);
         for (size_t s = 0; s < size(); s++) printf("%02x", data_[s]);
         printf("\n");
     }
+    
+private:
+    /** @cond internal */
+    inline decaf_bool_t operator>=(const Block &b) const NOEXCEPT DELETE;
+    inline decaf_bool_t operator<=(const Block &b) const NOEXCEPT DELETE;
+    inline decaf_bool_t operator> (const Block &b) const NOEXCEPT DELETE;
+    inline decaf_bool_t operator< (const Block &b) const NOEXCEPT DELETE;
+    /** @endcond */
 };
 
 /** A fixed-size block */
 template<size_t Size> class FixedBlock : public Block {
 public:
     /** Check a block's length. */
-    inline FixedBlock(const Block &b) throw(LengthException) : Block(b,Size) {
+    inline FixedBlock(const Block &b) throw(LengthException) : Block(b.data(),Size) {
         if (Size != b.size()) throw LengthException();
+    }
+    
+    /** Block from std::vector */
+    template<class alloc> inline FixedBlock(const std::vector<unsigned char,alloc> &s) : Block(s) {
+        if (Size != s.size()) throw LengthException();
     }
     
     /** Explicitly pass a C buffer. */
@@ -176,26 +233,29 @@ public:
 
     /** Unowned init */
     inline Buffer(unsigned char *data, size_t size) NOEXCEPT : Block(data,size) {}
-
-    /** Get unconst data */
-    inline unsigned char *data() NOEXCEPT { return data_; }
+    
+    /** Block from std::vector */
+    template<class alloc> inline Buffer(std::vector<unsigned char,alloc> &s) : Block(s) {}
 
     /** Get const data */
     inline const unsigned char *data() const NOEXCEPT { return data_; }
 
-    /** Autocast to const unsigned char * */
-    inline operator const unsigned char*() const NOEXCEPT { return data_; }
-
-    /** Autocast to unsigned char */
-    inline operator unsigned char*() NOEXCEPT { return data_; }
+    /** Cast to unsigned char */
+    inline unsigned char* data() NOEXCEPT { return data_; }
 
     /** Slice the buffer*/
-    inline TmpBuffer slice(size_t off, size_t length) throw(LengthException);
+    inline Buffer slice(size_t off, size_t length) throw(LengthException);
+    
+    /** Subscript */
+    inline unsigned char &operator[](size_t off) throw(std::out_of_range) {
+        if (off >= size()) throw(std::out_of_range("decaf::Buffer"));
+        return data_[off];
+    }
     
     /** Copy from another block */
     inline void assign(const Block b) throw(LengthException) {
         if (b.size() != size()) throw LengthException();
-        memmove(*this,b,size());
+        memmove(data(),b.data(),size());
     }
     
     /** Securely set the buffer to 0. */
@@ -207,7 +267,12 @@ public:
 template<size_t Size> class FixedBuffer : public Buffer {
 public:
     /** Check a block's length. */
-    inline FixedBuffer(Buffer &b) throw(LengthException) : Buffer(b,Size) {
+    inline FixedBuffer(Buffer b) throw(LengthException) : Buffer(b) {
+        if (Size != b.size()) throw LengthException();
+    }
+    
+    /** Check a block's length. */
+    inline FixedBuffer(SecureBuffer &b) throw(LengthException) : Buffer(b) {
         if (Size != b.size()) throw LengthException();
     }
     
@@ -218,13 +283,6 @@ public:
     inline operator FixedBlock<Size>() const NOEXCEPT {
         return FixedBlock<Size>(data());
     }
-};
-
-/** A temporary reference to a writeable buffer, for converting C to C++. */
-class TmpBuffer : public Buffer {
-public:
-    /** Unowned init */
-    inline TmpBuffer(unsigned char *data, size_t size) NOEXCEPT : Buffer(data,size) {}
 };
 
 /** A fixed-size stack-allocated buffer (for NOEXCEPT semantics) */
@@ -245,18 +303,18 @@ public:
     
     /** Copy constructor */
     inline explicit FixedArrayBuffer(const FixedBlock<Size> &b) NOEXCEPT : FixedBuffer<Size>(storage) {
-        memcpy(storage,b,Size);
+        memcpy(storage,b.data(),Size);
     }
     
     /** Copy constructor */
     inline explicit FixedArrayBuffer(const Block &b) throw(LengthException) : FixedBuffer<Size>(storage) {
         if (b.size() != Size) throw LengthException();
-        memcpy(storage,b,Size);
+        memcpy(storage,b.data(),Size);
     }
     
     /** Copy constructor */
     inline explicit FixedArrayBuffer(const FixedArrayBuffer<Size> &b) NOEXCEPT : FixedBuffer<Size>(storage) {
-        memcpy(storage,b,Size);
+        memcpy(storage,b.data(),Size);
     }
     
     /** Destroy the buffer */
@@ -264,90 +322,9 @@ public:
 };
 
 /** @cond internal */
-inline void Rng::read(TmpBuffer buffer) NOEXCEPT { read((Buffer &)buffer); }
-/** @endcond */
-
-/** A self-erasing block of data */
-class SecureBuffer : public Buffer {
-public:
-    /** Null secure block */
-    inline SecureBuffer() NOEXCEPT : Buffer() {}
-
-    /** Construct empty from size */
-    inline SecureBuffer(size_t size) throw(std::bad_alloc) {
-        data_ = new unsigned char[size_ = size];
-        memset(data_,0,size);
-    }
-
-    /** Construct from data */
-    inline SecureBuffer(const unsigned char *data, size_t size) throw(std::bad_alloc) {
-        data_ = new unsigned char[size_ = size];
-        memcpy(data_, data, size);
-    }
-    
-    /** Construct from random */
-    inline SecureBuffer(Rng &r, size_t size) NOEXCEPT {
-        data_ = new unsigned char[size_ = size];
-        r.read(*this);
-    }
-
-    /** Copy constructor */
-    inline SecureBuffer(const Block &copy) throw(std::bad_alloc) : Buffer() { *this = copy; }
-
-    /** Copy-assign constructor */
-    inline SecureBuffer& operator=(const Block &copy) throw(std::bad_alloc) {
-        if (&copy == this) return *this;
-        clear();
-        data_ = new unsigned char[size_ = copy.size()];
-        memcpy(data_,copy.data(),size_);
-        return *this;
-    }
-
-    /** Copy-assign constructor */
-    inline SecureBuffer& operator=(const SecureBuffer &copy) throw(std::bad_alloc) {
-        if (&copy == this) return *this;
-        clear();
-        data_ = new unsigned char[size_ = copy.size()];
-        memcpy(data_,copy.data(),size_);
-        return *this;
-    }
-
-    /** Destructor zeroizes data */
-    ~SecureBuffer() NOEXCEPT { clear(); }
-
-    /** Clear data */
-    inline void clear() NOEXCEPT {
-        if (data_ == NULL) return;
-        zeroize();
-        delete[] data_;
-        data_ = NULL;
-        size_ = 0;
-    }
-
-#if __cplusplus >= 201103L
-    /** Move constructor */
-    inline SecureBuffer(SecureBuffer &&move) { *this = move; }
-
-    /** Move non-constructor */
-    inline SecureBuffer(Block &&move) { *this = (Block &)move; }
-
-    /** Move-assign constructor. TODO: check that this actually gets used.*/ 
-    inline SecureBuffer& operator=(SecureBuffer &&move) {
-        clear();
-        data_ = move.data_; move.data_ = NULL;
-        size_ = move.size_; move.size_ = 0;
-        return *this;
-    }
-
-    /** C++11-only explicit cast */
-    inline explicit operator std::string() const { return get_string(); }
-#endif
-};
-
-/** @cond internal */
-TmpBuffer Buffer::slice(size_t off, size_t length) throw(LengthException) {
+Buffer Buffer::slice(size_t off, size_t length) throw(LengthException) {
     if (off > size() || length > size() - off) throw LengthException();
-    return TmpBuffer(data()+off, length);
+    return Buffer(data()+off, length);
 }
 
 inline SecureBuffer Rng::read(size_t length) throw(std::bad_alloc) {

@@ -130,7 +130,7 @@ public:
     static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
         Scalar &sc, const FixedBlock<SER_BYTES> buffer
     ) NOEXCEPT {
-        return decaf_255_scalar_decode(sc.s,buffer);
+        return decaf_255_scalar_decode(sc.s,buffer.data());
     }
     
     /** @brief Encode to fixed-length string */
@@ -140,7 +140,12 @@ public:
     
     /** @brief Encode to fixed-length buffer */
     inline void encode(FixedBuffer<SER_BYTES> buffer) const NOEXCEPT{
-        decaf_255_scalar_encode(buffer, s);
+        decaf_255_scalar_encode(buffer.data(), s);
+    }
+
+    /** @brief Encode to fixed-length buffer */
+    inline SecureBuffer encode() const throw(std::bad_alloc) {
+        SecureBuffer buffer(SER_BYTES); encode(buffer); return buffer;
     }
     
     /** Add. */
@@ -293,15 +298,15 @@ public:
         if (s.size() < HASH_BYTES) {
             SecureBuffer b(HASH_BYTES);
             memcpy(b.data(), s.data(), s.size());
-            decaf_255_point_from_hash_nonuniform(p,b);
+            decaf_255_point_from_hash_nonuniform(p,b.data());
         } else if (s.size() == HASH_BYTES) {
-            decaf_255_point_from_hash_nonuniform(p,s);
+            decaf_255_point_from_hash_nonuniform(p,s.data());
         } else if (s.size() < 2*HASH_BYTES) {
             SecureBuffer b(2*HASH_BYTES);
             memcpy(b.data(), s.data(), s.size());
-            decaf_255_point_from_hash_uniform(p,b);
+            decaf_255_point_from_hash_uniform(p,b.data());
         } else {
-            decaf_255_point_from_hash_uniform(p,s);
+            decaf_255_point_from_hash_uniform(p,s.data());
         }
     }
     
@@ -316,7 +321,12 @@ public:
     * @brief Encode to a C buffer.  The identity encodes to all zeros.
     */
     inline void encode(FixedBuffer<SER_BYTES> buffer) const NOEXCEPT {
-        decaf_255_point_encode(buffer, p);
+        decaf_255_point_encode(buffer.data(), p);
+    }
+
+    /** @brief Encode to fixed-length buffer */
+    inline SecureBuffer encode() const throw(std::bad_alloc) {
+        SecureBuffer buffer(SER_BYTES); encode(buffer); return buffer;
     }
     
     /** @brief Point add. */
@@ -394,7 +404,7 @@ public:
     
     /** @brief Return a point equal to *this, whose internal data has a modified representation. */
     inline Point debugging_pscale(const FixedBlock<SER_BYTES> factor) const NOEXCEPT {
-        Point q; decaf_255_point_debugging_pscale(q.p,p,factor); return q;
+        Point q; decaf_255_point_debugging_pscale(q.p,p,factor.data()); return q;
     }
     
     /** @brief Return a point equal to *this, whose internal data has a randomized representation. */
@@ -407,11 +417,11 @@ public:
      * or leave buf unmodified and return false.
      */
     inline bool invert_elligator (
-        Buffer &buf, uint16_t hint
+        Buffer buf, uint16_t hint
     ) const NOEXCEPT {
         unsigned char buf2[2*HASH_BYTES];
         memset(buf2,0,sizeof(buf2));
-        memcpy(buf2,buf,(buf.size() > 2*HASH_BYTES) ? 2*HASH_BYTES : buf.size());
+        memcpy(buf2,buf.data(),(buf.size() > 2*HASH_BYTES) ? 2*HASH_BYTES : buf.size());
         decaf_bool_t ret;
         if (buf.size() > HASH_BYTES) {
             ret = decaf_255_invert_elligator_uniform(buf2, p, hint);
@@ -423,7 +433,7 @@ public:
         }
         if (ret) {
             /* TODO: make this constant time?? */
-            memcpy(buf,buf2,(buf.size() < HASH_BYTES) ? buf.size() : HASH_BYTES);
+            memcpy(buf.data(),buf2,(buf.size() < HASH_BYTES) ? buf.size() : HASH_BYTES);
         }
         decaf_bzero(buf2,sizeof(buf2));
         return !!ret;
@@ -435,7 +445,7 @@ public:
         SecureBuffer out(STEG_BYTES);
         bool done;
         do {
-            rng.read(out.slice(HASH_BYTES-1,STEG_BYTES-HASH_BYTES+1));
+            rng.read(Buffer(out).slice(HASH_BYTES-1,STEG_BYTES-HASH_BYTES+1));
             done = invert_elligator(out, out[HASH_BYTES-1]); 
         } while (!done);
         return out;
@@ -553,7 +563,7 @@ inline SecureBuffer IsoEd25519::Scalar::direct_scalarmul (
     decaf_bool_t short_circuit
 ) const throw(CryptoException) {
     SecureBuffer out(IsoEd25519::Point::SER_BYTES);
-    if (!decaf_255_direct_scalarmul(out, in.data(), s, allow_identity, short_circuit))
+    if (!decaf_255_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit))
         throw CryptoException();
     return out;
 }

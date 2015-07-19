@@ -57,7 +57,7 @@ public:
     inline explicit PublicKey(const PrivateKey<Group> &priv) NOEXCEPT;
     
     /** @brief Read a private key from a string*/
-    inline explicit PublicKey(const FixedBlock<Group::Point::SER_BYTES> b) NOEXCEPT : ser(b) {}
+    inline explicit PublicKey(const FixedBlock<Group::Point::SER_BYTES> &b) NOEXCEPT : ser(b) {}
     
     /** @brief Return the corresponding EC point */
     inline typename Group::Point point() const throw(CryptoException) {
@@ -68,11 +68,10 @@ public:
     inline void verify_shake(const SHAKE<SHAKE_BITS> &ctx_, const FixedBlock<SIG_BYTES> &sig) throw(CryptoException) {
         SHAKE<SHAKE_BITS> ctx(ctx_);
         ctx << ser << sig.slice(0,Group::Point::SER_BYTES);
-        FixedBuffer<CHALLENGE_BYTES> challenge(ctx.output(CHALLENGE_BYTES));
-        challenge.debug_print("ch ver ");
+        SecureBuffer challenge(ctx.output(CHALLENGE_BYTES));
         
         const typename Group::Point combo = point().non_secret_combo_with_base(
-            challenge,
+            typename Group::Scalar(challenge),
             sig.slice(Group::Point::SER_BYTES, Group::Scalar::SER_BYTES)
         );
         if (combo != typename Group::Point(sig.slice(0,Group::Point::SER_BYTES)))
@@ -128,9 +127,9 @@ public:
     /** @brief Uncompressed representation */
     inline SecureBuffer ser_uncompressed() const throw(std::bad_alloc) {
         SecureBuffer b(SYM_BYTES + Group::Scalar::SER_BYTES + Group::Point::SER_BYTES);
-        b.slice(0,SYM_BYTES).assign(sym);
-        b.slice(SYM_BYTES,Group::Scalar::SER_BYTES).assign(scalar);
-        b.slice(SYM_BYTES+Group::Scalar::SER_BYTES,Group::Point::SER_BYTES).assign(pub_.ser);
+        Buffer(b).slice(0,SYM_BYTES).assign(sym);
+        Buffer(b).slice(SYM_BYTES,Group::Scalar::SER_BYTES).assign(scalar);
+        Buffer(b).slice(SYM_BYTES+Group::Scalar::SER_BYTES,Group::Point::SER_BYTES).assign(pub_.ser);
         return b;
     }
     
@@ -143,13 +142,12 @@ public:
         
         ctx = ctx_;
         ctx << pub_.ser << g_nonce;
-        FixedBuffer<PublicKey<Group>::CHALLENGE_BYTES> challenge(ctx.output(PublicKey<Group>::CHALLENGE_BYTES));
-        challenge.debug_print("ch sign");
-        SecureBuffer response(nonce - scalar * challenge);
+        SecureBuffer challenge(ctx.output(PublicKey<Group>::CHALLENGE_BYTES));
+        SecureBuffer response((nonce - scalar * typename Group::Scalar(challenge)).encode());
         
         SecureBuffer ret(PublicKey<Group>::SIG_BYTES);
-        ret.slice(0,Group::Point::SER_BYTES).assign(g_nonce);
-        ret.slice(Group::Point::SER_BYTES, Group::Scalar::SER_BYTES).assign(response);
+        Buffer(ret).slice(0,Group::Point::SER_BYTES).assign(g_nonce);
+        Buffer(ret).slice(Group::Point::SER_BYTES, Group::Scalar::SER_BYTES).assign(response);
         return ret;
     }
     
