@@ -214,15 +214,23 @@ public:
         if (!strobe_key(sp, data.data(), data.size(), more)) throw ProtocolException();
     }
 
-    inline void nonce(const Block &data, bool more = false
+    inline void key (
+        const Serializable &data, bool more = false
     ) throw(ProtocolException) {
+        key(data.serialize(), more);
+    }
+
+    inline void nonce(const Block &data, bool more = false) throw(ProtocolException) {
         if (!strobe_nonce(sp, data.data(), data.size(), more)) throw ProtocolException();
     }
 
-    inline void send_plaintext(const Block &data, bool more = false
-    ) throw(ProtocolException) {
+    inline void send_plaintext(const Block &data, bool more = false) throw(ProtocolException) {
         if (!strobe_plaintext(sp, data.data(), data.size(), true, more))
             throw(ProtocolException());
+    }
+
+    inline void send_plaintext(const Serializable &data, bool more = false) throw(ProtocolException) {
+        send_plaintext(data.serialize(), more);
     }
 
     inline void recv_plaintext(const Block &data, bool more = false
@@ -231,10 +239,17 @@ public:
             throw(ProtocolException());
     }
 
-    inline void ad(const Block &data, bool more = false
-    ) throw(ProtocolException) {
+    inline void recv_plaintext(const Serializable &data, bool more = false) throw(ProtocolException) {
+        recv_plaintext(data.serialize(), more);
+    }
+
+    inline void ad(const Block &data, bool more = false) throw(ProtocolException) {
         if (!strobe_ad(sp, data.data(), data.size(), more))
             throw(ProtocolException());
+    }
+
+    inline void ad(const Serializable &data, bool more = false) throw(ProtocolException) {
+        ad(data.serialize(), more);
     }
     
     inline void encrypt_no_auth(
@@ -249,6 +264,11 @@ public:
         SecureBuffer out(data.size()); encrypt_no_auth(out, data, more); return out;
     }
     
+    inline SecureBuffer encrypt_no_auth(const Serializable &data, bool more = false
+    ) throw(ProtocolException) {
+        return encrypt_no_auth(data.serialize(), more);
+    }
+    
     inline void decrypt_no_auth(
         Buffer out, const Block &data, bool more = false
     ) throw(LengthException,ProtocolException) {
@@ -259,6 +279,11 @@ public:
     inline SecureBuffer decrypt_no_auth(const Block &data, bool more = false
     ) throw(ProtocolException) {
         SecureBuffer out(data.size()); decrypt_no_auth(out, data, more); return out;
+    }
+    
+    inline SecureBuffer decrypt_no_auth(const Serializable &data, bool more = false
+    ) throw(ProtocolException) {
+        return decrypt_no_auth(data.serialize(),more);
     }
     
     inline void produce_auth(Buffer out) throw(LengthException,ProtocolException) {
@@ -286,12 +311,24 @@ public:
         SecureBuffer out(data.size() + auth); encrypt(out, data, auth); return out;
     }
     
+    inline SecureBuffer encrypt (
+        const Serializable &data, uint8_t auth = 8
+    ) throw(LengthException,ProtocolException,std::bad_alloc ){
+        return encrypt(data.serialize(), auth);
+    }
+    
     inline void decrypt (
         Buffer out, const Block &data, uint8_t bytes = 8
     ) throw(LengthException, CryptoException, ProtocolException) {
         if (out.size() > data.size() || out.size() != data.size() - bytes) throw LengthException();
         decrypt_no_auth(out, data.slice(0,out.size()));
         verify_auth(data.slice(out.size(),bytes));
+    }
+    
+    inline SecureBuffer decrypt (
+        const Serializable &data, uint8_t auth = 8
+    ) throw(LengthException,ProtocolException,CryptoException, std::bad_alloc ){
+        return decrypt(data.serialize(), auth);
     }
     
     inline SecureBuffer decrypt (

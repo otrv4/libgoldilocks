@@ -51,7 +51,7 @@ typedef typename Group::Precomputed Precomputed;
 
 static void print(const char *name, const Scalar &x) {
     unsigned char buffer[Scalar::SER_BYTES];
-    x.encode(FixedBuffer<Scalar::SER_BYTES>(buffer));
+    x.serializeInto(buffer);
     printf("  %s = 0x", name);
     for (int i=sizeof(buffer)-1; i>=0; i--) {
         printf("%02x", buffer[i]);
@@ -68,8 +68,8 @@ static void hexprint(const char *name, const SecureBuffer &buffer) {
 }
 
 static void print(const char *name, const Point &x) {
-    FixedArrayBuffer<Point::SER_BYTES> buffer;
-    x.encode(buffer);
+    unsigned char buffer[Point::SER_BYTES];
+    x.serializeInto(buffer);
     printf("  %s = 0x", name);
     for (int i=Point::SER_BYTES-1; i>=0; i--) {
         printf("%02x", buffer[i]);
@@ -284,9 +284,9 @@ static void test_ec() {
         rng.read(buffer);
         Point r = Point::from_hash(buffer);
         
-        point_check(test,p,q,r,0,0,p,Point((SecureBuffer)p),"round-trip");
+        point_check(test,p,q,r,0,0,p,Point(p.serialize()),"round-trip");
         Point pp = p.debugging_torque().debugging_pscale(rng);
-        if (SecureBuffer(pp) != SecureBuffer(p)) {
+        if (!memeq(pp.serialize(),p.serialize())) {
             test.fail();
             printf("Fail torque seq test\n");
         }
@@ -308,7 +308,7 @@ static void test_ec() {
             "unih = hash+add"
         );
             
-        point_check(test,p,q,r,x,0,Point(x.direct_scalarmul(SecureBuffer(p))),x*p,"direct mul");
+        point_check(test,p,q,r,x,0,Point(x.direct_scalarmul(p.serialize())),x*p,"direct mul");
     }
 }
 

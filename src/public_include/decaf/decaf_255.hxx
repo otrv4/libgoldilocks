@@ -38,8 +38,10 @@
 /** @cond internal */
 #if __cplusplus >= 201103L
 #define NOEXCEPT noexcept
+#define FINAL final
 #else
 #define NOEXCEPT throw()
+#define FINAL
 #endif
 /** @endcond */
 
@@ -64,8 +66,9 @@ class Precomputed;
 /**
  * @brief A scalar modulo the curve order.
  * Supports the usual arithmetic operations, all in constant time.
+ * FIXME: make it clearer which init-from-buffer operations reject scalars that are too big.
  */
-class Scalar {
+class Scalar : public Serializable {
 private:
     /** @brief wrapped C type */
     typedef decaf_255_scalar_t Wrapped;
@@ -100,6 +103,14 @@ public:
     
     /** @brief Construct from arbitrary-length little-endian byte sequence. */
     inline Scalar(const Block &buffer) NOEXCEPT { *this = buffer; }
+
+    /** @brief Serializable instance */
+    virtual inline size_t serSize() const NOEXCEPT FINAL { return SER_BYTES; }
+    
+    /** @brief Serializable instance */
+    virtual inline void serializeInto(unsigned char *buffer) const NOEXCEPT FINAL {
+        decaf_255_scalar_encode(buffer, s);
+    }
     
     /** @brief Assignment. */
     inline Scalar& operator=(const Scalar &x) NOEXCEPT {  decaf_255_scalar_copy(s,x.s); return *this; }
@@ -131,21 +142,6 @@ public:
         Scalar &sc, const FixedBlock<SER_BYTES> buffer
     ) NOEXCEPT {
         return decaf_255_scalar_decode(sc.s,buffer.data());
-    }
-    
-    /** @brief Encode to fixed-length string */
-    inline operator SecureBuffer() const NOEXCEPT {
-        SecureBuffer buf(SER_BYTES); encode(buf); return buf;
-    }
-    
-    /** @brief Encode to fixed-length buffer */
-    inline void encode(FixedBuffer<SER_BYTES> buffer) const NOEXCEPT{
-        decaf_255_scalar_encode(buffer.data(), s);
-    }
-
-    /** @brief Encode to fixed-length buffer */
-    inline SecureBuffer encode() const throw(std::bad_alloc) {
-        SecureBuffer buffer(SER_BYTES); encode(buffer); return buffer;
     }
     
     /** Add. */
@@ -201,7 +197,7 @@ public:
 /**
  * @brief Element of prime-order group.
  */
-class Point {
+class Point : public Serializable {
 public:
     typedef decaf_255_point_t Wrapped;
     
@@ -242,17 +238,6 @@ public:
             set_to_hash(b);
         }
     }
-    
-    /**
-     * @brief Initialize from C++ fixed-length byte string.
-     * The all-zero string maps to the identity.
-     *
-     * @throw CryptoException the string was the wrong length, or wasn't the encoding of a point,
-     * or was the identity and allow_identity was DECAF_FALSE.
-     */
-    inline explicit Point(const Block &s, decaf_bool_t allow_identity=DECAF_TRUE) throw(CryptoException) {
-        if (!decode(*this,s,allow_identity)) throw CryptoException();
-    }
    
    /**
     * @brief Initialize from a fixed-length byte string.
@@ -261,7 +246,7 @@ public:
     * @throw CryptoException the string was the wrong length, or wasn't the encoding of a point,
     * or was the identity and allow_identity was DECAF_FALSE.
     */
-    inline explicit Point(const FixedBuffer<SER_BYTES> buffer, decaf_bool_t allow_identity=DECAF_TRUE)
+    inline explicit Point(const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE)
         throw(CryptoException) { if (!decode(*this,buffer,allow_identity)) throw CryptoException(); }
     
     /**
@@ -273,7 +258,7 @@ public:
      * or was the identity and allow_identity was DECAF_FALSE.  Contents of the buffer are undefined.
      */    
     static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
-        Point &p, const FixedBlock<SER_BYTES> buffer, decaf_bool_t allow_identity=DECAF_TRUE
+        Point &p, const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE
     ) NOEXCEPT {
         return decaf_255_point_decode(p.p,buffer.data(),allow_identity);
     }
@@ -309,24 +294,13 @@ public:
             decaf_255_point_from_hash_uniform(p,s.data());
         }
     }
-    
-    /**
-     * @brief Encode to string.  The identity encodes to the all-zero string.
-     */
-    inline operator SecureBuffer() const NOEXCEPT {
-        SecureBuffer buffer(SER_BYTES); encode(buffer); return buffer;
-    }
-   
-   /**
-    * @brief Encode to a C buffer.  The identity encodes to all zeros.
-    */
-    inline void encode(FixedBuffer<SER_BYTES> buffer) const NOEXCEPT {
-        decaf_255_point_encode(buffer.data(), p);
-    }
 
-    /** @brief Encode to fixed-length buffer */
-    inline SecureBuffer encode() const throw(std::bad_alloc) {
-        SecureBuffer buffer(SER_BYTES); encode(buffer); return buffer;
+    /** @brief Serializable instance */
+    virtual inline size_t serSize() const NOEXCEPT FINAL { return SER_BYTES; }
+    
+    /** @brief Serializable instance */
+    virtual inline void serializeInto(unsigned char *buffer) const NOEXCEPT FINAL {
+        decaf_255_point_encode(buffer, p);
     }
     
     /** @brief Point add. */
@@ -570,6 +544,7 @@ inline SecureBuffer IsoEd25519::Scalar::direct_scalarmul (
 /** endcond */
 
 #undef NOEXCEPT
+#undef FINAL
 } /* namespace decaf */
 
 #endif /* __DECAF_255_HXX__ */

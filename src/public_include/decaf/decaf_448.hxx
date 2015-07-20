@@ -38,8 +38,10 @@
 /** @cond internal */
 #if __cplusplus >= 201103L
 #define NOEXCEPT noexcept
+#define FINAL final
 #else
 #define NOEXCEPT throw()
+#define FINAL
 #endif
 /** @endcond */
 
@@ -65,7 +67,7 @@ class Precomputed;
  * @brief A scalar modulo the curve order.
  * Supports the usual arithmetic operations, all in constant time.
  */
-class Scalar {
+class Scalar : public Serializable {
 private:
     /** @brief wrapped C type */
     typedef decaf_448_scalar_t Wrapped;
@@ -133,14 +135,12 @@ public:
         return decaf_448_scalar_decode(sc.s,buffer.data());
     }
     
-    /** @brief Encode to fixed-length buffer */
-    inline void encode(FixedBuffer<SER_BYTES> buffer) const NOEXCEPT{
-        decaf_448_scalar_encode(buffer.data(), s);
-    }
+    /** @brief Serializable instance */
+    virtual inline size_t serSize() const NOEXCEPT FINAL { return SER_BYTES; }
     
-    /** @brief Encode to fixed-length buffer */
-    inline SecureBuffer encode() const throw(std::bad_alloc) {
-        SecureBuffer buffer(SER_BYTES); encode(buffer); return buffer;
+    /** @brief Serializable instance */
+    virtual inline void serializeInto(unsigned char *buffer) const NOEXCEPT FINAL {
+        decaf_448_scalar_encode(buffer, s);
     }
     
     /** Add. */
@@ -201,7 +201,7 @@ public:
 /**
  * @brief Element of prime-order group.
  */
-class Point {
+class Point : public Serializable {
 public:
     /** @brief Size of a serialized element */
     static const size_t SER_BYTES = DECAF_448_SER_BYTES;
@@ -240,17 +240,6 @@ public:
             set_to_hash(b);
         }
     }
-    
-    /**
-     * @brief Initialize from C++ fixed-length byte string.
-     * The all-zero string maps to the identity.
-     *
-     * @throw CryptoException the string was the wrong length, or wasn't the encoding of a point,
-     * or was the identity and allow_identity was DECAF_FALSE.
-     */
-    inline explicit Point(const Block &s, decaf_bool_t allow_identity=DECAF_TRUE) throw(CryptoException) {
-        if (!decode(*this,s,allow_identity)) throw CryptoException();
-    }
    
    /**
     * @brief Initialize from a fixed-length byte string.
@@ -259,7 +248,7 @@ public:
     * @throw CryptoException the string was the wrong length, or wasn't the encoding of a point,
     * or was the identity and allow_identity was DECAF_FALSE.
     */
-    inline explicit Point(const FixedBuffer<SER_BYTES> buffer, decaf_bool_t allow_identity=DECAF_TRUE)
+    inline explicit Point(const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE)
         throw(CryptoException) { if (!decode(*this,buffer,allow_identity)) throw CryptoException(); }
     
     /**
@@ -271,7 +260,7 @@ public:
      * or was the identity and allow_identity was DECAF_FALSE.  Contents of the buffer are undefined.
      */    
     static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
-        Point &p, const FixedBlock<SER_BYTES> buffer, decaf_bool_t allow_identity=DECAF_TRUE
+        Point &p, const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE
     ) NOEXCEPT {
         return decaf_448_point_decode(p.p,buffer.data(),allow_identity);
     }
@@ -316,17 +305,13 @@ public:
         decaf_448_point_encode(buffer.data(), p);
         return buffer;
     }
-   
-   /**
-    * @brief Encode to a C buffer.  The identity encodes to all zeros.
-    */
-    inline void encode(FixedBuffer<SER_BYTES> buffer) const NOEXCEPT{
-        decaf_448_point_encode(buffer.data(), p);
-    }
-
-    /** @brief Encode to fixed-length buffer */
-    inline SecureBuffer encode() const throw(std::bad_alloc) {
-        SecureBuffer buffer(SER_BYTES); encode(buffer); return buffer;
+    
+    /** @brief Serializable instance */
+    virtual inline size_t serSize() const NOEXCEPT FINAL { return SER_BYTES; }
+    
+    /** @brief Serializable instance */
+    virtual inline void serializeInto(unsigned char *buffer) const NOEXCEPT FINAL {
+        decaf_448_point_encode(buffer, p);
     }
     
     /** @brief Point add. */
@@ -559,6 +544,7 @@ public:
 }; /* struct Decaf448 */
 
 #undef NOEXCEPT
+#undef FINAL
 } /* namespace decaf */
 
 #endif /* __DECAF_448_HXX__ */

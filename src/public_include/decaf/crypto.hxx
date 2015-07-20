@@ -51,7 +51,7 @@ public:
     }
     
     /** @brief Set the public key to a point */
-    inline explicit PublicKey(const typename Group::Point &p) NOEXCEPT : ser(SecureBuffer(p)) {}
+    inline explicit PublicKey(const typename Group::Point &p) NOEXCEPT : ser(p.serialize()) {}
     
     /** @brief Get the private key for a given public key */
     inline explicit PublicKey(const PrivateKey<Group> &priv) NOEXCEPT;
@@ -111,7 +111,7 @@ public:
     inline PrivateKey(Rng &r) :
         sym(r),
         scalar(SHAKE<SHAKE_BITS>::hash(sym, SCALAR_HASH_BYTES)),
-        pub_(SecureBuffer(Group::Precomputed::base() * scalar)) {}
+        pub_((Group::Precomputed::base() * scalar).serialize()) {}
         
     /** @brief Construct from buffer */
     inline PrivateKey(const FixedBlock<SYM_BYTES> &sym_) :
@@ -134,16 +134,16 @@ public:
     }
     
     /** @brief Sign from a SHAKE context.  TODO: double check random oracle eval of this; destructive version? */
-    inline SecureBuffer sign_shake(const SHAKE<SHAKE_BITS> &ctx_) NOEXCEPT {
+    inline SecureBuffer sign_shake(const SHAKE<SHAKE_BITS> &ctx_) throw(std::bad_alloc) {
         SHAKE<SHAKE_BITS> ctx(ctx_);
         ctx << sym << "decaf_255_sign_shake";
         typename Group::Scalar nonce(ctx.output(SCALAR_HASH_BYTES));
-        SecureBuffer g_nonce(Group::Precomputed::base() * nonce); /* FIXME: make output fixed size, avoid std::bad_alloc */
+        SecureBuffer g_nonce = (Group::Precomputed::base() * nonce).serialize();
         
         ctx = ctx_;
         ctx << pub_.ser << g_nonce;
         SecureBuffer challenge(ctx.output(PublicKey<Group>::CHALLENGE_BYTES));
-        SecureBuffer response((nonce - scalar * typename Group::Scalar(challenge)).encode());
+        SecureBuffer response((nonce - scalar * typename Group::Scalar(challenge)).serialize());
         
         SecureBuffer ret(PublicKey<Group>::SIG_BYTES);
         Buffer(ret).slice(0,Group::Point::SER_BYTES).assign(g_nonce);

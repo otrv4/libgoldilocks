@@ -87,6 +87,38 @@ public:
 
 typedef std::vector<unsigned char, SanitizingAllocator<unsigned char, 0> > SecureBuffer;
 
+/** Constant-time compare two buffers */
+template<class T,class U, class V, class W>
+inline bool memeq(const std::vector<T,U> &a, const std::vector<V,W> &b) {
+    if (a.size() != b.size()) return false;
+    return decaf_memeq(a.data(),b.data(),a.size());
+}
+
+/** Base class of objects which support serialization */
+class Serializable {
+public:
+    /** @brief Return the number of bytes needed to serialize this object */
+    virtual inline size_t serSize() const NOEXCEPT = 0;
+    
+    /** @brief Serialize this object into a buffer */
+    virtual inline void serializeInto(unsigned char *buf) const NOEXCEPT = 0;
+    
+    /** @brief Serialize this object into a SecureBuffer and return it */
+    inline SecureBuffer serialize() const throw(std::bad_alloc) {
+        SecureBuffer out(serSize());
+        serializeInto(out.data());
+        return out;
+    }
+    
+    /** Cast operator */
+#if __cplusplus >= 201103L
+    explicit
+#endif
+    inline operator SecureBuffer() const throw(std::bad_alloc) {
+        return serialize();
+    }
+};
+
 /**@cond internal*/
 class Buffer;
 /**@endcond*/
@@ -187,6 +219,11 @@ public:
     inline decaf_bool_t contents_equal(const Block &b) const NOEXCEPT {
         if (b.size() != size()) return false;
         return decaf_memeq(b.data(),data(),size());
+    }
+    
+    /* Create new block from this */
+    inline operator SecureBuffer() const throw(std::bad_alloc) {
+        return SecureBuffer(data_,data_+size_);
     }
 
     /** Virtual destructor for SecureBlock. TODO: probably means vtable?  Make bool? */

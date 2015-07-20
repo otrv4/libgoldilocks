@@ -283,7 +283,7 @@ static void macro() {
     printf("Protocol benchmarks:\n");
     SpongeRng clientRng(Block("client rng seed"));
     SpongeRng serverRng(Block("server rng seed"));
-    SecureBuffer hashedPassword("hello world");
+    SecureBuffer hashedPassword(Block("hello world"));
     for (Benchmark b("Spake2ee c+s",0.1); b.iter(); ) {
         spake2ee(clientRng, serverRng, hashedPassword,false);
     }
