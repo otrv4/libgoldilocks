@@ -98,13 +98,15 @@ inline bool memeq(const std::vector<T,U> &a, const std::vector<V,W> &b) {
 }
 
 /** Base class of objects which support serialization */
-class Serializable {
+template<class Base> class Serializable {
 public:
     /** @brief Return the number of bytes needed to serialize this object */
-    virtual inline size_t serSize() const NOEXCEPT = 0;
+    inline size_t serSize() const NOEXCEPT { return static_cast<const Base*>(this)->serSize(); }
     
     /** @brief Serialize this object into a buffer */
-    virtual inline void serializeInto(unsigned char *buf) const NOEXCEPT = 0;
+    inline void serializeInto(unsigned char *buf) const NOEXCEPT {
+        static_cast<const Base*>(this)->serializeInto(buf);
+    }
     
     /** @brief Serialize this object into a SecureBuffer and return it */
     inline SecureBuffer serialize() const throw(std::bad_alloc) {

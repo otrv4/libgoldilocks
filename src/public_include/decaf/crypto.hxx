@@ -17,10 +17,8 @@
 /** @cond internal */
 #if __cplusplus >= 201103L
 #define NOEXCEPT noexcept
-#define FINAL final
 #else
 #define NOEXCEPT throw()
-#define FINAL
 #endif
 /** @endcond */
 
@@ -31,7 +29,7 @@ namespace decaf {
 template <typename Group> class PrivateKey;
 
 /** @brief A public key using a particular EC group */ 
-template <typename Group> class PublicKey : public Serializable {
+template <typename Group> class PublicKey : public Serializable<PublicKey<Group> > {
 private:
     /** @cond internal */
     friend class PrivateKey<Group>;
@@ -66,17 +64,19 @@ public:
     }
     
     /** @brief Verify a sig.  TODO: nothrow version? FIXME: doesn't check reduction of scalar! */
-    inline void verify_shake(const SHAKE<SHAKE_BITS> &ctx_, const FixedBlock<SIG_BYTES> &sig) throw(CryptoException) {
+    inline bool verify_shake(const SHAKE<SHAKE_BITS> &ctx_, const FixedBlock<SIG_BYTES> &sig) throw(CryptoException) {
         SHAKE<SHAKE_BITS> ctx(ctx_);
         ctx << ser << sig.slice(0,Group::Point::SER_BYTES);
-        SecureBuffer challenge(ctx.output(CHALLENGE_BYTES));
+        FixedArrayBuffer<CHALLENGE_BYTES> challenge;
+        ctx.output(challenge);
         
         const typename Group::Point combo = point().non_secret_combo_with_base(
             typename Group::Scalar(challenge),
             sig.slice(Group::Point::SER_BYTES, Group::Scalar::SER_BYTES)
         );
-        if (combo != typename Group::Point(sig.slice(0,Group::Point::SER_BYTES)))
-            throw CryptoException();
+        //if (combo != typename Group::Point(sig.slice(0,Group::Point::SER_BYTES)))
+        //    throw CryptoException();
+            return combo == typename Group::Point(sig.slice(0,Group::Point::SER_BYTES));
     }
     
     /** @brief Sign from a message. */
@@ -87,12 +87,12 @@ public:
     }
     
     /** @brief Serialize into a buffer. */
-    inline void serializeInto(unsigned char *x) const NOEXCEPT FINAL {
+    inline void serializeInto(unsigned char *x) const NOEXCEPT {
         memcpy(x,ser.data(),Group::Point::SER_BYTES);
     }
     
     /** @brief Serialize into a buffer. */
-    inline size_t serSize() const NOEXCEPT FINAL {
+    inline size_t serSize() const NOEXCEPT {
         return Group::Point::SER_BYTES;
     }
     
@@ -101,7 +101,7 @@ public:
 };
 
 /** @brief A private key using a particular EC group */ 
-template <typename Group> class PrivateKey : public Serializable {
+template <typename Group> class PrivateKey : public Serializable<PrivateKey<Group> > {
 public:
     /** Size of associated symmetric key */
     static const size_t SYM_BYTES = 32;
@@ -140,12 +140,12 @@ public:
     }
     
     /** @brief Serialize */
-    inline size_t serSize() const NOEXCEPT FINAL {
+    inline size_t serSize() const NOEXCEPT {
         return SYM_BYTES;
     }
     
     /** @brief Serialize */
-    inline void serializeInto(unsigned char *target) const NOEXCEPT FINAL {
+    inline void serializeInto(unsigned char *target) const NOEXCEPT {
         memcpy(target,sym.data(),serSize());
     }
         

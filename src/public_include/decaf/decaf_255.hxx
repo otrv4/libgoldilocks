@@ -38,10 +38,8 @@
 /** @cond internal */
 #if __cplusplus >= 201103L
 #define NOEXCEPT noexcept
-#define FINAL final
 #else
 #define NOEXCEPT throw()
-#define FINAL
 #endif
 /** @endcond */
 
@@ -68,7 +66,7 @@ class Precomputed;
  * Supports the usual arithmetic operations, all in constant time.
  * FIXME: make it clearer which init-from-buffer operations reject scalars that are too big.
  */
-class Scalar : public Serializable {
+class Scalar : public Serializable<Scalar> {
 private:
     /** @brief wrapped C type */
     typedef decaf_255_scalar_t Wrapped;
@@ -105,10 +103,10 @@ public:
     inline Scalar(const Block &buffer) NOEXCEPT { *this = buffer; }
 
     /** @brief Serializable instance */
-    virtual inline size_t serSize() const NOEXCEPT FINAL { return SER_BYTES; }
+    inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
     
     /** @brief Serializable instance */
-    virtual inline void serializeInto(unsigned char *buffer) const NOEXCEPT FINAL {
+    inline void serializeInto(unsigned char *buffer) const NOEXCEPT {
         decaf_255_scalar_encode(buffer, s);
     }
     
@@ -197,7 +195,7 @@ public:
 /**
  * @brief Element of prime-order group.
  */
-class Point : public Serializable {
+class Point : public Serializable<Point> {
 public:
     typedef decaf_255_point_t Wrapped;
     
@@ -296,10 +294,10 @@ public:
     }
 
     /** @brief Serializable instance */
-    virtual inline size_t serSize() const NOEXCEPT FINAL { return SER_BYTES; }
+    inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
     
     /** @brief Serializable instance */
-    virtual inline void serializeInto(unsigned char *buffer) const NOEXCEPT FINAL {
+    inline void serializeInto(unsigned char *buffer) const NOEXCEPT {
         decaf_255_point_encode(buffer, p);
     }
     
@@ -544,7 +542,6 @@ inline SecureBuffer IsoEd25519::Scalar::direct_scalarmul (
 /** endcond */
 
 #undef NOEXCEPT
-#undef FINAL
 } /* namespace decaf */
 
 #endif /* __DECAF_255_HXX__ */

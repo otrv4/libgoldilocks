@@ -497,8 +497,8 @@ static void strobe_forget (
         if (sponge->params->rate < len + sponge->params->position) {
             dokeccak(sponge);
         }
-        memset(sponge->state->b, 0, len);
-        sponge->params->position = len;
+        memset(&sponge->state->b[sponge->params->position], 0, len);
+        sponge->params->position += len;
     }
 }
 

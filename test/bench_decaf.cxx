@@ -286,7 +286,7 @@ static void macro() {
     PublicKey<Group> p1((NOINIT())), p2((NOINIT()));
     PrivateKey<Group> s1((NOINIT())), s2((NOINIT()));
 
-    SecureBuffer message = rng.read(12), sig;
+    SecureBuffer message = rng.read(5), sig;
 
     for (Benchmark b("Create private key",1); b.iter(); ) {
         s1 = PrivateKey<Group>(rng);
@@ -299,7 +299,7 @@ static void macro() {
     
     p1 = s1.pub();
     for (Benchmark b("Verify",1); b.iter(); ) {
-        message = rng.read(12);
+        rng.read(Buffer(message));
         try { p1.verify(message, sig); } catch (CryptoException) {}
     }
     
@@ -354,6 +354,7 @@ static void micro() {
     for (Benchmark b("Point double scalarmul"); b.iter(); ) { Point::double_scalarmul(p,s,q,t); }
     for (Benchmark b("Point precmp scalarmul"); b.iter(); ) { pBase * s; }
     for (Benchmark b("Point double scalarmul_v"); b.iter(); ) {
+        s = Scalar(rng);
         t = Scalar(rng);
         p.non_secret_combo_with_base(s,t);
     }
@@ -362,6 +363,7 @@ static void micro() {
 }; /* template <typename group> struct Benches */
 
 int main(int argc, char **argv) {
+    
     bool micro = false;
     if (argc >= 2 && !strcmp(argv[1], "--micro"))
         micro = true;
@@ -379,9 +381,8 @@ int main(int argc, char **argv) {
     size_t lmessage = sizeof(umessage);
 
 
+    SpongeRng rng(Block("micro-benchmarks"));
     if (micro) {
-        SpongeRng rng(Block("micro-benchmarks"));
-        
         printf("\nMicro-benchmarks:\n");
         SHAKE<128> shake1;
         SHAKE<256> shake2;
@@ -435,8 +436,9 @@ int main(int argc, char **argv) {
     
     for (Benchmark b("Verify"); b.iter(); ) {
         decaf_bool_t ret = decaf_255_verify(sig1,p1,umessage,lmessage);
-        umessage[0]++;
-        umessage[1]^=umessage[0];
+        rng.read(Buffer(umessage,lmessage));
+        // umessage[0]++;
+        // umessage[1]^=umessage[0];
         ignore_result(ret);
     }
     

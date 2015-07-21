@@ -38,10 +38,8 @@
 /** @cond internal */
 #if __cplusplus >= 201103L
 #define NOEXCEPT noexcept
-#define FINAL final
 #else
 #define NOEXCEPT throw()
-#define FINAL
 #endif
 /** @endcond */
 
@@ -67,7 +65,7 @@ class Precomputed;
  * @brief A scalar modulo the curve order.
  * Supports the usual arithmetic operations, all in constant time.
  */
-class Scalar : public Serializable {
+class Scalar : public Serializable<Scalar> {
 private:
     /** @brief wrapped C type */
     typedef decaf_448_scalar_t Wrapped;
@@ -136,10 +134,10 @@ public:
     }
     
     /** @brief Serializable instance */
-    virtual inline size_t serSize() const NOEXCEPT FINAL { return SER_BYTES; }
+    inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
     
     /** @brief Serializable instance */
-    virtual inline void serializeInto(unsigned char *buffer) const NOEXCEPT FINAL {
+    inline void serializeInto(unsigned char *buffer) const NOEXCEPT {
         decaf_448_scalar_encode(buffer, s);
     }
     
@@ -201,7 +199,7 @@ public:
 /**
  * @brief Element of prime-order group.
  */
-class Point : public Serializable {
+class Point : public Serializable<Point> {
 public:
     /** @brief Size of a serialized element */
     static const size_t SER_BYTES = DECAF_448_SER_BYTES;
@@ -307,10 +305,10 @@ public:
     }
     
     /** @brief Serializable instance */
-    virtual inline size_t serSize() const NOEXCEPT FINAL { return SER_BYTES; }
+    inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
     
     /** @brief Serializable instance */
-    virtual inline void serializeInto(unsigned char *buffer) const NOEXCEPT FINAL {
+    inline void serializeInto(unsigned char *buffer) const NOEXCEPT {
         decaf_448_point_encode(buffer, p);
     }
     
@@ -544,7 +542,6 @@ public:
 }; /* struct Decaf448 */
 
 #undef NOEXCEPT
-#undef FINAL
 } /* namespace decaf */
 
 #endif /* __DECAF_448_HXX__ */

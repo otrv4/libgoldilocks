@@ -73,12 +73,6 @@ public:
      */
     inline void output(Buffer b) { sha3_output(sp,b.data(),b.size()); }
     
-    /**
-     * @brief Output bytes from the sponge.
-     * @todo make this throw exceptions.
-     */
-    inline void output(Buffer &b) { sha3_output(sp,b.data(),b.size()); }
-    
     /** @brief Output bytes from the sponge. */
     inline SecureBuffer output(size_t len) {
         SecureBuffer buffer(len);
@@ -214,8 +208,8 @@ public:
         if (!strobe_key(sp, data.data(), data.size(), more)) throw ProtocolException();
     }
 
-    inline void key (
-        const Serializable &data, bool more = false
+    template<class T> inline void key (
+        const Serializable<T> &data, bool more = false
     ) throw(ProtocolException) {
         key(data.serialize(), more);
     }
@@ -229,7 +223,7 @@ public:
             throw(ProtocolException());
     }
 
-    inline void send_plaintext(const Serializable &data, bool more = false) throw(ProtocolException) {
+    template<class T> inline void send_plaintext(const Serializable<T> &data, bool more = false) throw(ProtocolException) {
         send_plaintext(data.serialize(), more);
     }
 
@@ -239,7 +233,7 @@ public:
             throw(ProtocolException());
     }
 
-    inline void recv_plaintext(const Serializable &data, bool more = false) throw(ProtocolException) {
+    template<class T> inline void recv_plaintext(const Serializable<T> &data, bool more = false) throw(ProtocolException) {
         recv_plaintext(data.serialize(), more);
     }
 
@@ -248,7 +242,7 @@ public:
             throw(ProtocolException());
     }
 
-    inline void ad(const Serializable &data, bool more = false) throw(ProtocolException) {
+    template<class T> inline void ad(const Serializable<T> &data, bool more = false) throw(ProtocolException) {
         ad(data.serialize(), more);
     }
     
@@ -264,7 +258,7 @@ public:
         SecureBuffer out(data.size()); encrypt_no_auth(out, data, more); return out;
     }
     
-    inline SecureBuffer encrypt_no_auth(const Serializable &data, bool more = false
+    template<class T> inline SecureBuffer encrypt_no_auth(const Serializable<T> &data, bool more = false
     ) throw(ProtocolException) {
         return encrypt_no_auth(data.serialize(), more);
     }
@@ -281,7 +275,7 @@ public:
         SecureBuffer out(data.size()); decrypt_no_auth(out, data, more); return out;
     }
     
-    inline SecureBuffer decrypt_no_auth(const Serializable &data, bool more = false
+    template<class T> inline SecureBuffer decrypt_no_auth(const Serializable<T> &data, bool more = false
     ) throw(ProtocolException) {
         return decrypt_no_auth(data.serialize(),more);
     }
@@ -311,8 +305,8 @@ public:
         SecureBuffer out(data.size() + auth); encrypt(out, data, auth); return out;
     }
     
-    inline SecureBuffer encrypt (
-        const Serializable &data, uint8_t auth = 8
+    template<class T> inline SecureBuffer encrypt (
+        const Serializable<T> &data, uint8_t auth = 8
     ) throw(LengthException,ProtocolException,std::bad_alloc ){
         return encrypt(data.serialize(), auth);
     }
@@ -325,8 +319,8 @@ public:
         verify_auth(data.slice(out.size(),bytes));
     }
     
-    inline SecureBuffer decrypt (
-        const Serializable &data, uint8_t auth = 8
+    template<class T> inline SecureBuffer decrypt (
+        const Serializable<T> &data, uint8_t auth = 8
     ) throw(LengthException,ProtocolException,CryptoException, std::bad_alloc ){
         return decrypt(data.serialize(), auth);
     }
