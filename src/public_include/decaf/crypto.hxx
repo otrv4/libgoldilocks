@@ -65,7 +65,7 @@ public:
         return typename Group::Point(ser);
     }
     
-    /** @brief Verify a sig.  TODO: nothrow version? */
+    /** @brief Verify a sig.  TODO: nothrow version? FIXME: doesn't check reduction of scalar! */
     inline void verify_shake(const SHAKE<SHAKE_BITS> &ctx_, const FixedBlock<SIG_BYTES> &sig) throw(CryptoException) {
         SHAKE<SHAKE_BITS> ctx(ctx_);
         ctx << ser << sig.slice(0,Group::Point::SER_BYTES);
