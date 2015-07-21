@@ -15,6 +15,9 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <vector>
+#include <stdexcept>
+#include <cstddef>
+#include <limits>
 
 /** @cond internal */
 #if __cplusplus >= 201103L
@@ -44,7 +47,7 @@ public:
    typedef T& reference;
    typedef const T& const_reference;
    typedef size_t size_type;
-   typedef ptrdiff_t difference_type;
+   typedef std::ptrdiff_t difference_type;
 
    template<typename U> struct rebind { typedef SanitizingAllocator<U> other; };
    inline SanitizingAllocator() NOEXCEPT {}
@@ -112,11 +115,10 @@ public:
     
     /** Cast operator */
 #if __cplusplus >= 201103L
-    explicit
-#endif
-    inline operator SecureBuffer() const throw(std::bad_alloc) {
+    explicit inline operator SecureBuffer() const throw(std::bad_alloc) {
         return serialize();
     }
+#endif
 };
 
 /**@cond internal*/
@@ -242,6 +244,7 @@ private:
     inline decaf_bool_t operator<=(const Block &b) const NOEXCEPT DELETE;
     inline decaf_bool_t operator> (const Block &b) const NOEXCEPT DELETE;
     inline decaf_bool_t operator< (const Block &b) const NOEXCEPT DELETE;
+    inline void operator= (const Block &b) const NOEXCEPT DELETE;
     /** @endcond */
 };
 
@@ -297,6 +300,9 @@ public:
     
     /** Securely set the buffer to 0. */
     inline void zeroize() NOEXCEPT { really_bzero(data(),size()); }
+    
+private:
+    inline void operator= (const Block &b) const NOEXCEPT DELETE;
 };
 
 
@@ -320,6 +326,9 @@ public:
     inline operator FixedBlock<Size>() const NOEXCEPT {
         return FixedBlock<Size>(data());
     }
+    
+private:
+    inline void operator= (const Block &b) const NOEXCEPT DELETE;
 };
 
 /** A fixed-size stack-allocated buffer (for NOEXCEPT semantics) */
@@ -341,6 +350,21 @@ public:
     /** Copy constructor */
     inline explicit FixedArrayBuffer(const FixedBlock<Size> &b) NOEXCEPT : FixedBuffer<Size>(storage) {
         memcpy(storage,b.data(),Size);
+    }
+    
+    /** Copy operator */
+    inline FixedArrayBuffer& operator=(const FixedBlock<Size> &b) NOEXCEPT {
+        memcpy(storage,b.data(),Size); return *this;
+    }
+    
+    /** Copy operator */
+    inline FixedArrayBuffer& operator=(const FixedArrayBuffer<Size> &b) NOEXCEPT {
+        memcpy(storage,b.data(),Size); return *this;
+    }
+    
+    /** Copy operator */
+    inline FixedArrayBuffer& operator=(const Block &b) throw(LengthException) {
+        *this = FixedBlock<Size>(b);
     }
     
     /** Copy constructor */

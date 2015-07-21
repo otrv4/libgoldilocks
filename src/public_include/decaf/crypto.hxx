@@ -17,8 +17,10 @@
 /** @cond internal */
 #if __cplusplus >= 201103L
 #define NOEXCEPT noexcept
+#define FINAL final
 #else
 #define NOEXCEPT throw()
+#define FINAL
 #endif
 /** @endcond */
 
@@ -29,26 +31,25 @@ namespace decaf {
 template <typename Group> class PrivateKey;
 
 /** @brief A public key using a particular EC group */ 
-template <typename Group> class PublicKey {
+template <typename Group> class PublicKey : public Serializable {
 private:
     /** @cond internal */
     friend class PrivateKey<Group>;
-    //const typename Group::Point p;
-    const FixedArrayBuffer<Group::Point::SER_BYTES> ser;
     static const size_t CHALLENGE_BYTES = Group::Scalar::SER_BYTES;
+    //const typename Group::Point p;
+    FixedArrayBuffer<Group::Point::SER_BYTES> ser;
     /** @endcond */
 
 public:
+    
+    /** Create without init */
+    PublicKey(NOINIT) : ser(NOINIT()) {}
+    
     /** SHAKE instance size for sigs etc */
     static const size_t SHAKE_BITS = 256;
     
     /** Size of a signature */
     static const size_t SIG_BYTES = Group::Point::SER_BYTES + Group::Scalar::SER_BYTES;
-    
-    /** @brief Return a pointer to the serialized version of the point. */
-    inline operator FixedBlock<Group::Point::SER_BYTES>() const NOEXCEPT {
-        return ser;
-    }
     
     /** @brief Set the public key to a point */
     inline explicit PublicKey(const typename Group::Point &p) NOEXCEPT : ser(p.serialize()) {}
@@ -78,18 +79,29 @@ public:
             throw CryptoException();
     }
     
-
-    
     /** @brief Sign from a message. */
     inline void verify(const Block &message, const FixedBlock<SIG_BYTES> &sig) throw(CryptoException) {
         SHAKE<SHAKE_BITS> ctx;
         ctx << message;
         verify_shake(ctx,sig);
     }
+    
+    /** @brief Serialize into a buffer. */
+    inline void serializeInto(unsigned char *x) const NOEXCEPT FINAL {
+        memcpy(x,ser.data(),Group::Point::SER_BYTES);
+    }
+    
+    /** @brief Serialize into a buffer. */
+    inline size_t serSize() const NOEXCEPT FINAL {
+        return Group::Point::SER_BYTES;
+    }
+    
+    /** @brief Copy operator */
+    inline PublicKey &operator=(const PublicKey &x) NOEXCEPT { ser = x.ser; return *this; }
 };
 
 /** @brief A private key using a particular EC group */ 
-template <typename Group> class PrivateKey {
+template <typename Group> class PrivateKey : public Serializable {
 public:
     /** Size of associated symmetric key */
     static const size_t SYM_BYTES = 32;
@@ -101,12 +113,15 @@ private:
     /** @cond internal */
     static const size_t SCALAR_HASH_BYTES = Group::Scalar::SER_BYTES + 8;
     friend class PublicKey<Group>;
-    const FixedArrayBuffer<SYM_BYTES> sym;
-    const typename Group::Scalar scalar;
-    const PublicKey<Group> pub_;
+    FixedArrayBuffer<SYM_BYTES> sym;
+    typename Group::Scalar scalar;
+    PublicKey<Group> pub_;
     /** @endcond */
     
 public:
+    /** @brief Don't initialize */
+    inline PrivateKey(const NOINIT &ni) NOEXCEPT : sym(ni), scalar(ni), pub_(ni) {}
+        
     /** @brief Construct at random */
     inline PrivateKey(Rng &r) :
         sym(r),
@@ -122,6 +137,16 @@ public:
     /** @brief Compressed representation */
     inline const FixedBlock<SYM_BYTES> &ser_compressed() const NOEXCEPT {
         return sym;
+    }
+    
+    /** @brief Serialize */
+    inline size_t serSize() const NOEXCEPT FINAL {
+        return SYM_BYTES;
+    }
+    
+    /** @brief Serialize */
+    inline void serializeInto(unsigned char *target) const NOEXCEPT FINAL {
+        memcpy(target,sym.data(),serSize());
     }
         
     /** @brief Uncompressed representation */
@@ -160,6 +185,14 @@ public:
     
     /** @brief Get the corresponding public key */
     inline const PublicKey<Group> &pub() const { return pub_; }
+    
+    /** @brief Copy operator */
+    inline PrivateKey &operator=(const PrivateKey &x) NOEXCEPT {
+        sym = x.sym;
+        scalar = x.scalar;
+        pub_ = x.pub_;
+        return *this;
+    }
 };
 
 /** @cond internal */

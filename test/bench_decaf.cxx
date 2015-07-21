@@ -12,6 +12,7 @@
 #include <decaf.hxx>
 #include <decaf/shake.hxx>
 #include <decaf/crypto.h>
+#include <decaf/crypto.hxx>
 #include <stdio.h>
 #include <sys/time.h>
 #include <assert.h>
@@ -153,12 +154,12 @@ static void tdh (
     Strobe client(Strobe::CLIENT), server(Strobe::SERVER);
     
     Scalar xe(clientRng);
-    SecureBuffer gxe = Precomputed::base() * xe;
+    SecureBuffer gxe((Precomputed::base() * xe).serialize());
     client.send_plaintext(gxe);
     server.recv_plaintext(gxe);
     
     Scalar ye(serverRng);
-    SecureBuffer gye = Precomputed::base() * ye;
+    SecureBuffer gye((Precomputed::base() * ye).serialize());
     server.send_plaintext(gye);
     client.recv_plaintext(gye);
     
@@ -196,14 +197,14 @@ static void fhmqv (
     Scalar xe(clientRng);
     client.send_plaintext(gx);
     server.recv_plaintext(gx);
-    SecureBuffer gxe = Precomputed::base() * xe;
+    SecureBuffer gxe((Precomputed::base() * xe).serialize());
     server.send_plaintext(gxe);
     client.recv_plaintext(gxe);
 
     Scalar ye(serverRng);
     server.send_plaintext(gy);
     client.recv_plaintext(gy);
-    SecureBuffer gye = Precomputed::base() * ye;
+    SecureBuffer gye((Precomputed::base() * ye).serialize());
     server.send_plaintext(gye);
     
     Scalar schx(server.prng(Scalar::SER_BYTES));
@@ -247,12 +248,12 @@ static void spake2ee(
     Point hs = Point::from_hash(h1);
     hs = Point::from_hash(h1); // double-count
     
-    SecureBuffer gx(Precomputed::base() * x + hc);
+    SecureBuffer gx((Precomputed::base() * x + hc).serialize());
     client.send_plaintext(gx);
     server.recv_plaintext(gx);
     
     Scalar y(serverRng);
-    SecureBuffer gy(Precomputed::base() * y + hs);
+    SecureBuffer gy((Precomputed::base() * y + hs).serialize());
     server.send_plaintext(gy);
     client.recv_plaintext(gy);
     
@@ -260,7 +261,7 @@ static void spake2ee(
     server.key((Point(gx) - hc)*y);
     if(aug) {
         /* This step isn't actually online but whatever, it's fastish */
-        SecureBuffer serverAug(Precomputed::base() * gs);
+        SecureBuffer serverAug((Precomputed::base() * gs).serialize());
         server.key(Point(serverAug)*y);
     }
     SecureBuffer tag = server.produce_auth();
@@ -280,7 +281,29 @@ static void spake2ee(
 
 static void macro() {
     printf("\nMacro-benchmarks for %s:\n", Group::name());
-    printf("Protocol benchmarks:\n");
+    printf("Crypto benchmarks:\n");
+    SpongeRng rng(Block("macro rng seed"));
+    PublicKey<Group> p1((NOINIT())), p2((NOINIT()));
+    PrivateKey<Group> s1((NOINIT())), s2((NOINIT()));
+
+    SecureBuffer message = rng.read(12), sig;
+
+    for (Benchmark b("Create private key",1); b.iter(); ) {
+        s1 = PrivateKey<Group>(rng);
+        SecureBuffer bb = s1.serialize();
+    }
+    
+    for (Benchmark b("Sign",1); b.iter(); ) {
+        sig = s1.sign(message);
+    }
+    
+    p1 = s1.pub();
+    for (Benchmark b("Verify",1); b.iter(); ) {
+        message = rng.read(12);
+        try { p1.verify(message, sig); } catch (CryptoException) {}
+    }
+    
+    printf("\nProtocol benchmarks:\n");
     SpongeRng clientRng(Block("client rng seed"));
     SpongeRng serverRng(Block("server rng seed"));
     SecureBuffer hashedPassword(Block("hello world"));
@@ -293,9 +316,9 @@ static void macro() {
     }
     
     Scalar x(clientRng);
-    SecureBuffer gx(Precomputed::base() * x);
+    SecureBuffer gx((Precomputed::base() * x).serialize());
     Scalar y(serverRng);
-    SecureBuffer gy(Precomputed::base() * y);
+    SecureBuffer gy((Precomputed::base() * y).serialize());
     
     for (Benchmark b("FHMQV c+s",0.1); b.iter(); ) {
         fhmqv(clientRng, serverRng,x,gx,y,gy);
@@ -320,7 +343,7 @@ static void micro() {
     for (Benchmark b("Point add", 100); b.iter(); ) { p += q; }
     for (Benchmark b("Point double", 100); b.iter(); ) { p.double_in_place(); }
     for (Benchmark b("Point scalarmul"); b.iter(); ) { p * s; }
-    for (Benchmark b("Point encode"); b.iter(); ) { ep = SecureBuffer(p); }
+    for (Benchmark b("Point encode"); b.iter(); ) { ep = p.serialize(); }
     for (Benchmark b("Point decode"); b.iter(); ) { p = Point(ep); }
     for (Benchmark b("Point create/destroy"); b.iter(); ) { Point r; }
     for (Benchmark b("Point hash nonuniform"); b.iter(); ) { Point::from_hash(ep); }
@@ -330,6 +353,10 @@ static void micro() {
     for (Benchmark b("Point steg"); b.iter(); ) { p.steg_encode(rng); }
     for (Benchmark b("Point double scalarmul"); b.iter(); ) { Point::double_scalarmul(p,s,q,t); }
     for (Benchmark b("Point precmp scalarmul"); b.iter(); ) { pBase * s; }
+    for (Benchmark b("Point double scalarmul_v"); b.iter(); ) {
+        t = Scalar(rng);
+        p.non_secret_combo_with_base(s,t);
+    }
 }
 
 }; /* template <typename group> struct Benches */
@@ -381,7 +408,7 @@ int main(int argc, char **argv) {
         for (Benchmark b("STROBEk256 1kiB", 10); b.iter(); ) {
             strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024),b.i>1);
         }
-        /* TODO: scalarmul for verif, etc */
+        
         Benches<IsoEd25519>::micro();
         Benches<Ed448Goldilocks>::micro();
     }
