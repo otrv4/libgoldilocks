@@ -1444,6 +1444,7 @@ decaf_bool_t API_NS(direct_scalarmul) (
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
 ) {
+    /* FIXME: this can cause assertions if !short_circuit and the input is garbage.*/
     point_t basep;
     decaf_bool_t succ = API_NS(point_decode)(basep, base, allow_identity);
     if (short_circuit & ~succ) return succ;

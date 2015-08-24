@@ -151,6 +151,12 @@ static void tdh (
     Scalar x, const Block &gx,
     Scalar y, const Block &gy
 ) {
+    /* "TripleDH".  A bit of a hack, really: the real TripleDH
+     * sends gx and gy and certs over the channel, but its goal
+     * is actually the opposite of STROBE in this case: it doesn't
+     * hash gx and gy into the session secret (only into the MAC
+     * and AD) because of IPR concerns.
+     */
     Strobe client(Strobe::CLIENT), server(Strobe::SERVER);
     
     Scalar xe(clientRng);
@@ -166,21 +172,21 @@ static void tdh (
     Point pgxe(gxe);
     server.key(pgxe*ye);
     SecureBuffer tag1 = server.produce_auth();
-    SecureBuffer ct = server.encrypt(gy);
+    //SecureBuffer ct = server.encrypt(gy);
     server.key(pgxe*y);
     SecureBuffer tag2 = server.produce_auth();
     
     Point pgye(gye);
     client.key(pgye*xe);
     client.verify_auth(tag1);
-    client.key(Point(client.decrypt(ct)) * xe);
+    client.key(Point(gy) * xe);
     client.verify_auth(tag2);
-    ct = client.encrypt(gx);
+    // ct = client.encrypt(gx);
     client.key(pgye * x);
     tag1 = client.produce_auth();
     client.respec(STROBE_KEYED_128);
     
-    server.key(Point(server.decrypt(ct)) * ye);
+    server.key(Point(gx) * ye);
     server.verify_auth(tag1);
     server.respec(STROBE_KEYED_128);
 }
