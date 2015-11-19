@@ -339,7 +339,7 @@ static void micro() {
     SpongeRng rng(Block("per-curve-benchmarks"));
     Precomputed pBase;
     Point p,q;
-    Scalar s,t;
+    Scalar s(1),t(2);
     SecureBuffer ep, ep2(Point::SER_BYTES*2);
     
     printf("\nMicro-benchmarks for %s:\n", Group::name());

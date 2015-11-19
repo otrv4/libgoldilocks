@@ -906,6 +906,9 @@ snv prepare_fixed_window(
         add_pniels_to_pt(tmp, pn, 0);
         pt_to_pniels(multiples[i], tmp);
     }
+    
+    decaf_bzero(pn,sizeof(pn));
+    decaf_bzero(tmp,sizeof(tmp));
 }
 
 void API_NS(point_scalarmul) (
@@ -961,6 +964,11 @@ void API_NS(point_scalarmul) (
     
     /* Write out the answer */
     API_NS(point_copy)(a,tmp);
+    
+    decaf_bzero(scalar1x,sizeof(scalar1x));
+    decaf_bzero(pn,sizeof(pn));
+    decaf_bzero(multiples,sizeof(multiples));
+    decaf_bzero(tmp,sizeof(tmp));
 }
 
 void API_NS(point_double_scalarmul) (
@@ -1029,6 +1037,14 @@ void API_NS(point_double_scalarmul) (
     
     /* Write out the answer */
     API_NS(point_copy)(a,tmp);
+    
+
+    decaf_bzero(scalar1x,sizeof(scalar1x));
+    decaf_bzero(scalar2x,sizeof(scalar2x));
+    decaf_bzero(pn,sizeof(pn));
+    decaf_bzero(multiples1,sizeof(multiples1));
+    decaf_bzero(multiples2,sizeof(multiples2));
+    decaf_bzero(tmp,sizeof(tmp));
 }
 
 decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
@@ -1275,7 +1291,7 @@ void API_NS(point_debugging_pscale) (
 
 static void gf_batch_invert (
     gf *__restrict__ out,
-    /* const */ gf *in,
+    const gf *in,
     unsigned int n
 ) {
     gf t1;
@@ -1321,6 +1337,8 @@ static void batch_normalize_niels (
         gf_strong_reduce(product);
         gf_cpy(table[i]->c, product);
     }
+    
+    decaf_bzero(product,sizeof(product));
 }
 
 void API_NS(precompute) (
@@ -1379,6 +1397,13 @@ void API_NS(precompute) (
     }
     
     batch_normalize_niels(table->table,zs,zis,n<<(t-1));
+    
+    decaf_bzero(zs,sizeof(zs));
+    decaf_bzero(zis,sizeof(zis));
+    decaf_bzero(pn_tmp,sizeof(pn_tmp));
+    decaf_bzero(working,sizeof(working));
+    decaf_bzero(start,sizeof(start));
+    decaf_bzero(doubles,sizeof(doubles));
 }
 
 extern const scalar_t API_NS(precomputed_scalarmul_adjustment);
@@ -1434,6 +1459,9 @@ void API_NS(precomputed_scalarmul) (
             }
         }
     }
+    
+    decaf_bzero(ni,sizeof(ni));
+    decaf_bzero(scalar1x,sizeof(scalar1x));
 }
 
 /* TODO: restore Curve25519 Montgomery ladder? */
@@ -1450,6 +1478,7 @@ decaf_bool_t API_NS(direct_scalarmul) (
     if (short_circuit & ~succ) return succ;
     API_NS(point_scalarmul)(basep, basep, scalar);
     API_NS(point_encode)(scaled, basep);
+    API_NS(point_destroy)(basep);
     return succ;
 }
 
@@ -1538,6 +1567,8 @@ sv prepare_wnaf_table(
         add_pniels_to_pt(tmp, twop,0);
         pt_to_pniels(output[i], tmp);
     }
+    
+    API_NS(point_destroy)(tmp);
 }
 
 extern const gf API_NS(precomputed_wnaf_as_fe)[];
@@ -1563,6 +1594,10 @@ void API_NS(precompute_wnafs) (
         gf_cpy(zs[i], tmp[i]->z);
     }
     batch_normalize_niels(out, zs, zis, 1<<DECAF_WNAF_FIXED_TABLE_BITS);
+    
+    decaf_bzero(tmp,sizeof(tmp));
+    decaf_bzero(zs,sizeof(zs));
+    decaf_bzero(zis,sizeof(zis));
 }
 
 void API_NS(base_double_scalarmul_non_secret) (
@@ -1626,6 +1661,11 @@ void API_NS(base_double_scalarmul_non_secret) (
             contp++;
         }
     }
+    
+    // Non-secret, but whatever this is cheap.
+    decaf_bzero(control_var,sizeof(control_var));
+    decaf_bzero(control_pre,sizeof(control_pre));
+    decaf_bzero(precmp_var,sizeof(precmp_var));
 
     assert(contv == ncb_var); (void)ncb_var;
     assert(contp == ncb_pre); (void)ncb_pre;
