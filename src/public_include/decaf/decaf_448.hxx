@@ -195,7 +195,7 @@ public:
         decaf_bool_t allow_identity=DECAF_FALSE,
         decaf_bool_t short_circuit=DECAF_TRUE    
     ) const throw(CryptoException) {
-        SecureBuffer out(/*FIXME Point::*/SER_BYTES);
+        SecureBuffer out(Point::SER_BYTES);
         if (DECAF_SUCCESS !=
             decaf_448_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit)
         ) {

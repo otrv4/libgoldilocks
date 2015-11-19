@@ -63,20 +63,25 @@ public:
         return typename Group::Point(ser);
     }
     
-    /** @brief Verify a sig.  TODO: nothrow version? FIXME: doesn't check reduction of scalar! */
+    /** @brief Verify a sig.  TODO: nothrow version? */
     inline bool verify_shake(const SHAKE<SHAKE_BITS> &ctx_, const FixedBlock<SIG_BYTES> &sig) throw(CryptoException) {
         SHAKE<SHAKE_BITS> ctx(ctx_);
         ctx << ser << sig.slice(0,Group::Point::SER_BYTES);
         FixedArrayBuffer<CHALLENGE_BYTES> challenge;
         ctx.output(challenge);
         
-        const typename Group::Point combo = point().non_secret_combo_with_base(
-            typename Group::Scalar(challenge),
+        typename Group::Scalar response;
+        decaf_bool_t scalar_OK = Group::Scalar::decode(
+            response,
             sig.slice(Group::Point::SER_BYTES, Group::Scalar::SER_BYTES)
+        );
+            
+        const typename Group::Point combo = point().non_secret_combo_with_base(
+            typename Group::Scalar(challenge), response
         );
         //if (combo != typename Group::Point(sig.slice(0,Group::Point::SER_BYTES)))
         //    throw CryptoException();
-            return combo == typename Group::Point(sig.slice(0,Group::Point::SER_BYTES));
+        return scalar_OK & (combo == typename Group::Point(sig.slice(0,Group::Point::SER_BYTES)));
     }
     
     /** @brief Sign from a message. */

@@ -1094,7 +1094,6 @@ void API_NS(point_from_hash_nonuniform) (
     /* Compute D := (dr+a-d)(dr-ar-d) with a=1 */
     gf_sub(a,c,dee);
     gf_add(a,a,ONE);
-    decaf_bool_t special_identity_case = gf_eq(a,ZERO);
     gf_sub(b,c,r);
     gf_sub(b,b,dee);
     gf_mul(D,a,b);
@@ -1108,9 +1107,6 @@ void API_NS(point_from_hash_nonuniform) (
     gf_mul(a,rN,D);
     
     decaf_bool_t square = gf_isqrt_chk(e,a,DECAF_FALSE);
-    decaf_bool_t r_is_zero = gf_eq(r,ZERO);
-    square |= r_is_zero;
-    square |= special_identity_case;
     
     /* b <- t/s */
     cond_sel(c,r0,r,square); /* r? = sqr ? r : 1 */
@@ -1136,7 +1132,7 @@ void API_NS(point_from_hash_nonuniform) (
     gf_mul(c,a,b);
     
     /* Normalize/negate */
-    decaf_bool_t neg_s = hibit(a)^~square;
+    decaf_bool_t neg_s = hibit(a) ^ ~square;
     cond_neg(a,neg_s); /* ends up negative if ~square */
     
     /* b <- t */
@@ -1145,7 +1141,7 @@ void API_NS(point_from_hash_nonuniform) (
     /* isogenize */
 #if IMAGINE_TWIST
     gf_mul(c,a,SQRT_MINUS_ONE);
-    gf_cpy(a,c); // TODO rename
+    gf_cpy(a,c);
 #endif
     
     gf_sqr(c,a); /* s^2 */

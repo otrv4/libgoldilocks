@@ -158,8 +158,13 @@ static void test_arithmetic() {
         
         if (i%20) continue;
         if (y!=0) arith_check(test,x,y,z,x*y/y,x,"invert");
-        // TODO: negative test, but this throws an exception
-        //arith_check(test,x,y,z,x/0,0,"invert0");
+        try {
+            y = x/0;
+            test.fail();
+            printf("  Inverted zero!");
+            print("x", x);
+            print("y", y);
+        } catch(CryptoException) {}
     }
 }
 

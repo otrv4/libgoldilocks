@@ -48,6 +48,11 @@ LANGXXFLAGS = -fno-strict-aliasing
 GENFLAGS = -ffunction-sections -fdata-sections -fvisibility=hidden -fomit-frame-pointer -fPIC
 OFLAGS ?= -O2
 
+MACOSX_VERSION_MIN ?= 10.9
+ifeq ($(UNAME),Darwin)
+GENFLAGS += -mmacosx-version-min=$(MACOSX_VERSION_MIN)
+endif
+
 TODAY = $(shell date "+%Y-%m-%d")
 
 ifneq (,$(findstring arm,$(MACHINE)))
@@ -184,7 +189,7 @@ $(BUILD_LIB)/libdecaf.so: $(BUILD_LIB)/libdecaf.so.1
 $(BUILD_LIB)/libdecaf.so.1: $(LIBCOMPONENTS)
 	rm -f $@
 ifeq ($(UNAME),Darwin)
-	libtool -macosx_version_min 10.6 -dynamic -dead_strip -lc -x -o $@ \
+	libtool -macosx_version_min $(MACOSX_VERSION_MIN) -dynamic -dead_strip -lc -x -o $@ \
 		  $(LIBCOMPONENTS)
 else
 	$(LD) $(LDFLAGS) -shared -Wl,-soname,`basename $@` -Wl,--gc-sections -o $@ $(LIBCOMPONENTS)
