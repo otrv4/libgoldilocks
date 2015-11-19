@@ -164,7 +164,7 @@ void decaf_448_scalar_mul (
 decaf_bool_t decaf_448_scalar_invert (
     decaf_448_scalar_t out,
     const decaf_448_scalar_t a
-) API_VIS NONNULL2 NOINLINE;
+) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
 
 /**
  * @brief Copy a scalar.  The scalars may use the same memory, in which

@@ -206,7 +206,7 @@ $(BUILD_ASM)/%.s: test/%.cxx $(HEADERSXX)
 sage: $(BUILDPYS)
 
 sagetest: sage lib
-	LD_LIBRARY_PATH=$(BUILD_LIB) sage $(BUILD_PY)/test_decaf.sage
+	$(SAGE) $(BUILD_PY)/test_decaf.sage
 
 $(BUILDPYS): $(SAGES) $(BUILD_OBJ)/timestamp
 	cp -f $(SAGES) $(BUILD_PY)/

@@ -1,7 +1,7 @@
 from ctypes import *
 from base64 import *
 
-DECAF = CDLL("libdecaf.so")
+DECAF = CDLL("build/lib/libdecaf.so")
 
 F = GF(2^448-2^224-1)
 d = -39081
@@ -16,6 +16,7 @@ passing = True
 # TODO: pathological cases
 # TODO: Elligator
 # TODO: double scalar mul
+# TODO: Curve25519
 
 def random_array(length):
     answer = "".join([chr(randint(0,255)) for i in xrange(length)])

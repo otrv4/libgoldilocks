@@ -164,13 +164,19 @@ public:
     inline Scalar operator- ()                const NOEXCEPT { Scalar r((NOINIT())); decaf_255_scalar_sub(r.s,decaf_255_scalar_zero,s); return r; }
     
     /** @brief Invert with Fermat's Little Theorem (slow!).  If *this == 0, return 0. */
-    inline Scalar inverse() const NOEXCEPT { Scalar r; decaf_255_scalar_invert(r.s,s); return r; }
+    inline Scalar inverse() const throw(CryptoException) {
+        Scalar r;
+        if (DECAF_SUCCESS != decaf_255_scalar_invert(r.s,s)) {
+            throw CryptoException();
+        }
+        return r;
+    }
     
     /** @brief Divide by inverting q. If q == 0, return 0.  */
-    inline Scalar operator/ (const Scalar &q) const NOEXCEPT { return *this * q.inverse(); }
+    inline Scalar operator/ (const Scalar &q) const throw(CryptoException) { return *this * q.inverse(); }
     
     /** @brief Divide by inverting q. If q == 0, return 0.  */
-    inline Scalar &operator/=(const Scalar &q)       NOEXCEPT { return *this *= q.inverse(); }
+    inline Scalar &operator/=(const Scalar &q) throw(CryptoException) { return *this *= q.inverse(); }
     
     /** @brief Compare in constant time */
     inline bool   operator!=(const Scalar &q) const NOEXCEPT { return !(*this == q); }
@@ -245,8 +251,12 @@ public:
     * or was the identity and allow_identity was DECAF_FALSE.
     */
     inline explicit Point(const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE)
-        throw(CryptoException) { if (!decode(*this,buffer,allow_identity)) throw CryptoException(); }
-    
+        throw(CryptoException) {
+        if (DECAF_SUCCESS != decode(*this,buffer,allow_identity)) {
+            throw CryptoException();
+        }
+    }
+
     /**
      * @brief Initialize from C++ fixed-length byte string.
      * The all-zero string maps to the identity.
@@ -335,13 +345,13 @@ public:
     inline Point &operator*=(const Scalar &s)       NOEXCEPT { decaf_255_point_scalarmul(p,p,s.s); return *this; }
     
     /** @brief Multiply by s.inverse().  If s=0, maps to the identity. */
-    inline Point  operator/ (const Scalar &s) const NOEXCEPT { return (*this) * s.inverse(); }
+    inline Point  operator/ (const Scalar &s) const throw(CryptoException) { return (*this) * s.inverse(); }
     
     /** @brief Multiply by s.inverse().  If s=0, maps to the identity. */
-    inline Point &operator/=(const Scalar &s)       NOEXCEPT { return (*this) *= s.inverse(); }
+    inline Point &operator/=(const Scalar &s)       throw(CryptoException) { return (*this) *= s.inverse(); }
     
     /** @brief Validate / sanity check */
-    inline bool validate() const NOEXCEPT { return !!decaf_255_point_valid(p); }
+    inline bool validate() const NOEXCEPT { return DECAF_SUCCESS == decaf_255_point_valid(p); }
     
     /** @brief Double-scalar multiply, equivalent to q*qs + r*rs but faster. */
     static inline Point double_scalarmul (
@@ -403,12 +413,12 @@ public:
         if (buf.size() < HASH_BYTES) {
             ret &= decaf_memeq(&buf2[buf.size()], &buf2[HASH_BYTES], HASH_BYTES - buf.size());
         }
-        if (ret) {
+        if (DECAF_SUCCESS == ret) {
             /* TODO: make this constant time?? */
             memcpy(buf.data(),buf2,(buf.size() < HASH_BYTES) ? buf.size() : HASH_BYTES);
         }
         decaf_bzero(buf2,sizeof(buf2));
-        return !!ret;
+        return DECAF_SUCCESS == ret;
     }
     
     /** @brief Steganographically encode this */
@@ -510,7 +520,7 @@ public:
     inline Point operator* (const Scalar &s) const NOEXCEPT { Point r; decaf_255_precomputed_scalarmul(r.p,get(),s.s); return r; }
     
     /** @brief Multiply by s.inverse().  If s=0, maps to the identity. */
-    inline Point operator/ (const Scalar &s) const NOEXCEPT { return (*this) * s.inverse(); }
+    inline Point operator/ (const Scalar &s) const throw(CryptoException) { return (*this) * s.inverse(); }
     
     /** @brief Return the table for the base point. */
     static inline const Precomputed base() NOEXCEPT { return Precomputed(); }
@@ -535,8 +545,11 @@ inline SecureBuffer IsoEd25519::Scalar::direct_scalarmul (
     decaf_bool_t short_circuit
 ) const throw(CryptoException) {
     SecureBuffer out(IsoEd25519::Point::SER_BYTES);
-    if (!decaf_255_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit))
+    if (DECAF_SUCCESS !=
+        decaf_255_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit)
+    ) {
         throw CryptoException();
+    }
     return out;
 }
 /** endcond */

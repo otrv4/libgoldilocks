@@ -161,12 +161,12 @@ void decaf_255_scalar_mul (
  * @brief Invert a scalar.  When passed zero, return 0.  The input and output may alias.
  * @param [in] a A scalar.
  * @param [out] out 1/a.
- * @return DECAF_TRUE The input is nonzero.
+ * @return DECAF_SUCCESS The input is nonzero.
  */  
 decaf_bool_t decaf_255_scalar_invert (
     decaf_255_scalar_t out,
     const decaf_255_scalar_t a
-) API_VIS NONNULL2 NOINLINE;
+) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
 
 /**
  * @brief Copy a scalar.  The scalars may use the same memory, in which
