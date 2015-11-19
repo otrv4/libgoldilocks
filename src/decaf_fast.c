@@ -64,10 +64,10 @@ const precomputed_s *API_NS(precomputed_base) =
 const size_t API_NS2(sizeof,precomputed_s) = sizeof(precomputed_s);
 const size_t API_NS2(alignof,precomputed_s) = 32;
 
-/* FIXME PERF: Vectorize vs unroll */
+/* TODO PERF: Vectorize vs unroll */
 #ifdef __clang__
 #if 100*__clang_major__ + __clang_minor__ > 305
-#define UNROLL _Pragma("clang loop unroll(full)") // PERF FIXME: vectorize?
+#define UNROLL _Pragma("clang loop unroll(full)") // PERF TODO: vectorize?
 #endif
 #endif
 
@@ -1464,6 +1464,26 @@ void API_NS(precomputed_scalarmul) (
     decaf_bzero(scalar1x,sizeof(scalar1x));
 }
 
+void API_NS(point_cond_sel) (
+    point_t out,
+    const point_t a,
+    const point_t b,
+    decaf_bool_t pick_b
+) {
+    pick_b = ~(((decaf_dword_t)pick_b - 1) >> WBITS);
+    constant_time_select(out,b,a,sizeof(point_t),pick_b);
+}
+
+void API_NS(scalar_cond_sel) (
+    scalar_t out,
+    const scalar_t a,
+    const scalar_t b,
+    decaf_bool_t pick_b
+) {
+    pick_b = ~(((decaf_dword_t)pick_b - 1) >> WBITS);
+    constant_time_select(out,b,a,sizeof(scalar_t),pick_b);
+}
+
 /* TODO: restore Curve25519 Montgomery ladder? */
 decaf_bool_t API_NS(direct_scalarmul) (
     uint8_t scaled[SER_BYTES],
@@ -1472,10 +1492,10 @@ decaf_bool_t API_NS(direct_scalarmul) (
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
 ) {
-    /* FIXME: this can cause assertions if !short_circuit and the input is garbage.*/
     point_t basep;
     decaf_bool_t succ = API_NS(point_decode)(basep, base, allow_identity);
     if (short_circuit & ~succ) return succ;
+    API_NS(point_cond_sel)(basep, API_NS(point_base), basep, succ);
     API_NS(point_scalarmul)(basep, basep, scalar);
     API_NS(point_encode)(scaled, basep);
     API_NS(point_destroy)(basep);

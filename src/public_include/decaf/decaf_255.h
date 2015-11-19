@@ -417,6 +417,38 @@ void decaf_255_base_double_scalarmul_non_secret (
 ) API_VIS NONNULL4 NOINLINE;
 
 /**
+ * @brief Constant-time decision between two points.  If pick_b
+ * is zero, out = a; else out = b.
+ *
+ * @param [out] q The output.  It may be the same as either input.
+ * @param [in] a Any point.
+ * @param [in] b Any point.
+ * @param [in] pick_b If nonzero, choose point b.
+ */
+void decaf_255_point_cond_sel (
+     decaf_255_point_t out,
+     const decaf_255_point_t a,
+     const decaf_255_point_t b,
+     decaf_word_t pick_b
+) API_VIS NONNULL3 NOINLINE;
+
+/**
+ * @brief Constant-time decision between two scalars.  If pick_b
+ * is zero, out = a; else out = b.
+ *
+ * @param [out] q The output.  It may be the same as either input.
+ * @param [in] a Any scalar.
+ * @param [in] b Any scalar.
+ * @param [in] pick_b If nonzero, choose scalar b.
+ */
+void decaf_255_scalar_cond_sel (
+     decaf_255_scalar_t out,
+     const decaf_255_scalar_t a,
+     const decaf_255_scalar_t b,
+     decaf_word_t pick_b
+) API_VIS NONNULL3 NOINLINE;
+
+/**
  * @brief Test that a point is valid, for debugging purposes.
  *
  * @param [in] toTest The point to test.
