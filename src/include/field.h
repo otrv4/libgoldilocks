@@ -14,13 +14,6 @@
 #include "f_field.h"
 #include <string.h>
 
-#define is32 (GOLDI_BITS == 32 || GF_BITS != 448)
-#if (is32)
-#define IF32(s) (s)
-#else
-#define IF32(s)
-#endif
-
 /**
  * Returns 1/sqrt(+- x).
  * 
@@ -59,17 +52,6 @@ gf_sqrn (
         gf_sqr(tmp,y);
         gf_sqr(y,tmp);
     }
-}
-
-static __inline__ void
-gf_subx_RAW (
-    gf d,
-    const gf a,
-    const gf b
-) {
-    gf_sub_RAW ( d, a, b );
-    gf_bias( d, 2 );
-    IF32( gf_weak_reduce ( d ) );
 }
 
 static __inline__ void
