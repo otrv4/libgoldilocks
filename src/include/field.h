@@ -22,17 +22,12 @@
  * 
  * If x=0, returns 0.
  */
-void
-gf_isr (
-    gf       a,
-    const gf x
-);
+void gf_isr(gf a, const gf x);
     
 /**
  * Square x, n times.
  */
-static __inline__ void
-__attribute__((unused,always_inline))
+static INLINE UNUSED void
 gf_sqrn (
     gf_s *__restrict__ y,
     const gf x,

@@ -41,8 +41,6 @@ extern const gf SQRT_MINUS_ONE;
 extern const gf SQRT_ONE_MINUS_D; /* TODO: Intern this? */
 #endif
 
-#define NOINLINE __attribute__((noinline))
-#define INLINE inline __attribute__((always_inline))
 #define WBITS DECAF_WORD_BITS
 
 const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
