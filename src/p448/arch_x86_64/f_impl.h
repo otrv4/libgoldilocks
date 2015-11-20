@@ -7,14 +7,8 @@
 #include <stdint.h>
 #include <assert.h>
 
+#include "decaf/decaf_448.h"
 #include "word.h"
-
-#ifndef __DECAF_448_H__ // HACK FIXME
-#define DECAF_WORD_BITS 64
-typedef struct gf_448_s {
-  uint64_t limb[8];
-} __attribute__((aligned(32))) gf_448_s, gf_448_t[1];
-#endif
 
 #define LBITS 56
 #define FIELD_LITERAL(a,b,c,d,e,f,g,h) {{a,b,c,d,e,f,g,h}}
