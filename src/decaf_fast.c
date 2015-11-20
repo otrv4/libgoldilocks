@@ -42,13 +42,22 @@ extern const gf SQRT_ONE_MINUS_D; /* TODO: Intern this? */
 #define sv static void
 #define snv static void __attribute__((noinline))
 #define siv static inline void __attribute__((always_inline))
-static const gf ZERO = {{{0}}}, ONE = {{{1}}};
+
+
 
 const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
 extern const scalar_t API_NS(sc_r2);
 extern const decaf_word_t API_NS(MONTGOMERY_FACTOR);
 
 extern const point_t API_NS(point_base);
+
+/* These are externally exposed (but private) instead of static so that
+ * f_arithmetic.c can use it
+ */
+#define ONE API_NS(ONE)
+#define ZERO API_NS(ZERO)
+#define gf_eq API_NS(gf_eq)
+const gf ZERO = {{{0}}}, ONE = {{{1}}};
 
 /* Projective Niels coordinates */
 typedef struct { gf a, b, c; } niels_s, niels_t[1];
@@ -103,7 +112,7 @@ siv cond_swap(gf x, gf_s *__restrict__ y, decaf_bool_t swap) {
 }
 
 /** Compare a==b */
-static decaf_word_t __attribute__((noinline)) gf_eq(const gf a, const gf b) {
+decaf_word_t __attribute__((noinline)) gf_eq(const gf a, const gf b) {
     gf c;
     gf_sub(c,a,b);
     gf_strong_reduce(c);
@@ -1078,6 +1087,7 @@ void API_NS(point_from_hash_nonuniform) (
     const unsigned char ser[SER_BYTES]
 ) {
     // TODO: simplify since we don't return a hint anymore
+    // TODO: test pathological case ur0^2 = 1/(1-d)
     gf r0,r,a,b,c,dee,D,N,rN,e;
     gf_deser(r0,ser);
     gf_strong_reduce(r0);

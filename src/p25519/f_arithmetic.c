@@ -9,6 +9,7 @@
  */
 
 #include "field.h"
+#include "constant_time.h"
 
 const gf_25519_t P25519_SQRT_MINUS_ONE = {FIELD_LITERAL(
     0x61b274a0ea0b0,
@@ -18,20 +19,9 @@ const gf_25519_t P25519_SQRT_MINUS_ONE = {FIELD_LITERAL(
     0x2b8324804fc1d
 )};
     
-static const gf_25519_t ONE = {FIELD_LITERAL( // FIXME copy-pasted
-    1,0,0,0,0
-)}; 
-
-// ARCH MAGIC FIXME copy-pasted from decaf_fast.c
-static mask_t gf_eq(const gf_25519_t a, const gf_25519_t b) {
-    gf_25519_t c;
-    gf_sub(c,a,b);
-    gf_strong_reduce(c);
-    mask_t ret=0;
-    int i;
-    for (i=0; i<5; i++) { ret |= c->limb[i]; }
-    return ((__uint128_t)ret - 1) >> 64;
-}
+/* TODO put in header */
+extern const gf_25519_t decaf_255_ONE;
+extern mask_t decaf_255_gf_eq(const gf_25519_t a, const gf_25519_t b);
 
 /* Guarantee: a^2 x = 0 if x = 0; else a^2 x = 1 or SQRT_MINUS_ONE; */
 void 
@@ -51,10 +41,8 @@ gf_isr (
         st[i&1][0] = tmp2[0];
     }
     
-    mask_t mask = gf_eq(st[1],ONE) | gf_eq(st[1],SQRT_MINUS_ONE);
+    mask_t mask = decaf_255_gf_eq(st[1],decaf_255_ONE) | decaf_255_gf_eq(st[1],SQRT_MINUS_ONE);
     
-    // ARCH MAGIC FIXME: should be cond_sel
-    for (i=0; i<5; i++) tmp1->limb[i] = (ONE->limb[i]            &  mask)
-                                      | (SQRT_MINUS_ONE->limb[i] & ~mask);
+    constant_time_select(tmp1, decaf_255_ONE, SQRT_MINUS_ONE, sizeof(tmp1), mask);
     gf_mul(a,tmp1,st[0]);
 }
