@@ -8,11 +8,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include "decaf/decaf_255.h"
 #include "word.h"
-
-typedef struct gf_25519_s {
-  uint64_t limb[5];
-} gf_25519_s, gf_25519_t[1];
 
 #define LBITS 51
 #define FIELD_LITERAL(a,b,c,d,e) {{ a,b,c,d,e }}
