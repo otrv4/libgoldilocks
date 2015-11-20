@@ -41,11 +41,9 @@ extern const gf SQRT_MINUS_ONE;
 extern const gf SQRT_ONE_MINUS_D; /* TODO: Intern this? */
 #endif
 
-#define sv static void
-#define snv static void __attribute__((noinline))
-#define siv static inline void __attribute__((always_inline))
-
-
+#define NOINLINE __attribute__((noinline))
+#define INLINE inline __attribute__((always_inline))
+#define WBITS DECAF_WORD_BITS
 
 const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
 extern const scalar_t API_NS(sc_r2);
@@ -90,22 +88,26 @@ const size_t API_NS2(alignof,precomputed_s) = 32;
 #define FOR_LIMB_U(i,op) { unsigned int i=0; UNROLL for (i=0; i<NLIMBS; i++)  { op; }}
 
 /** Copy x = y */
-siv gf_cpy(gf x, const gf y) { x[0] = y[0]; }
+static INLINE void
+gf_cpy(gf x, const gf y) { x[0] = y[0]; }
 
 /** Constant time, x = is_z ? z : y */
-siv cond_sel(gf x, const gf y, const gf z, decaf_bool_t is_z) {
+static INLINE void
+cond_sel(gf x, const gf y, const gf z, decaf_bool_t is_z) {
     constant_time_select(x,z,y,sizeof(gf),is_z);
 }
 
 /** Constant time, if (neg) x=-x; */
-sv cond_neg(gf x, decaf_bool_t neg) {
+static void
+cond_neg(gf x, decaf_bool_t neg) {
     gf y;
     gf_sub(y,ZERO,x);
     cond_sel(x,x,y,neg);
 }
 
 /** Constant time, if (swap) (x,y) = (y,x); */
-siv cond_swap(gf x, gf_s *__restrict__ y, decaf_bool_t swap) {
+static INLINE void
+cond_swap(gf x, gf_s *__restrict__ y, decaf_bool_t swap) {
     FOR_LIMB_U(i, {
         decaf_word_t s = (x->limb[i] ^ y->limb[i]) & swap;
         x->limb[i] ^= s;
@@ -114,7 +116,9 @@ siv cond_swap(gf x, gf_s *__restrict__ y, decaf_bool_t swap) {
 }
 
 /** Compare a==b */
-decaf_word_t __attribute__((noinline)) gf_eq(const gf a, const gf b) {
+/* Not static because it's used in inverse square root. */
+decaf_word_t
+gf_eq(const gf a, const gf b) {
     gf c;
     gf_sub(c,a,b);
     gf_strong_reduce(c);
@@ -125,7 +129,8 @@ decaf_word_t __attribute__((noinline)) gf_eq(const gf a, const gf b) {
 }
 
 /** Inverse square root using addition chain. */
-static decaf_bool_t gf_isqrt_chk(gf y, const gf x, decaf_bool_t allow_zero) {
+static decaf_bool_t
+gf_isqrt_chk(gf y, const gf x, decaf_bool_t allow_zero) {
     gf tmp0, tmp1;
     gf_isr((gf_s *)y, (const gf_s *)x);
     gf_sqr(tmp0,y);
@@ -134,7 +139,8 @@ static decaf_bool_t gf_isqrt_chk(gf y, const gf x, decaf_bool_t allow_zero) {
 }
 
 /** Inverse. */
-sv gf_invert(gf y, const gf x) {
+static void
+gf_invert(gf y, const gf x) {
     gf t1, t2;
     gf_sqr(t1, x); // o^2
     decaf_bool_t ret = gf_isqrt_chk(t2, t1, 0); // +-1/sqrt(o^2) = +-1/o
@@ -148,7 +154,8 @@ sv gf_invert(gf y, const gf x) {
  * Mul by signed int.  Not constant-time WRT the sign of that int.
  * Just uses a full mul (PERF)
  */
-static inline void gf_mulw_sgn(gf c, const gf a, int w) {
+static INLINE void
+gf_mulw_sgn(gf c, const gf a, int w) {
     if (w>0) {
         gf_mulw(c, a, w);
     } else {
@@ -178,7 +185,8 @@ static decaf_word_t lobit(const gf x) {
 /** {extra,accum} - sub +? p
  * Must have extra <= 1
  */
-snv sc_subx(
+static NOINLINE void
+sc_subx(
     scalar_t out,
     const decaf_word_t accum[SCALAR_LIMBS],
     const scalar_t sub,
@@ -202,7 +210,8 @@ snv sc_subx(
     }
 }
 
-snv sc_montmul (
+static NOINLINE void
+sc_montmul (
     scalar_t out,
     const scalar_t a,
     const scalar_t b
@@ -250,7 +259,8 @@ void API_NS(scalar_mul) (
 }
 
 /* PERF: could implement this */
-siv sc_montsqr (
+static INLINE void
+sc_montsqr (
     scalar_t out,
     const scalar_t a
 ) {
@@ -357,7 +367,8 @@ void API_NS(scalar_add) (
     sc_subx(out, out->limb, sc_p, sc_p, chain);
 }
 
-snv sc_halve (
+static NOINLINE void
+sc_halve (
     scalar_t out,
     const scalar_t a,
     const scalar_t p
@@ -376,7 +387,8 @@ snv sc_halve (
     out->limb[i] = out->limb[i]>>1 | chain<<(WBITS-1);
 }
 
-void API_NS(scalar_set_unsigned) (
+void
+API_NS(scalar_set_unsigned) (
     scalar_t out,
     decaf_word_t w
 ) {
@@ -384,7 +396,8 @@ void API_NS(scalar_set_unsigned) (
     out->limb[0] = w;
 }
 
-decaf_bool_t API_NS(scalar_eq) (
+decaf_bool_t
+API_NS(scalar_eq) (
     const scalar_t a,
     const scalar_t b
 ) {
@@ -401,11 +414,13 @@ decaf_bool_t API_NS(scalar_eq) (
 /** identity = (0,1) */
 const point_t API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 
-static void gf_encode ( unsigned char ser[SER_BYTES], gf a ) {
+static void
+gf_encode ( unsigned char ser[SER_BYTES], gf a ) {
     gf_serialize(ser, (gf_s *)a);
 }
 
-static void deisogenize (
+static void
+deisogenize (
     gf_s *__restrict__ s,
     gf_s *__restrict__ minus_t_over_s,
     const point_t p,
@@ -655,7 +670,8 @@ void API_NS(point_add) (
     gf_mul ( p->t, b, c );
 }
 
-snv point_double_internal (
+static NOINLINE void
+point_double_internal (
     point_t p,
     const point_t q,
     decaf_bool_t before_double
@@ -691,7 +707,8 @@ void API_NS(point_negate) (
     gf_sub(nega->t, ZERO, a->t);
 }
 
-siv scalar_decode_short (
+static INLINE void
+scalar_decode_short (
     scalar_t s,
     const unsigned char ser[SER_BYTES],
     unsigned int nbytes
@@ -728,7 +745,7 @@ void API_NS(scalar_destroy) (
     decaf_bzero(scalar, sizeof(scalar_t));
 }
 
-static inline void ignore_result ( decaf_bool_t boo ) {
+static INLINE void ignore_result ( decaf_bool_t boo ) {
     (void)boo;
 }
 
@@ -783,7 +800,8 @@ void API_NS(scalar_encode)(
 }
 
 /* Operations on [p]niels */
-siv cond_neg_niels (
+static INLINE void
+cond_neg_niels (
     niels_t n,
     decaf_bool_t neg
 ) {
@@ -814,7 +832,8 @@ static void pniels_to_pt (
     gf_sqr ( e->z, d->z );
 }
 
-snv niels_to_pt (
+static NOINLINE void
+niels_to_pt (
     point_t e,
     const niels_t n
 ) {
@@ -824,7 +843,8 @@ snv niels_to_pt (
     gf_cpy ( e->z, ONE );
 }
 
-snv add_niels_to_pt (
+static NOINLINE void
+add_niels_to_pt (
     point_t d,
     const niels_t e,
     decaf_bool_t before_double
@@ -845,7 +865,8 @@ snv add_niels_to_pt (
     if (!before_double) gf_mul ( d->t, b, c );
 }
 
-snv sub_niels_from_pt (
+static NOINLINE void
+sub_niels_from_pt (
     point_t d,
     const niels_t e,
     decaf_bool_t before_double
@@ -866,7 +887,8 @@ snv sub_niels_from_pt (
     if (!before_double) gf_mul ( d->t, b, c );
 }
 
-sv add_pniels_to_pt (
+static void
+add_pniels_to_pt (
     point_t p,
     const pniels_t pn,
     decaf_bool_t before_double
@@ -877,7 +899,8 @@ sv add_pniels_to_pt (
     add_niels_to_pt( p, pn->n, before_double );
 }
 
-sv sub_pniels_from_pt (
+static void
+sub_pniels_from_pt (
     point_t p,
     const pniels_t pn,
     decaf_bool_t before_double
@@ -890,7 +913,8 @@ sv sub_pniels_from_pt (
 
 extern const scalar_t API_NS(point_scalarmul_adjustment);
 
-siv constant_time_lookup_xx (
+static INLINE void
+constant_time_lookup_xx (
     void *__restrict__ out_,
     const void *table_,
     decaf_word_t elem_bytes,
@@ -900,7 +924,8 @@ siv constant_time_lookup_xx (
     constant_time_lookup(out_,table_,elem_bytes,n_table,idx);
 }
 
-snv prepare_fixed_window(
+static NOINLINE void
+prepare_fixed_window(
     pniels_t *multiples,
     const point_t b,
     int ntable
@@ -1416,7 +1441,8 @@ void API_NS(precompute) (
 
 extern const scalar_t API_NS(precomputed_scalarmul_adjustment);
 
-siv constant_time_lookup_xx_niels (
+static INLINE void
+constant_time_lookup_xx_niels (
     niels_s *__restrict__ ni,
     const niels_t *table,
     int nelts,
@@ -1573,7 +1599,8 @@ static int recode_wnaf (
     return position;
 }
 
-sv prepare_wnaf_table(
+static void
+prepare_wnaf_table(
     pniels_t *output,
     const point_t working,
     unsigned int tbits
@@ -1690,7 +1717,7 @@ void API_NS(base_double_scalarmul_non_secret) (
         }
     }
     
-    // Non-secret, but whatever this is cheap.
+    /* This function is non-secret, but whatever this is cheap. */
     decaf_bzero(control_var,sizeof(control_var));
     decaf_bzero(control_pre,sizeof(control_pre));
     decaf_bzero(precmp_var,sizeof(precmp_var));
@@ -1700,13 +1727,13 @@ void API_NS(base_double_scalarmul_non_secret) (
 }
 
 void API_NS(point_destroy) (
-  point_t point
+    point_t point
 ) {
     decaf_bzero(point, sizeof(point_t));
 }
 
 void API_NS(precomputed_destroy) (
-  precomputed_s *pre
+    precomputed_s *pre
 ) {
     decaf_bzero(pre, API_NS2(sizeof,precomputed_s));
 }

@@ -1,14 +1,3 @@
-#define WBITS DECAF_WORD_BITS
-// #define LBITS DECAF_448_LIMB_BITS // FIXME
-
-#if WBITS == 64
-#define SC_LIMB(x) (x##ull)
-#elif WBITS == 32
-#define SC_LIMB(x) (x##ull)&((1ull<<32)-1), (x##ull)>>32
-#else
-#error "Only supporting 32- and 64-bit platforms right now"
-#endif
-
 #define API_NAME "decaf_448"
 #define API_NS(_id) decaf_448_##_id
 #define API_NS2(_pref,_id) _pref##_decaf_448_##_id

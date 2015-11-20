@@ -1,14 +1,3 @@
-// FIXME move to arch or something
-#define WBITS DECAF_WORD_BITS
-#define LBITS DECAF_255_LIMB_BITS
-
-#if WBITS == 64
-#define LIMB(x) (x##ull)
-#define SC_LIMB(x) (x##ull)
-#else
-#error "Only supporting 64-bit platforms right now"
-#endif
-
 #define API_NAME "decaf_255"
 #define API_NS(_id) decaf_255_##_id
 #define API_NS2(_pref,_id) _pref##_decaf_255_##_id

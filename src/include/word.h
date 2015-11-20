@@ -46,7 +46,8 @@ typedef __int128_t dsword_t;
 #define U60LE(x) x##ull
 #define letohWORD letoh64
 #define GOLDI_BITS 64
-#else
+#define SC_LIMB(x) (x##ull)
+#elif (WORD_BITS == 32)
 typedef uint16_t hword_t;
 typedef uint32_t word_t;
 typedef uint64_t dword_t;
@@ -62,6 +63,9 @@ typedef int64_t dsword_t;
 #define U60LE(x) (x##ull)&((1ull<<30)-1), (x##ull)>>30
 #define letohWORD letoh32
 #define GOLDI_BITS 32
+#define SC_LIMB(x) (x##ull)
+#else
+#error "For now, libdecaf only supports 32- and 64-bit architectures."
 #endif
 
 #define DIV_CEIL(_x,_y) (((_x) + (_y) - 1)/(_y))
