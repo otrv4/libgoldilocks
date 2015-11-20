@@ -11,7 +11,7 @@
 #include "decaf/decaf_255.h"
 #include "word.h"
 
-#define LBITS 51
+#define DECAF_255_LIMB_BITS 51
 #define FIELD_LITERAL(a,b,c,d,e) {{ a,b,c,d,e }}
 
 /*

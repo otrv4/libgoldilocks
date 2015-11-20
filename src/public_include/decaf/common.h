@@ -32,6 +32,7 @@
 /** @endcond */
 
 /* Internal word types */
+/* TODO: decide this internally, per curve, based on how it was built! */
 #if (defined(__ILP64__) || defined(__amd64__) || defined(__x86_64__) || (((__UINT_FAST32_MAX__)>>30)>>30)) \
 	 && !defined(DECAF_FORCE_32_BIT)
 #define DECAF_WORD_BITS 64

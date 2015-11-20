@@ -1,9 +1,8 @@
 // FIXME move to arch or something
 #define WBITS DECAF_WORD_BITS
+#define LBITS DECAF_255_LIMB_BITS
 
 #if WBITS == 64
-#define LBITS 51
-typedef __int128_t decaf_sdword_t;
 #define LIMB(x) (x##ull)
 #define SC_LIMB(x) (x##ull)
 #else

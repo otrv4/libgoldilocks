@@ -12,6 +12,8 @@
 #define __STDC_WANT_LIB_EXT1__ 1 /* for memset_s */
 #include <decaf.h>
 #include <string.h>
+
+#include "word.h"
 #include "field.h"
 #include "decaf_config.h"
 
@@ -183,7 +185,7 @@ snv sc_subx(
     const scalar_t p,
     decaf_word_t extra
 ) {
-    decaf_sdword_t chain = 0;
+    dsword_t chain = 0;
     unsigned int i;
     for (i=0; i<SCALAR_LIMBS; i++) {
         chain = (chain + accum[i]) - sub->limb[i];
@@ -710,7 +712,7 @@ decaf_bool_t API_NS(scalar_decode)(
 ) {
     unsigned int i;
     scalar_decode_short(s, ser, SER_BYTES);
-    decaf_sdword_t accum = 0;
+    dsword_t accum = 0;
     for (i=0; i<SCALAR_LIMBS; i++) {
         accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
     }

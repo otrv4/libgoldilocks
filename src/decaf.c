@@ -213,7 +213,7 @@ snv gf_canon ( gf a ) {
     gf_reduce(a);
 
     /* subtract p with borrow */
-    decaf_sdword_t carry = 0;
+    decaf_dsword_t carry = 0;
     FOR_LIMB(i, {
         carry = carry + a->limb[i] - P->limb[i];
         a->limb[i] = carry & LMASK;
@@ -273,7 +273,7 @@ snv decaf_448_subx(
     const decaf_448_scalar_t p,
     decaf_word_t extra
 ) {
-    decaf_sdword_t chain = 0;
+    decaf_dsword_t chain = 0;
     unsigned int i;
     for (i=0; i<DECAF_448_SCALAR_LIMBS; i++) {
         chain = (chain + accum[i]) - sub->limb[i];
@@ -458,7 +458,7 @@ static decaf_bool_t gf_deser(gf s, const unsigned char ser[DECAF_448_SER_BYTES])
         }
     }
     
-    decaf_sdword_t accum = 0;
+    decaf_dsword_t accum = 0;
     FOR_LIMB(i, accum = (accum + s->limb[i] - P->limb[i]) >> WBITS );
     return accum;
 }
@@ -563,7 +563,7 @@ decaf_bool_t decaf_448_scalar_decode(
         s->limb[i] = out;
     }
     
-    decaf_sdword_t accum = 0;
+    decaf_dsword_t accum = 0;
     for (i=0; i<DECAF_448_SCALAR_LIMBS; i++) {
         accum = (accum + s->limb[i] - decaf_448_scalar_p->limb[i]) >> WBITS;
     }
