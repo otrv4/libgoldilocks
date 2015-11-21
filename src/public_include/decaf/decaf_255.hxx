@@ -56,6 +56,9 @@ static inline const char *name() { return "IsoEd25519"; }
 /** The curve's cofactor (removed, but useful for testing) */
 static const int REMOVED_COFACTOR = 8;
 
+/** Residue class of field modulus: p == this mod 2*(this-1) */
+static const int FIELD_MODULUS_TYPE = 5;
+
 /** @cond internal */
 class Point;
 class Precomputed;

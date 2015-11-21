@@ -232,12 +232,6 @@ static void test_elligator() {
                     hexprint("x",b1);
                     hexprint("X",*alts[j]);
                 }
-                /*
-                if (i == Point::HASH_BYTES) {
-                    printf("Identity, hint = %d\n", j);
-                    hexprint("einv(0)",*alts[j]);
-                }
-                */
             }
         }
         
@@ -277,7 +271,13 @@ static void test_ec() {
 
     Point id = Point::identity(), base = Point::base();
     point_check(test,id,id,id,0,0,Point::from_hash(""),id,"fh0");
-    //point_check(test,id,id,id,0,0,Point::from_hash("\x01"),id,"fh1"); FIXME
+    
+    if (Group::FIELD_MODULUS_TYPE == 3) {
+        /* When p == 3 mod 4, the QNR is -1, so u*1^2 = -1 also produces the
+         * identity.
+         */
+        point_check(test,id,id,id,0,0,Point::from_hash("\x01"),id,"fh1");
+    }
     
     for (int i=0; i<NTESTS && test.passing_now; i++) {
         /* TODO: pathological cases */
@@ -334,7 +334,7 @@ static void test_crypto() {
 
 }; // template<GroupId GROUP>
 
-// FIXME cross-field
+// TODO cross-field
 static void test_decaf() {
     Test test("Sample crypto");
     SpongeRng rng(Block("test_decaf"));

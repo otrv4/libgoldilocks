@@ -56,6 +56,9 @@ static inline const char *name() { return "Ed448-Goldilocks"; }
 /** The curve's cofactor (removed, but useful for testing) */
 static const int REMOVED_COFACTOR = 4;
 
+/** Residue class of field modulus: p == this mod 2*(this-1) */
+static const int FIELD_MODULUS_TYPE = 3;
+
 /** @cond internal */
 class Point;
 class Precomputed;
