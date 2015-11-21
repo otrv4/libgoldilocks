@@ -103,7 +103,7 @@ void decaf_255_private_to_public (
  * @warning This is a pretty silly shared secret computation
  * and will almost definitely change in the future.
  */
-decaf_bool_t
+decaf_error_t
 decaf_255_shared_secret (
     uint8_t *shared,
     size_t shared_bytes,
@@ -147,8 +147,11 @@ decaf_255_sign (
  * @param [in] sig The signature.
  * @param [in] pub The public key.
  * @param [in] shake A SHAKE256 context with the message.
+ *
+ * @return DECAF_SUCCESS The signature verified successfully.
+ * @return DECAF_FAILURE The signature did not verify successfully.
  */    
-decaf_bool_t
+decaf_error_t
 decaf_255_verify_shake (
     const decaf_255_signature_t sig,
     const decaf_255_public_key_t pub,
@@ -162,8 +165,11 @@ decaf_255_verify_shake (
  * @param [in] pub The public key.
  * @param [in] message The message.
  * @param [in] message_len The message's length.
+ *
+ * @return DECAF_SUCCESS The signature verified successfully.
+ * @return DECAF_FAILURE The signature did not verify successfully.
  */    
-decaf_bool_t
+decaf_error_t
 decaf_255_verify (
     const decaf_255_signature_t sig,
     const decaf_255_public_key_t pub,

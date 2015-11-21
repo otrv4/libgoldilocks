@@ -73,7 +73,6 @@
 #define UNUSED __attribute__((unused))
 #define INLINE __inline__ __attribute__((always_inline))
 
-
 #ifdef __ARM_NEON__
     typedef uint32x4_t vecmask_t;
 #elif __clang__

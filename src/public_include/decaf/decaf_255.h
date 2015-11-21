@@ -80,7 +80,7 @@ extern const struct decaf_255_precomputed_s *decaf_255_precomputed_base API_VIS;
  * @retval DECAF_FAILURE The scalar was greater than the modulus,
  * and has been reduced modulo that modulus.
  */
-decaf_bool_t decaf_255_scalar_decode (
+decaf_error_t decaf_255_scalar_decode (
     decaf_255_scalar_t out,
     const unsigned char ser[DECAF_255_SCALAR_BYTES]
 ) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
@@ -164,7 +164,7 @@ void decaf_255_scalar_mul (
  * @param [out] out 1/a.
  * @return DECAF_SUCCESS The input is nonzero.
  */  
-decaf_bool_t decaf_255_scalar_invert (
+decaf_error_t decaf_255_scalar_invert (
     decaf_255_scalar_t out,
     const decaf_255_scalar_t a
 ) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
@@ -217,7 +217,7 @@ void decaf_255_point_encode (
  * @retval DECAF_FAILURE The decoding didn't succeed, because
  * ser does not represent a point.
  */
-decaf_bool_t decaf_255_point_decode (
+decaf_error_t decaf_255_point_decode (
     decaf_255_point_t pt,
     const uint8_t ser[DECAF_255_SER_BYTES],
     decaf_bool_t allow_identity
@@ -335,7 +335,7 @@ void decaf_255_point_scalarmul (
  * @retval DECAF_FAILURE The scalarmul didn't succeed, because
  * base does not represent a point.
  */
-decaf_bool_t decaf_255_direct_scalarmul (
+decaf_error_t decaf_255_direct_scalarmul (
     uint8_t scaled[DECAF_255_SER_BYTES],
     const uint8_t base[DECAF_255_SER_BYTES],
     const decaf_255_scalar_t scalar,
@@ -552,7 +552,7 @@ void decaf_255_point_from_hash_uniform (
  * @retval DECAF_SUCCESS The inverse succeeded.
  * @retval DECAF_FAILURE The inverse failed.
  */
-decaf_bool_t
+decaf_error_t
 decaf_255_invert_elligator_nonuniform (
     unsigned char recovered_hash[DECAF_255_SER_BYTES],
     const decaf_255_point_t pt,
@@ -577,7 +577,7 @@ decaf_255_invert_elligator_nonuniform (
  * @retval DECAF_SUCCESS The inverse succeeded.
  * @retval DECAF_FAILURE The inverse failed.
  */
-decaf_bool_t
+decaf_error_t
 decaf_255_invert_elligator_uniform (
     unsigned char recovered_hash[2*DECAF_255_SER_BYTES],
     const decaf_255_point_t pt,

@@ -201,8 +201,8 @@ static void test_elligator() {
             if (len > Point::HASH_BYTES)
                 memcpy(&(*alts2[j])[Point::HASH_BYTES], &b1[Point::HASH_BYTES], len-Point::HASH_BYTES);
             
-            successes[j]  =  s.invert_elligator(*alts[j], j);
-            successes2[j] = ss.invert_elligator(*alts2[j],j);
+            successes[j]  = decaf_successful( s.invert_elligator(*alts[j], j));
+            successes2[j] = decaf_successful(ss.invert_elligator(*alts2[j],j));
             
             if (successes[j] != successes2[j]
                 || (successes[j] && successes2[j] && *alts[j] != *alts2[j])
@@ -353,17 +353,17 @@ static void test_decaf() {
         decaf_255_private_to_public(p1,s1);
         decaf_255_derive_private_key(s2,proto2);
         decaf_255_private_to_public(p2,s2);
-        if (!decaf_255_shared_secret (shared1,sizeof(shared1),s1,p2)) {
+        if (DECAF_SUCCESS != decaf_255_shared_secret (shared1,sizeof(shared1),s1,p2)) {
             test.fail(); printf("Fail ss12\n");
         }
-        if (!decaf_255_shared_secret (shared2,sizeof(shared2),s2,p1)) {
+        if (DECAF_SUCCESS != decaf_255_shared_secret (shared2,sizeof(shared2),s2,p1)) {
             test.fail(); printf("Fail ss21\n");
         }
         if (memcmp(shared1,shared2,sizeof(shared1))) {
             test.fail(); printf("Fail ss21 == ss12\n");   
         }
         decaf_255_sign (sig,s1,(const unsigned char *)message,strlen(message));
-        if (!decaf_255_verify (sig,p1,(const unsigned char *)message,strlen(message))) {
+        if (DECAF_SUCCESS != decaf_255_verify (sig,p1,(const unsigned char *)message,strlen(message))) {
             test.fail(); printf("Fail sig ver\n");   
         }
     }

@@ -261,7 +261,7 @@ static INLINE void sc_montsqr (scalar_t out, const scalar_t a) {
     sc_montmul(out,a,a);
 }
 
-decaf_bool_t API_NS(scalar_invert) (
+decaf_error_t API_NS(scalar_invert) (
     scalar_t out,
     const scalar_t a
 ) {
@@ -318,7 +318,7 @@ decaf_bool_t API_NS(scalar_invert) (
     /* Demontgomerize */
     sc_montmul(out,out,API_NS(scalar_one));
     decaf_bzero(precmp, sizeof(precmp));
-    return ~API_NS(scalar_eq)(out,API_NS(scalar_zero));
+    return decaf_succeed_if(~API_NS(scalar_eq)(out,API_NS(scalar_zero)));
 }
 
 void API_NS(scalar_sub) (
@@ -510,13 +510,14 @@ static decaf_bool_t gf_deser(gf s, const unsigned char ser[SER_BYTES]) {
     return gf_deserialize((gf_s *)s, ser);
 }
 
-decaf_bool_t API_NS(point_decode) (
+decaf_error_t API_NS(point_decode) (
     point_t p,
     const unsigned char ser[SER_BYTES],
     decaf_bool_t allow_identity
 ) {
     gf s, a, b, c, d, e, f;
     decaf_bool_t succ = gf_deser(s, ser), zero = gf_eq(s, ZERO);
+    allow_identity = ~word_is_zero(allow_identity);
     succ &= allow_identity | ~zero;
     succ &= ~hibit(s);
     gf_sqr ( a, s );
@@ -566,7 +567,7 @@ decaf_bool_t API_NS(point_decode) (
     
     assert(API_NS(point_valid)(p) | ~succ);
     
-    return succ;
+    return decaf_succeed_if(succ);
 }
 
 #if IMAGINE_TWIST
@@ -700,7 +701,7 @@ scalar_decode_short (
     }
 }
 
-decaf_bool_t API_NS(scalar_decode)(
+decaf_error_t API_NS(scalar_decode)(
     scalar_t s,
     const unsigned char ser[SER_BYTES]
 ) {
@@ -710,10 +711,11 @@ decaf_bool_t API_NS(scalar_decode)(
     for (i=0; i<SCALAR_LIMBS; i++) {
         accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
     }
+    /* Here accum == 0 or -1 */
     
     API_NS(scalar_mul)(s,s,API_NS(scalar_one)); /* ham-handed reduce */
     
-    return accum;
+    return decaf_succeed_if(accum);
 }
 
 void API_NS(scalar_destroy) (
@@ -1170,7 +1172,7 @@ void API_NS(point_from_hash_nonuniform) (
     assert(API_NS(point_valid)(p));
 }
 
-decaf_bool_t
+decaf_error_t
 API_NS(invert_elligator_nonuniform) (
     unsigned char recovered_hash[SER_BYTES],
     const point_t p,
@@ -1218,7 +1220,7 @@ API_NS(invert_elligator_nonuniform) (
     
     gf_encode(recovered_hash, b); 
     /* TODO: deal with overflow flag */
-    return succ;
+    return decaf_succeed_if(succ);
 }
 
 void API_NS(point_from_hash_uniform) (
@@ -1231,7 +1233,7 @@ void API_NS(point_from_hash_uniform) (
     API_NS(point_add)(pt,pt,pt2);
 }
 
-decaf_bool_t
+decaf_error_t
 API_NS(invert_elligator_uniform) (
     unsigned char partial_hash[2*SER_BYTES],
     const point_t p,
@@ -1481,7 +1483,7 @@ void API_NS(point_cond_sel) (
     const point_t b,
     decaf_bool_t pick_b
 ) {
-    pick_b = ~(((decaf_dword_t)pick_b - 1) >> WBITS);
+    pick_b = ~word_is_zero(pick_b);
     constant_time_select(out,b,a,sizeof(point_t),pick_b);
 }
 
@@ -1491,12 +1493,12 @@ void API_NS(scalar_cond_sel) (
     const scalar_t b,
     decaf_bool_t pick_b
 ) {
-    pick_b = ~(((decaf_dword_t)pick_b - 1) >> WBITS);
+    pick_b = ~word_is_zero(pick_b);
     constant_time_select(out,b,a,sizeof(scalar_t),pick_b);
 }
 
 /* TODO: restore Curve25519 Montgomery ladder? */
-decaf_bool_t API_NS(direct_scalarmul) (
+decaf_error_t API_NS(direct_scalarmul) (
     uint8_t scaled[SER_BYTES],
     const uint8_t base[SER_BYTES],
     const scalar_t scalar,
@@ -1504,13 +1506,13 @@ decaf_bool_t API_NS(direct_scalarmul) (
     decaf_bool_t short_circuit
 ) {
     point_t basep;
-    decaf_bool_t succ = API_NS(point_decode)(basep, base, allow_identity);
-    if (short_circuit & ~succ) return succ;
+    decaf_bool_t succ = decaf_successful(API_NS(point_decode)(basep, base, allow_identity));
+    if (short_circuit && ~succ) return DECAF_FAILURE;
     API_NS(point_cond_sel)(basep, API_NS(point_base), basep, succ);
     API_NS(point_scalarmul)(basep, basep, scalar);
     API_NS(point_encode)(scaled, basep);
     API_NS(point_destroy)(basep);
-    return succ;
+    return decaf_succeed_if(succ);
 }
 
 /**

@@ -51,7 +51,7 @@ void decaf_255_private_to_public (
     memcpy(pub, priv->pub, sizeof(decaf_255_public_key_t));
 }
 
-decaf_bool_t
+decaf_error_t
 decaf_255_shared_secret (
     uint8_t *shared,
     size_t shared_bytes,
@@ -92,15 +92,16 @@ decaf_255_shared_secret (
     }
     shake256_update(sponge, ss_ser, sizeof(ss_ser));
     
-    decaf_bool_t ret = decaf_255_direct_scalarmul(ss_ser, your_pubkey, my_privkey->secret_scalar, DECAF_FALSE, DECAF_TRUE);
+    decaf_error_t ret = decaf_255_direct_scalarmul(ss_ser, your_pubkey, my_privkey->secret_scalar, DECAF_FALSE, DECAF_TRUE);
+    decaf_bool_t good = decaf_successful(ret);
     /* If invalid, then replace ... */
     for (i=0; i<sizeof(ss_ser); i++) {
-        ss_ser[i] &= ret;
+        ss_ser[i] &= good;
         
         if (i < sizeof(my_privkey->sym)) {
-            ss_ser[i] |= my_privkey->sym[i] & ~ret;
+            ss_ser[i] |= my_privkey->sym[i] & ~good;
         } else if (i - sizeof(my_privkey->sym) < strlen(nope)) {
-            ss_ser[i] |= nope[i-sizeof(my_privkey->sym)] & ~ret;
+            ss_ser[i] |= nope[i-sizeof(my_privkey->sym)] & ~good;
         }
     }
 
@@ -159,7 +160,7 @@ decaf_255_sign_shake (
     decaf_bzero(encoded,sizeof(encoded));
 }
 
-decaf_bool_t
+decaf_error_t
 decaf_255_verify_shake (
     const decaf_255_signature_t sig,
     const decaf_255_public_key_t pub,
@@ -181,9 +182,9 @@ decaf_255_verify_shake (
     decaf_255_scalar_decode_long(challenge, overkill, sizeof(overkill));
 
     /* Decode points. */
-    ret  = decaf_255_point_decode(point, sig, DECAF_TRUE);
-    ret &= decaf_255_point_decode(pubpoint, pub, DECAF_FALSE);
-    ret &= decaf_255_scalar_decode(response, &sig[DECAF_255_SER_BYTES]);
+    ret  = decaf_successful(decaf_255_point_decode(point, sig, DECAF_TRUE));
+    ret &= decaf_successful(decaf_255_point_decode(pubpoint, pub, DECAF_FALSE));
+    ret &= decaf_successful(decaf_255_scalar_decode(response, &sig[DECAF_255_SER_BYTES]));
 
     decaf_255_base_double_scalarmul_non_secret (
         pubpoint, response, pubpoint, challenge
@@ -191,7 +192,7 @@ decaf_255_verify_shake (
 
     ret &= decaf_255_point_eq(pubpoint, point);
     
-    return ret;
+    return decaf_succeed_if(ret);
 }
 
 void
@@ -208,7 +209,7 @@ decaf_255_sign (
     shake256_destroy(ctx);
 }
 
-decaf_bool_t
+decaf_error_t
 decaf_255_verify (
     const decaf_255_signature_t sig,
     const decaf_255_public_key_t pub,
@@ -218,7 +219,7 @@ decaf_255_verify (
     shake256_ctx_t ctx;
     shake256_init(ctx);
     shake256_update(ctx, message, message_len);
-    decaf_bool_t ret = decaf_255_verify_shake(sig, pub, ctx);
+    decaf_error_t ret = decaf_255_verify_shake(sig, pub, ctx);
     shake256_destroy(ctx);
     return ret;
 }

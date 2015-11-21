@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     
     API_NS(point_t) real_point_base;
     int ret = API_NS(point_decode)(real_point_base,base_point_ser_for_pregen,0);
-    if (!ret) return 1;
+    if (ret != DECAF_SUCCESS) return 1;
     
     API_NS(precomputed_s) *pre;
     ret = posix_memalign((void**)&pre, API_NS2(alignof,precomputed_s), API_NS2(sizeof,precomputed_s));

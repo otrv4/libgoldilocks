@@ -130,7 +130,7 @@ public:
      * @brief Decode from correct-length little-endian byte sequence.
      * @return DECAF_FAILURE if the scalar is greater than or equal to the group order q.
      */
-    static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
+    static inline decaf_error_t __attribute__((warn_unused_result)) decode (
         Scalar &sc, const FixedBlock<SER_BYTES> buffer
     ) NOEXCEPT {
         return decaf_448_scalar_decode(sc.s,buffer.data());
@@ -271,7 +271,7 @@ public:
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point,
      * or was the identity and allow_identity was DECAF_FALSE.  Contents of the buffer are undefined.
      */    
-    static inline decaf_bool_t __attribute__((warn_unused_result)) decode (
+    static inline decaf_error_t __attribute__((warn_unused_result)) decode (
         Point &p, const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE
     ) NOEXCEPT {
         return decaf_448_point_decode(p.p,buffer.data(),allow_identity);
@@ -366,7 +366,7 @@ public:
     inline Point &operator/=(const Scalar &s) throw(CryptoException) { return (*this) *= s.inverse(); }
     
     /** @brief Validate / sanity check */
-    inline bool validate() const NOEXCEPT { return DECAF_SUCCESS == decaf_448_point_valid(p); }
+    inline bool validate() const NOEXCEPT { return decaf_448_point_valid(p); }
     
     /** @brief Double-scalar multiply, equivalent to q*qs + r*rs but faster. */
     static inline Point double_scalarmul (
@@ -415,10 +415,10 @@ public:
     }
     
     /**
-     * Modify buffer so that Point::from_hash(Buffer) == *this, and return true;
-     * or leave buf unmodified and return false.
+     * Modify buffer so that Point::from_hash(Buffer) == *this, and return DECAF_SUCCESS;
+     * or leave buf unmodified and return DECAF_FAILURE.
      */
-    inline bool invert_elligator (
+    inline decaf_error_t invert_elligator (
         Buffer buf, uint16_t hint
     ) const NOEXCEPT {
         unsigned char buf2[2*HASH_BYTES];
@@ -426,30 +426,29 @@ public:
         memcpy(buf2,buf.data(),(buf.size() > 2*HASH_BYTES) ? 2*HASH_BYTES : buf.size());
         decaf_bool_t ret;
         if (buf.size() > HASH_BYTES) {
-            ret = decaf_448_invert_elligator_uniform(buf2, p, hint);
+            ret = decaf_successful(decaf_448_invert_elligator_uniform(buf2, p, hint));
         } else {
-            ret = decaf_448_invert_elligator_nonuniform(buf2, p, hint);
+            ret = decaf_successful(decaf_448_invert_elligator_nonuniform(buf2, p, hint));
         }
         if (buf.size() < HASH_BYTES) {
-            // FIXME: this &= will fail if success becomes 0
             ret &= decaf_memeq(&buf2[buf.size()], &buf2[HASH_BYTES], HASH_BYTES - buf.size());
         }
-        if (DECAF_SUCCESS == ret) {
+        if (ret) {
             /* TODO: make this constant time?? */
             memcpy(buf.data(),buf2,(buf.size() < HASH_BYTES) ? buf.size() : HASH_BYTES);
         }
         decaf_bzero(buf2,sizeof(buf2));
-        return (ret == DECAF_SUCCESS);
+        return decaf_succeed_if(ret);
     }
     
     /** @brief Steganographically encode this */
     inline SecureBuffer steg_encode(Rng &rng) const throw(std::bad_alloc) {
         SecureBuffer out(STEG_BYTES);
-        bool done;
+        decaf_error_t done;
         do {
             rng.read(Buffer(out).slice(HASH_BYTES-1,STEG_BYTES-HASH_BYTES+1));
             done = invert_elligator(out, out[HASH_BYTES-1]); 
-        } while (!done);
+        } while (!decaf_successful(done));
         return out;
     }
     
