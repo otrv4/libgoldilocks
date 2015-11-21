@@ -1497,7 +1497,7 @@ void API_NS(scalar_cond_sel) (
     constant_time_select(out,b,a,sizeof(scalar_t),pick_b);
 }
 
-/* TODO: restore Curve25519 Montgomery ladder? */
+/* FUTURE: restore Curve25519 Montgomery ladder? */
 decaf_error_t API_NS(direct_scalarmul) (
     uint8_t scaled[SER_BYTES],
     const uint8_t base[SER_BYTES],

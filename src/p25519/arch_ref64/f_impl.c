@@ -79,15 +79,15 @@ gf_25519_mulw (
 }
 
 void
-gf_25519_t qr (
+gf_25519_sqr (
     gf_25519_t __restrict__ cs,
     const gf_25519_t as
 ) {
-    gf_25519_mul(cs,as,as); // TODO
+    gf_25519_mul(cs,as,as); // PERF
 }
 
 void
-gf_25519_t trong_reduce (
+gf_25519_strong_reduce (
     gf_25519_t a
 ) {
     uint64_t mask = (1ull<<51)-1;
@@ -128,7 +128,7 @@ gf_25519_t trong_reduce (
 }
 
 void
-gf_25519_t erialize (
+gf_25519_serialize (
     uint8_t serial[32],
     const struct gf_25519_t x
 ) {

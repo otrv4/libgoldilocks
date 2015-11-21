@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-/* TODO: non x86-64 versions of these.
+/* FUTURE: non x86-64 versions of these.
  * FUTURE: autogenerate
  */
 
