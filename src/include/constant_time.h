@@ -234,7 +234,8 @@ constant_time_mask (
 /**
  * @brief Constant-time a = mask ? bTrue : bFalse.
  *
- * The input and output must be at least as aligned as elem_bytes.
+ * The input and output must be at least as aligned as alignment_bytes
+ * or their size, whichever is smaller.
  *
  * Note that the output is not __restrict__, but if it overlaps either
  * input, it must be equal and not partially overlap.
@@ -249,16 +250,19 @@ constant_time_select (
     const void *bTrue_,
     const void *bFalse_,
     word_t elem_bytes,
-    mask_t mask
+    mask_t mask,
+    size_t alignment_bytes
 ) {
     unsigned char *a = (unsigned char *)a_;
     const unsigned char *bTrue = (const unsigned char *)bTrue_;
     const unsigned char *bFalse = (const unsigned char *)bFalse_;
     
+    alignment_bytes |= elem_bytes;
+
     word_t k;
     big_register_t br_mask = br_set_to_mask(mask);
     for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
-        if (elem_bytes % sizeof(big_register_t)) {
+        if (alignment_bytes % sizeof(big_register_t)) {
             /* unaligned */
             ((unaligned_br_t*)(&a[k]))->unaligned =
 		  ( br_mask & ((const unaligned_br_t*)(&bTrue [k]))->unaligned)
@@ -273,7 +277,7 @@ constant_time_select (
 
     if (elem_bytes % sizeof(big_register_t) >= sizeof(word_t)) {
         for (; k<=elem_bytes-sizeof(word_t); k+=sizeof(word_t)) {
-            if (elem_bytes % sizeof(word_t)) {
+            if (alignment_bytes % sizeof(word_t)) {
                 /* unaligned */
                 ((unaligned_word_t*)(&a[k]))->unaligned =
 		    ( mask & ((const unaligned_word_t*)(&bTrue [k]))->unaligned)

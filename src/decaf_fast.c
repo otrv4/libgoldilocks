@@ -92,7 +92,7 @@ gf_cpy(gf x, const gf y) { x[0] = y[0]; }
 /** Constant time, x = is_z ? z : y */
 static INLINE void
 cond_sel(gf x, const gf y, const gf z, decaf_bool_t is_z) {
-    constant_time_select(x,z,y,sizeof(gf),is_z);
+    constant_time_select(x,z,y,sizeof(gf),is_z,0);
 }
 
 /** Constant time, if (neg) x=-x; */
@@ -115,6 +115,8 @@ cond_swap(gf x, gf_s *__restrict__ y, decaf_bool_t swap) {
 
 /** Compare a==b */
 /* Not static because it's used in inverse square root. */
+decaf_word_t gf_eq(const gf a, const gf b);
+
 decaf_word_t
 gf_eq(const gf a, const gf b) {
     gf c;
@@ -300,7 +302,7 @@ decaf_error_t API_NS(scalar_invert) (
             residue = 0;
         }
         
-        if (trailing > 0 && (trailing & (1<<SCALAR_WINDOW_BITS)-1) == 0) {
+        if (trailing > 0 && (trailing & ((1<<SCALAR_WINDOW_BITS)-1)) == 0) {
             if (started) {
                 sc_montmul(out,out,precmp[trailing>>(SCALAR_WINDOW_BITS+1)]);
             } else {
@@ -1328,8 +1330,8 @@ static void gf_batch_invert (
 
 static void batch_normalize_niels (
     niels_t *table,
-    gf *zs,
-    gf *zis,
+    const gf *zs,
+    gf *__restrict__ zis,
     int n
 ) {
     int i;
@@ -1408,7 +1410,7 @@ void API_NS(precompute) (
         }
     }
     
-    batch_normalize_niels(table->table,zs,zis,n<<(t-1));
+    batch_normalize_niels(table->table,(const gf *)zs,zis,n<<(t-1));
     
     decaf_bzero(zs,sizeof(zs));
     decaf_bzero(zis,sizeof(zis));
@@ -1484,7 +1486,7 @@ void API_NS(point_cond_sel) (
     decaf_bool_t pick_b
 ) {
     pick_b = ~word_is_zero(pick_b);
-    constant_time_select(out,b,a,sizeof(point_t),pick_b);
+    constant_time_select(out,b,a,sizeof(point_t),pick_b,0);
 }
 
 void API_NS(scalar_cond_sel) (
@@ -1494,7 +1496,7 @@ void API_NS(scalar_cond_sel) (
     decaf_bool_t pick_b
 ) {
     pick_b = ~word_is_zero(pick_b);
-    constant_time_select(out,b,a,sizeof(scalar_t),pick_b);
+    constant_time_select(out,b,a,sizeof(scalar_t),pick_b,sizeof(out->limb[0]));
 }
 
 /* FUTURE: restore Curve25519 Montgomery ladder? */
@@ -1627,7 +1629,7 @@ void API_NS(precompute_wnafs) (
         memcpy(out[i], tmp[i]->n, sizeof(niels_t));
         gf_cpy(zs[i], tmp[i]->z);
     }
-    batch_normalize_niels(out, zs, zis, 1<<DECAF_WNAF_FIXED_TABLE_BITS);
+    batch_normalize_niels(out, (const gf *)zs, zis, 1<<DECAF_WNAF_FIXED_TABLE_BITS);
     
     decaf_bzero(tmp,sizeof(tmp));
     decaf_bzero(zs,sizeof(zs));

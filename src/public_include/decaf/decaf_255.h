@@ -21,14 +21,11 @@ extern "C" {
 #define DECAF_255_SCALAR_BITS 253
 #define DECAF_255_SCALAR_LIMBS (256/DECAF_WORD_BITS)
 
-#ifndef __DECAF_255_GF_DEFINED__
-#define __DECAF_255_GF_DEFINED__ 1
 /** Galois field element internal structure */
 typedef struct gf_25519_s {
     decaf_word_t limb[DECAF_255_LIMBS];
-} gf_25519_s, gf_25519_t[1];
+} __attribute__((aligned(32))) gf_25519_s, gf_25519_t[1];
 /** @endcond */
-#endif /* __DECAF_255_GF_DEFINED__ */
 
 /** Number of bytes in a serialized point. */
 #define DECAF_255_SER_BYTES 32

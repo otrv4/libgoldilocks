@@ -43,6 +43,6 @@ gf_isr (
     
     mask_t mask = decaf_255_gf_eq(st[1],decaf_255_ONE) | decaf_255_gf_eq(st[1],SQRT_MINUS_ONE);
     
-    constant_time_select(tmp1, decaf_255_ONE, SQRT_MINUS_ONE, sizeof(tmp1), mask);
+    constant_time_select(tmp1, decaf_255_ONE, SQRT_MINUS_ONE, sizeof(tmp1), mask, 0);
     gf_mul(a,tmp1,st[0]);
 }
