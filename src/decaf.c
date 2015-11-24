@@ -250,17 +250,35 @@ static decaf_word_t hibit(const gf x) {
     return -(y->limb[0]&1);
 }
 
-/* a = use_c ? c : b */
-sv decaf_448_cond_sel (
-    decaf_448_point_t a,
+static inline decaf_word_t
+word_is_zero(decaf_word_t x) {
+    return ((decaf_dword_t)x - 1)>>WBITS;
+}
+
+void decaf_448_point_cond_sel (
+    decaf_448_point_t out,
+    const decaf_448_point_t a,
     const decaf_448_point_t b,
-    const decaf_448_point_t c,
-    decaf_bool_t use_c
+    decaf_bool_t pick_b
 ) {
+    pick_b = ~word_is_zero(pick_b);
     cond_sel(a->x, b->x, c->x, use_c);
     cond_sel(a->y, b->y, c->y, use_c);
     cond_sel(a->z, b->z, c->z, use_c);
     cond_sel(a->t, b->t, c->t, use_c);
+}
+
+void decaf_448_scalar_cond_sel (
+    decaf_448_scalar_t out,
+    const decaf_448_scalar_t a,
+    const decaf_448_scalar_t b,
+    decaf_bool_t pick_b
+) {
+    pick_b = ~word_is_zero(pick_b);
+    int i;
+    for (i=0; i<DECAF_448_SCALAR_LIMBS; i++) {
+        out->limb[i] = (a->limb[i] & ~pick_b) | (b->limb[i] & pick_b);
+    }
 }
 
 /** {extra,accum} - sub +? p
@@ -659,15 +677,19 @@ void decaf_448_point_scalarmul (
     int i;
     for (i=DECAF_448_SCALAR_BITS &~ 1; i>0; i-=2) {
         decaf_word_t bits = scalar->limb[i/WBITS]>>(i%WBITS);
-        decaf_448_cond_sel(tmp,b,b3,((bits^(bits>>1))&1)-1);
+        decaf_448_point_cond_sel(tmp,b,b3,((bits^(bits>>1))&1)-1);
         decaf_448_point_double(w,w);
         decaf_448_point_add_sub(w,w,tmp,((bits>>1)&1)-1);
         decaf_448_point_double(w,w);
     }
     decaf_448_point_add_sub(w,w,b,((scalar->limb[0]>>1)&1)-1);
     /* low bit is special because fo signed window */
-    decaf_448_cond_sel(tmp,b,decaf_448_point_identity,-(scalar->limb[0]&1));
+    decaf_448_point_cond_sel(tmp,b,decaf_448_point_identity,-(scalar->limb[0]&1));
     decaf_448_point_sub(a,w,tmp);
+    
+    decaf_448_point_destroy(w);
+    decaf_448_point_destroy(b3);
+    decaf_448_point_destroy(tmp);
 }
 
 void decaf_448_point_double_scalarmul (
@@ -693,20 +715,41 @@ void decaf_448_point_double_scalarmul (
     for (i=DECAF_448_SCALAR_BITS &~ 1; i>0; i-=2) {
         decaf_448_point_double(w,w);
         decaf_word_t bits = scalarb->limb[i/WBITS]>>(i%WBITS);
-        decaf_448_cond_sel(tmp,b,b3,((bits^(bits>>1))&1)-1);
+        decaf_448_point_cond_sel(tmp,b,b3,((bits^(bits>>1))&1)-1);
         decaf_448_point_add_sub(w,w,tmp,((bits>>1)&1)-1);
         bits = scalarc->limb[i/WBITS]>>(i%WBITS);
-        decaf_448_cond_sel(tmp,c,c3,((bits^(bits>>1))&1)-1);
+        decaf_448_point_cond_sel(tmp,c,c3,((bits^(bits>>1))&1)-1);
         decaf_448_point_add_sub(w,w,tmp,((bits>>1)&1)-1);
         decaf_448_point_double(w,w);
     }
     decaf_448_point_add_sub(w,w,b,((scalarb->limb[0]>>1)&1)-1);
     decaf_448_point_add_sub(w,w,c,((scalarc->limb[0]>>1)&1)-1);
     /* low bit is special because of signed window */
-    decaf_448_cond_sel(tmp,b,decaf_448_point_identity,-(scalarb->limb[0]&1));
+    decaf_448_point_cond_sel(tmp,b,decaf_448_point_identity,-(scalarb->limb[0]&1));
     decaf_448_point_sub(w,w,tmp);
-    decaf_448_cond_sel(tmp,c,decaf_448_point_identity,-(scalarc->limb[0]&1));
+    decaf_448_point_cond_sel(tmp,c,decaf_448_point_identity,-(scalarc->limb[0]&1));
     decaf_448_point_sub(a,w,tmp);
+    
+    decaf_448_point_destroy(w);
+    decaf_448_point_destroy(b3);
+    decaf_448_point_destroy(c3);
+    decaf_448_point_destroy(tmp);
+}
+
+
+void decaf_448_point_dual_scalarmul (
+   decaf_448_point_t a1,
+   decaf_448_point_t a2,
+   const decaf_448_point_t b,
+   const decaf_448_scalar_t scalar1,
+   const decaf_448_scalar_t scalar2
+) {
+    /* Temporary point in case a1 aliases b */
+    decaf_448_point_t a1tmp;
+    decaf_448_point_scalarmul(a1tmp, b, scalar1);
+    decaf_448_point_scalarmul(a2, b, scalar2);
+    decaf_448_point_copy(a1, a1tmp);
+    decaf_448_point_destroy(a1tmp);
 }
 
 decaf_bool_t decaf_448_point_eq ( const decaf_448_point_t p, const decaf_448_point_t q ) {
@@ -946,6 +989,7 @@ decaf_bool_t decaf_448_direct_scalarmul (
     if (short_circuit & ~succ) return succ;
     decaf_448_point_scalarmul(basep, basep, scalar);
     decaf_448_point_encode(scaled, basep);
+    decaf_448_point_destroy(basep);
     return succ;
 }
 
