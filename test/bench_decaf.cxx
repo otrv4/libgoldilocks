@@ -358,6 +358,7 @@ static void micro() {
     for (Benchmark b("Point unhash uniform"); b.iter(); ) { ignore_result(p.invert_elligator(ep2,0)); }
     for (Benchmark b("Point steg"); b.iter(); ) { p.steg_encode(rng); }
     for (Benchmark b("Point double scalarmul"); b.iter(); ) { Point::double_scalarmul(p,s,q,t); }
+    for (Benchmark b("Point dual scalarmul"); b.iter(); ) { p.dual_scalarmul(p,q,s,t); }
     for (Benchmark b("Point precmp scalarmul"); b.iter(); ) { pBase * s; }
     for (Benchmark b("Point double scalarmul_v"); b.iter(); ) {
         s = Scalar(rng);

@@ -286,6 +286,8 @@ static void test_ec() {
         Point p(rng);
         Point q(rng);
         
+        Point d1, d2;
+        
         SecureBuffer buffer(2*Point::HASH_BYTES);
         rng.read(buffer);
         Point r = Point::from_hash(buffer);
@@ -305,7 +307,12 @@ static void test_ec() {
         if (i%10) continue;
         point_check(test,p,q,r,x,0,x*(p+q),x*p+x*q,"distr mul");
         point_check(test,p,q,r,x,y,(x*y)*p,x*(y*p),"assoc mul");
-        point_check(test,p,q,r,x,y,x*p+y*q,Point::double_scalarmul(x,p,y,q),"ds mul");
+        point_check(test,p,q,r,x,y,x*p+y*q,Point::double_scalarmul(x,p,y,q),"double mul");
+        
+        p.dual_scalarmul(d1,d2,x,y);
+        point_check(test,p,q,r,x,y,x*p,d1,"dual mul 1");
+        point_check(test,p,q,r,x,y,y*p,d2,"dual mul 2");
+        
         point_check(test,base,q,r,x,y,x*base+y*q,q.non_secret_combo_with_base(y,x),"ds vt mul");
         point_check(test,p,q,r,x,0,Precomputed(p)*x,p*x,"precomp mul");
         point_check(test,p,q,r,0,0,r,

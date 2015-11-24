@@ -185,6 +185,73 @@ constant_time_lookup (
 }
 
 /**
+ * @brief Constant-time equivalent of memcpy(table + elem_bytes*idx, in, elem_bytes);
+ *
+ * The table must be at least as aligned as elem_bytes.  The input must be word aligned,
+ * and if the output size is vector aligned it must also be vector aligned.
+ *
+ * The table and input must not alias.
+ */
+static __inline__ void
+__attribute__((unused,always_inline))
+constant_time_insert (
+    void *__restrict__ table_,
+    const void *in_,
+    word_t elem_bytes,
+    word_t n_table,
+    word_t idx
+) {
+    big_register_t big_one = br_set_to_mask(1), big_i = br_set_to_mask(idx);
+    
+    /* Can't do pointer arithmetic on void* */
+    const unsigned char *in = (const unsigned char *)in_;
+    unsigned char *table = (unsigned char *)table_;
+    word_t j,k;
+    
+    for (j=0; j<n_table; j++, big_i-=big_one) {        
+        big_register_t br_mask = br_is_zero(big_i);
+        for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
+            if (elem_bytes % sizeof(big_register_t)) {
+                /* unaligned */
+                ((unaligned_br_t*)(&table[k+j*elem_bytes]))->unaligned
+                    = ( ((unaligned_br_t*)(&table[k+j*elem_bytes]))->unaligned & ~br_mask )
+                    | ( ((const unaligned_br_t *)(in+k))->unaligned & br_mask );
+            } else {
+                /* aligned */
+                *(big_register_t*)(&table[k+j*elem_bytes])
+                    = ( *(big_register_t*)(&table[k+j*elem_bytes]) & ~br_mask )
+                    | ( *(const big_register_t *)(in+k) & br_mask );
+            }
+        }
+
+        word_t mask = word_is_zero(idx^j);
+        if (elem_bytes % sizeof(big_register_t) >= sizeof(word_t)) {
+            for (; k<=elem_bytes-sizeof(word_t); k+=sizeof(word_t)) {
+                if (elem_bytes % sizeof(word_t)) {
+                    /* output unaligned, input aligned */
+                    ((unaligned_word_t*)(&table[k+j*elem_bytes]))->unaligned
+                        = ( ((unaligned_word_t*)(&table[k+j*elem_bytes]))->unaligned & ~mask )
+                        | ( *(const word_t *)(in+k) & mask );
+                } else {
+                    /* aligned */
+                    *(word_t*)(&table[k+j*elem_bytes])
+                        = ( *(word_t*)(&table[k+j*elem_bytes]) & ~mask )
+                        | ( *(const word_t *)(in+k) & mask );
+                }
+            }
+        }
+        
+        if (elem_bytes % sizeof(word_t)) {
+            for (; k<elem_bytes; k+=1) {
+                table[k+j*elem_bytes]
+                    = ( table[k+j*elem_bytes] & ~mask )
+                    | ( in[k] & mask );
+            }
+        }
+    }
+}
+
+/**
  * @brief Constant-time a = b&mask.
  *
  * The input and output must be at least as aligned as elem_bytes.

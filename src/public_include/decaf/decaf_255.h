@@ -391,6 +391,28 @@ void decaf_255_point_double_scalarmul (
     const decaf_255_point_t base2,
     const decaf_255_scalar_t scalar2
 ) API_VIS NONNULL5 NOINLINE;
+    
+/*
+ * @brief Multiply one base point by two scalars:
+ * a1 = scalar1 * base
+ * a2 = scalar2 * base
+ *
+ * Equivalent to two calls to decaf_255_point_scalarmul, but may be
+ * faster.
+ *
+ * @param [out] a1 The first multiple
+ * @param [out] a2 The second multiple
+ * @param [in] base1 A point to be scaled.
+ * @param [in] scalar1 A first scalar to multiply by.
+ * @param [in] scalar2 A second scalar to multiply by.
+ */
+void decaf_255_point_dual_scalarmul (
+    decaf_255_point_t a1,
+    decaf_255_point_t a2,
+    const decaf_255_point_t b,
+    const decaf_255_scalar_t scalar1,
+    const decaf_255_scalar_t scalar2
+) API_VIS NONNULL5 NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:

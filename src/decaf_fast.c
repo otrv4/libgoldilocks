@@ -1064,6 +1064,106 @@ void API_NS(point_double_scalarmul) (
     decaf_bzero(tmp,sizeof(tmp));
 }
 
+void API_NS(point_dual_scalarmul) (
+    point_t a1,
+    point_t a2,
+    const point_t b,
+    const scalar_t scalar1,
+    const scalar_t scalar2
+) {
+    const int WINDOW = DECAF_WINDOW_BITS,
+        WINDOW_MASK = (1<<WINDOW)-1,
+        WINDOW_T_MASK = WINDOW_MASK >> 1,
+        NTABLE = 1<<(WINDOW-1);
+        
+    scalar_t scalar1x, scalar2x;
+    API_NS(scalar_add)(scalar1x, scalar1, API_NS(point_scalarmul_adjustment));
+    sc_halve(scalar1x,scalar1x,sc_p);
+    API_NS(scalar_add)(scalar2x, scalar2, API_NS(point_scalarmul_adjustment));
+    sc_halve(scalar2x,scalar2x,sc_p);
+    
+    /* Set up a precomputed table with odd multiples of b. */
+    point_t multiples1[NTABLE], multiples2[NTABLE], working, tmp;
+    pniels_t pn;
+    
+    API_NS(point_copy)(working, b);
+
+    /* Initialize. */
+    int i,j;
+    
+    for (i=0; i<NTABLE; i++) {
+        API_NS(point_copy)(multiples1[i], API_NS(point_identity));
+        API_NS(point_copy)(multiples2[i], API_NS(point_identity));
+    }
+
+    for (i=0; i<SCALAR_BITS; i+=WINDOW) {   
+        if (i) {
+            for (j=0; j<WINDOW-1; j++)
+                point_double_internal(working, working, -1);
+            point_double_internal(working, working, 0);
+        }
+        
+        /* Fetch another block of bits */
+        decaf_word_t bits1 = scalar1x->limb[i/WBITS] >> (i%WBITS),
+                     bits2 = scalar2x->limb[i/WBITS] >> (i%WBITS);
+        if (i%WBITS >= WBITS-WINDOW && i/WBITS<SCALAR_LIMBS-1) {
+            bits1 ^= scalar1x->limb[i/WBITS+1] << (WBITS - (i%WBITS));
+            bits2 ^= scalar2x->limb[i/WBITS+1] << (WBITS - (i%WBITS));
+        }
+        bits1 &= WINDOW_MASK;
+        bits2 &= WINDOW_MASK;
+        decaf_word_t inv1 = (bits1>>(WINDOW-1))-1;
+        decaf_word_t inv2 = (bits2>>(WINDOW-1))-1;
+        bits1 ^= inv1;
+        bits2 ^= inv2;
+        
+        pt_to_pniels(pn, working);
+
+        constant_time_lookup_xx(tmp, multiples1, sizeof(tmp), NTABLE, bits1 & WINDOW_T_MASK);
+        cond_neg_niels(pn->n, inv1);
+        /* add_pniels_to_pt(multiples1[bits1 & WINDOW_T_MASK], pn, 0); */
+        add_pniels_to_pt(tmp, pn, 0);
+        constant_time_insert(multiples1, tmp, sizeof(tmp), NTABLE, bits1 & WINDOW_T_MASK);
+        
+        
+        constant_time_lookup_xx(tmp, multiples2, sizeof(tmp), NTABLE, bits2 & WINDOW_T_MASK);
+        cond_neg_niels(pn->n, inv1^inv2);
+        /* add_pniels_to_pt(multiples2[bits2 & WINDOW_T_MASK], pn, 0); */
+        add_pniels_to_pt(tmp, pn, 0);
+        constant_time_insert(multiples2, tmp, sizeof(tmp), NTABLE, bits2 & WINDOW_T_MASK);
+    }
+    
+    if (NTABLE > 1) {
+        API_NS(point_copy)(working, multiples1[NTABLE-1]);
+        API_NS(point_copy)(tmp    , multiples2[NTABLE-1]);
+    
+        for (i=NTABLE-1; i>1; i--) {
+            API_NS(point_add)(multiples1[i-1], multiples1[i-1], multiples1[i]);
+            API_NS(point_add)(multiples2[i-1], multiples2[i-1], multiples2[i]);
+            API_NS(point_add)(working, working, multiples1[i-1]);
+            API_NS(point_add)(tmp,     tmp,     multiples2[i-1]);
+        }
+    
+        API_NS(point_add)(multiples1[0], multiples1[0], multiples1[1]);
+        API_NS(point_add)(multiples2[0], multiples2[0], multiples2[1]);
+        point_double_internal(working, working, 0);
+        point_double_internal(tmp,         tmp, 0);
+        API_NS(point_add)(a1, working, multiples1[0]);
+        API_NS(point_add)(a2, tmp,     multiples2[0]);
+    } else {
+        API_NS(point_copy)(a1, multiples1[0]);
+        API_NS(point_copy)(a2, multiples2[0]);
+    }
+
+    decaf_bzero(scalar1x,sizeof(scalar1x));
+    decaf_bzero(scalar2x,sizeof(scalar2x));
+    decaf_bzero(pn,sizeof(pn));
+    decaf_bzero(multiples1,sizeof(multiples1));
+    decaf_bzero(multiples2,sizeof(multiples2));
+    decaf_bzero(tmp,sizeof(tmp));
+    decaf_bzero(working,sizeof(working));
+}
+
 decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     /* equality mod 2-torsion compares x/y */
     gf a, b;

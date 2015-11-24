@@ -363,6 +363,13 @@ public:
         Point p((NOINIT())); decaf_255_point_double_scalarmul(p.p,q.p,qs.s,r.p,rs.s); return p;
     }
     
+    /** @brief Dual-scalar multiply, equivalent to this*r1, this*r2 but faster. */
+    inline void dual_scalarmul (
+        Point &q1, Point &q2, const Scalar &r1, const Scalar &r2
+    ) const NOEXCEPT {
+        decaf_255_point_dual_scalarmul(q1.p,q2.p,p,r1.s,r2.s);
+    }
+    
     /**
      * @brief Double-scalar multiply, equivalent to q*qs + r*rs but faster.
      * For those who like their scalars before the point.
