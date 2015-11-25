@@ -276,18 +276,17 @@ typedef enum {
     STROBE_MODE_SQUEEZE_R = 7
 } strobe_mode_t;
 
-static const uint32_t
-    STROBE_FLAG_CLIENT_SENT = 1<<8,
-    STROBE_FLAG_IMPLICIT    = 1<<9,
-    STROBE_FLAG_FORGET      = 1<<12,
-    STROBE_FLAG_NO_LENGTH   = 1<<15,
-    
-    /* After 1<<16, flags don't go to the sponge anymore, they just affect the handling */
-    STROBE_FLAG_RECV        = 1<<16,
-    STROBE_FLAG_RUN_F       = 1<<17,
-    STROBE_FLAG_MORE        = 1<<18,
-    STROBE_FLAG_LENGTH_64   = 1<<19,
-    STROBE_FLAG_NONDIR      = STROBE_FLAG_IMPLICIT; /* Currently same as implicit */
+#define STROBE_FLAG_CLIENT_SENT (1<<8)
+#define STROBE_FLAG_IMPLICIT    (1<<9)
+#define STROBE_FLAG_FORGET      (1<<12)
+#define STROBE_FLAG_NO_LENGTH   (1<<15)
+
+/* After 1<<16, flags don't go to the sponge anymore, they just affect the handling */
+#define STROBE_FLAG_RECV        (1<<16)
+#define STROBE_FLAG_RUN_F       (1<<17)
+#define STROBE_FLAG_MORE        (1<<18)
+#define STROBE_FLAG_LENGTH_64   (1<<19)
+#define STROBE_FLAG_NONDIR      (STROBE_FLAG_IMPLICIT)
 
 /** Automatic flags implied by the mode */
 /* HACK: SQUEEZE_R is treated as directional because its' MAC */
