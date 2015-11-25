@@ -96,33 +96,32 @@ void decaf_255_private_to_public (
  * @param [in] shared_bytes The size of the buffer.
  * @param [in] my_privkey My private key.
  * @param [in] your_pubkey Your public key.
+ * @param [in] me_first Direction flag to break symmetry.
  *
  * @retval DECAF_SUCCESS Key exchange was successful.
  * @retval DECAF_FAILURE Key exchange failed.
- *
- * @warning This is a pretty silly shared secret computation
- * and will almost definitely change in the future.
  */
 decaf_error_t
 decaf_255_shared_secret (
     uint8_t *shared,
     size_t shared_bytes,
     const decaf_255_private_key_t my_privkey,
-    const decaf_255_public_key_t your_pubkey
+    const decaf_255_public_key_t your_pubkey,
+    int me_first
 ) NONNULL134 WARN_UNUSED API_VIS;
    
 /**
- * @brief Sign a message from its SHAKE context.
+ * @brief Sign a message from a STROBE context.
  *
  * @param [out] sig The signature.
  * @param [in] priv Your private key.
- * @param [in] shake A SHAKE256 context with the message.
+ * @param [in] strobe A STROBE context with the message.
  */ 
 void
-decaf_255_sign_shake (
+decaf_255_sign_strobe (
+    keccak_strobe_t strobe,
     decaf_255_signature_t sig,
-    const decaf_255_private_key_t priv,
-    const shake256_ctx_t shake
+    const decaf_255_private_key_t priv
 ) NONNULL3 API_VIS;
 
 /**
@@ -142,20 +141,20 @@ decaf_255_sign (
 ) NONNULL3 API_VIS;
 
 /**
- * @brief Verify a signed message from its SHAKE context.
+ * @brief Verify a signed message from its STROBE context.
  *
  * @param [in] sig The signature.
  * @param [in] pub The public key.
- * @param [in] shake A SHAKE256 context with the message.
+ * @param [in] strobe A STROBE context with the message.
  *
  * @return DECAF_SUCCESS The signature verified successfully.
  * @return DECAF_FAILURE The signature did not verify successfully.
  */    
 decaf_error_t
-decaf_255_verify_shake (
+decaf_255_verify_strobe (
+    keccak_strobe_t strobe,
     const decaf_255_signature_t sig,
-    const decaf_255_public_key_t pub,
-    const shake256_ctx_t shake
+    const decaf_255_public_key_t pub
 ) NONNULL3 API_VIS WARN_UNUSED;
 
 /**

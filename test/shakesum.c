@@ -13,6 +13,13 @@
 #include <string.h>
 #include <decaf/shake.h>
 
+void usage() {
+    fprintf(
+        stderr,
+        "shakesum [shake256|shake128|sha3-224|sha3-384|sha3-512] < infile > outfile\n"
+    );
+}
+
 int main(int argc, char **argv) {
     (void)argc; (void)argv;
 
@@ -42,6 +49,9 @@ int main(int argc, char **argv) {
         } else if (!strcmp(argv[1], "sha3-512") || !strcmp(argv[1], "SHA3-512")) {
             outlen = 512/8;
             sha3_512_gen_init(sponge);
+        } else {
+            usage();
+            return 2;
         }
     }
 

@@ -17,16 +17,15 @@ void decaf_255_derive_private_key (
     decaf_255_private_key_t priv,
     const decaf_255_symmetric_key_t proto
 ) {
-    const char *magic = "decaf_255_derive_private_key";
+    const char *magic = "decaf::derive_255_private_key"; /* TODO: canonicalize and freeze */
     uint8_t encoded_scalar[DECAF_255_SCALAR_OVERKILL_BYTES];
     decaf_255_point_t pub;
-
-    shake256_ctx_t sponge;
-    shake256_init(sponge);
-    shake256_update(sponge, proto, sizeof(decaf_255_symmetric_key_t));
-    shake256_update(sponge, (const unsigned char *)magic, strlen(magic));
-    shake256_final(sponge, encoded_scalar, sizeof(encoded_scalar));
-    shake256_destroy(sponge);
+    
+    keccak_strobe_t strobe;
+    strobe_init(strobe, &STROBE_256, magic, 0);
+    strobe_key(strobe, proto, sizeof(decaf_255_symmetric_key_t));
+    strobe_prng(strobe, encoded_scalar, sizeof(encoded_scalar));
+    strobe_destroy(strobe);
     
     memcpy(priv->sym, proto, sizeof(decaf_255_symmetric_key_t));
     decaf_255_scalar_decode_long(priv->secret_scalar, encoded_scalar, sizeof(encoded_scalar));
@@ -51,98 +50,77 @@ void decaf_255_private_to_public (
     memcpy(pub, priv->pub, sizeof(decaf_255_public_key_t));
 }
 
+static const uint16_t SHARED_SECRET_MAX_BLOCK_SIZE = 1<<12; /* TODO: standardize and freeze */
+
 decaf_error_t
 decaf_255_shared_secret (
     uint8_t *shared,
     size_t shared_bytes,
     const decaf_255_private_key_t my_privkey,
-    const decaf_255_public_key_t your_pubkey
+    const decaf_255_public_key_t your_pubkey,
+    int me_first
 ) {
+    const char *magic = "decaf::decaf_255_shared_secret"; /* TODO: canonicalize and freeze */
+    keccak_strobe_t strobe;
+    strobe_init(strobe, &STROBE_256, magic, 0);
+    
     uint8_t ss_ser[DECAF_255_SER_BYTES];
-    const char *nope = "decaf_255_ss_invalid";
     
-    unsigned i;
-    /* Lexsort keys.  Less will be -1 if mine is less, and 0 otherwise. */
-    uint16_t less = 0;
-    for (i=0; i<DECAF_255_SER_BYTES; i++) {
-        uint16_t delta = my_privkey->pub[i];
-        delta -= your_pubkey[i];
-        /* Case:
-         * = -> delta = 0 -> hi delta-1 = -1, hi delta = 0
-         * > -> delta > 0 -> hi delta-1 = 0, hi delta = 0
-         * < -> delta < 0 -> hi delta-1 = (doesnt matter), hi delta = -1
-         */
-        less &= delta-1;
-        less |= delta;
+    if (me_first) {
+        strobe_ad(strobe,my_privkey->pub,sizeof(decaf_255_public_key_t));
+        strobe_ad(strobe,your_pubkey,sizeof(decaf_255_public_key_t));
+    } else {
+        strobe_ad(strobe,your_pubkey,sizeof(decaf_255_public_key_t));
+        strobe_ad(strobe,my_privkey->pub,sizeof(decaf_255_public_key_t));
     }
-    less >>= 8;
-
-    shake256_ctx_t sponge;
-    shake256_init(sponge);
-
-    /* update the lesser */
-    for (i=0; i<sizeof(ss_ser); i++) {
-        ss_ser[i] = (my_privkey->pub[i] & less) | (your_pubkey[i] & ~less);
-    }
-    shake256_update(sponge, ss_ser, sizeof(ss_ser));
-
-    /* update the greater */
-    for (i=0; i<sizeof(ss_ser); i++) {
-        ss_ser[i] = (my_privkey->pub[i] & ~less) | (your_pubkey[i] & less);
-    }
-    shake256_update(sponge, ss_ser, sizeof(ss_ser));
+    decaf_error_t ret = decaf_255_direct_scalarmul(
+        ss_ser, your_pubkey, my_privkey->secret_scalar, DECAF_FALSE, DECAF_TRUE
+    );
     
-    decaf_error_t ret = decaf_255_direct_scalarmul(ss_ser, your_pubkey, my_privkey->secret_scalar, DECAF_FALSE, DECAF_TRUE);
-    decaf_bool_t good = decaf_successful(ret);
-    /* If invalid, then replace ... */
-    for (i=0; i<sizeof(ss_ser); i++) {
-        ss_ser[i] &= good;
-        
-        if (i < sizeof(my_privkey->sym)) {
-            ss_ser[i] |= my_privkey->sym[i] & ~good;
-        } else if (i - sizeof(my_privkey->sym) < strlen(nope)) {
-            ss_ser[i] |= nope[i-sizeof(my_privkey->sym)] & ~good;
-        }
+    strobe_transact(strobe,NULL,ss_ser,sizeof(ss_ser),STROBE_CW_DH_KEY);
+    
+    while (shared_bytes) {
+        uint16_t cando = (shared_bytes > SHARED_SECRET_MAX_BLOCK_SIZE)
+                       ? SHARED_SECRET_MAX_BLOCK_SIZE : shared_bytes;
+        strobe_prng(strobe,shared,cando);
+        shared_bytes -= cando;
+        shared += cando;
     }
 
-    shake256_update(sponge, ss_ser, sizeof(ss_ser));
-    shake256_final(sponge, shared, shared_bytes);
-    shake256_destroy(sponge);
-    
+    strobe_destroy(strobe);
     decaf_bzero(ss_ser, sizeof(ss_ser));
     
     return ret;
 }
 
 void
-decaf_255_sign_shake (
+decaf_255_sign_strobe (
+    keccak_strobe_t strobe,
     decaf_255_signature_t sig,
-    const decaf_255_private_key_t priv,
-    const shake256_ctx_t shake
+    const decaf_255_private_key_t priv
 ) {
-    const char *magic = "decaf_255_sign_shake";
-
-    uint8_t overkill[DECAF_255_SCALAR_OVERKILL_BYTES], encoded[DECAF_255_SER_BYTES];
+    uint8_t overkill[DECAF_255_SCALAR_OVERKILL_BYTES];
     decaf_255_point_t point;
     decaf_255_scalar_t nonce, challenge;
     
+    /* Stir pubkey */
+    strobe_transact(strobe,NULL,priv->pub,sizeof(decaf_255_public_key_t),STROBE_CW_SIG_PK);
+    
     /* Derive nonce */
-    shake256_ctx_t ctx;
-    memcpy(ctx, shake, sizeof(ctx));
-    shake256_update(ctx, priv->sym, sizeof(priv->sym));
-    shake256_update(ctx, (const unsigned char *)magic, strlen(magic));
-    shake256_final(ctx, overkill, sizeof(overkill));
+    keccak_strobe_t strobe2;
+    memcpy(strobe2,strobe,sizeof(strobe2));
+    strobe_key(strobe2,priv->sym,sizeof(decaf_255_symmetric_key_t));
+    strobe_prng(strobe2,overkill,sizeof(overkill));
+    strobe_destroy(strobe2);
     
     decaf_255_scalar_decode_long(nonce, overkill, sizeof(overkill));
     decaf_255_precomputed_scalarmul(point, decaf_255_precomputed_base, nonce);
-    decaf_255_point_encode(encoded, point);
+    decaf_255_point_encode(sig, point);
+    
 
     /* Derive challenge */
-    memcpy(ctx, shake, sizeof(ctx));
-    shake256_update(ctx, priv->pub, sizeof(priv->pub));
-    shake256_update(ctx, encoded, sizeof(encoded));
-    shake256_final(ctx, overkill, sizeof(overkill));
-    shake256_destroy(ctx);
+    strobe_transact(strobe,NULL,sig,DECAF_255_SER_BYTES,STROBE_CW_SIG_EPH);
+    strobe_transact(strobe,overkill,NULL,sizeof(overkill),STROBE_CW_SIG_CHAL);
     decaf_255_scalar_decode_long(challenge, overkill, sizeof(overkill));
     
     /* Respond */
@@ -150,47 +128,56 @@ decaf_255_sign_shake (
     decaf_255_scalar_sub(nonce, nonce, challenge);
     
     /* Save results */
-    memcpy(sig, encoded, sizeof(encoded));
-    decaf_255_scalar_encode(&sig[sizeof(encoded)], nonce);
+    decaf_255_scalar_encode(overkill, nonce);
+    strobe_transact(strobe,&sig[DECAF_255_SER_BYTES],overkill,DECAF_255_SCALAR_BYTES,STROBE_CW_SIG_RESP);
     
     /* Clean up */
     decaf_255_scalar_destroy(nonce);
     decaf_255_scalar_destroy(challenge);
     decaf_bzero(overkill,sizeof(overkill));
-    decaf_bzero(encoded,sizeof(encoded));
 }
 
 decaf_error_t
-decaf_255_verify_shake (
+decaf_255_verify_strobe (
+    keccak_strobe_t strobe,
     const decaf_255_signature_t sig,
-    const decaf_255_public_key_t pub,
-    const shake256_ctx_t shake
+    const decaf_255_public_key_t pub
 ) {
     decaf_bool_t ret;
-
+    
     uint8_t overkill[DECAF_255_SCALAR_OVERKILL_BYTES];
     decaf_255_point_t point, pubpoint;
     decaf_255_scalar_t challenge, response;
     
+    /* Stir pubkey */
+    strobe_transact(strobe,NULL,pub,sizeof(decaf_255_public_key_t),STROBE_CW_SIG_PK);
+    
+    /* Derive nonce */
+    strobe_transact(strobe,NULL,sig,DECAF_255_SER_BYTES,STROBE_CW_SIG_EPH);
+    ret = decaf_successful( decaf_255_point_decode(point, sig, DECAF_TRUE) );
+    
     /* Derive challenge */
-    shake256_ctx_t ctx;
-    memcpy(ctx, shake, sizeof(ctx));
-    shake256_update(ctx, pub, sizeof(decaf_255_public_key_t));
-    shake256_update(ctx, sig, DECAF_255_SER_BYTES);
-    shake256_final(ctx, overkill, sizeof(overkill));
-    shake256_destroy(ctx);
+    strobe_transact(strobe,overkill,NULL,sizeof(overkill),STROBE_CW_SIG_CHAL);
     decaf_255_scalar_decode_long(challenge, overkill, sizeof(overkill));
-
-    /* Decode points. */
-    ret  = decaf_successful(decaf_255_point_decode(point, sig, DECAF_TRUE));
-    ret &= decaf_successful(decaf_255_point_decode(pubpoint, pub, DECAF_FALSE));
-    ret &= decaf_successful(decaf_255_scalar_decode(response, &sig[DECAF_255_SER_BYTES]));
+    
+    /* Decode response */
+    strobe_transact(strobe,overkill,&sig[DECAF_255_SER_BYTES],DECAF_255_SCALAR_BYTES,STROBE_CW_SIG_RESP);
+    ret &= decaf_successful( decaf_255_scalar_decode(response, overkill) );
+    ret &= decaf_successful( decaf_255_point_decode(pubpoint, pub, DECAF_FALSE) );
 
     decaf_255_base_double_scalarmul_non_secret (
         pubpoint, response, pubpoint, challenge
     );
 
     ret &= decaf_255_point_eq(pubpoint, point);
+    
+    /* Nothing here is secret, so don't do these things:
+        decaf_bzero(overkill,sizeof(overkill));
+        decaf_255_point_destroy(point);
+        decaf_255_point_destroy(pubpoint);
+        decaf_255_scalar_destroy(challenge);
+        decaf_255_scalar_destroy(response);
+    */
     
     return decaf_succeed_if(ret);
 }
@@ -202,11 +189,11 @@ decaf_255_sign (
     const unsigned char *message,
     size_t message_len
 ) {
-    shake256_ctx_t ctx;
-    shake256_init(ctx);
-    shake256_update(ctx, message, message_len);
-    decaf_255_sign_shake(sig, priv, ctx);
-    shake256_destroy(ctx);
+    keccak_strobe_t ctx;
+    strobe_init(ctx,&STROBE_256,"decaf::decaf_255_sign",0); /* TODO: canonicalize and freeze */
+    strobe_transact(ctx, NULL, message, message_len, STROBE_CW_STREAMING_PLAINTEXT);
+    decaf_255_sign_strobe(ctx, sig, priv);
+    strobe_destroy(ctx);
 }
 
 decaf_error_t
@@ -216,10 +203,10 @@ decaf_255_verify (
     const unsigned char *message,
     size_t message_len
 ) {
-    shake256_ctx_t ctx;
-    shake256_init(ctx);
-    shake256_update(ctx, message, message_len);
-    decaf_error_t ret = decaf_255_verify_shake(sig, pub, ctx);
-    shake256_destroy(ctx);
+    keccak_strobe_t ctx;
+    strobe_init(ctx,&STROBE_256,"decaf::decaf_255_sign",0); /* TODO: canonicalize and freeze */
+    strobe_transact(ctx, NULL, message, message_len, STROBE_CW_STREAMING_PLAINTEXT);
+    decaf_error_t ret = decaf_255_verify_strobe(ctx, sig, pub);
+    strobe_destroy(ctx);
     return ret;
 }

@@ -157,7 +157,7 @@ static void tdh (
      * hash gx and gy into the session secret (only into the MAC
      * and AD) because of IPR concerns.
      */
-    Strobe client(Strobe::CLIENT), server(Strobe::SERVER);
+    Strobe client("example::tripleDH",Strobe::CLIENT), server("example::tripleDH",Strobe::SERVER);
     
     Scalar xe(clientRng);
     SecureBuffer gxe((Precomputed::base() * xe).serialize());
@@ -198,7 +198,7 @@ static void fhmqv (
     Scalar y, const Block &gy
 ) {
     /* Don't use this, it's probably patented */
-    Strobe client(Strobe::CLIENT), server(Strobe::SERVER);
+    Strobe client("example::fhmqv",Strobe::CLIENT), server("example::fhmqv",Strobe::SERVER);
     
     Scalar xe(clientRng);
     client.send_plaintext(gx);
@@ -238,7 +238,7 @@ static void spake2ee(
     const Block &hashed_password,
     bool aug
 ) {
-    Strobe client(Strobe::CLIENT), server(Strobe::SERVER);
+    Strobe client("example::spake2ee",Strobe::CLIENT), server("example::spake2ee",Strobe::SERVER);
     
     Scalar x(clientRng);
     
@@ -394,7 +394,7 @@ int main(int argc, char **argv) {
         SHAKE<128> shake1;
         SHAKE<256> shake2;
         SHA3<512> sha5;
-        Strobe strobe(Strobe::CLIENT);
+        Strobe strobe("example::bench",Strobe::CLIENT);
         unsigned char b1024[1024] = {1};
         for (Benchmark b("SHAKE128 1kiB", 30); b.iter(); ) { shake1 += Buffer(b1024,1024); }
         for (Benchmark b("SHAKE256 1kiB", 30); b.iter(); ) { shake2 += Buffer(b1024,1024); }
@@ -402,19 +402,19 @@ int main(int argc, char **argv) {
         strobe.key(Buffer(b1024,1024));
         strobe.respec(STROBE_128);
         for (Benchmark b("STROBE128 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024),b.i>1);
+            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024));
         }
         strobe.respec(STROBE_256);
         for (Benchmark b("STROBE256 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024),b.i>1);
+            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024));
         }
         strobe.respec(STROBE_KEYED_128);
         for (Benchmark b("STROBEk128 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024),b.i>1);
+            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024));
         }
         strobe.respec(STROBE_KEYED_256);
         for (Benchmark b("STROBEk256 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024),b.i>1);
+            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024));
         }
         
         Benches<IsoEd25519>::micro();
@@ -432,7 +432,7 @@ int main(int argc, char **argv) {
     decaf_255_private_to_public(p2,s2);
     
     for (Benchmark b("Shared secret"); b.iter(); ) {
-        decaf_bool_t ret = decaf_255_shared_secret(ss,sizeof(ss),s1,p2);
+        decaf_bool_t ret = decaf_255_shared_secret(ss,sizeof(ss),s1,p2,1);
         ignore_result(ret);
         assert(ret);
     }

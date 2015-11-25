@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+#include <stdlib.h> /* for NULL */
 
 #include <decaf/common.h>
 
@@ -24,6 +25,8 @@
 #define NONNULL2 __attribute__((nonnull(1,2)))
 #define NONNULL13 __attribute__((nonnull(1,3)))
 #define NONNULL3 __attribute__((nonnull(1,2,3)))
+#define INLINE __inline__ __attribute__((always_inline))
+#define UNUSED __attribute__((unused))
 /** @endcond */
 
 #ifndef INTERNAL_SPONGE_STRUCT
@@ -35,6 +38,7 @@
     } keccak_sponge_t[1];
     struct kparams_s;
 #endif
+typedef struct keccak_sponge_s keccak_strobe_t[1], keccak_prng_t[1];
 
 #ifdef __cplusplus
 extern "C" {
@@ -173,14 +177,14 @@ DECSHA3(512)
 /**
  * @brief Initialize a sponge-based CSPRNG from a buffer.
  *
- * @param [out] sponge The sponge object.
+ * @param [out] prng The prng object.
  * @param [in] in The initial data.
  * @param [in] len The length of the initial data.
  * @param [in] deterministic If zero, allow RNG to stir in nondeterministic
  * data from RDRAND or RDTSC.
  */
 void spongerng_init_from_buffer (
-    keccak_sponge_t sponge,
+    keccak_prng_t prng,
     const uint8_t * __restrict__ in,
     size_t len,
     int deterministic
@@ -193,7 +197,7 @@ void spongerng_init_from_buffer (
 /**
  * @brief Initialize a sponge-based CSPRNG from a file.
  *
- * @param [out] sponge The sponge object.
+ * @param [out] prng The prng object.
  * @param [in] file A name of a file containing initial data.
  * @param [in] len The length of the initial data.  Must be positive.
  * @param [in] deterministic If zero, allow RNG to stir in nondeterministic
@@ -205,7 +209,7 @@ void spongerng_init_from_buffer (
  * @retval -2 len was 0.
  */
 int spongerng_init_from_file (
-    keccak_sponge_t sponge,
+    keccak_prng_t prng,
     const char *file,
     size_t len,
     int deterministic
@@ -226,7 +230,7 @@ int spongerng_init_from_file (
  * @retval -1 An unknown error has occurred.
  */
 int spongerng_init_from_dev_urandom (
-    keccak_sponge_t sponge
+    keccak_prng_t prng
 ) API_VIS WARN_UNUSED;
 
 /**
@@ -237,7 +241,7 @@ int spongerng_init_from_dev_urandom (
  * @param [in] len The output buffer's length.
  */
 void spongerng_next (
-    keccak_sponge_t sponge,
+    keccak_prng_t prng,
     uint8_t * __restrict__ out,
     size_t len
 ) API_VIS;
@@ -250,7 +254,7 @@ void spongerng_next (
  * @param [in] len The length of the initial data.
  */
 void spongerng_stir (
-    keccak_sponge_t sponge,
+    keccak_prng_t prng,
     const uint8_t * __restrict__ in,
     size_t len
 ) NONNULL2 API_VIS;
@@ -260,161 +264,260 @@ extern const struct kparams_s STROBE_256 API_VIS;
 extern const struct kparams_s STROBE_KEYED_128 API_VIS;
 extern const struct kparams_s STROBE_KEYED_256 API_VIS;
 
-#define STROBE_MAX_AUTH_BYTES 255
+typedef enum {
+    STROBE_MODE_ABSORB    = 0,
+    STROBE_MODE_DUPLEX    = 1,
+    STROBE_MODE_ABSORB_R  = 2,
+    STROBE_MODE_DUPLEX_R  = 3,
+    /* FIXME: no bits allocated in .py version */
+    STROBE_MODE_PLAINTEXT = 4,
+    STROBE_MODE_SQUEEZE   = 5, 
+    STROBE_MODE_FORGET    = 6,
+    STROBE_MODE_SQUEEZE_R = 7
+} strobe_mode_t;
 
-/** TODO: check "more" flags? */
+static const uint32_t
+    STROBE_FLAG_CLIENT_SENT = 1<<8,
+    STROBE_FLAG_IMPLICIT    = 1<<9,
+    STROBE_FLAG_FORGET      = 1<<12,
+    STROBE_FLAG_NO_LENGTH   = 1<<15,
+    
+    /* After 1<<16, flags don't go to the sponge anymore, they just affect the handling */
+    STROBE_FLAG_RECV        = 1<<16,
+    STROBE_FLAG_RUN_F       = 1<<17,
+    STROBE_FLAG_MORE        = 1<<18,
+    STROBE_FLAG_LENGTH_64   = 1<<19,
+    STROBE_FLAG_NONDIR      = STROBE_FLAG_IMPLICIT; /* Currently same as implicit */
+
+/** Automatic flags implied by the mode */
+/* HACK: SQUEEZE_R is treated as directional because its' MAC */
+#define STROBE_AUTO_FLAGS(_mode)                           \
+    (     (((_mode)&1) ? STROBE_FLAG_RUN_F : 0)            \
+        | (( ((_mode) & ~2) == STROBE_MODE_ABSORB          \
+          ||  (_mode)       == STROBE_MODE_SQUEEZE         \
+          ||  (_mode)       == STROBE_MODE_FORGET          \
+          ) ? STROBE_FLAG_IMPLICIT|STROBE_FLAG_NONDIR : 0) \
+    )
+
+#define STROBE_CONTROL_WORD(_name,_id,_mode,_flags) \
+    static const uint32_t _name = _id | (_mode<<10) | (_mode<<29) | _flags | STROBE_AUTO_FLAGS(_mode)
+
+STROBE_CONTROL_WORD(STROBE_CW_INIT,              0x00, STROBE_MODE_ABSORB,    0);
+                                                 
+/* Ciphers */                                    
+STROBE_CONTROL_WORD(STROBE_CW_FIXED_KEY,          0x10, STROBE_MODE_ABSORB,    0);
+STROBE_CONTROL_WORD(STROBE_CW_STATIC_PUB,         0x11, STROBE_MODE_PLAINTEXT, 0);
+STROBE_CONTROL_WORD(STROBE_CW_DH_EPH,             0x12, STROBE_MODE_PLAINTEXT, 0);
+STROBE_CONTROL_WORD(STROBE_CW_DH_KEY,             0x13, STROBE_MODE_ABSORB,    0);
+STROBE_CONTROL_WORD(STROBE_CW_PRNG,               0x18, STROBE_MODE_SQUEEZE,   STROBE_FLAG_FORGET);
+STROBE_CONTROL_WORD(STROBE_CW_SESSION_HASH,       0x19, STROBE_MODE_SQUEEZE,   0);
+
+/* Reuse for PRNG */
+STROBE_CONTROL_WORD(STROBE_CW_PRNG_INITIAL_SEED,  0x10, STROBE_MODE_ABSORB,    STROBE_FLAG_LENGTH_64);
+STROBE_CONTROL_WORD(STROBE_CW_PRNG_RESEED,        0x11, STROBE_MODE_ABSORB,    STROBE_FLAG_LENGTH_64);
+STROBE_CONTROL_WORD(STROBE_CW_PRNG_CPU_SEED,      0x12, STROBE_MODE_ABSORB,    0);
+STROBE_CONTROL_WORD(STROBE_CW_PRNG_USER_SEED,     0x13, STROBE_MODE_ABSORB,    STROBE_FLAG_LENGTH_64);
+STROBE_CONTROL_WORD(STROBE_CW_PRNG_PRNG,          0x14, STROBE_MODE_SQUEEZE,   STROBE_FLAG_LENGTH_64 | STROBE_FLAG_FORGET);
+
+/* Signatures */                                 
+STROBE_CONTROL_WORD(STROBE_CW_SIG_SCHEME,         0x20, STROBE_MODE_ABSORB,    0);
+STROBE_CONTROL_WORD(STROBE_CW_SIG_PK,             0x21, STROBE_MODE_ABSORB,    0);
+STROBE_CONTROL_WORD(STROBE_CW_SIG_EPH,            0x22, STROBE_MODE_PLAINTEXT, 0);
+STROBE_CONTROL_WORD(STROBE_CW_SIG_CHAL,           0x23, STROBE_MODE_SQUEEZE,   0);
+STROBE_CONTROL_WORD(STROBE_CW_SIG_RESP,           0x24, STROBE_MODE_DUPLEX,    0);
+
+
+/* Payloads and encrypted data */
+
+STROBE_CONTROL_WORD(STROBE_CW_PAYLOAD_PLAINTEXT,  0x30, STROBE_MODE_PLAINTEXT, 0);
+STROBE_CONTROL_WORD(STROBE_CW_PAYLOAD_CIPHERTEXT, 0x31, STROBE_MODE_DUPLEX,    0);
+STROBE_CONTROL_WORD(STROBE_CW_MAC,                0x32, STROBE_MODE_SQUEEZE_R, STROBE_FLAG_FORGET);
+STROBE_CONTROL_WORD(STROBE_CW_AD_EXPLICIT,        0x34, STROBE_MODE_PLAINTEXT, 0);
+STROBE_CONTROL_WORD(STROBE_CW_AD_IMPLICIT,        0x35, STROBE_MODE_ABSORB,    0);
+STROBE_CONTROL_WORD(STROBE_CW_NONCE_EXPLICIT,     0x36, STROBE_MODE_PLAINTEXT, 0);
+STROBE_CONTROL_WORD(STROBE_CW_NONCE_IMPLICIT,     0x37, STROBE_MODE_ABSORB,    0);
+
+STROBE_CONTROL_WORD(STROBE_CW_STREAMING_PLAINTEXT,0x30, STROBE_MODE_PLAINTEXT, STROBE_FLAG_NO_LENGTH); /* TODO: orly? */
+
+/* Change spec, control flow, etc */
+STROBE_CONTROL_WORD(STROBE_CW_COMPRESS,           0x40, STROBE_MODE_ABSORB_R,  0);
+/* FIXME: adjust this respec logic */
+STROBE_CONTROL_WORD(STROBE_CW_RESPEC_INFO,        0x41, STROBE_MODE_ABSORB,    STROBE_FLAG_RUN_F | STROBE_FLAG_FORGET);
+STROBE_CONTROL_WORD(STROBE_CW_RESPEC,             0x42, STROBE_MODE_ABSORB_R,  STROBE_FLAG_RUN_F);
+STROBE_CONTROL_WORD(STROBE_CW_FORK,               0x43, STROBE_MODE_ABSORB_R,  STROBE_FLAG_RUN_F | STROBE_FLAG_FORGET);
+/* FIXME: instance can be rolled back to recover other INSTANCEs */
+STROBE_CONTROL_WORD(STROBE_CW_INSTANCE,           0x44, STROBE_MODE_ABSORB_R,  STROBE_FLAG_FORGET);
+STROBE_CONTROL_WORD(STROBE_CW_ACKNOWLEDGE,        0x45, STROBE_MODE_PLAINTEXT, 0);
+
+static INLINE UNUSED WARN_UNUSED uint32_t
+strobe_cw_recv(uint32_t cw) {
+    uint32_t recv_toggle = (cw & STROBE_FLAG_NONDIR) ? 0 : STROBE_FLAG_RECV;
+    if (cw & STROBE_FLAG_IMPLICIT) {
+        return cw ^ recv_toggle;
+    } else {   
+        uint32_t modes_2[8] = {
+            /* Note: most of these really shouldn't happen... */
+            STROBE_MODE_ABSORB,
+            STROBE_MODE_DUPLEX_R,
+            STROBE_MODE_ABSORB_R,
+            STROBE_MODE_DUPLEX,
+            STROBE_MODE_PLAINTEXT,
+            STROBE_MODE_SQUEEZE,
+            STROBE_MODE_FORGET,
+            STROBE_MODE_ABSORB
+        };
+    
+        return ((cw & ((1<<29)-1)) | (modes_2[cw>>29]<<29)) ^ recv_toggle;
+    }
+}
+
+#define STROBE_MAX_AUTH_BYTES 32
+
 
 /**
  * @brief Initialize Strobe protocol context.
- * @param [out] The initialized strobe object.
+ * @param [out] strobe The uninitialized strobe object.
  * @param [in] Strobe parameter descriptor
  * @param [in] am_client Nonzero if this party
  * is the client.
  */
 void strobe_init (
-    keccak_sponge_t sponge,
+    keccak_strobe_t strobe,
     const struct kparams_s *params,
+    const char *proto,
     uint8_t am_client
 ) NONNULL2 API_VIS;
-   
+
+/**
+ * @brief Run a transaction against a STROBE state.
+ * @param [inout] strobe The initialized STROBE object.
+ * @param [out] out The output.
+ * @param [in] in The input.
+ * @param [in] len The length of the input/output.
+ * @param [in] cw_flags The control word with flags.
+ */
+void strobe_transact (
+    keccak_strobe_t strobe,
+    unsigned char *out,
+    const unsigned char *in,
+    size_t len,
+    uint32_t cw_flags
+) NONNULL1 API_VIS;
+
 /**
  * @brief Send plaintext in strobe context.
  * @param [inout] The initialized strobe object.
- * @param [in] Strobe parameter descriptor
  * @param [in] in The plaintext.
  * @param [in] len The length of the plaintext.
  * @param [in] iSent Nonzero if this side of exchange sent the plaintext.
- * @param [in] more Nonzero if this is a continuation.
- * @retval DECAF_SUCCESS The operation applied successfully.
- * @retval DECAF_FAILURE The operation applied, but is dangerous
- * because it breaks the usual flow (by doing keyed operations
- * before a key is specified, or by specifying more when the previous
- * operation didn't match).
  */
-decaf_bool_t strobe_plaintext (
-    keccak_sponge_t sponge,
+static INLINE UNUSED void strobe_plaintext (
+    keccak_strobe_t strobe,
     const unsigned char *in,
-    size_t len,
-    uint8_t iSent,
-    uint8_t more
-) NONNULL2 API_VIS;
+    uint16_t len,
+    uint8_t iSent
+) {
+    strobe_transact(
+        strobe, NULL, in, len,
+        iSent ? STROBE_CW_PAYLOAD_PLAINTEXT
+              : strobe_cw_recv(STROBE_CW_PAYLOAD_PLAINTEXT)
+    );
+}
    
 /**
  * @brief Report authenticated data in strobe context.
  * @param [inout] The initialized strobe object.
- * @param [in] Strobe parameter descriptor
  * @param [in] in The plaintext.
  * @param [in] len The length of the ad.
- * @param [in] more Nonzero if this is a continuation.
- * @retval DECAF_SUCCESS The operation applied successfully.
- * @retval DECAF_FAILURE The operation applied, but is dangerous
- * because it breaks the usual flow (by doing keyed operations
- * before a key is specified, or by specifying more when the previous
- * operation didn't match).
  */
-decaf_bool_t strobe_ad (
-    keccak_sponge_t sponge,
+static INLINE UNUSED void strobe_ad (
+    keccak_strobe_t strobe,
     const unsigned char *in,
-    size_t len,
-    uint8_t more
-) NONNULL2 API_VIS;
-   
+    size_t len
+) {
+    strobe_transact( strobe, NULL, in, len, STROBE_CW_AD_EXPLICIT );
+}
+  
 /**
  * @brief Set nonce in strobe context.
  * @param [inout] The initialized strobe object.
- * @param [in] Strobe parameter descriptor
  * @param [in] in The nonce.
  * @param [in] len The length of the nonce.
- * @param [in] more Nonzero if this is a continuation.
- * @retval DECAF_SUCCESS The operation applied successfully.
- * @retval DECAF_FAILURE The operation applied, but is dangerous
- * because it breaks the usual flow (by doing keyed operations
- * before a key is specified, or by specifying more when the previous
- * operation didn't match).
  */
-decaf_bool_t strobe_nonce (
-    keccak_sponge_t sponge,
+static INLINE UNUSED void strobe_nonce (
+    keccak_strobe_t strobe,
     const unsigned char *in,
-    size_t len,
-    uint8_t more
-) NONNULL2 API_VIS;
+    uint16_t len
+) {
+    strobe_transact( strobe, NULL, in, len, STROBE_CW_NONCE_EXPLICIT );
+}
    
 /**
  * @brief Set key in strobe context.
  * @param [inout] The initialized strobe object.
- * @param [in] Strobe parameter descriptor
  * @param [in] in The key.
  * @param [in] len The length of the key.
- * @param [in] more Nonzero if this is a continuation.
  */
-decaf_bool_t strobe_key (
-    keccak_sponge_t sponge,
+static INLINE UNUSED void
+strobe_key (
+    keccak_strobe_t strobe,
     const unsigned char *in,
-    size_t len,
-    uint8_t more
-) NONNULL2 API_VIS;
+    uint16_t len
+) {
+    strobe_transact( strobe, NULL, in, len, STROBE_CW_DH_KEY ); /* FIXME: what about other kinds of keys? */
+}
+
     
 /**
  * @brief Produce an authenticator.
- * @param [inout] strobe The Strobe protocol context
+ * @param [inout] strobe The Strobe protocol context.
  * @param [out] out The authenticator
- * @param len The length, which must be no more than
- * @todo 32?
- * @retval DECAF_SUCCESS The operation applied successfully.
- * @retval DECAF_FAILURE The operation applied, but is dangerous
- * because it breaks the usual flow (by doing keyed operations
- * before a key is specified, or by specifying more when the previous
- * operation didn't match).
+ * @param len The length.
  */
-decaf_bool_t strobe_produce_auth (
-   keccak_sponge_t sponge,
-   unsigned char *out,
-   size_t len
-) NONNULL2 API_VIS;
+static INLINE UNUSED void
+strobe_produce_auth (
+    keccak_strobe_t strobe,
+    unsigned char *out,
+    uint16_t len
+) {
+    strobe_transact( strobe, out, NULL, len, STROBE_CW_MAC );
+}
    
 /**
  * @brief Encrypt bytes from in to out.
- * @warning Doesn't produce an auth tag (TODO?)
+ * @warning Doesn't produce an auth tag.
  * @param [inout] strobe The Strobe protocol context.
  * @param [in] in The plaintext.
  * @param [out] out The ciphertext.
  * @param [in] len The length of plaintext and ciphertext.
- * @param [in] more This is a continuation.
- * @retval DECAF_SUCCESS The operation applied successfully.
- * @retval DECAF_FAILURE The operation applied, but is dangerous
- * because it breaks the usual flow (by doing keyed operations
- * before a key is specified, or by specifying more when the previous
- * operation didn't match).
  */
-decaf_bool_t strobe_encrypt (
-   keccak_sponge_t sponge,
+static INLINE UNUSED void
+strobe_encrypt (
+   keccak_strobe_t strobe,
    unsigned char *out,
    const unsigned char *in,
-   size_t len,
-   uint8_t more
-) NONNULL3 API_VIS;
+   uint16_t len
+) {
+   strobe_transact(strobe, out, in, len, STROBE_CW_PAYLOAD_CIPHERTEXT);
+}
    
 /**
  * @brief Decrypt bytes from in to out.
- * @warning Doesn't check an auth tag (TODO?)
+ * @warning Doesn't check an auth tag.
  * @param [inout] strobe The Strobe protocol context.
  * @param [in] in The ciphertext.
  * @param [out] out The plaintext.
  * @param [in] len The length of plaintext and ciphertext.
- * @param [in] more This is a continuation.
- * @retval DECAF_SUCCESS The operation applied successfully.
- * @retval DECAF_FAILURE The operation applied, but is dangerous
- * because it breaks the usual flow (by doing keyed operations
- * before a key is specified, or by specifying more when the previous
- * operation didn't match).
  */
-decaf_bool_t strobe_decrypt (
-   keccak_sponge_t sponge,
+static INLINE UNUSED void
+strobe_decrypt (
+   keccak_strobe_t strobe,
    unsigned char *out,
    const unsigned char *in,
-   size_t len,
-   uint8_t more
-) NONNULL3 API_VIS;
+   uint16_t len
+) {
+   strobe_transact(strobe, out, in, len, strobe_cw_recv(STROBE_CW_PAYLOAD_CIPHERTEXT));
+}
 
 /**
  * @brief Produce a session-bound pseudorandom value.
@@ -423,24 +526,17 @@ decaf_bool_t strobe_decrypt (
  * refreshing forward secrecy!  It's to replace things
  * like TCP session hash.
  *
- * @todo Figure out how to treat this wrt anti-rollback.
- *
  * @param [inout] strobe The Strobe protocol context
- * @param [out] out The authenticator
+ * @param [out] out The output random data.
  * @param len The length.
- *
- * @retval DECAF_SUCCESS The operation applied successfully.
- * @retval DECAF_FAILURE The operation applied, but is dangerous
- * because it breaks the usual flow (by doing keyed operations
- * before a key is specified, or by specifying more when the previous
- * operation didn't match).
- */   
-decaf_bool_t strobe_prng (
-   keccak_sponge_t sponge,
-   unsigned char *out,
-   size_t len,
-   uint8_t more
-) NONNULL2 API_VIS;
+ */
+static inline void strobe_prng (
+    keccak_strobe_t strobe,
+    unsigned char *out,
+    uint16_t len
+) {
+    strobe_transact( strobe, out, NULL, len, STROBE_CW_PRNG );
+}
 
 /**
  * @brief Verify an authenticator.
@@ -452,10 +548,10 @@ decaf_bool_t strobe_prng (
  * @retval DECAF_FAILURE The operation failed because of a
  * bad validator (or because you aren't keyed)
  */
-decaf_bool_t strobe_verify_auth (
-    keccak_sponge_t sponge,
+decaf_error_t strobe_verify_auth (
+    keccak_strobe_t strobe,
     const unsigned char *in,
-    size_t len
+    uint16_t len
 ) WARN_UNUSED NONNULL2 API_VIS;
 
 /**
@@ -464,14 +560,13 @@ decaf_bool_t strobe_verify_auth (
  * @param [in] Strobe parameter descriptor
  * @param [in] am_client Nonzero if this party
  * is the client.
- * @retval DECAF_SUCCESS The operation applied successfully.
- * @retval DECAF_FAILURE The operation failed because of a
- * bad validator (or because you aren't keyed)
  */
-decaf_bool_t strobe_respec (
-    keccak_sponge_t sponge,
+void strobe_respec (
+    keccak_strobe_t strobe,
     const struct kparams_s *params
 ) NONNULL2 API_VIS;
+    
+#define strobe_destroy sponge_destroy
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -483,5 +578,7 @@ decaf_bool_t strobe_respec (
 #undef NONNULL13
 #undef NONNULL2
 #undef NONNULL3
+#undef INLINE
+#undef UNUSED
     
 #endif /* __SHAKE_H__ */

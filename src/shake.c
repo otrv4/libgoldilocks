@@ -71,12 +71,6 @@ typedef struct keccak_sponge_s {
 
 #define FLAG_ABSORBING 'A'
 #define FLAG_SQUEEZING 'Z'
-#define FLAG_RNG_SQU   'R'
-#define FLAG_DET_SQU   'D'
-#define FLAG_RNG_ABS   'r'
-#define FLAG_DET_ABS   'd'
-#define FLAG_RNG_UNI   'u'
-#define FLAG_DET_UNI   'g'
 
 /** Constants. **/
 static const uint8_t pi[24] = {
@@ -119,8 +113,9 @@ keccakf(kdomain_t state, uint8_t startRound) {
     for (i=0; i<25; i++) a[i] = le64toh(a[i]);
 
     for (i = startRound; i < 24; i++) {
-        FOR51(x, b[x] = 0; FOR55(y, b[x] ^= a[x + y];))
-        FOR51(x, FOR55(y,
+        FOR51(x, b[x] = 0; )
+        FOR55(y, FOR51(x, b[x] ^= a[x + y]; ))
+        FOR55(y, FOR51(x,
             a[y + x] ^= b[(x + 4) % 5] ^ rol(b[(x + 1) % 5], 1);
         ))
         // Rho and pi
@@ -285,7 +280,7 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
             }
             *eo ^= out;
         }
-    } else if (len>8) {
+    } else if (len>=8) {
         uint64_t out;
         __asm__ __volatile__ ("rdtsc" : "=A"(out));
         *(uint64_t*) entropy ^= out;
@@ -297,51 +292,27 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
 #endif
 }
 
+static const uint16_t SPONGERNG_MAX_BLOCK_SIZE = 1<<12; /* TODO: standardize and freeze */
+static const uint16_t SPONGERNG_FILE_BLOCK_SIZE = 1<<12; /* TODO: standardize and freeze */
+static const char *SPONGERNG_NAME = "spongerng";  /* TODO: canonicalize name */
+
 void spongerng_next (
     keccak_sponge_t sponge,
     uint8_t * __restrict__ out,
     size_t len
 ) {
-    assert(sponge->params->position < sponge->params->rate);
-    assert(sponge->params->rate < sizeof(sponge->state));
-
-    switch(sponge->params->flags) {
-    case FLAG_DET_SQU: case FLAG_RNG_SQU: break;
-    case FLAG_DET_ABS: case FLAG_RNG_ABS:
-        {
-            uint8_t* state = sponge->state->b;
-            state[sponge->params->position] ^= sponge->params->pad;
-            state[sponge->params->rate - 1] ^= sponge->params->ratePad;
-            dokeccak(sponge);
-            sponge->params->flags = (sponge->params->flags == FLAG_DET_ABS) ? FLAG_DET_SQU : FLAG_RNG_SQU;
-            break;
-        }
-    default: assert(0);
-    };
-
-    while (len) {
-        size_t cando = sponge->params->rate - sponge->params->position;
-        uint8_t* state = &sponge->state->b[sponge->params->position];
-        if (cando > len) {
-            memcpy(out, state, len);
-            memset(state, 0, len);
-            sponge->params->position += len;
-            return;
-        } else {
-            memcpy(out, state, cando);
-            memset(state, 0, cando);
-            if (sponge->params->flags == FLAG_RNG_SQU)
-                get_cpu_entropy(sponge->state->b, 32);
-            dokeccak(sponge);
-            len -= cando;
-            out += cando;
-        }
+    if (sponge->params->client) {
+        /* nondet */
+        uint8_t cpu_entropy[32];
+        get_cpu_entropy(cpu_entropy, sizeof(cpu_entropy));
+        strobe_transact(sponge,NULL,cpu_entropy,sizeof(cpu_entropy),STROBE_CW_PRNG_CPU_SEED);
     }
-
-    /* Anti-rollback */
-    if (sponge->params->position < 32) {
-        memset(&sponge->state->b, 0, 32);
-        sponge->params->position = 32;
+    
+    while (len) {
+        uint16_t cando = (len > SPONGERNG_MAX_BLOCK_SIZE) ? SPONGERNG_MAX_BLOCK_SIZE : len;
+        strobe_transact(sponge,out,NULL,cando,STROBE_CW_PRNG);
+        out += cando;
+        len -= cando;
     }
 }
 
@@ -350,41 +321,16 @@ void spongerng_stir (
     const uint8_t * __restrict__ in,
     size_t len
 ) {
-    assert(sponge->params->position < sponge->params->rate);
-    assert(sponge->params->rate < sizeof(sponge->state));
-
-    switch(sponge->params->flags) {
-    case FLAG_RNG_SQU:
-        get_cpu_entropy(sponge->state->b, 32);
-        /* fall through */
-    case FLAG_DET_SQU: 
-        sponge->params->flags = (sponge->params->flags == FLAG_DET_SQU) ? FLAG_DET_ABS : FLAG_RNG_ABS;
-        dokeccak(sponge);
-        break;
-    case FLAG_DET_ABS: case FLAG_RNG_ABS: break;
-    case FLAG_DET_UNI: case FLAG_RNG_UNI: break;
-    default: assert(0);
-    };
-
     while (len) {
-        size_t i;
-        size_t cando = sponge->params->rate - sponge->params->position;
-        uint8_t* state = &sponge->state->b[sponge->params->position];
-        if (cando > len) {
-            for (i = 0; i < len; i += 1) state[i] ^= in[i];
-            sponge->params->position += len;
-            return;
-        } else {
-            for (i = 0; i < cando; i += 1) state[i] ^= in[i];
-            dokeccak(sponge);
-            len -= cando;
-            in += cando;
-        }
+        uint16_t cando = (len > SPONGERNG_MAX_BLOCK_SIZE) ? SPONGERNG_MAX_BLOCK_SIZE : len;
+        strobe_transact(sponge,NULL,in,cando,STROBE_CW_PRNG_USER_SEED);
+        in += cando;
+        len -= cando;
     }
 }
 
 static const struct kparams_s spongerng_params = {
-    0, FLAG_RNG_UNI, 200-256/4, 0, 0x06, 0x80, 0xFF, 0
+    0, 0, 200-256/4, 0, 0x06, 0x80, 0xFF, 0
 };
 
 void spongerng_init_from_buffer (
@@ -393,8 +339,7 @@ void spongerng_init_from_buffer (
     size_t len,
     int deterministic
 ) {
-    sponge_init(sponge, &spongerng_params);
-    sponge->params->flags = deterministic ? FLAG_DET_ABS : FLAG_RNG_ABS;
+    strobe_init(sponge, &spongerng_params, SPONGERNG_NAME, !deterministic);
     spongerng_stir(sponge, in, len);
 }
 
@@ -404,14 +349,13 @@ int spongerng_init_from_file (
     size_t len,
     int deterministic
 ) {
-    sponge_init(sponge, &spongerng_params);
-    sponge->params->flags = deterministic ? FLAG_DET_UNI : FLAG_RNG_UNI;
+    strobe_init(sponge, &spongerng_params, SPONGERNG_NAME, !deterministic);
     if (!len) return -2;
 
     int fd = open(file, O_RDONLY);
     if (fd < 0) return errno ? errno : -1;
     
-    uint8_t buffer[128];
+    uint8_t buffer[SPONGERNG_FILE_BLOCK_SIZE];
     while (len) {
         ssize_t red = read(fd, buffer, (len > sizeof(buffer)) ? sizeof(buffer) : len);
         if (red <= 0) {
@@ -422,8 +366,7 @@ int spongerng_init_from_file (
         len -= red;
     };
     close(fd);
-
-    sponge->params->flags = deterministic ? FLAG_DET_ABS : FLAG_RNG_ABS;
+    
     return 0;
 }
 
@@ -442,283 +385,241 @@ const struct kparams_s STROBE_KEYED_128 = { 0, 0, 200-128/4, 12, 0, 0, 0, 0 };
 void strobe_init(
     keccak_sponge_t sponge,
     const struct kparams_s *params,
+    const char *proto,
     uint8_t am_client
 ) {
     sponge_init(sponge,params);
+    
+    const char *a_string = "STROBE full v0.2";
+    unsigned len = strlen(a_string);
+    memcpy (
+        &sponge->state->b[sizeof(sponge->state)-len],
+        a_string,
+        len
+    );
+        
+    strobe_transact(sponge,  NULL, (const unsigned char *)proto, strlen(proto), STROBE_CW_INIT);
+        
+    sponge->state->b[sponge->params->rate+1] = 1;
     sponge->params->client = !!am_client;
+}
+
+static const uint8_t EXCEEDED_RATE_PAD = 0x2;
+static __inline__ uint8_t CONTROL_WORD_PAD(int cw_size) {
+    assert(cw_size >= 0 && cw_size <= 31);
+    return 0xC0 | cw_size;
 }
 
 static void strobe_duplex (
     keccak_sponge_t sponge,
     unsigned char *out,
     const unsigned char *in,
-    size_t len
+    size_t len,
+    mode_t mode
 ) {
-    unsigned j;
-    while (len) {
-        assert(sponge->params->rate >= sponge->params->position);
-        size_t cando = sponge->params->rate - sponge->params->position;
-        uint8_t* state = &sponge->state->b[sponge->params->position];
-        if (cando >= len) {
-            for (j=0; in && j<len; j++) state[j]^=in[j];
-            if (out) memcpy(out, state, len);
-            sponge->params->position += len;
-            return;
-        } else {
-            if (in) {
-                for (j=0; j<cando; j++) state[j]^=in[j];
-                in += cando;
-            }
+    unsigned int j, r = sponge->params->rate, p = sponge->params->position;
+    uint8_t* state = &sponge->state->b[0];
+    
+    /* sanity */
+    assert(r < sizeof(sponge->state) && r >= p);
+    switch (mode) {
+    case STROBE_MODE_PLAINTEXT:
+        assert(in || len==0);
+        break;
+    case STROBE_MODE_ABSORB:
+    case STROBE_MODE_ABSORB_R:
+        assert((in||len==0) && !out);
+        break;
+    case STROBE_MODE_DUPLEX:
+    case STROBE_MODE_DUPLEX_R:
+        assert((in && out) || len==0);
+        break;
+    case STROBE_MODE_SQUEEZE:
+    case STROBE_MODE_SQUEEZE_R:
+        assert((out || len==0) && !in);
+        break;
+    case STROBE_MODE_FORGET:
+        assert(!in && !out);
+        break;
+    default:
+        assert(0);
+    }
+    
+    while(1) {
+        unsigned int cando = r - p;
+        unsigned int last = (cando >= len);
+        if (last) {
+            cando = len;
+        }
+        
+        switch (mode) {
+        case STROBE_MODE_PLAINTEXT:
+            for (j=0; j<cando; j++) state[p+j] ^= in[j];
             if (out) {
-                memcpy(out, state, cando);
+                memcpy(out, in, cando);
                 out += cando;
             }
-            state[cando] ^= 0x1;
-            dokeccak(sponge);
-            len -= cando;
-        }
-    }
-}
-
-static void strobe_forget (
-    keccak_sponge_t sponge,
-    size_t len
-) {
-    assert(sponge->params->rate < sizeof(sponge->state));
-    assert(sponge->params->position <= sponge->params->rate);
-    if (sizeof(sponge->state) - sponge->params->rate < len) {
-        /** Tiny case */
-        unsigned char tmp[len];
-        strobe_duplex(sponge,tmp,NULL,len);
-        if (sponge->params->position) dokeccak(sponge);
-        strobe_duplex(sponge,tmp,NULL,len);
-        decaf_bzero(tmp,len);
-    } else {
-        if (sponge->params->rate < len + sponge->params->position) {
-            dokeccak(sponge);
-        }
-        memset(&sponge->state->b[sponge->params->position], 0, len);
-        sponge->params->position += len;
-    }
-}
-
-static void strobe_unduplex (
-    keccak_sponge_t sponge,
-    unsigned char *out,
-    const unsigned char *in,
-    size_t len
-) {
-    unsigned j;
-    while (len) {
-        assert(sponge->params->rate >= sponge->params->position);
-        size_t cando = sponge->params->rate - sponge->params->position;
-        uint8_t* state = &sponge->state->b[sponge->params->position];
-        if (cando >= len) {
-            for (j=0; in && j<len; j++) {
-                unsigned char c = in[j];
-                out[j] = in[j] ^ state[j];
-                state[j] = c;
+            in += cando;
+            break;
+            
+        case STROBE_MODE_ABSORB:
+            for (j=0; j<cando; j++) state[p+j] ^= in[j];
+            in += cando;
+            break;
+            
+        case STROBE_MODE_ABSORB_R:
+            memcpy(state+p, in, cando);
+            in += cando;
+            break;
+        
+        case STROBE_MODE_SQUEEZE:
+            memcpy(out, state+p, cando);
+            out += cando;
+            break;
+        
+        case STROBE_MODE_SQUEEZE_R:
+            memcpy(out, state+p, cando);
+            out += cando;
+            memset(state+p, 0, cando);
+            break;
+            
+        case STROBE_MODE_FORGET:
+            memset(state+p, 0, cando);
+            break;
+        
+        case STROBE_MODE_DUPLEX:
+            for (j=0; j<cando; j++) {
+                state[p+j] ^= in[j];
+                out[j] = state[p+j];
             }
-            sponge->params->position += len;
+            in += cando;
+            out += cando;
+            break;
+        
+        case STROBE_MODE_DUPLEX_R:
+            for (j=0; j<cando; j++) {
+                unsigned char c = in[j];
+                out[j] = c ^ state[p+j];
+                state[p+j] = c;
+            }
+            in += cando;
+            out += cando;
+            break;
+
+        default:
+            assert(0);
+        };
+        
+        if (last) {
+            sponge->params->position = p+len;
             return;
         } else {
-            for (j=0; in && j<cando; j++) {
-                unsigned char c = in[j];
-                out[j] = in[j] ^ state[j];
-                state[j] = c;
-            }
-            state[j] ^= 0x1;
-            dokeccak(sponge);
+            state[r] ^= EXCEEDED_RATE_PAD;
+            keccakf(sponge->state, sponge->params->startRound);
             len -= cando;
+            p = 0;
         }
     }
 }
 
-enum { KEY=1, NONCE, AD, PLAINTEXT, CIPHERTEXT, TAGFORGET, DIVERSIFIER, PRNG, FORK, JOIN, RESPEC };
+static inline mode_t get_mode ( uint32_t cw_flags ) {
+    return (mode_t)((cw_flags >> 29) & 7);
+}
 
-#define CLIENT_TO_SERVER 0
-#define SERVER_TO_CLIENT 0x80
+static const int STROBE_FORGET_BYTES = 32;
 
-static decaf_bool_t strobe_control_word (
+static const uint8_t FLAG_NOPARSE = 1;
+
+void strobe_transact (
     keccak_sponge_t sponge,
-    const unsigned char *control,
+    unsigned char *out,
+    const unsigned char *in,
     size_t len,
-    uint8_t more
+    uint32_t cw_flags
 ) {
-    assert(sponge->params->rate < sizeof(sponge->state));
-    decaf_bool_t ret = DECAF_SUCCESS;
-    if (!more) {
-        strobe_duplex(sponge,NULL,control,len);
-        sponge->state->b[sponge->params->position] ^= 0x1;
-        sponge->state->b[sponge->params->rate] ^= 0x2;
-        dokeccak(sponge);
-        sponge->params->flags = control[len-1];
-    } else if (sponge->params->flags && sponge->params->flags != control[len-1]) {
-        ret = DECAF_FAILURE;
+    if ( (cw_flags & STROBE_FLAG_NONDIR) == 0
+        /* extraneous nots to change ints to bools :-/ */
+        && !(cw_flags & STROBE_FLAG_RECV) != !(sponge->params->client) ) {
+        cw_flags ^= STROBE_FLAG_CLIENT_SENT;
     }
-    sponge->params->flags = control[len-1];
-    return ret;
+    
+    uint64_t my_len = len, len_cw = (cw_flags & STROBE_FLAG_LENGTH_64) ? 10 : 4;
+    if (cw_flags & STROBE_FLAG_NO_LENGTH) {
+        my_len = 0;
+    } else {
+        assert(my_len < 1<<16);
+    }
+    
+    if (cw_flags & STROBE_FLAG_MORE) {
+        assert(cw_flags & STROBE_FLAG_NO_LENGTH); /* FUTURE */
+    } else {
+        uint8_t cwb[10] = {
+            cw_flags,
+            cw_flags>>8,
+            my_len,
+            my_len>>8,
+            my_len>>16,
+            my_len>>24,
+            my_len>>32,
+            my_len>>40,
+            my_len>>48,
+            my_len>>56
+        };
+        strobe_duplex(sponge, NULL, cwb, len_cw, STROBE_MODE_ABSORB_R);
+        if ((cw_flags & STROBE_FLAG_RUN_F) || (sponge->params->flags & FLAG_NOPARSE)) {
+            sponge->state->b[sponge->params->position] ^= CONTROL_WORD_PAD(len_cw);
+            dokeccak(sponge);
+        }
+
+        sponge->params->flags &= ~FLAG_NOPARSE;
+        if (cw_flags & STROBE_FLAG_NO_LENGTH) {
+            sponge->params->flags |= FLAG_NOPARSE;
+        }
+    }
+        
+    strobe_duplex(sponge, out, in, len, get_mode(cw_flags));
+    if (cw_flags & STROBE_FLAG_FORGET) {
+        
+        uint32_t len = sponge->params->rate - sponge->params->position;
+        if (len < STROBE_FORGET_BYTES + len_cw) len += sponge->params->rate;
+        len -= len_cw;
+        
+        if (cw_flags & STROBE_FLAG_NO_LENGTH) len = 2*STROBE_FORGET_BYTES;
+        
+        strobe_duplex(
+            sponge, NULL, NULL, len,
+            STROBE_MODE_FORGET
+        );
+    }
 }
 
-decaf_bool_t strobe_encrypt (
-    keccak_sponge_t sponge,
-    unsigned char *out,
-    const unsigned char *in,
-    size_t len,
-    uint8_t more
-) {
-    unsigned char control[] = { CIPHERTEXT |
-        (sponge->params->client ? CLIENT_TO_SERVER : SERVER_TO_CLIENT)
-    };
-    decaf_bool_t ret = strobe_control_word(sponge, control, sizeof(control), more);
-    strobe_duplex(sponge, out, in, len);
-    if (!sponge->params->pad/*keyed*/) ret = DECAF_FAILURE;
-    return ret;
-}
-
-decaf_bool_t strobe_decrypt (
-    keccak_sponge_t sponge,
-    unsigned char *out,
-    const unsigned char *in,
-    size_t len,
-    uint8_t more
-) {
-    unsigned char control[] = { CIPHERTEXT |
-        (sponge->params->client ? SERVER_TO_CLIENT : CLIENT_TO_SERVER)
-    };
-    decaf_bool_t ret = strobe_control_word(sponge, control, sizeof(control), more);
-    strobe_unduplex(sponge, out, in, len);
-    if (!sponge->params->pad/*keyed*/) ret = DECAF_FAILURE;
-    return ret;
-}
-
-decaf_bool_t strobe_plaintext (
-    keccak_sponge_t sponge,
-    const unsigned char *in,
-    size_t len,
-    uint8_t iSent,
-    uint8_t more
-) {
-    unsigned char control[] = { PLAINTEXT |
-        ((sponge->params->client == !!iSent) ? CLIENT_TO_SERVER : SERVER_TO_CLIENT)
-    };
-    decaf_bool_t ret = strobe_control_word(sponge, control, sizeof(control), more);
-    strobe_duplex(sponge, NULL, in, len);
-    return ret;
-}
-
-decaf_bool_t strobe_key (
-    keccak_sponge_t sponge,
-    const unsigned char *in,
-    size_t len,
-    uint8_t more
-) {
-    unsigned char control[] = { KEY };
-    decaf_bool_t ret = strobe_control_word(sponge, control, sizeof(control), more);
-    strobe_duplex(sponge, NULL, in, len);
-    sponge->params->pad/*=keyed*/ = 1;
-    return ret;
-}
-
-decaf_bool_t strobe_nonce (
+decaf_error_t strobe_verify_auth (
     keccak_sponge_t sponge,
     const unsigned char *in,
-    size_t len,
-    uint8_t more
+    uint16_t len
 ) {
-    unsigned char control[] = { NONCE };
-    decaf_bool_t ret = strobe_control_word(sponge, control, sizeof(control), more);
-    strobe_duplex(sponge, NULL, in, len);
-    return ret;
-}
-
-decaf_bool_t strobe_ad (
-    keccak_sponge_t sponge,
-    const unsigned char *in,
-    size_t len,
-    uint8_t more
-) {
-    unsigned char control[] = { AD };
-    decaf_bool_t ret = strobe_control_word(sponge, control, sizeof(control), more);
-    strobe_duplex(sponge, NULL, in, len);
-    return ret;
-}
-
-#define STROBE_FORGET_BYTES 32
-
-decaf_bool_t strobe_produce_auth (
-    keccak_sponge_t sponge,
-    unsigned char *out,
-    size_t len
-) {
-    unsigned char control[] = {
-        (unsigned char)len,
-        (unsigned char)STROBE_FORGET_BYTES,
-        TAGFORGET | (sponge->params->client ? CLIENT_TO_SERVER : SERVER_TO_CLIENT)
-    };
-    decaf_bool_t ret = strobe_control_word(sponge, control, sizeof(control), 0);
-    strobe_duplex(sponge, out, NULL, len);
-    strobe_forget(sponge, STROBE_FORGET_BYTES);
-    if (!sponge->params->pad/*keyed*/) ret = DECAF_FAILURE;
-    return ret;
-}
-
-decaf_bool_t strobe_prng (
-    keccak_sponge_t sponge,
-    unsigned char *out,
-    size_t len,
-    uint8_t more
-) {
-    unsigned char control[9] = { PRNG };
+    if (len > sponge->params->rate) return DECAF_FAILURE;
+    strobe_transact(sponge, NULL, in, len, strobe_cw_recv(STROBE_CW_MAC));
+    
+    int32_t residue = 0;
     int i;
-    for (i=0; i<8; i++) control[i+1] = len>>(8*i);
-    
-    decaf_bool_t ret = strobe_control_word(sponge, control, sizeof(control), more);
-    strobe_duplex(sponge, out, NULL, len);
-    // TODO: forget as follows? this breaks "more"
-    // unsigned char control2[] = { 0, STROBE_FORGET_BYTES, TAGFORGET };
-    // ret &= strobe_control_word(sponge, control2, sizeof(control2));
-    // strobe_forget(sponge, STROBE_FORGET_BYTES);
-    if (!sponge->params->pad/*keyed*/) ret = DECAF_FAILURE;
-    return ret;
-}
-
-decaf_bool_t strobe_verify_auth (
-    keccak_sponge_t sponge,
-    const unsigned char *in,
-    size_t len
-) {
-    unsigned char control[] = {
-        (unsigned char)len,
-        (unsigned char)STROBE_FORGET_BYTES,
-        TAGFORGET | (sponge->params->client ? SERVER_TO_CLIENT : CLIENT_TO_SERVER)
-    };
-    decaf_bool_t ret = strobe_control_word(sponge, control, sizeof(control), 0);
-    unsigned char zero[len];
-    strobe_unduplex(sponge, zero, in, len);
-    strobe_forget(sponge, STROBE_FORGET_BYTES);
-    
-    /* Check for 0 */
-    decaf_bool_t chain=0;
-    unsigned i;
     for (i=0; i<len; i++) {
-        chain |= zero[i];
+        residue |= sponge->state->b[i];
     }
-    ret &= ((decaf_dword_t)chain-1)>>(8*sizeof(decaf_word_t));
-    if (!sponge->params->pad/*keyed*/) ret = DECAF_FAILURE;
-    return ret;
+    
+    return decaf_succeed_if((residue-1)>>8);
 }
 
-decaf_bool_t strobe_respec (
+void strobe_respec (
     keccak_sponge_t sponge,
     const struct kparams_s *params
 ) {
-    unsigned char control[] = { params->rate, params->startRound, RESPEC };
-    decaf_bool_t ret = strobe_control_word(sponge, control, sizeof(control), 0);
-    if (!sponge->params->pad/*keyed*/) ret = DECAF_FAILURE;
+    uint8_t in[] = { params->rate, params->startRound }; /* TODO: nail down */
+    strobe_transact( sponge, NULL, in, sizeof(in), STROBE_CW_RESPEC_INFO );
+    strobe_transact( sponge, NULL, NULL, 0, STROBE_CW_RESPEC );
+    assert(sponge->params->position == 0);
     sponge->params->rate = params->rate;
     sponge->params->startRound = params->startRound;
-    return ret;
 }
 
 /* FUTURE: Keyak instances, etc */

@@ -31,8 +31,13 @@
 #define NONNULL5 __attribute__((nonnull(1,2,3,4,5)))
 /** @endcond */
 
-/* Internal word types */
-/* TODO: decide this internally, per curve, based on how it was built! */
+/* Internal word types.
+ *
+ * Somewhat tricky.  This could be decided separately per platform.  However,
+ * the structs do need to be all the same size and alignment on a given
+ * platform to support dynamic linking, since even if you header was built
+ * with eg arch_neon, you might end up linking a library built with arch_arm32.
+ */
 #if (defined(__ILP64__) || defined(__amd64__) || defined(__x86_64__) || (((__UINT_FAST32_MAX__)>>30)>>30)) \
 	 && !defined(DECAF_FORCE_32_BIT)
 #define DECAF_WORD_BITS 64

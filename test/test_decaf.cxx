@@ -360,10 +360,10 @@ static void test_decaf() {
         decaf_255_private_to_public(p1,s1);
         decaf_255_derive_private_key(s2,proto2);
         decaf_255_private_to_public(p2,s2);
-        if (DECAF_SUCCESS != decaf_255_shared_secret (shared1,sizeof(shared1),s1,p2)) {
+        if (DECAF_SUCCESS != decaf_255_shared_secret (shared1,sizeof(shared1),s1,p2,0)) {
             test.fail(); printf("Fail ss12\n");
         }
-        if (DECAF_SUCCESS != decaf_255_shared_secret (shared2,sizeof(shared2),s2,p1)) {
+        if (DECAF_SUCCESS != decaf_255_shared_secret (shared2,sizeof(shared2),s2,p1,1)) {
             test.fail(); printf("Fail ss21\n");
         }
         if (memcmp(shared1,shared2,sizeof(shared1))) {
