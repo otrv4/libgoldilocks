@@ -88,7 +88,7 @@ HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp
 HEADERSXX = $(HEADERS) $(shell find . -name "*.hxx") 
 
 # components needed by the lib
-LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/decaf_crypto.o # and per-field components
+LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/decaf_crypto_255.o $(BUILD_OBJ)/decaf_crypto_448.o # and per-field components
 
 BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o
 

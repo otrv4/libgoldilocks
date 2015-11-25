@@ -1,14 +1,14 @@
 /**
  * @cond internal
- * @file decaf_crypto.c
+ * @file decaf_crypto_255.c
  * @copyright
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  * @author Mike Hamburg
- * @brief Example Decaf cyrpto routines.
+ * @brief Example Decaf crypto routines, 255-bit version.
  */
 
-#include <decaf/crypto.h>
+#include <decaf/crypto_255.h>
 #include <string.h>
 
 static const unsigned int DECAF_255_SCALAR_OVERKILL_BYTES = DECAF_255_SCALAR_BYTES + 8;

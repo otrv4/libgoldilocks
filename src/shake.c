@@ -583,7 +583,7 @@ void strobe_transact (
         
         uint32_t len = sponge->params->rate - sponge->params->position;
         if (len < STROBE_FORGET_BYTES + len_cw) len += sponge->params->rate;
-        len -= len_cw;
+        len -= len_cw; /* HACK */
         
         if (cw_flags & STROBE_FLAG_NO_LENGTH) len = 2*STROBE_FORGET_BYTES;
         

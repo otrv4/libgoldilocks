@@ -6,7 +6,8 @@
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
- * @brief Example cryptography using Decaf
+ * @brief Example cryptography using Decaf.
+ * @warning FIXME: this is out of sync with crypto_*.h
  */
 #ifndef __DECAF_CRYPTO_HXX__
 #define __DECAF_CRYPTO_HXX__ 1
