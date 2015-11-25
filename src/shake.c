@@ -410,15 +410,16 @@ static __inline__ uint8_t CONTROL_WORD_PAD(int cw_size) {
     return 0xC0 | cw_size;
 }
 
+/* PERF vectorize */
 static void strobe_duplex (
-    keccak_sponge_t sponge,
+    struct keccak_sponge_s *__restrict__ sponge,
     unsigned char *out,
     const unsigned char *in,
     size_t len,
     mode_t mode
 ) {
     unsigned int j, r = sponge->params->rate, p = sponge->params->position;
-    uint8_t* state = &sponge->state->b[0];
+    uint8_t* __restrict__ state = &sponge->state->b[0];
     
     /* sanity */
     assert(r < sizeof(sponge->state) && r >= p);
