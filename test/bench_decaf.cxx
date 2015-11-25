@@ -171,23 +171,23 @@ static void tdh (
     client.recv_plaintext(gye);
     
     Point pgxe(gxe);
-    server.key(pgxe*ye);
+    server.dh_key(pgxe*ye);
     SecureBuffer tag1 = server.produce_auth();
     //SecureBuffer ct = server.encrypt(gy);
-    server.key(pgxe*y);
+    server.dh_key(pgxe*y);
     SecureBuffer tag2 = server.produce_auth();
     
     Point pgye(gye);
-    client.key(pgye*xe);
+    client.dh_key(pgye*xe);
     client.verify_auth(tag1);
-    client.key(Point(gy) * xe);
+    client.dh_key(Point(gy) * xe);
     client.verify_auth(tag2);
     // ct = client.encrypt(gx);
-    client.key(pgye * x);
+    client.dh_key(pgye * x);
     tag1 = client.produce_auth();
     client.respec(STROBE_KEYED_128);
     
-    server.key(Point(gx) * ye);
+    server.dh_key(Point(gx) * ye);
     server.verify_auth(tag1);
     server.respec(STROBE_KEYED_128);
 }
@@ -217,14 +217,14 @@ static void fhmqv (
     Scalar schx(server.prng(Scalar::SER_BYTES));
     Scalar schy(server.prng(Scalar::SER_BYTES));
     Scalar yec = y + ye*schy;
-    server.key(Point::double_scalarmul(Point(gx),yec,Point(gxe),yec*schx));
+    server.dh_key(Point::double_scalarmul(Point(gx),yec,Point(gxe),yec*schx));
     SecureBuffer as = server.produce_auth();
     
     client.recv_plaintext(gye);
     Scalar cchx(client.prng(Scalar::SER_BYTES));
     Scalar cchy(client.prng(Scalar::SER_BYTES));
     Scalar xec = x + xe*schx;
-    client.key(Point::double_scalarmul(Point(gy),xec,Point(gye),xec*schy));
+    client.dh_key(Point::double_scalarmul(Point(gy),xec,Point(gye),xec*schy));
     client.verify_auth(as);
     SecureBuffer ac = client.produce_auth();
     client.respec(STROBE_KEYED_128);
@@ -264,19 +264,19 @@ static void spake2ee(
     server.send_plaintext(gy);
     client.recv_plaintext(gy);
     
-    server.key(h1);
-    server.key((Point(gx) - hc)*y);
+    server.dh_key(h1);
+    server.dh_key((Point(gx) - hc)*y);
     if(aug) {
         /* This step isn't actually online but whatever, it's fastish */
         SecureBuffer serverAug((Precomputed::base() * gs).serialize());
-        server.key(Point(serverAug)*y);
+        server.dh_key(Point(serverAug)*y);
     }
     SecureBuffer tag = server.produce_auth();
     
-    client.key(h1);
+    client.dh_key(h1);
     Point pgy(gy); pgy -= hs;
-    client.key(pgy*x);
-    if (aug) client.key(pgy * gs);
+    client.dh_key(pgy*x);
+    if (aug) client.dh_key(pgy * gs);
     client.verify_auth(tag);    
     tag = client.produce_auth();
     client.respec(STROBE_KEYED_128);
@@ -395,7 +395,7 @@ int main(int argc, char **argv) {
         for (Benchmark b("SHAKE128 1kiB", 30); b.iter(); ) { shake1 += Buffer(b1024,1024); }
         for (Benchmark b("SHAKE256 1kiB", 30); b.iter(); ) { shake2 += Buffer(b1024,1024); }
         for (Benchmark b("SHA3-512 1kiB", 30); b.iter(); ) { sha5 += Buffer(b1024,1024); }
-        strobe.key(Buffer(b1024,1024));
+        strobe.dh_key(Buffer(b1024,1024));
         strobe.respec(STROBE_128);
         for (Benchmark b("STROBE128 1kiB", 10); b.iter(); ) {
             strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024));

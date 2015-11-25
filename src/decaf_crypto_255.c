@@ -23,7 +23,7 @@ void decaf_255_derive_private_key (
     
     keccak_strobe_t strobe;
     strobe_init(strobe, &STROBE_256, magic, 0);
-    strobe_key(strobe, proto, sizeof(decaf_255_symmetric_key_t));
+    strobe_fixed_key(strobe, proto, sizeof(decaf_255_symmetric_key_t));
     strobe_prng(strobe, encoded_scalar, sizeof(encoded_scalar));
     strobe_destroy(strobe);
     
@@ -109,7 +109,7 @@ decaf_255_sign_strobe (
     /* Derive nonce */
     keccak_strobe_t strobe2;
     memcpy(strobe2,strobe,sizeof(strobe2));
-    strobe_key(strobe2,priv->sym,sizeof(decaf_255_symmetric_key_t));
+    strobe_fixed_key(strobe2,priv->sym,sizeof(decaf_255_symmetric_key_t));
     strobe_prng(strobe2,overkill,sizeof(overkill));
     strobe_destroy(strobe2);
     

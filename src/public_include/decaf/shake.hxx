@@ -15,6 +15,7 @@
 #include <decaf/shake.h>
 #include <string>
 #include <sys/types.h>
+#include <errno.h>
 
 /** @cond internal */
 #if __cplusplus >= 201103L
@@ -167,9 +168,9 @@ public:
     inline SpongeRng( const std::string &in = "/dev/urandom", size_t len = 32, bool deterministic = false )
         throw(RngException)
     : KeccakSponge((NOINIT())) {
-        int ret = spongerng_init_from_file(sp,in.c_str(),len,deterministic);
-        if (ret) {
-            throw RngException(ret, "Couldn't load from file");
+        decaf_error_t ret = spongerng_init_from_file(sp,in.c_str(),len,deterministic);
+        if (!decaf_successful(ret)) {
+            throw RngException(errno, "Couldn't load from file");
         }
     }
     
@@ -205,18 +206,30 @@ public:
         keyed = false;
     }
 
-    /* TODO: add a key type keyword */
-    inline void key (
+    inline void fixed_key (
         const Block &data
     ) throw(ProtocolException) {
-        strobe_key(sp, data.data(), data.size());
+        strobe_fixed_key(sp, data.data(), data.size());
         keyed = true;
     }
 
-    template<class T> inline void key (
+    template<class T> inline void fixed_key (
         const Serializable<T> &data
     ) throw(ProtocolException) {
-        key(data.serialize());
+        fixed_key(data.serialize());
+    }
+
+    inline void dh_key (
+        const Block &data
+    ) throw(ProtocolException) {
+        strobe_dh_key(sp, data.data(), data.size());
+        keyed = true;
+    }
+
+    template<class T> inline void dh_key (
+        const Serializable<T> &data
+    ) throw(ProtocolException) {
+        dh_key(data.serialize());
     }
 
     inline void nonce(const Block &data) NOEXCEPT {

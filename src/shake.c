@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <unistd.h>
 
 /* Subset of Mathias Panzenböck's portable endian code, public domain */
@@ -292,9 +291,7 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
 #endif
 }
 
-static const uint16_t SPONGERNG_MAX_BLOCK_SIZE = 1<<12; /* TODO: standardize and freeze */
-static const uint16_t SPONGERNG_FILE_BLOCK_SIZE = 1<<12; /* TODO: standardize and freeze */
-static const char *SPONGERNG_NAME = "spongerng";  /* TODO: canonicalize name */
+static const char *SPONGERNG_NAME = "strobe::spongerng";  /* TODO: canonicalize name */
 
 void spongerng_next (
     keccak_sponge_t sponge,
@@ -308,12 +305,7 @@ void spongerng_next (
         strobe_transact(sponge,NULL,cpu_entropy,sizeof(cpu_entropy),STROBE_CW_PRNG_CPU_SEED);
     }
     
-    while (len) {
-        uint16_t cando = (len > SPONGERNG_MAX_BLOCK_SIZE) ? SPONGERNG_MAX_BLOCK_SIZE : len;
-        strobe_transact(sponge,out,NULL,cando,STROBE_CW_PRNG);
-        out += cando;
-        len -= cando;
-    }
+    strobe_transact(sponge,out,NULL,len,STROBE_CW_PRNG);
 }
 
 void spongerng_stir (
@@ -321,12 +313,7 @@ void spongerng_stir (
     const uint8_t * __restrict__ in,
     size_t len
 ) {
-    while (len) {
-        uint16_t cando = (len > SPONGERNG_MAX_BLOCK_SIZE) ? SPONGERNG_MAX_BLOCK_SIZE : len;
-        strobe_transact(sponge,NULL,in,cando,STROBE_CW_PRNG_USER_SEED);
-        in += cando;
-        len -= cando;
-    }
+    strobe_transact(sponge,NULL,in,len,STROBE_CW_PRNG_USER_SEED);
 }
 
 static const struct kparams_s spongerng_params = {
@@ -343,34 +330,37 @@ void spongerng_init_from_buffer (
     spongerng_stir(sponge, in, len);
 }
 
-int spongerng_init_from_file (
+decaf_error_t spongerng_init_from_file (
     keccak_sponge_t sponge,
     const char *file,
     size_t len,
     int deterministic
 ) {
     strobe_init(sponge, &spongerng_params, SPONGERNG_NAME, !deterministic);
-    if (!len) return -2;
+    if (!len) return DECAF_FAILURE;
 
     int fd = open(file, O_RDONLY);
-    if (fd < 0) return errno ? errno : -1;
+    if (fd < 0) return DECAF_FAILURE;
     
-    uint8_t buffer[SPONGERNG_FILE_BLOCK_SIZE];
+    uint8_t buffer[128];
+    int first = 1;
     while (len) {
         ssize_t red = read(fd, buffer, (len > sizeof(buffer)) ? sizeof(buffer) : len);
         if (red <= 0) {
             close(fd);
-            return errno ? errno : -1;
+            return DECAF_FAILURE;
         }
-        spongerng_stir(sponge,buffer,red);
+        strobe_transact(sponge,NULL,buffer,red,
+            first ? STROBE_CW_PRNG_USER_SEED : (STROBE_CW_PRNG_USER_SEED | STROBE_FLAG_MORE));
         len -= red;
+        first = 0;
     };
     close(fd);
     
-    return 0;
+    return DECAF_SUCCESS;
 }
 
-int spongerng_init_from_dev_urandom (
+decaf_error_t spongerng_init_from_dev_urandom (
     keccak_sponge_t sponge
 ) {
     return spongerng_init_from_file(sponge, "/dev/urandom", 64, 0);
@@ -547,7 +537,7 @@ void strobe_transact (
     uint64_t my_len = len, len_cw = (cw_flags & STROBE_FLAG_LENGTH_64) ? 10 : 4;
     if (cw_flags & STROBE_FLAG_NO_LENGTH) {
         my_len = 0;
-    } else {
+    } else if ((cw_flags & STROBE_FLAG_LENGTH_64)==0) {
         assert(my_len < 1<<16);
     }
     
@@ -586,6 +576,7 @@ void strobe_transact (
         len -= len_cw; /* HACK */
         
         if (cw_flags & STROBE_FLAG_NO_LENGTH) len = 2*STROBE_FORGET_BYTES;
+        assert(!(cw_flags & STROBE_FLAG_MORE));
         
         strobe_duplex(
             sponge, NULL, NULL, len,
@@ -615,7 +606,7 @@ void strobe_respec (
     keccak_sponge_t sponge,
     const struct kparams_s *params
 ) {
-    uint8_t in[] = { params->rate, params->startRound }; /* TODO: nail down */
+    uint8_t in[] = { params->rate, params->startRound };
     strobe_transact( sponge, NULL, in, sizeof(in), STROBE_CW_RESPEC_INFO );
     strobe_transact( sponge, NULL, NULL, 0, STROBE_CW_RESPEC );
     assert(sponge->params->position == 0);

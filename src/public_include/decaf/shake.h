@@ -189,11 +189,6 @@ void spongerng_init_from_buffer (
     size_t len,
     int deterministic
 ) NONNULL2 API_VIS;
-
-/* FIXME!! This interface has the opposite retval convention from other functions
- * in the library.  (0=success).  Should they be harmonized?
- */
-
 /**
  * @brief Initialize a sponge-based CSPRNG from a file.
  *
@@ -203,33 +198,27 @@ void spongerng_init_from_buffer (
  * @param [in] deterministic If zero, allow RNG to stir in nondeterministic
  * data from RDRAND or RDTSC.
  *
- * @retval 0 Success.
- * @retval positive An error has occurred, and this was the errno.
- * @retval -1 An unknown error has occurred.
- * @retval -2 len was 0.
+ * @retval DECAF_SUCCESS success.
+ * @retval DECAF_FAILURE failure.
+ * @note On failure, errno can be used to determine the cause.
  */
-int spongerng_init_from_file (
+decaf_error_t spongerng_init_from_file (
     keccak_prng_t prng,
     const char *file,
     size_t len,
     int deterministic
 ) NONNULL2 API_VIS WARN_UNUSED;
 
-
-/* FIXME!! This interface has the opposite retval convention from other functions
- * in the library.  (0=success).  Should they be harmonized?
- */
-
 /**
  * @brief Initialize a nondeterministic sponge-based CSPRNG from /dev/urandom.
  *
  * @param [out] sponge The sponge object.
  *
- * @retval 0 Success.
- * @retval positive An error has occurred, and this was the errno.
- * @retval -1 An unknown error has occurred.
+ * @retval DECAF_SUCCESS success.
+ * @retval DECAF_FAILURE failure.
+ * @note On failure, errno can be used to determine the cause.
  */
-int spongerng_init_from_dev_urandom (
+decaf_error_t spongerng_init_from_dev_urandom (
     keccak_prng_t prng
 ) API_VIS WARN_UNUSED;
 
@@ -312,8 +301,8 @@ STROBE_CONTROL_WORD(STROBE_CW_PRNG,               0x18, STROBE_MODE_SQUEEZE,   S
 STROBE_CONTROL_WORD(STROBE_CW_SESSION_HASH,       0x19, STROBE_MODE_SQUEEZE,   0);
 
 /* Reuse for PRNG */
-STROBE_CONTROL_WORD(STROBE_CW_PRNG_INITIAL_SEED,  0x10, STROBE_MODE_ABSORB,    STROBE_FLAG_LENGTH_64);
-STROBE_CONTROL_WORD(STROBE_CW_PRNG_RESEED,        0x11, STROBE_MODE_ABSORB,    STROBE_FLAG_LENGTH_64);
+STROBE_CONTROL_WORD(STROBE_CW_PRNG_INITIAL_SEED,  0x10, STROBE_MODE_ABSORB,    STROBE_FLAG_NO_LENGTH);
+STROBE_CONTROL_WORD(STROBE_CW_PRNG_RESEED,        0x11, STROBE_MODE_ABSORB,    STROBE_FLAG_NO_LENGTH);
 STROBE_CONTROL_WORD(STROBE_CW_PRNG_CPU_SEED,      0x12, STROBE_MODE_ABSORB,    0);
 STROBE_CONTROL_WORD(STROBE_CW_PRNG_USER_SEED,     0x13, STROBE_MODE_ABSORB,    STROBE_FLAG_LENGTH_64);
 STROBE_CONTROL_WORD(STROBE_CW_PRNG_PRNG,          0x14, STROBE_MODE_SQUEEZE,   STROBE_FLAG_LENGTH_64 | STROBE_FLAG_FORGET);
@@ -452,18 +441,33 @@ static INLINE UNUSED void strobe_nonce (
 }
    
 /**
- * @brief Set key in strobe context.
+ * @brief Set fixed key in strobe context.
  * @param [inout] The initialized strobe object.
  * @param [in] in The key.
  * @param [in] len The length of the key.
  */
 static INLINE UNUSED void
-strobe_key (
+strobe_fixed_key (
     keccak_strobe_t strobe,
     const unsigned char *in,
     uint16_t len
 ) {
-    strobe_transact( strobe, NULL, in, len, STROBE_CW_DH_KEY ); /* FIXME: what about other kinds of keys? */
+    strobe_transact( strobe, NULL, in, len, STROBE_CW_FIXED_KEY );
+}
+   
+/**
+ * @brief Set Diffie-Hellman key in strobe context.
+ * @param [inout] The initialized strobe object.
+ * @param [in] in The key.
+ * @param [in] len The length of the key.
+ */
+static INLINE UNUSED void
+strobe_dh_key (
+    keccak_strobe_t strobe,
+    const unsigned char *in,
+    uint16_t len
+) {
+    strobe_transact( strobe, NULL, in, len, STROBE_CW_DH_KEY );
 }
 
     
