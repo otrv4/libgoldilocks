@@ -206,7 +206,6 @@ public:
     }
 
     /* TODO: add a key type keyword */
-    /* TODO: add a "keyed" tracker */
     inline void key (
         const Block &data
     ) throw(ProtocolException) {
