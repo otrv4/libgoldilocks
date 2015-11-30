@@ -23,9 +23,10 @@ extern "C" {
 
 /** Galois field element internal structure */
 typedef struct gf_25519_s {
+    /** @cond internal */
     decaf_word_t limb[DECAF_255_LIMBS];
+    /** @endcond */
 } __attribute__((aligned(32))) gf_25519_s, gf_25519_t[1];
-/** @endcond */
 
 /** Number of bytes in a serialized point. */
 #define DECAF_255_SER_BYTES 32
@@ -34,7 +35,11 @@ typedef struct gf_25519_s {
 #define DECAF_255_SCALAR_BYTES 32
 
 /** Twisted Edwards (-1,d-1) extended homogeneous coordinates */
-typedef struct decaf_255_point_s { /**@cond internal*/gf_25519_t x,y,z,t;/**@endcond*/ } decaf_255_point_t[1];
+typedef struct decaf_255_point_s {
+    /**@cond internal*/
+    gf_25519_t x,y,z,t;
+    /**@endcond*/
+} decaf_255_point_t[1];
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
 struct decaf_255_precomputed_s;
