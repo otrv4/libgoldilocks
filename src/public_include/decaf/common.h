@@ -27,8 +27,11 @@
 #define NONNULL2 __attribute__((nonnull(1,2)))
 #define NONNULL3 __attribute__((nonnull(1,2,3)))
 #define NONNULL13 __attribute__((nonnull(1,3)))
+#define NONNULL134 __attribute__((nonnull(1,3,4)))
 #define NONNULL4 __attribute__((nonnull(1,2,3,4)))
 #define NONNULL5 __attribute__((nonnull(1,2,3,4,5)))
+#define INLINE inline __attribute__((always_inline))
+#define UNUSED __attribute__((unused))
 /** @endcond */
 
 /* Internal word types.

@@ -18,17 +18,6 @@
 
 #include <decaf/common.h>
 
-/** @cond internal */
-#define API_VIS __attribute__((visibility("default")))
-#define WARN_UNUSED __attribute__((warn_unused_result))
-#define NONNULL1 __attribute__((nonnull(1)))
-#define NONNULL2 __attribute__((nonnull(1,2)))
-#define NONNULL13 __attribute__((nonnull(1,3)))
-#define NONNULL3 __attribute__((nonnull(1,2,3)))
-#define INLINE __inline__ __attribute__((always_inline))
-#define UNUSED __attribute__((unused))
-/** @endcond */
-
 #ifndef INTERNAL_SPONGE_STRUCT
     /** Sponge container object for the various primitives. */
     typedef struct keccak_sponge_s {
@@ -574,14 +563,5 @@ void strobe_respec (
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
-#undef API_VIS
-#undef WARN_UNUSED
-#undef NONNULL1
-#undef NONNULL13
-#undef NONNULL2
-#undef NONNULL3
-#undef INLINE
-#undef UNUSED
     
 #endif /* __SHAKE_H__ */

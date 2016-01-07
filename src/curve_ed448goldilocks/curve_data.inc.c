@@ -13,6 +13,7 @@
 #define P_MOD_8 7
 #define COFACTOR 4
 
+#ifndef DECAF_JUST_API
 static const int EDWARDS_D = -39081;
 
 static const scalar_t sc_p = {{{
@@ -31,3 +32,5 @@ static const unsigned char base_point_ser_for_pregen[SER_BYTES] = {
     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1
 };
 #endif
+
+#endif /* DECAF_JUST_API */

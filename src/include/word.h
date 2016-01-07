@@ -10,6 +10,8 @@
 
 #include "arch_config.h"
 
+#include <decaf/common.h>
+
 
 #ifndef __APPLE__
 #ifndef _BSD_SOURCE
@@ -67,11 +69,6 @@
 #else
     #error "For now, libdecaf only supports 32- and 64-bit architectures."
 #endif
-
-/* General utilities */
-#define NOINLINE __attribute__((noinline))
-#define UNUSED __attribute__((unused))
-#define INLINE __inline__ __attribute__((always_inline))
 
 #ifdef __ARM_NEON__
     typedef uint32x4_t vecmask_t;

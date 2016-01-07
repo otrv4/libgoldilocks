@@ -2,6 +2,7 @@
 #define API_NS(_id) decaf_255_##_id
 #define API_NS2(_pref,_id) _pref##_decaf_255_##_id
 
+
 #define SCALAR_LIMBS DECAF_255_SCALAR_LIMBS
 #define SCALAR_BITS DECAF_255_SCALAR_BITS
 #define NLIMBS DECAF_255_LIMBS
@@ -13,6 +14,7 @@
 #define P_MOD_8 5
 #define COFACTOR 8
 
+#ifndef DECAF_JUST_API
 static const int EDWARDS_D = -121665;
 
 static const scalar_t sc_p = {{{
@@ -36,3 +38,5 @@ static const gf SQRT_ONE_MINUS_D = {FIELD_LITERAL(
     0x7540f7816214a,
     0x0a0d85b4032b1
 )};
+    
+#endif /* DECAF_JUST_API */

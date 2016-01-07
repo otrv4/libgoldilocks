@@ -20,16 +20,6 @@
 /** Number of bytes for a symmetric key (expanded to full key) */
 #define DECAF_255_SYMMETRIC_KEY_BYTES 32
 
-/** @cond internal */
-#define API_VIS __attribute__((visibility("default"))) __attribute__((noinline)) // TODO: synergize with decaf.h
-#define WARN_UNUSED __attribute__((warn_unused_result))
-#define NONNULL1 __attribute__((nonnull(1)))
-#define NONNULL2 __attribute__((nonnull(1,2)))
-#define NONNULL3 __attribute__((nonnull(1,2,3)))
-#define NONNULL134 __attribute__((nonnull(1,3,4)))
-#define NONNULL5 __attribute__((nonnull(1,2,3,4,5)))
-/** @endcond */
-
 /** A symmetric key, the compressed point of a private key. */
 typedef unsigned char decaf_255_symmetric_key_t[DECAF_255_SYMMETRIC_KEY_BYTES];
 
@@ -175,14 +165,6 @@ decaf_255_verify (
     const unsigned char *message,
     size_t message_len
 ) NONNULL3 API_VIS WARN_UNUSED;
-    
-#undef API_VIS
-#undef WARN_UNUSED
-#undef NONNULL1
-#undef NONNULL2
-#undef NONNULL3
-#undef NONNULL134
-#undef NONNULL5
 
 #ifdef __cplusplus
 } /* extern "C" */
