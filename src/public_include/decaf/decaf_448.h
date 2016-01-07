@@ -6,7 +6,7 @@
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
- * @brief A group of prime order p, based on Ed448-Goldilocks.
+ * @brief A group of prime order p, based on Ed448.
  */
 #ifndef __DECAF_448_H__
 #define __DECAF_448_H__ 1
@@ -25,10 +25,11 @@ extern "C" {
 #ifndef __DECAF_448_GF_DEFINED__
 #define __DECAF_448_GF_DEFINED__ 1
 typedef struct gf_448_s {
+    /** @cond internal */
     decaf_word_t limb[DECAF_448_LIMBS];
+    /** @endcond */
 } __attribute__((aligned(32))) gf_448_s, gf_448_t[1];
 #endif /* __DECAF_448_GF_DEFINED__ */
-/** @endcond */
 
 /** Number of bytes in a serialized point. */
 #define DECAF_448_SER_BYTES 56
@@ -37,7 +38,11 @@ typedef struct gf_448_s {
 #define DECAF_448_SCALAR_BYTES 56
 
 /** Twisted Edwards (-1,d-1) extended homogeneous coordinates */
-typedef struct decaf_448_point_s { /**@cond internal*/gf_448_t x,y,z,t;/**@endcond*/ } decaf_448_point_t[1];
+typedef struct decaf_448_point_s {
+    /** @cond internal */
+    gf_448_t x,y,z,t;
+    /** @endcond */
+} decaf_448_point_t[1];
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
 struct decaf_448_precomputed_s;
@@ -162,7 +167,7 @@ void decaf_448_scalar_mul (
  * @brief Invert a scalar.  When passed zero, return 0.  The input and output may alias.
  * @param [in] a A scalar.
  * @param [out] out 1/a.
- * @return DECAF_TRUE The input is nonzero.
+ * @return DECAF_SUCCESS The input is nonzero.
  */  
 decaf_error_t decaf_448_scalar_invert (
     decaf_448_scalar_t out,
@@ -183,7 +188,7 @@ static inline void NONNULL2 decaf_448_scalar_copy (
 }
 
 /**
- * @brief Set a scalar to an integer.
+ * @brief Set a scalar to an unsigned integer.
  * @param [in] a An integer.
  * @param [out] out Will become equal to a.
  */  
@@ -400,7 +405,7 @@ void decaf_448_point_double_scalarmul (
  * a1 = scalar1 * base
  * a2 = scalar2 * base
  *
- * Equivalent to two calls to decaf_255_point_scalarmul, but may be
+ * Equivalent to two calls to decaf_448_point_scalarmul, but may be
  * faster.
  *
  * @param [out] a1 The first multiple
@@ -410,11 +415,11 @@ void decaf_448_point_double_scalarmul (
  * @param [in] scalar2 A second scalar to multiply by.
  */
 void decaf_448_point_dual_scalarmul (
-   decaf_448_point_t a1,
-   decaf_448_point_t a2,
-   const decaf_448_point_t b,
-   const decaf_448_scalar_t scalar1,
-   const decaf_448_scalar_t scalar2
+    decaf_448_point_t a1,
+    decaf_448_point_t a2,
+    const decaf_448_point_t b,
+    const decaf_448_scalar_t scalar1,
+    const decaf_448_scalar_t scalar2
 ) API_VIS NONNULL5 NOINLINE;
 
 /**
@@ -441,14 +446,14 @@ void decaf_448_base_double_scalarmul_non_secret (
     
 
 /**
-* @brief Constant-time decision between two points.  If pick_b
-* is zero, out = a; else out = b.
-*
-* @param [out] q The output.  It may be the same as either input.
-* @param [in] a Any point.
-* @param [in] b Any point.
-* @param [in] pick_b If nonzero, choose point b.
-*/
+ * @brief Constant-time decision between two points.  If pick_b
+ * is zero, out = a; else out = b.
+ *
+ * @param [out] q The output.  It may be the same as either input.
+ * @param [in] a Any point.
+ * @param [in] b Any point.
+ * @param [in] pick_b If nonzero, choose point b.
+ */
 void decaf_448_point_cond_sel (
     decaf_448_point_t out,
     const decaf_448_point_t a,
@@ -457,14 +462,14 @@ void decaf_448_point_cond_sel (
 ) API_VIS NONNULL3 NOINLINE;
 
 /**
-* @brief Constant-time decision between two scalars.  If pick_b
-* is zero, out = a; else out = b.
-*
-* @param [out] q The output.  It may be the same as either input.
-* @param [in] a Any scalar.
-* @param [in] b Any scalar.
-* @param [in] pick_b If nonzero, choose scalar b.
-*/
+ * @brief Constant-time decision between two scalars.  If pick_b
+ * is zero, out = a; else out = b.
+ *
+ * @param [out] q The output.  It may be the same as either input.
+ * @param [in] a Any scalar.
+ * @param [in] b Any scalar.
+ * @param [in] pick_b If nonzero, choose scalar b.
+ */
 void decaf_448_scalar_cond_sel (
     decaf_448_scalar_t out,
     const decaf_448_scalar_t a,
@@ -484,14 +489,15 @@ decaf_bool_t decaf_448_point_valid (
 ) API_VIS WARN_UNUSED NONNULL1 NOINLINE;
 
 /**
- * @brief Torque a point, for debugging purposes.
+ * @brief Torque a point, for debugging purposes.  The output
+ * will be equal to the input.
  *
  * @param [out] q The point to torque.
  * @param [in] p The point to torque.
  */
 void decaf_448_point_debugging_torque (
-     decaf_448_point_t q,
-     const decaf_448_point_t p
+    decaf_448_point_t q,
+    const decaf_448_point_t p
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
@@ -504,9 +510,9 @@ void decaf_448_point_debugging_torque (
  * @param [in] factor Serialized GF factor to scale.
  */
 void decaf_448_point_debugging_pscale (
-     decaf_448_point_t q,
-     const decaf_448_point_t p,
-     const unsigned char factor[DECAF_448_SER_BYTES]
+    decaf_448_point_t q,
+    const decaf_448_point_t p,
+    const unsigned char factor[DECAF_448_SER_BYTES]
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
@@ -610,7 +616,7 @@ decaf_448_invert_elligator_uniform (
  * @brief Overwrite scalar with zeros.
  */
 void decaf_448_scalar_destroy (
-  decaf_448_scalar_t scalar
+    decaf_448_scalar_t scalar
 ) NONNULL1 API_VIS;
 
 /**
@@ -618,14 +624,14 @@ void decaf_448_scalar_destroy (
  * @todo Use this internally.
  */
 void decaf_448_point_destroy (
-  decaf_448_point_t point
+    decaf_448_point_t point
 ) NONNULL1 API_VIS;
 
 /**
  * @brief Overwrite precomputed table with zeros.
  */
 void decaf_448_precomputed_destroy (
-  decaf_448_precomputed_s *pre
+    decaf_448_precomputed_s *pre
 ) NONNULL1 API_VIS;
 
 #ifdef __cplusplus

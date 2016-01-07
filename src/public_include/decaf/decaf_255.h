@@ -22,11 +22,14 @@ extern "C" {
 #define DECAF_255_SCALAR_LIMBS (256/DECAF_WORD_BITS)
 
 /** Galois field element internal structure */
+#ifndef __DECAF_255_GF_DEFINED__
+#define __DECAF_255_GF_DEFINED__ 1
 typedef struct gf_25519_s {
     /** @cond internal */
     decaf_word_t limb[DECAF_255_LIMBS];
     /** @endcond */
 } __attribute__((aligned(32))) gf_25519_s, gf_25519_t[1];
+#endif /* __DECAF_255_GF_DEFINED__ */
 
 /** Number of bytes in a serialized point. */
 #define DECAF_255_SER_BYTES 32
@@ -36,9 +39,9 @@ typedef struct gf_25519_s {
 
 /** Twisted Edwards (-1,d-1) extended homogeneous coordinates */
 typedef struct decaf_255_point_s {
-    /**@cond internal*/
+    /** @cond internal */
     gf_25519_t x,y,z,t;
-    /**@endcond*/
+    /** @endcond */
 } decaf_255_point_t[1];
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
@@ -451,10 +454,10 @@ void decaf_255_base_double_scalarmul_non_secret (
  * @param [in] pick_b If nonzero, choose point b.
  */
 void decaf_255_point_cond_sel (
-     decaf_255_point_t out,
-     const decaf_255_point_t a,
-     const decaf_255_point_t b,
-     decaf_word_t pick_b
+    decaf_255_point_t out,
+    const decaf_255_point_t a,
+    const decaf_255_point_t b,
+    decaf_word_t pick_b
 ) API_VIS NONNULL3 NOINLINE;
 
 /**
@@ -467,10 +470,10 @@ void decaf_255_point_cond_sel (
  * @param [in] pick_b If nonzero, choose scalar b.
  */
 void decaf_255_scalar_cond_sel (
-     decaf_255_scalar_t out,
-     const decaf_255_scalar_t a,
-     const decaf_255_scalar_t b,
-     decaf_word_t pick_b
+    decaf_255_scalar_t out,
+    const decaf_255_scalar_t a,
+    const decaf_255_scalar_t b,
+    decaf_word_t pick_b
 ) API_VIS NONNULL3 NOINLINE;
 
 /**
@@ -492,8 +495,8 @@ decaf_bool_t decaf_255_point_valid (
  * @param [in] p The point to torque.
  */
 void decaf_255_point_debugging_torque (
-     decaf_255_point_t q,
-     const decaf_255_point_t p
+    decaf_255_point_t q,
+    const decaf_255_point_t p
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
@@ -506,9 +509,9 @@ void decaf_255_point_debugging_torque (
  * @param [in] factor Serialized GF factor to scale.
  */
 void decaf_255_point_debugging_pscale (
-     decaf_255_point_t q,
-     const decaf_255_point_t p,
-     const unsigned char factor[DECAF_255_SER_BYTES]
+    decaf_255_point_t q,
+    const decaf_255_point_t p,
+    const unsigned char factor[DECAF_255_SER_BYTES]
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
@@ -612,7 +615,7 @@ decaf_255_invert_elligator_uniform (
  * @brief Overwrite scalar with zeros.
  */
 void decaf_255_scalar_destroy (
-  decaf_255_scalar_t scalar
+    decaf_255_scalar_t scalar
 ) NONNULL1 API_VIS;
 
 /**
@@ -620,14 +623,14 @@ void decaf_255_scalar_destroy (
  * @todo Use this internally.
  */
 void decaf_255_point_destroy (
-  decaf_255_point_t point
+    decaf_255_point_t point
 ) NONNULL1 API_VIS;
 
 /**
  * @brief Overwrite precomputed table with zeros.
  */
 void decaf_255_precomputed_destroy (
-  decaf_255_precomputed_s *pre
+    decaf_255_precomputed_s *pre
 ) NONNULL1 API_VIS;
 
 #ifdef __cplusplus

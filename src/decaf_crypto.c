@@ -15,18 +15,24 @@
 #include "curve_data.inc.c"
 #define SCALAR_BYTES ((SCALAR_BITS + 7)/8)
 
+ /* TODO: canonicalize and freeze the STROBE constants in this file
+  * (and STROBE itself for that matter)
+  */
+static const char *DERIVE_MAGIC = API_NAME"::derive_private_key";
+static const char *SIGN_MAGIC = API_NAME"::sign";
+static const char *SHARED_SECRET_MAGIC = API_NAME"::shared_secret";
+static const uint16_t SHARED_SECRET_MAX_BLOCK_SIZE = 1<<12;
 static const unsigned int SCALAR_OVERKILL_BYTES = SCALAR_BYTES + 8;
 
 void API_NS(derive_private_key) (
     API_NS(private_key_t) priv,
     const API_NS(symmetric_key_t) proto
 ) {
-    const char *magic = API_NAME"::derive_private_key"; /* TODO: canonicalize and freeze */
     uint8_t encoded_scalar[SCALAR_OVERKILL_BYTES];
     API_NS(point_t) pub;
     
     keccak_strobe_t strobe;
-    strobe_init(strobe, &STROBE_256, magic, 0);
+    strobe_init(strobe, &STROBE_256, DERIVE_MAGIC, 0);
     strobe_fixed_key(strobe, proto, sizeof(API_NS(symmetric_key_t)));
     strobe_prng(strobe, encoded_scalar, sizeof(encoded_scalar));
     strobe_destroy(strobe);
@@ -54,8 +60,6 @@ void API_NS(private_to_public) (
     memcpy(pub, priv->pub, sizeof(API_NS(public_key_t)));
 }
 
-static const uint16_t SHARED_SECRET_MAX_BLOCK_SIZE = 1<<12; /* TODO: standardize and freeze */
-
 decaf_error_t
 API_NS(shared_secret) (
     uint8_t *shared,
@@ -64,9 +68,8 @@ API_NS(shared_secret) (
     const API_NS(public_key_t) your_pubkey,
     int me_first
 ) {
-    const char *magic = API_NAME"::shared_secret"; /* TODO: canonicalize and freeze */
     keccak_strobe_t strobe;
-    strobe_init(strobe, &STROBE_256, magic, 0);
+    strobe_init(strobe, &STROBE_256, SHARED_SECRET_MAGIC, 0);
     
     uint8_t ss_ser[SER_BYTES];
     
@@ -194,7 +197,7 @@ API_NS(sign) (
     size_t message_len
 ) {
     keccak_strobe_t ctx;
-    strobe_init(ctx,&STROBE_256,API_NAME"::sign",0); /* TODO: canonicalize and freeze */
+    strobe_init(ctx,&STROBE_256,SIGN_MAGIC,0);
     strobe_transact(ctx, NULL, message, message_len, STROBE_CW_STREAMING_PLAINTEXT);
     API_NS(sign_strobe)(ctx, sig, priv);
     strobe_destroy(ctx);
@@ -208,7 +211,7 @@ API_NS(verify) (
     size_t message_len
 ) {
     keccak_strobe_t ctx;
-    strobe_init(ctx,&STROBE_256,API_NAME"::sign",0); /* TODO: canonicalize and freeze */
+    strobe_init(ctx,&STROBE_256,SIGN_MAGIC,0);
     strobe_transact(ctx, NULL, message, message_len, STROBE_CW_STREAMING_PLAINTEXT);
     decaf_error_t ret = API_NS(verify_strobe)(ctx, sig, pub);
     strobe_destroy(ctx);
