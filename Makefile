@@ -30,8 +30,6 @@ LD = $(CC)
 LDXX = $(CXX)
 ASM ?= $(CC)
 
-DECAF ?= decaf_fast
-
 ifneq (,$(findstring x86_64,$(MACHINE)))
 ARCH ?= arch_x86_64
 else
@@ -144,7 +142,7 @@ endef
 # Per-field, per-curve code: call with curve, field
 ################################################################
 define define_curve
-$$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/decaf_gen_tables_$(1).o $$(BUILD_OBJ)/decaf_fast_$(1).o $$(BUILD_OBJ)/utils.o \
+$$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/decaf_gen_tables_$(1).o $$(BUILD_OBJ)/decaf_$(1).o $$(BUILD_OBJ)/utils.o \
 		$$(COMPONENTS_OF_$(2))
 	$$(LD) $$(LDFLAGS) -o $$@ $$^
 
@@ -160,7 +158,7 @@ $$(BUILD_ASM)/decaf_gen_tables_$(1).s: src/decaf_gen_tables.c $$(HEADERS)
 		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) \
 		-S -c -o $$@ $$<
 
-$$(BUILD_ASM)/decaf_fast_$(1).s: src/decaf_fast.c $$(HEADERS)
+$$(BUILD_ASM)/decaf_$(1).s: src/decaf.c $$(HEADERS)
 	$$(CC) $$(CFLAGS) \
 		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) \
 		-S -c -o $$@ $$<
@@ -170,7 +168,7 @@ $$(BUILD_ASM)/decaf_crypto_$(1).s: src/decaf_crypto.c $$(HEADERS)
 		-I src/curve_$(1)/ \
 		-S -c -o $$@ $$<
 
-LIBCOMPONENTS += $$(BUILD_OBJ)/decaf_fast_$(1).o $$(BUILD_OBJ)/decaf_tables_$(1).o
+LIBCOMPONENTS += $$(BUILD_OBJ)/decaf_$(1).o $$(BUILD_OBJ)/decaf_tables_$(1).o
 endef
 
 ################################################################
@@ -245,7 +243,7 @@ $(BUILD_DOC)/timestamp:
 #           targ="$@/crypto_$$prim/ed448goldilocks_decaf"; \
 # 	  (while read arch where; do \
 # 	    mkdir -p $$targ/`basename $$arch`; \
-# 	    cp include/*.h $(BUILD_C)/decaf_tables.c src/decaf_fast.c src/decaf_crypto.c src/shake.c src/include/*.h src/bat/$$prim.c src/p448/$$where/*.c src/p448/$$where/*.h src/p448/*.c src/p448/*.h $$targ/`basename $$arch`; \
+# 	    cp include/*.h $(BUILD_C)/decaf_tables.c src/decaf.c src/decaf_crypto.c src/shake.c src/include/*.h src/bat/$$prim.c src/p448/$$where/*.c src/p448/$$where/*.h src/p448/*.c src/p448/*.h $$targ/`basename $$arch`; \
 # 	    cp src/bat/api_$$prim.h $$targ/`basename $$arch`/api.h; \
 # 	    perl -p -i -e 's/SYSNAME/'`basename $(BATNAME)`_`basename $$arch`'/g' $$targ/`basename $$arch`/api.h;  \
 # 	    perl -p -i -e 's/__TODAY__/'$(TODAY)'/g' $$targ/`basename $$arch`/api.h;  \
