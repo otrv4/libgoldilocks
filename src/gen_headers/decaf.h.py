@@ -31,7 +31,7 @@ typedef struct gf_%(longnum)s_s {
 /** Number of bytes in a serialized scalar. */
 #define %(C_NS)s_SCALAR_BYTES %(scalar_ser_bytes)d
 
-/** Twisted Edwards (-1,d-1) extended homogeneous coordinates */
+/** Twisted Edwards extended homogeneous coordinates */
 typedef struct %(c_ns)s_point_s {
     /** @cond internal */
     gf_%(longnum)s_t x,y,z,t;

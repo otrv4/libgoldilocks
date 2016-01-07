@@ -20,6 +20,8 @@ def redoc(filename,doc,author):
     doc = doc.replace(" * \n", " *\n")
     return doc[1:]
 
+gend_files = {}
+
 def gen_file(name,doc,code,author="Mike Hamburg"):
     is_header = name.endswith(".h") or name.endswith(".hxx") or name.endswith(".h++")
     
@@ -42,7 +44,7 @@ def gen_file(name,doc,code,author="Mike Hamburg"):
                 #endif /* %(header_guard)s */
                 """) % { "header_guard" : header_guard, "code": code }
         ret += code[1:-1]
-        print ret
+        gend_files[ns_name] = ret
         
         if ns_name == name:
             # It's not namespaced
