@@ -13,7 +13,7 @@
 #include <string.h>
 #include <decaf/shake.h>
 
-void usage() {
+static void usage() {
     fprintf(
         stderr,
         "shakesum [shake256|shake128|sha3-224|sha3-384|sha3-512] < infile > outfile\n"
