@@ -1,54 +1,21 @@
-curve_data = {
-    "Curve25519" : {
-        "iso_to" : "Curve25519",
-        "name" : "IsoEd25519",
-        "cxx_ns" : "IsoEd25519",
-        "short" : "255",
-        "c_ns" : "decaf_255",
-        "C_NS" : "DECAF_255",
-        "cofactor" : 8,
-        "modulus_type" : 5,
-        "bits" : 255
-    },
-    "Ed448" : {
-        "iso_to" : "Ed448-Goldilocks",
-        "name" : "Ed448-Goldilocks",
-        "cxx_ns" : "Ed448Goldilocks",
-        "short" : "448",
-        "c_ns" : "decaf_448",
-        "C_NS" : "DECAF_448",
-        "cofactor" : 4,
-        "modulus_type" : 3,
-        "bits" : 448
-    }
-}
+from gen_file import gen_file
 
+gen_file(
+    name = "decaf/%(c_ns)s.hxx",
+    doc = """
+        @brief A group of prime order p, C++ wrapper.
 
-header = """
-/**
- * @file decaf/%(c_ns)s.hxx
- * @author Mike Hamburg
- *
- * @copyright
- * Copyright (c) 2015-2016 Cryptography Research, Inc. \\n
- * Released under the MIT License. See LICENSE.txt for license information.
- *
- * @brief A group of prime order p, C++ wrapper.
- *
- * The Decaf library implements cryptographic operations on a an elliptic curve
- * group of prime order p. It accomplishes this by using a twisted Edwards
- * curve (isogenous to %(iso_to)s) and wiping out the cofactor.
- *
- * The formulas are all complete and have no special cases, except that
- * %(c_ns)s_decode can fail because not every sequence of bytes is a valid group
- * element.
- *
- * The formulas contain no data-dependent branches, timing or memory accesses,
- * except for %(c_ns)s_base_double_scalarmul_non_secret.
- */
-#ifndef __%(C_NS)s_HXX__
-#define __%(C_NS)s_HXX__ 1
+        The Decaf library implements cryptographic operations on a an elliptic curve
+        group of prime order p. It accomplishes this by using a twisted Edwards
+        curve (isogenous to %(iso_to)s) and wiping out the cofactor.
 
+        The formulas are all complete and have no special cases, except that
+        %(c_ns)s_decode can fail because not every sequence of bytes is a valid group
+        element.
+
+        The formulas contain no data-dependent branches, timing or memory accesses,
+        except for %(c_ns)s_base_double_scalarmul_non_secret.
+    """, code = """
 /** This code uses posix_memalign. */
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 600
@@ -607,8 +574,6 @@ inline SecureBuffer %(cxx_ns)s::Scalar::direct_scalarmul (
 
 #undef NOEXCEPT
 } /* namespace decaf */
-
-#endif /* __%(C_NS)s_HXX__ */
 """
+)
 
-print header[1:-1] % curve_data["Ed448"]
