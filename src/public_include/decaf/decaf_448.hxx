@@ -3,13 +3,13 @@
  * @author Mike Hamburg
  *
  * @copyright
- *   Copyright (c) 2015 Cryptography Research, Inc.  \n
- *   Released under the MIT License.  See LICENSE.txt for license information.
+ * Copyright (c) 2015 Cryptography Research, Inc. \n
+ * Released under the MIT License. See LICENSE.txt for license information.
  *
  * @brief A group of prime order p, C++ wrapper.
  *
  * The Decaf library implements cryptographic operations on a an elliptic curve
- * group of prime order p.  It accomplishes this by using a twisted Edwards
+ * group of prime order p. It accomplishes this by using a twisted Edwards
  * curve (isogenous to Ed448-Goldilocks) and wiping out the cofactor.
  *
  * The formulas are all complete and have no special cases, except that
@@ -96,10 +96,10 @@ public:
     }
 
     /** @brief Construct from decaf_scalar_t object. */
-    inline Scalar(const Wrapped &t = decaf_448_scalar_zero) NOEXCEPT {  decaf_448_scalar_copy(s,t); }
+    inline Scalar(const Wrapped &t = decaf_448_scalar_zero) NOEXCEPT { decaf_448_scalar_copy(s,t); }
 
     /** @brief Copy constructor. */
-    inline Scalar(const Scalar &x) NOEXCEPT {  *this = x; }
+    inline Scalar(const Scalar &x) NOEXCEPT { *this = x; }
 
     /** @brief Construct from arbitrary-length little-endian byte sequence. */
     inline Scalar(const Block &buffer) NOEXCEPT { *this = buffer; }
@@ -113,10 +113,10 @@ public:
     }
 
     /** @brief Assignment. */
-    inline Scalar& operator=(const Scalar &x) NOEXCEPT {  decaf_448_scalar_copy(s,x.s); return *this; }
+    inline Scalar& operator=(const Scalar &x) NOEXCEPT { decaf_448_scalar_copy(s,x.s); return *this; }
 
     /** @brief Assign from unsigned word. */
-    inline Scalar& operator=(decaf_word_t w) NOEXCEPT {  decaf_448_scalar_set_unsigned(s,w); return *this; }
+    inline Scalar& operator=(decaf_word_t w) NOEXCEPT { decaf_448_scalar_set_unsigned(s,w); return *this; }
 
 
     /** @brief Assign from signed int. */
@@ -146,27 +146,27 @@ public:
     }
 
     /** Add. */
-    inline Scalar  operator+ (const Scalar &q) const NOEXCEPT { Scalar r((NOINIT())); decaf_448_scalar_add(r.s,s,q.s); return r; }
+    inline Scalar operator+ (const Scalar &q) const NOEXCEPT { Scalar r((NOINIT())); decaf_448_scalar_add(r.s,s,q.s); return r; }
 
     /** Add to this. */
-    inline Scalar &operator+=(const Scalar &q)       NOEXCEPT { decaf_448_scalar_add(s,s,q.s); return *this; }
+    inline Scalar &operator+=(const Scalar &q) NOEXCEPT { decaf_448_scalar_add(s,s,q.s); return *this; }
 
     /** Subtract. */
-    inline Scalar  operator- (const Scalar &q) const NOEXCEPT { Scalar r((NOINIT())); decaf_448_scalar_sub(r.s,s,q.s); return r; }
+    inline Scalar operator- (const Scalar &q) const NOEXCEPT { Scalar r((NOINIT())); decaf_448_scalar_sub(r.s,s,q.s); return r; }
 
     /** Subtract from this. */
-    inline Scalar &operator-=(const Scalar &q)       NOEXCEPT { decaf_448_scalar_sub(s,s,q.s); return *this; }
+    inline Scalar &operator-=(const Scalar &q) NOEXCEPT { decaf_448_scalar_sub(s,s,q.s); return *this; }
 
     /** Multiply */
-    inline Scalar  operator* (const Scalar &q) const NOEXCEPT { Scalar r((NOINIT())); decaf_448_scalar_mul(r.s,s,q.s); return r; }
+    inline Scalar operator* (const Scalar &q) const NOEXCEPT { Scalar r((NOINIT())); decaf_448_scalar_mul(r.s,s,q.s); return r; }
 
     /** Multiply into this. */
-    inline Scalar &operator*=(const Scalar &q)       NOEXCEPT { decaf_448_scalar_mul(s,s,q.s); return *this; }
+    inline Scalar &operator*=(const Scalar &q) NOEXCEPT { decaf_448_scalar_mul(s,s,q.s); return *this; }
 
     /** Negate */
-    inline Scalar operator- ()                const NOEXCEPT { Scalar r((NOINIT())); decaf_448_scalar_sub(r.s,decaf_448_scalar_zero,s); return r; }
+    inline Scalar operator- () const NOEXCEPT { Scalar r((NOINIT())); decaf_448_scalar_sub(r.s,decaf_448_scalar_zero,s); return r; }
 
-    /** @brief Invert with Fermat's Little Theorem (slow!).  If *this == 0, return 0. */
+    /** @brief Invert with Fermat's Little Theorem (slow!). If *this == 0, return 0. */
     inline Scalar inverse() const throw(CryptoException) {
         Scalar r;
         if (DECAF_SUCCESS != decaf_448_scalar_invert(r.s,s)) {
@@ -175,17 +175,17 @@ public:
         return r;
     }
 
-    /** @brief Divide by inverting q. If q == 0, return 0.  */
+    /** @brief Divide by inverting q. If q == 0, return 0. */
     inline Scalar operator/ (const Scalar &q) const throw(CryptoException) { return *this * q.inverse(); }
 
-    /** @brief Divide by inverting q. If q == 0, return 0.  */
+    /** @brief Divide by inverting q. If q == 0, return 0. */
     inline Scalar &operator/=(const Scalar &q) throw(CryptoException) { return *this *= q.inverse(); }
 
     /** @brief Compare in constant time */
-    inline bool   operator!=(const Scalar &q) const NOEXCEPT { return !(*this == q); }
+    inline bool operator!=(const Scalar &q) const NOEXCEPT { return !(*this == q); }
 
     /** @brief Compare in constant time */
-    inline bool   operator==(const Scalar &q) const NOEXCEPT { return !!decaf_448_scalar_eq(s,q.s); }
+    inline bool operator==(const Scalar &q) const NOEXCEPT { return !!decaf_448_scalar_eq(s,q.s); }
 
     /** @brief Scalarmul with scalar on left. */
     inline Point operator* (const Point &q) const NOEXCEPT { return q * (*this); }
@@ -268,7 +268,7 @@ public:
      *
      * @retval DECAF_SUCCESS the string was successfully decoded.
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point,
-     * or was the identity and allow_identity was DECAF_FALSE.  Contents of the buffer are undefined.
+     * or was the identity and allow_identity was DECAF_FALSE. Contents of the buffer are undefined.
      */
     static inline decaf_error_t __attribute__((warn_unused_result)) decode (
         Point &p, const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE
@@ -309,7 +309,7 @@ public:
     }
 
     /**
-     * @brief Encode to string.  The identity encodes to the all-zero string.
+     * @brief Encode to string. The identity encodes to the all-zero string.
      */
     inline operator SecureBuffer() const {
         SecureBuffer buffer(SER_BYTES);
@@ -326,42 +326,42 @@ public:
     }
 
     /** @brief Point add. */
-    inline Point  operator+ (const Point &q)  const NOEXCEPT { Point r((NOINIT())); decaf_448_point_add(r.p,p,q.p); return r; }
+    inline Point operator+ (const Point &q) const NOEXCEPT { Point r((NOINIT())); decaf_448_point_add(r.p,p,q.p); return r; }
 
     /** @brief Point add. */
-    inline Point &operator+=(const Point &q)        NOEXCEPT { decaf_448_point_add(p,p,q.p); return *this; }
+    inline Point &operator+=(const Point &q) NOEXCEPT { decaf_448_point_add(p,p,q.p); return *this; }
 
     /** @brief Point subtract. */
-    inline Point  operator- (const Point &q)  const NOEXCEPT { Point r((NOINIT())); decaf_448_point_sub(r.p,p,q.p); return r; }
+    inline Point operator- (const Point &q) const NOEXCEPT { Point r((NOINIT())); decaf_448_point_sub(r.p,p,q.p); return r; }
 
     /** @brief Point subtract. */
-    inline Point &operator-=(const Point &q)        NOEXCEPT { decaf_448_point_sub(p,p,q.p); return *this; }
+    inline Point &operator-=(const Point &q) NOEXCEPT { decaf_448_point_sub(p,p,q.p); return *this; }
 
     /** @brief Point negate. */
-    inline Point  operator- ()                const NOEXCEPT { Point r((NOINIT())); decaf_448_point_negate(r.p,p); return r; }
+    inline Point operator- () const NOEXCEPT { Point r((NOINIT())); decaf_448_point_negate(r.p,p); return r; }
 
     /** @brief Double the point out of place. */
-    inline Point  times_two ()                const NOEXCEPT { Point r((NOINIT())); decaf_448_point_double(r.p,p); return r; }
+    inline Point times_two () const NOEXCEPT { Point r((NOINIT())); decaf_448_point_double(r.p,p); return r; }
 
     /** @brief Double the point in place. */
-    inline Point &double_in_place()                NOEXCEPT { decaf_448_point_double(p,p); return *this; }
+    inline Point &double_in_place() NOEXCEPT { decaf_448_point_double(p,p); return *this; }
 
     /** @brief Constant-time compare. */
-    inline bool  operator!=(const Point &q)  const NOEXCEPT { return ! decaf_448_point_eq(p,q.p); }
+    inline bool operator!=(const Point &q) const NOEXCEPT { return ! decaf_448_point_eq(p,q.p); }
 
     /** @brief Constant-time compare. */
-    inline bool  operator==(const Point &q)  const NOEXCEPT { return !!decaf_448_point_eq(p,q.p); }
+    inline bool operator==(const Point &q) const NOEXCEPT { return !!decaf_448_point_eq(p,q.p); }
 
     /** @brief Scalar multiply. */
-    inline Point  operator* (const Scalar &s) const NOEXCEPT { Point r((NOINIT())); decaf_448_point_scalarmul(r.p,p,s.s); return r; }
+    inline Point operator* (const Scalar &s) const NOEXCEPT { Point r((NOINIT())); decaf_448_point_scalarmul(r.p,p,s.s); return r; }
 
     /** @brief Scalar multiply in place. */
-    inline Point &operator*=(const Scalar &s)       NOEXCEPT { decaf_448_point_scalarmul(p,p,s.s); return *this; }
+    inline Point &operator*=(const Scalar &s) NOEXCEPT { decaf_448_point_scalarmul(p,p,s.s); return *this; }
 
-    /** @brief Multiply by s.inverse().  If s=0, maps to the identity. */
-    inline Point  operator/ (const Scalar &s) const throw(CryptoException) { return (*this) * s.inverse(); }
+    /** @brief Multiply by s.inverse(). If s=0, maps to the identity. */
+    inline Point operator/ (const Scalar &s) const throw(CryptoException) { return (*this) * s.inverse(); }
 
-    /** @brief Multiply by s.inverse().  If s=0, maps to the identity. */
+    /** @brief Multiply by s.inverse(). If s=0, maps to the identity. */
     inline Point &operator/=(const Scalar &s) throw(CryptoException) { return (*this) *= s.inverse(); }
 
     /** @brief Validate / sanity check */
@@ -522,7 +522,7 @@ public:
 #endif
 
     /**
-     * @brief Initilaize from point.  Must allocate memory, and may throw.
+     * @brief Initilaize from point. Must allocate memory, and may throw.
      */
     inline Precomputed &operator=(const Point &it) throw(std::bad_alloc) {
         alloc();
@@ -545,7 +545,7 @@ public:
     /** @brief Fixed base scalarmul. */
     inline Point operator* (const Scalar &s) const NOEXCEPT { Point r; decaf_448_precomputed_scalarmul(r.p,get(),s.s); return r; }
 
-    /** @brief Multiply by s.inverse().  If s=0, maps to the identity. */
+    /** @brief Multiply by s.inverse(). If s=0, maps to the identity. */
     inline Point operator/ (const Scalar &s) const throw(CryptoException) { return (*this) * s.inverse(); }
 
     /** @brief Return the table for the base point. */
