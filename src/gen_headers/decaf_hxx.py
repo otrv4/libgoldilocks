@@ -1,6 +1,6 @@
 from gen_file import gen_file
 
-gen_file(
+decaf_hxx = gen_file(
     name = "decaf/%(c_ns)s.hxx",
     doc = """
         @brief A group of prime order p, C++ wrapper.

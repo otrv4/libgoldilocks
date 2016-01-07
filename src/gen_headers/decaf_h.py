@@ -1,7 +1,6 @@
-from curve_data import curve_data
 from gen_file import gen_file
 
-gen_file(
+decaf_h = gen_file(
     name = "decaf/%(c_ns)s.h",
     doc = """@brief A group of prime order p, based on %(iso_to)s.""",
     code = """
