@@ -26,6 +26,22 @@ decaf_root_hxx = gen_file(
     code = "\n"+root_hxx_code+"\n"
 )
 
+crypto_h_code = "\n".join((
+    "#include <%s>" % name
+    for name in sorted(gend_files)
+    if re.match("^decaf/crypto_\d+.h$",name)
+))
+crypto_h = gen_file(
+    name = "decaf/crypto.h",
+    doc = """@brief
+        @brief Example Decaf cyrpto routines, metaheader.
+        @warning These are merely examples, though they ought to be secure.  But real
+        protocols will decide differently on magic numbers, formats, which items to
+        hash, etc.
+    """,
+    code = "\n"+crypto_h_code+"\n"
+)
+
 root_h_code = "\n".join((
     "#include <%s>" % name
     for name in sorted(gend_files)
