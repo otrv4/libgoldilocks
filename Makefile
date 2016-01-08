@@ -40,7 +40,8 @@ endif
 WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 	 -Wmissing-declarations -Wunused-function -Wno-overlength-strings $(EXWARN)
 
-INCFLAGS = -Isrc/include -Isrc/public_include -Ibuild/include
+INCFLAGS = -Isrc/include -Ibuild/include
+PUB_INCFLAGS = -Ibuild/include
 LANGFLAGS = -std=c99 -fno-strict-aliasing
 LANGXXFLAGS = -fno-strict-aliasing
 GENFLAGS = -ffunction-sections -fdata-sections -fvisibility=hidden -fomit-frame-pointer -fPIC
@@ -71,7 +72,8 @@ endif
 
 ARCHFLAGS += $(XARCHFLAGS)
 CFLAGS  = $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
-CXXFLAGS = $(LANGXXFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCXXFLAGS) 
+PUB_CFLAGS  = $(LANGFLAGS) $(WARNFLAGS) $(PUB_INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
+CXXFLAGS = $(LANGXXFLAGS) $(WARNFLAGS) $(PUB_INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCXXFLAGS)
 LDFLAGS = $(XLDFLAGS)
 ASFLAGS = $(ARCHFLAGS) $(XASFLAGS)
 
@@ -86,7 +88,8 @@ GEN_HEADERS=\
 	$(BUILD_INC)/decaf/decaf_255.h \
 	$(BUILD_INC)/decaf/decaf_448.h \
 	$(BUILD_INC)/decaf/decaf_255.hxx \
-	$(BUILD_INC)/decaf/decaf_448.hxx
+	$(BUILD_INC)/decaf/decaf_448.hxx \
+	$( src/public_include/decaf/* : src/public_include = $(BUILD_INC) )
 HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_HEADERS)
 HEADERSXX = $(HEADERS) $(shell find . -name "*.hxx") 
 
@@ -130,8 +133,9 @@ $(BUILD_OBJ)/%.o: $(BUILD_ASM)/%.s
 
 gen_headers: $(GEN_HEADERS)
 	
-$(GEN_HEADERS): src/gen_headers/*.py
+$(GEN_HEADERS): src/gen_headers/*.py src/public_include/decaf/*
 	python -B src/gen_headers/main.py --hpre=$(BUILD_INC) --cpre=$(BUILD_C)
+	cp src/public_include/decaf/* $(BUILD_INC)/decaf/
 
 ################################################################
 # Per-field code: call with field, arch
@@ -214,7 +218,7 @@ $(BUILD_ASM)/%.s: src/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -S -c -o $@ $<
 	
 $(BUILD_ASM)/%.s: test/%.c $(HEADERS)
-	$(CC) $(CFLAGS) -S -c -o $@ $<
+	$(CC) $(PUB_CFLAGS) -S -c -o $@ $<
 
 $(BUILD_ASM)/%.s: test/%.cxx $(HEADERSXX)
 	$(CXX) $(CXXFLAGS) -S -c -o $@ $<
