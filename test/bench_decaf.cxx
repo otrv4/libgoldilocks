@@ -376,14 +376,6 @@ int main(int argc, char **argv) {
     if (argc >= 2 && !strcmp(argv[1], "--micro"))
         micro = true;
 
-    decaf_255_symmetric_key_t r1,r2;
-    memset(r1,1,sizeof(r1));
-    memset(r2,2,sizeof(r2)); 
-    
-    unsigned char umessage[] = {1,2,3,4,5};
-    size_t lmessage = sizeof(umessage);
-
-
     SpongeRng rng(Block("micro-benchmarks"));
     if (micro) {
         printf("\nMicro-benchmarks:\n");
@@ -417,76 +409,10 @@ int main(int argc, char **argv) {
         Benches<Ed448Goldilocks>::micro();
     }
 
-    {
-        decaf_255_public_key_t p1,p2;
-        decaf_255_private_key_t s1,s2;
-        decaf_255_signature_t sig1;
-        unsigned char ss[32];
-    
-        printf("\nMacro-benchmarks for IsoEd25519:\n");
-        for (Benchmark b("Keygen"); b.iter(); ) {
-            decaf_255_derive_private_key(s1,r1);
-        }
-    
-        decaf_255_private_to_public(p1,s1);
-        decaf_255_derive_private_key(s2,r2);
-        decaf_255_private_to_public(p2,s2);
-    
-        for (Benchmark b("Shared secret"); b.iter(); ) {
-            decaf_bool_t ret = decaf_255_shared_secret(ss,sizeof(ss),s1,p2,1);
-            ignore_result(ret);
-            assert(ret);
-        }
-    
-        for (Benchmark b("Sign"); b.iter(); ) {
-            decaf_255_sign(sig1,s1,umessage,lmessage);
-        }
-    
-        for (Benchmark b("Verify"); b.iter(); ) {
-            decaf_bool_t ret = decaf_255_verify(sig1,p1,umessage,lmessage);
-            rng.read(Buffer(umessage,lmessage));
-            // umessage[0]++;
-            // umessage[1]^=umessage[0];
-            ignore_result(ret);
-        }
-    }
 
-    {
-        decaf_448_public_key_t p1,p2;
-        decaf_448_private_key_t s1,s2;
-        decaf_448_signature_t sig1;
-        unsigned char ss[32];
-    
-        printf("\nMacro-benchmarks for Ed448-Goldilocks:\n");
-        for (Benchmark b("Keygen"); b.iter(); ) {
-            decaf_448_derive_private_key(s1,r1);
-        }
-    
-        decaf_448_private_to_public(p1,s1);
-        decaf_448_derive_private_key(s2,r2);
-        decaf_448_private_to_public(p2,s2);
-    
-        for (Benchmark b("Shared secret"); b.iter(); ) {
-            decaf_bool_t ret = decaf_448_shared_secret(ss,sizeof(ss),s1,p2,1);
-            ignore_result(ret);
-            assert(ret);
-        }
-    
-        for (Benchmark b("Sign"); b.iter(); ) {
-            decaf_448_sign(sig1,s1,umessage,lmessage);
-        }
-    
-        for (Benchmark b("Verify"); b.iter(); ) {
-            decaf_bool_t ret = decaf_448_verify(sig1,p1,umessage,lmessage);
-            rng.read(Buffer(umessage,lmessage));
-            // umessage[0]++;
-            // umessage[1]^=umessage[0];
-            ignore_result(ret);
-        }
-    }
-    
     Benches<IsoEd25519>::macro();
     Benches<Ed448Goldilocks>::macro();
+
     
     printf("\n");
     Benchmark::calib();

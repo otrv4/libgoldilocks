@@ -3,7 +3,7 @@ from gen_file import gen_file
 crypto_h = gen_file(
     name = "decaf/crypto_%(shortname)s.h",
     doc = """
-        @brief Example Decaf cyrpto routines.
+        @brief Example Decaf crypto routines.
         @warning These are merely examples, though they ought to be secure.  But real
         protocols will decide differently on magic numbers, formats, which items to
         hash, etc.
@@ -25,7 +25,7 @@ typedef unsigned char %(c_ns)s_public_key_t[%(C_NS)s_SER_BYTES];
 typedef unsigned char %(c_ns)s_signature_t[%(C_NS)s_SER_BYTES + %(C_NS)s_SCALAR_BYTES];
 
 typedef struct {
-    /** @cond intetrnal */
+    /** @cond internal */
     /** The symmetric key from which everything is expanded */
     %(c_ns)s_symmetric_key_t sym;
     

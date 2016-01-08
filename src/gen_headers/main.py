@@ -14,6 +14,7 @@ prefixes = { "h" : args.hpre, "hxx" : args.hpre, "c" : args.cpre }
 from decaf_hxx import decaf_hxx
 from decaf_h import decaf_h
 from crypto_h import crypto_h
+from crypto_hxx import crypto_hxx
 
 root_hxx_code = "\n".join((
     "#include <%s>" % name
@@ -34,12 +35,28 @@ crypto_h_code = "\n".join((
 crypto_h = gen_file(
     name = "decaf/crypto.h",
     doc = """@brief
-        @brief Example Decaf cyrpto routines, metaheader.
+        @brief Example Decaf crypto routines, metaheader.
         @warning These are merely examples, though they ought to be secure.  But real
         protocols will decide differently on magic numbers, formats, which items to
         hash, etc.
     """,
     code = "\n"+crypto_h_code+"\n"
+)
+
+crypto_hxx_code = "\n".join((
+    "#include <%s>" % name
+    for name in sorted(gend_files)
+    if re.match("^decaf/crypto_\d+.hxx$",name)
+))
+crypto_hxx = gen_file(
+    name = "decaf/crypto.hxx",
+    doc = """@brief
+        @brief Example Decaf crypto routines, C++, metaheader.
+        @warning These are merely examples, though they ought to be secure.  But real
+        protocols will decide differently on magic numbers, formats, which items to
+        hash, etc.
+    """,
+    code = "\n"+crypto_hxx_code+"\n"
 )
 
 root_h_code = "\n".join((

@@ -11,8 +11,7 @@
 
 #include <decaf.hxx>
 #include <decaf/shake.hxx>
-#include <decaf/crypto_255.h>
-#include <decaf/crypto_448.h>
+#include <decaf/crypto.h>
 #include <decaf/crypto.hxx>
 #include <stdio.h>
 
@@ -342,75 +341,6 @@ static void test_crypto() {
 
 }; // template<GroupId GROUP>
 
-static void test_decaf_255() {
-    Test test("Sample crypto");
-    SpongeRng rng(Block("test_decaf"));
-
-    decaf_255_symmetric_key_t proto1,proto2;
-    decaf_255_private_key_t s1,s2;
-    decaf_255_public_key_t p1,p2;
-    decaf_255_signature_t sig;
-    unsigned char shared1[1234],shared2[1234];
-    const char *message = "Hello, world!";
-
-    for (int i=0; i<NTESTS && test.passing_now; i++) {
-        rng.read(Buffer(proto1,sizeof(proto1)));
-        rng.read(Buffer(proto2,sizeof(proto2)));
-        decaf_255_derive_private_key(s1,proto1);
-        decaf_255_private_to_public(p1,s1);
-        decaf_255_derive_private_key(s2,proto2);
-        decaf_255_private_to_public(p2,s2);
-        if (DECAF_SUCCESS != decaf_255_shared_secret (shared1,sizeof(shared1),s1,p2,0)) {
-            test.fail(); printf("Fail ss12\n");
-        }
-        if (DECAF_SUCCESS != decaf_255_shared_secret (shared2,sizeof(shared2),s2,p1,1)) {
-            test.fail(); printf("Fail ss21\n");
-        }
-        if (memcmp(shared1,shared2,sizeof(shared1))) {
-            test.fail(); printf("Fail ss21 == ss12\n");   
-        }
-        decaf_255_sign (sig,s1,(const unsigned char *)message,strlen(message));
-        if (DECAF_SUCCESS != decaf_255_verify (sig,p1,(const unsigned char *)message,strlen(message))) {
-            test.fail(); printf("Fail sig ver\n");   
-        }
-    }
-}
-
-/* TODO: don't copy-paste */
-static void test_decaf_448() {
-    Test test("Sample crypto");
-    SpongeRng rng(Block("test_decaf"));
-
-    decaf_448_symmetric_key_t proto1,proto2;
-    decaf_448_private_key_t s1,s2;
-    decaf_448_public_key_t p1,p2;
-    decaf_448_signature_t sig;
-    unsigned char shared1[1234],shared2[1234];
-    const char *message = "Hello, world!";
-
-    for (int i=0; i<NTESTS && test.passing_now; i++) {
-        rng.read(Buffer(proto1,sizeof(proto1)));
-        rng.read(Buffer(proto2,sizeof(proto2)));
-        decaf_448_derive_private_key(s1,proto1);
-        decaf_448_private_to_public(p1,s1);
-        decaf_448_derive_private_key(s2,proto2);
-        decaf_448_private_to_public(p2,s2);
-        if (DECAF_SUCCESS != decaf_448_shared_secret (shared1,sizeof(shared1),s1,p2,0)) {
-            test.fail(); printf("Fail ss12\n");
-        }
-        if (DECAF_SUCCESS != decaf_448_shared_secret (shared2,sizeof(shared2),s2,p1,1)) {
-            test.fail(); printf("Fail ss21\n");
-        }
-        if (memcmp(shared1,shared2,sizeof(shared1))) {
-            test.fail(); printf("Fail ss21 == ss12\n");   
-        }
-        decaf_448_sign (sig,s1,(const unsigned char *)message,strlen(message));
-        if (DECAF_SUCCESS != decaf_448_verify (sig,p1,(const unsigned char *)message,strlen(message))) {
-            test.fail(); printf("Fail sig ver\n");   
-        }
-    }
-}
-
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
     
@@ -419,7 +349,6 @@ int main(int argc, char **argv) {
     Tests<IsoEd25519>::test_elligator();
     Tests<IsoEd25519>::test_ec();
     Tests<IsoEd25519>::test_crypto();
-    test_decaf_255();
     
     printf("\n");
     printf("Testing %s:\n", Ed448Goldilocks::name());
@@ -427,7 +356,6 @@ int main(int argc, char **argv) {
     Tests<Ed448Goldilocks>::test_elligator();
     Tests<Ed448Goldilocks>::test_ec();
     Tests<Ed448Goldilocks>::test_crypto();
-    test_decaf_448();
     
     if (passing) printf("Passed all tests.\n");
     
