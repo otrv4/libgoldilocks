@@ -29,7 +29,7 @@ def gen_file(name,doc,code,author="Mike Hamburg"):
         ns_name = name % data
         
         _,_,name_base = ns_name.rpartition("/")
-        header_guard = "__" + name_base.replace(".","_").upper() + "__"
+        header_guard = "__DECAF_" + name_base.replace(".","_").upper() + "__"
         
         ns_doc = dedent(doc).strip().rstrip()
         ns_doc = redoc(ns_name, ns_doc % data, author)

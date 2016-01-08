@@ -12,6 +12,7 @@ prefixes = { "h" : args.hpre, "hxx" : args.hpre, "c" : args.cpre }
 
 from decaf_hxx import decaf_hxx
 from decaf_h import decaf_h
+from crypto_h import crypto_h
 
 for name,code in gend_files.iteritems():        
     _,_,name_suffix = name.partition(".")
