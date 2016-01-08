@@ -128,9 +128,9 @@ $(BUILD_OBJ)/timestamp:
 $(BUILD_OBJ)/%.o: $(BUILD_ASM)/%.s
 	$(ASM) $(ASFLAGS) -c -o $@ $<
 
-$(GEN_HEADERS): gen_headers
+gen_headers: $(GEN_HEADERS)
 	
-gen_headers: src/gen_headers/*.py
+$(GEN_HEADERS): src/gen_headers/*.py
 	python -B src/gen_headers/main.py --hpre=$(BUILD_INC) --cpre=$(BUILD_C)
 
 ################################################################
