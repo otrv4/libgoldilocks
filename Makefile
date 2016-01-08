@@ -91,7 +91,6 @@ GEN_HEADERS=\
 	$(BUILD_INC)/decaf/decaf_448.hxx \
 	$( src/public_include/decaf/* : src/public_include = $(BUILD_INC) )
 HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_HEADERS)
-HEADERSXX = $(HEADERS) $(shell find . -name "*.hxx") 
 
 # components needed by the lib
 LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/decaf_crypto_ed25519.o $(BUILD_OBJ)/decaf_crypto_ed448goldilocks.o # and per-field components
@@ -220,7 +219,7 @@ $(BUILD_ASM)/%.s: src/%.c $(HEADERS)
 $(BUILD_ASM)/%.s: test/%.c $(HEADERS)
 	$(CC) $(PUB_CFLAGS) -S -c -o $@ $<
 
-$(BUILD_ASM)/%.s: test/%.cxx $(HEADERSXX)
+$(BUILD_ASM)/%.s: test/%.cxx $(HEADERS)
 	$(CXX) $(CXXFLAGS) -S -c -o $@ $<
 
 # The sage test scripts
