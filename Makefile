@@ -40,7 +40,7 @@ endif
 WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 	 -Wmissing-declarations -Wunused-function -Wno-overlength-strings $(EXWARN)
 
-INCFLAGS = -Isrc/include -Isrc/public_include
+INCFLAGS = -Isrc/include -Isrc/public_include -Ibuild/include
 LANGFLAGS = -std=c99 -fno-strict-aliasing
 LANGXXFLAGS = -fno-strict-aliasing
 GENFLAGS = -ffunction-sections -fdata-sections -fvisibility=hidden -fomit-frame-pointer -fPIC
@@ -79,10 +79,15 @@ SAGE ?= sage
 SAGES= $(shell ls test/*.sage)
 BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 
-.PHONY: clean all test bench todo doc lib bat sage sagetest
+.PHONY: clean all test bench todo doc lib bat sage sagetest gen_headers
 .PRECIOUS: $(BUILD_ASM)/%.s $(BUILD_C)/%.c $(BUILD_IBIN)/%
 
-HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp
+GEN_HEADERS=\
+	$(BUILD_INC)/decaf/decaf_255.h \
+	$(BUILD_INC)/decaf/decaf_448.h \
+	$(BUILD_INC)/decaf/decaf_255.hxx \
+	$(BUILD_INC)/decaf/decaf_448.hxx
+HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_HEADERS)
 HEADERSXX = $(HEADERS) $(shell find . -name "*.hxx") 
 
 # components needed by the lib
@@ -122,6 +127,11 @@ $(BUILD_OBJ)/timestamp:
 
 $(BUILD_OBJ)/%.o: $(BUILD_ASM)/%.s
 	$(ASM) $(ASFLAGS) -c -o $@ $<
+
+$(GEN_HEADERS): gen_headers
+	
+gen_headers: src/gen_headers/*.py
+	python -B src/gen_headers/main.py --hpre=$(BUILD_INC) --cpre=$(BUILD_C)
 
 ################################################################
 # Per-field code: call with field, arch
@@ -178,7 +188,6 @@ $(eval $(call define_curve,ed25519,p25519))
 $(eval $(call define_field,p448,arch_x86_64))
 $(eval $(call define_curve,ed448goldilocks,p448))
 
-		
 # The shakesum utility is in the public bin directory.
 $(BUILD_BIN)/shakesum: $(BUILD_OBJ)/shakesum.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/utils.o
 	$(LD) $(LDFLAGS) -o $@ $^
