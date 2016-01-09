@@ -63,7 +63,7 @@ public:
     /** @brief Serialization size. */
     inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
     
-    /* TODO: verify_strobe? */
+    /* TODO: verify_strobe */
     
     /** @brief Verify a message */
     inline void verify(

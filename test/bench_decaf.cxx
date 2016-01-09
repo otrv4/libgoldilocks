@@ -290,10 +290,10 @@ static void macro() {
     printf("\nMacro-benchmarks for %s:\n", Group::name());
     printf("Crypto benchmarks:\n");
     SpongeRng rng(Block("macro rng seed"));
-    PublicKey<Group> p1((NOINIT())), p2((NOINIT()));
-    PrivateKey<Group> s1((NOINIT())), s2((NOINIT()));
+    PrivateKey<Group> s1((NOINIT())), s2(rng);
+    PublicKey<Group> p1((NOINIT())), p2(s2);
 
-    SecureBuffer message = rng.read(5), sig;
+    SecureBuffer message = rng.read(5), sig, ss;
 
     for (Benchmark b("Create private key",1); b.iter(); ) {
         s1 = PrivateKey<Group>(rng);
@@ -308,6 +308,10 @@ static void macro() {
     for (Benchmark b("Verify",1); b.iter(); ) {
         rng.read(Buffer(message));
         try { p1.verify(message, sig); } catch (CryptoException) {}
+    }
+    
+    for (Benchmark b("SharedSecret",1); b.iter(); ) {
+        ss = s1.sharedSecret(p2,32,true);
     }
     
     printf("\nProtocol benchmarks:\n");

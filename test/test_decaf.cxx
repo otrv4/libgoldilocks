@@ -335,7 +335,15 @@ static void test_crypto() {
         
         SecureBuffer message = rng.read(i);
         SecureBuffer sig(priv1.sign(message));
+
         pub1.verify(message, sig);
+        
+        SecureBuffer s1(priv1.sharedSecret(pub2,32,true));
+        SecureBuffer s2(priv2.sharedSecret(pub1,32,false));
+        if (memcmp(s1.data(),s2.data(),s1.size())) {
+            test.fail();
+            printf("    Shared secrets disagree.");
+        }
     }
 }
 
