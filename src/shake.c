@@ -63,7 +63,7 @@ typedef struct kparams_s {
 typedef struct keccak_sponge_s {
     kdomain_t state;
     kparams_t params;
-} keccak_sponge_t[1];
+} keccak_sponge_s, keccak_sponge_t[1];
 
 #define INTERNAL_SPONGE_STRUCT 1
 #include <decaf/shake.h>
@@ -296,26 +296,27 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
 static const char *SPONGERNG_NAME = "strobe::spongerng";  /* TODO: canonicalize name */
 
 void spongerng_next (
-    keccak_sponge_t sponge,
+    keccak_prng_t prng,
     uint8_t * __restrict__ out,
     size_t len
 ) {
+    keccak_sponge_s *sponge = prng->sponge;
     if (sponge->params->client) {
         /* nondet */
         uint8_t cpu_entropy[32];
         get_cpu_entropy(cpu_entropy, sizeof(cpu_entropy));
-        strobe_transact(sponge,NULL,cpu_entropy,sizeof(cpu_entropy),STROBE_CW_PRNG_CPU_SEED);
+        strobe_transact((keccak_strobe_s*)sponge,NULL,cpu_entropy,sizeof(cpu_entropy),STROBE_CW_PRNG_CPU_SEED);
     }
     
-    strobe_transact(sponge,out,NULL,len,STROBE_CW_PRNG);
+    strobe_transact((keccak_strobe_s*)sponge,out,NULL,len,STROBE_CW_PRNG);
 }
 
 void spongerng_stir (
-    keccak_sponge_t sponge,
+    keccak_prng_t sponge,
     const uint8_t * __restrict__ in,
     size_t len
 ) {
-    strobe_transact(sponge,NULL,in,len,STROBE_CW_PRNG_USER_SEED);
+    strobe_transact((keccak_strobe_s*)sponge,NULL,in,len,STROBE_CW_PRNG_USER_SEED);
 }
 
 static const struct kparams_s spongerng_params = {
@@ -323,22 +324,24 @@ static const struct kparams_s spongerng_params = {
 };
 
 void spongerng_init_from_buffer (
-    keccak_sponge_t sponge,
+    keccak_prng_t prng,
     const uint8_t * __restrict__ in,
     size_t len,
     int deterministic
 ) {
-    strobe_init(sponge, &spongerng_params, SPONGERNG_NAME, !deterministic);
-    spongerng_stir(sponge, in, len);
+    keccak_sponge_s *sponge = prng->sponge;
+    strobe_init((keccak_strobe_s*)sponge, &spongerng_params, SPONGERNG_NAME, !deterministic);
+    spongerng_stir(prng, in, len);
 }
 
 decaf_error_t spongerng_init_from_file (
-    keccak_sponge_t sponge,
+    keccak_prng_t prng,
     const char *file,
     size_t len,
     int deterministic
 ) {
-    strobe_init(sponge, &spongerng_params, SPONGERNG_NAME, !deterministic);
+    keccak_sponge_s *sponge = prng->sponge;
+    strobe_init((keccak_strobe_s*)sponge, &spongerng_params, SPONGERNG_NAME, !deterministic);
     if (!len) return DECAF_FAILURE;
 
     int fd = open(file, O_RDONLY);
@@ -352,7 +355,7 @@ decaf_error_t spongerng_init_from_file (
             close(fd);
             return DECAF_FAILURE;
         }
-        strobe_transact(sponge,NULL,buffer,red,
+        strobe_transact((keccak_strobe_s*)sponge,NULL,buffer,red,
             first ? STROBE_CW_PRNG_USER_SEED : (STROBE_CW_PRNG_USER_SEED | STROBE_FLAG_MORE));
         len -= red;
         first = 0;
@@ -363,7 +366,7 @@ decaf_error_t spongerng_init_from_file (
 }
 
 decaf_error_t spongerng_init_from_dev_urandom (
-    keccak_sponge_t sponge
+    keccak_prng_t sponge
 ) {
     return spongerng_init_from_file(sponge, "/dev/urandom", 64, 0);
 }
@@ -375,11 +378,12 @@ const struct kparams_s STROBE_KEYED_128 = { 0, 0, 200-128/4, 12, 0, 0, 0, 0 };
 
 /* Strobe is different in that its rate is padded by one byte. */
 void strobe_init(
-    keccak_sponge_t sponge,
+    keccak_strobe_t strobe,
     const struct kparams_s *params,
     const char *proto,
     uint8_t am_client
 ) {
+    keccak_sponge_s *sponge = strobe->sponge;
     sponge_init(sponge,params);
     
     const char *a_string = "STROBE full v0.2";
@@ -390,7 +394,7 @@ void strobe_init(
         len
     );
         
-    strobe_transact(sponge,  NULL, (const unsigned char *)proto, strlen(proto), STROBE_CW_INIT);
+    strobe_transact(strobe,  NULL, (const unsigned char *)proto, strlen(proto), STROBE_CW_INIT);
         
     sponge->state->b[sponge->params->rate+1] = 1;
     sponge->params->client = !!am_client;
@@ -524,12 +528,13 @@ static const int STROBE_FORGET_BYTES = 32;
 static const uint8_t FLAG_NOPARSE = 1;
 
 void strobe_transact (
-    keccak_sponge_t sponge,
+    keccak_strobe_t strobe,
     unsigned char *out,
     const unsigned char *in,
     size_t len,
     uint32_t cw_flags
 ) {
+    keccak_sponge_s *sponge = strobe->sponge;
     if ( (cw_flags & STROBE_FLAG_NONDIR) == 0
         /* extraneous nots to change ints to bools :-/ */
         && !(cw_flags & STROBE_FLAG_RECV) != !(sponge->params->client) ) {
@@ -588,12 +593,13 @@ void strobe_transact (
 }
 
 decaf_error_t strobe_verify_auth (
-    keccak_sponge_t sponge,
+    keccak_strobe_t strobe,
     const unsigned char *in,
     uint16_t len
 ) {
+    keccak_sponge_s *sponge = strobe->sponge;
     if (len > sponge->params->rate) return DECAF_FAILURE;
-    strobe_transact(sponge, NULL, in, len, strobe_cw_recv(STROBE_CW_MAC));
+    strobe_transact(strobe, NULL, in, len, strobe_cw_recv(STROBE_CW_MAC));
     
     int32_t residue = 0;
     int i;
@@ -605,12 +611,13 @@ decaf_error_t strobe_verify_auth (
 }
 
 void strobe_respec (
-    keccak_sponge_t sponge,
+    keccak_strobe_t strobe,
     const struct kparams_s *params
 ) {
+    keccak_sponge_s *sponge = strobe->sponge;
     uint8_t in[] = { params->rate, params->startRound };
-    strobe_transact( sponge, NULL, in, sizeof(in), STROBE_CW_RESPEC_INFO );
-    strobe_transact( sponge, NULL, NULL, 0, STROBE_CW_RESPEC );
+    strobe_transact( strobe, NULL, in, sizeof(in), STROBE_CW_RESPEC_INFO );
+    strobe_transact( strobe, NULL, NULL, 0, STROBE_CW_RESPEC );
     assert(sponge->params->position == 0);
     sponge->params->rate = params->rate;
     sponge->params->startRound = params->startRound;

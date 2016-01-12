@@ -32,33 +32,19 @@
 
 namespace decaf {
 
-/** A Keccak sponge internal class */
-class KeccakSponge {
-protected:
-    /** @cond internal */
-    /** The C-wrapper sponge state */
-    keccak_sponge_t sp;
-
-    /** Initialize from parameters */
-    inline KeccakSponge(const struct kparams_s *params) NOEXCEPT { sponge_init(sp, params); }
-    
-    /** No initialization */
-    inline KeccakSponge(const NOINIT &) NOEXCEPT { }
-    /** @endcond */
-
-public:
-    /** Destructor zeroizes state */
-    inline ~KeccakSponge() NOEXCEPT { sponge_destroy(sp); }
-};
-
 /**
  * Hash function derived from Keccak
  * @todo throw exceptions when hash is misused.
  */
-class KeccakHash : public KeccakSponge {
+class KeccakHash {
 protected:
+    /** @cond internal */
+    /** The C-wrapper sponge state */
+    keccak_sponge_t sp;
+    
     /** Initialize from parameters */
-    inline KeccakHash(const kparams_s *params) NOEXCEPT : KeccakSponge(params) {}
+    inline KeccakHash(const kparams_s *params) NOEXCEPT { sponge_init(sp, params); }
+    /** @endcond */
     
 public:
     /** Add more data to running hash */
@@ -95,6 +81,9 @@ public:
     inline SecureBuffer output() {
         return output(default_output_size());
     }
+    
+    /** Destructor zeroizes state */
+    inline ~KeccakHash() NOEXCEPT { sponge_destroy(sp); }
 };
 
 /** Fixed-output-length SHA3 */
@@ -160,7 +149,11 @@ public:
 };
 
 /** Sponge-based random-number generator */
-class SpongeRng : public Rng, private KeccakSponge {
+class SpongeRng : public Rng {
+private:
+    /** C wrapped object */
+    keccak_prng_t sp;
+    
 public:
     /** Exception thrown when The RNG fails (to seed itself) */
     class RngException : public std::exception {
@@ -175,20 +168,21 @@ public:
     };
     
     /** Initialize, deterministically by default, from block */
-    inline SpongeRng( const Block &in, bool deterministic = true )
-    : KeccakSponge((NOINIT())) {
+    inline SpongeRng( const Block &in, bool deterministic = true ) {
         spongerng_init_from_buffer(sp,in.data(),in.size(),deterministic);
     }
     
     /** Initialize, non-deterministically by default, from C/C++ filename */
     inline SpongeRng( const std::string &in = "/dev/urandom", size_t len = 32, bool deterministic = false )
-        throw(RngException)
-    : KeccakSponge((NOINIT())) {
+        throw(RngException) {
         decaf_error_t ret = spongerng_init_from_file(sp,in.c_str(),len,deterministic);
         if (!decaf_successful(ret)) {
             throw RngException(errno, "Couldn't load from file");
         }
     }
+    
+    /** Securely destroy by overwriting state. */
+    inline ~SpongeRng() NOEXCEPT { spongerng_destroy(sp); }
     
     using Rng::read;
     
@@ -206,7 +200,11 @@ private:
 /**@endcond*/
 
 /** STROBE protocol framework object */
-class Strobe : private KeccakSponge {
+class Strobe {
+private:
+    /** The wrapped object */
+    keccak_strobe_t sp;
+    
 public:
     /** Number of bytes in a default authentication size. */
     static const uint16_t DEFAULT_AUTH_SIZE = 16;
@@ -219,10 +217,13 @@ public:
         const char *description, /**< Description of this protocol. */
         client_or_server whoami, /**< Am I client or server? */
         const kparams_s &params = STROBE_256 /**< Strength parameters */
-    ) NOEXCEPT : KeccakSponge(NOINIT()) {
+    ) NOEXCEPT {
         strobe_init(sp, &params, description, whoami == CLIENT);
         keyed = false;
     }
+    
+    /** Securely destroy by overwriting state. */
+    inline ~Strobe() NOEXCEPT { strobe_destroy(sp); }
 
     /** Stir in fixed key, from a C++ block. */
     inline void fixed_key (

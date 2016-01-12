@@ -18,8 +18,10 @@
 extern "C" {
 #endif
     
-/** Keccak CSPRNG structure as struct.  FUTURE: distinguish. */
-typedef struct keccak_sponge_s keccak_prng_s;
+/** Keccak CSPRNG structure as struct. */
+typedef struct {
+    keccak_sponge_t sponge;  /**< Internal sponge object. */
+} keccak_prng_s;
     
 /** Keccak CSPRNG structure as one-element array */
 typedef keccak_prng_s keccak_prng_t[1];
@@ -80,7 +82,7 @@ spongerng_destroy (
 /* Implementations of inline functions */
 /***************************************/
 void spongerng_destroy (keccak_prng_t doomed) {
-    sponge_destroy(doomed);
+    sponge_destroy(doomed->sponge);
 }
 /** @endcond */ /* internal */
 

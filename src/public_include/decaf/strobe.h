@@ -17,8 +17,10 @@
 extern "C" {
 #endif
     
-/** Keccak STROBE structure as struct.  FUTURE: distinguish. */
-typedef struct keccak_sponge_s keccak_strobe_s;
+/** Keccak STROBE structure as struct. */
+typedef struct {
+    keccak_sponge_t sponge; /**< Internal sponge object. */
+} keccak_strobe_s;
     
 /** Keccak STROBE structure as one-element array */
 typedef keccak_strobe_s keccak_strobe_t[1];
@@ -198,7 +200,9 @@ typedef enum {
 #define STROBE_FLAG_NONDIR      (STROBE_FLAG_IMPLICIT)
 
 /** Automatic flags implied by the mode */
-/* HACK: SQUEEZE_R is treated as directional because its' MAC */
+/* NB: SQUEEZE_R is treated as directional because its' MAC.
+ * can of course override by orring in IMPLICIT|NONDIR
+ */
 #define STROBE_AUTO_FLAGS(_mode)                           \
    (     (((_mode)&1) ? STROBE_FLAG_RUN_F : 0)            \
        | (( ((_mode) & ~2) == STROBE_MODE_ABSORB          \
@@ -325,7 +329,7 @@ void strobe_prng(keccak_strobe_t strobe, unsigned char *out, uint16_t len) {
 }
 
 void strobe_destroy (keccak_strobe_t doomed) {
-    sponge_destroy(doomed);
+    sponge_destroy(doomed->sponge);
 }
 
 /** @endcond */ /* internal */

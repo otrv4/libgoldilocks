@@ -81,11 +81,9 @@ void sha3_output (
  * for the purpose of C++ default operators.
  *
  * Returns n/8 for SHA3-n and 2n/8 for SHAKE-n.
- *
- * @param [inout] sponge The context.
  */  
 size_t sponge_default_output_bytes (
-    const keccak_sponge_t sponge
+    const keccak_sponge_t sponge /**< [inout] The context. */
 ) API_VIS;
 
 /**
