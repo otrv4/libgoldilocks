@@ -280,7 +280,7 @@ static void spake2ee(
     client.verify_auth(tag);    
     tag = client.produce_auth();
     client.respec(STROBE_KEYED_128);
-    /* TODO: fork... */
+    /* A real protocol would continue with fork etc here... */
     
     server.verify_auth(tag);
     server.respec(STROBE_KEYED_128);

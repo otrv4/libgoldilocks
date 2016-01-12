@@ -41,7 +41,7 @@ gf_25519_mul (
         c[i] = accum & mask;
         accum >>= 51;
     }
-    /* PERF: parallelize? eh well this is reference */
+    
     accum *= 19;
     accum += c[0];
     c[0] = accum & mask;
@@ -68,7 +68,7 @@ gf_25519_mulw (
         c[i] = accum & mask;
         accum >>= 51;
     }
-    /* PERF: parallelize? eh well this is reference */
+    
     accum *= 19;
     accum += c[0];
     c[0] = accum & mask;

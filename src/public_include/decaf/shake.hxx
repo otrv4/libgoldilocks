@@ -102,17 +102,25 @@ template<int bits> class SHA3 : public KeccakHash {
 private:
     /** Get the parameter template block for this hash */
     static inline const struct kparams_s *get_params();
+    
 public:
+    /** Number of bytes of output */
+    static const size_t MAX_OUTPUT_BYTES = bits/8;
+    
     /** Initializer */
     inline SHA3() NOEXCEPT : KeccakHash(get_params()) {}
 
     /** Reset the hash to the empty string */
     inline void reset() NOEXCEPT { sponge_init(sp, get_params()); }
 
-    
-    /** Hash bytes with this SHA3 instance.  TODO: output length? */
-    static inline SecureBuffer hash(const Block &b) throw(std::bad_alloc) {
-        SHA3 s; s += b; return s.output();
+    /** Hash bytes with this SHA3 instance.
+     * @throw LengthException if nbytes > MAX_OUTPUT_BYTES
+     */
+    static inline SecureBuffer hash(const Block &b, size_t nbytes = MAX_OUTPUT_BYTES) throw(std::bad_alloc, LengthException) {
+        if (nbytes > MAX_OUTPUT_BYTES) {
+            throw LengthException();
+        }
+        SHA3 s; s += b; return s.output(nbytes);
     }
 };
 
@@ -306,8 +314,8 @@ public:
     }
     
     /** Produce an authenticator into a buffer. */
-    inline void produce_auth(Buffer out) throw(LengthException,ProtocolException) {
-        if (!keyed) throw ProtocolException(); /* TODO: maybe.  Could use for eg sanity or dos protection */
+    inline void produce_auth(Buffer out, bool even_though_unkeyed = false) throw(LengthException,ProtocolException) {
+        if (!keyed && !even_though_unkeyed) throw ProtocolException();
         if (out.size() > STROBE_MAX_AUTH_BYTES) throw LengthException();
         strobe_produce_auth(sp, out.data(), out.size());
     }

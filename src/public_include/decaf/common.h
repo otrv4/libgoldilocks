@@ -65,7 +65,6 @@ static const decaf_bool_t DECAF_TRUE = -(decaf_bool_t)1;
 static const decaf_bool_t DECAF_FALSE = 0;
 
 /** Another boolean type used to indicate success or failure. */
-// FIXME: deploy project-wide
 typedef enum {
     DECAF_SUCCESS = -1, /**< The operation succeeded. */
     DECAF_FAILURE = 0   /**< The operation failed. */
@@ -87,17 +86,13 @@ decaf_successful(decaf_error_t e) {
     return (w-1)>>DECAF_WORD_BITS;
 }
     
-/**
-* @brief Overwrite data with zeros.  Uses memset_s if available.
-*/
+/** Overwrite data with zeros.  Uses memset_s if available. */
 void decaf_bzero (
     void *data,
     size_t size
 ) NONNULL1 API_VIS;
 
-/**
-* @brief Compare two buffers, returning DECAF_TRUE if they are equal.
-*/
+/** Compare two buffers, returning DECAF_TRUE if they are equal. */
 decaf_bool_t decaf_memeq (
     const void *data1,
     const void *data2,
