@@ -10,19 +10,23 @@ decaf_h = gen_file(
 extern "C" {
 #endif
 
+/** @cond internal */
 #define %(C_NS)s_LIMBS (%(gf_bits)d/DECAF_WORD_BITS)
-#define %(C_NS)s_SCALAR_BITS %(scalar_bits)d
 #define %(C_NS)s_SCALAR_LIMBS ((%(scalar_bits)d-1)/DECAF_WORD_BITS+1)
+/** @endcond */
 
-/** Galois field element internal structure */
+/** The number of bits in a scalar */
+#define %(C_NS)s_SCALAR_BITS %(scalar_bits)d
+
+/** @cond internal */
 #ifndef __%(C_NS)s_GF_DEFINED__
 #define __%(C_NS)s_GF_DEFINED__ 1
+/** @brief Galois field element internal structure */
 typedef struct gf_%(longnum)s_s {
-    /** @cond internal */
     decaf_word_t limb[%(C_NS)s_LIMBS];
-    /** @endcond */
 } __attribute__((aligned(32))) gf_%(longnum)s_s, gf_%(longnum)s_t[1];
 #endif /* __%(C_NS)s_GF_DEFINED__ */
+/** @endcond */
 
 /** Number of bytes in a serialized point. */
 #define %(C_NS)s_SER_BYTES %(ser_bytes)d
@@ -393,16 +397,17 @@ void %(c_ns)s_point_double_scalarmul (
     const %(c_ns)s_scalar_t scalar2
 ) API_VIS NONNULL5 NOINLINE;
     
-/*
- * @brief Multiply one base point by two scalars:
+/**
+ * Multiply one base point by two scalars:
+ *
  * a1 = scalar1 * base
  * a2 = scalar2 * base
  *
  * Equivalent to two calls to %(c_ns)s_point_scalarmul, but may be
  * faster.
  *
- * @param [out] a1 The first multiple
- * @param [out] a2 The second multiple
+ * @param [out] a1 The first multiple.  It may be the same as the input point.
+ * @param [out] a2 The second multiple.  It may be the same as the input point.
  * @param [in] base1 A point to be scaled.
  * @param [in] scalar1 A first scalar to multiply by.
  * @param [in] scalar2 A second scalar to multiply by.
@@ -410,7 +415,7 @@ void %(c_ns)s_point_double_scalarmul (
 void %(c_ns)s_point_dual_scalarmul (
     %(c_ns)s_point_t a1,
     %(c_ns)s_point_t a2,
-    const %(c_ns)s_point_t b,
+    const %(c_ns)s_point_t base1,
     const %(c_ns)s_scalar_t scalar1,
     const %(c_ns)s_scalar_t scalar2
 ) API_VIS NONNULL5 NOINLINE;
@@ -441,7 +446,7 @@ void %(c_ns)s_base_double_scalarmul_non_secret (
  * @brief Constant-time decision between two points.  If pick_b
  * is zero, out = a; else out = b.
  *
- * @param [out] q The output.  It may be the same as either input.
+ * @param [out] out The output.  It may be the same as either input.
  * @param [in] a Any point.
  * @param [in] b Any point.
  * @param [in] pick_b If nonzero, choose point b.
@@ -457,7 +462,7 @@ void %(c_ns)s_point_cond_sel (
  * @brief Constant-time decision between two scalars.  If pick_b
  * is zero, out = a; else out = b.
  *
- * @param [out] q The output.  It may be the same as either input.
+ * @param [out] out The output.  It may be the same as either input.
  * @param [in] a Any scalar.
  * @param [in] b Any scalar.
  * @param [in] pick_b If nonzero, choose scalar b.

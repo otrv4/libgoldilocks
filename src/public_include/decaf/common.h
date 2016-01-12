@@ -15,6 +15,10 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Goldilocks' build flags default to hidden and stripping executables. */
 /** @cond internal */
 #if defined(DOXYGEN) && !defined(__attribute__)
@@ -43,27 +47,28 @@
  */
 #if (defined(__ILP64__) || defined(__amd64__) || defined(__x86_64__) || (((__UINT_FAST32_MAX__)>>30)>>30)) \
 	 && !defined(DECAF_FORCE_32_BIT)
-#define DECAF_WORD_BITS 64
-typedef uint64_t decaf_word_t, decaf_bool_t;
-typedef __uint128_t decaf_dword_t;
+#define DECAF_WORD_BITS 64         /**< The number of bits in a word */
+typedef uint64_t decaf_word_t;     /**< Word size for internal computations */
+typedef uint64_t decaf_bool_t;     /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
+typedef __uint128_t decaf_dword_t; /**< Double-word size for internal computations */
 #else
-#define DECAF_WORD_BITS 32
-typedef uint32_t decaf_word_t, decaf_bool_t;
-typedef uint64_t decaf_dword_t;
-#endif
-
-#ifdef __cplusplus
-extern "C" {
+#define DECAF_WORD_BITS 32          /**< The number of bits in a word */
+typedef uint32_t decaf_word_t;      /**< Word size for internal computations */
+typedef uint32_t decaf_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
+typedef uint64_t decaf_dword_t;     /**< Double-word size for internal computations */
 #endif
     
 /** DECAF_TRUE = -1 so that DECAF_TRUE & x = x */
-static const decaf_bool_t DECAF_TRUE = -(decaf_bool_t)1, DECAF_FALSE = 0;
+static const decaf_bool_t DECAF_TRUE = -(decaf_bool_t)1;
 
-/* Success or failure */
+/** DECAF_FALSE = 0 so that DECAF_FALSE & x = 0 */
+static const decaf_bool_t DECAF_FALSE = 0;
+
+/** Another boolean type used to indicate success or failure. */
 // FIXME: deploy project-wide
 typedef enum {
-    DECAF_SUCCESS = -1,
-    DECAF_FAILURE = 0
+    DECAF_SUCCESS = -1, /**< The operation succeeded. */
+    DECAF_FAILURE = 0   /**< The operation failed. */
 } decaf_error_t;
 
 

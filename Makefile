@@ -243,8 +243,8 @@ $(BUILD_DOC)/timestamp:
 	mkdir -p `dirname $@`
 	touch $@
 #
-# doc: Doxyfile $(BUILD_OBJ)/timestamp $(HEADERS) src/*.c src/$(FIELD)/$(ARCH)/*.c src/$(FIELD)/$(ARCH)/*.h
-# 	doxygen > /dev/null
+doc: Doxyfile $(BUILD_OBJ)/timestamp $(HEADERS)
+	doxygen > /dev/null
 
 # # The eBATS benchmarking script
 # bat: $(BATNAME)

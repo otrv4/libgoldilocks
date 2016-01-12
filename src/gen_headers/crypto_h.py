@@ -3,14 +3,18 @@ from gen_file import gen_file
 crypto_h = gen_file(
     name = "decaf/crypto_%(shortname)s.h",
     doc = """
-        @brief Example Decaf crypto routines.
+        Example Decaf crypto routines.
         @warning These are merely examples, though they ought to be secure.  But real
         protocols will decide differently on magic numbers, formats, which items to
         hash, etc.
         @warning Experimental!  The names, parameter orders etc are likely to change.
     """, code = """
 #include <decaf/%(c_ns)s.h>
-#include <decaf/shake.h>
+#include <decaf/strobe.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Number of bytes for a symmetric key (expanded to full key) */
 #define %(C_NS)s_SYMMETRIC_KEY_BYTES 32
@@ -39,13 +43,9 @@ typedef struct {
   %(c_ns)s_private_key_s,
   /** A private key (gmp array[1] style). */
   %(c_ns)s_private_key_t[1];
-
-#ifdef __cplusplus
-extern "C" {
-#endif
     
 /**
- * @brief Derive a key from its compressed form.
+ * Derive a key from its compressed form.
  * @param [out] priv The derived private key.
  * @param [in] proto The compressed or proto-key, which must be 32 random bytes.
  */
@@ -55,14 +55,14 @@ void %(c_ns)s_derive_private_key (
 ) NONNULL2 API_VIS;
 
 /**
- * @brief Destroy a private key.
+ * Destroy a private key.
  */
 void %(c_ns)s_destroy_private_key (
     %(c_ns)s_private_key_t priv
 ) NONNULL1 API_VIS;
 
 /**
- * @brief Convert a private key to a public one.
+ * Convert a private key to a public one.
  * @param [out] pub The extracted private key.
  * @param [in] priv The private key.
  */
@@ -72,7 +72,7 @@ void %(c_ns)s_private_to_public (
 ) NONNULL2 API_VIS;
     
 /**
- * @brief Compute a Diffie-Hellman shared secret.
+ * Compute a Diffie-Hellman shared secret.
  *
  * This is an example routine; real protocols would use something
  * protocol-specific.
@@ -96,7 +96,7 @@ decaf_error_t
 ) NONNULL134 WARN_UNUSED API_VIS;
    
 /**
- * @brief Sign a message from a STROBE context.
+ * Sign a message from a STROBE context.
  *
  * @param [out] sig The signature.
  * @param [in] priv Your private key.
@@ -110,7 +110,7 @@ void
 ) NONNULL3 API_VIS;
 
 /**
- * @brief Sign a message.
+ * Sign a message.
  *
  * @param [out] sig The signature.
  * @param [in] priv Your private key.
@@ -126,7 +126,7 @@ void
 ) NONNULL3 API_VIS;
 
 /**
- * @brief Verify a signed message from its STROBE context.
+ * Verify a signed message from its STROBE context.
  *
  * @param [in] sig The signature.
  * @param [in] pub The public key.
@@ -143,7 +143,7 @@ decaf_error_t
 ) NONNULL3 API_VIS WARN_UNUSED;
 
 /**
- * @brief Verify a signed message.
+ * Verify a signed message.
  *
  * @param [in] sig The signature.
  * @param [in] pub The public key.

@@ -34,8 +34,8 @@ crypto_h_code = "\n".join((
 ))
 crypto_h = gen_file(
     name = "decaf/crypto.h",
-    doc = """@brief
-        @brief Example Decaf crypto routines, metaheader.
+    doc = """
+        Example Decaf crypto routines, metaheader.
         @warning These are merely examples, though they ought to be secure.  But real
         protocols will decide differently on magic numbers, formats, which items to
         hash, etc.
@@ -50,8 +50,8 @@ crypto_hxx_code = "\n".join((
 ))
 crypto_hxx = gen_file(
     name = "decaf/crypto.hxx",
-    doc = """@brief
-        @brief Example Decaf crypto routines, C++, metaheader.
+    doc = """
+        Example Decaf crypto routines, C++, metaheader.
         @warning These are merely examples, though they ought to be secure.  But real
         protocols will decide differently on magic numbers, formats, which items to
         hash, etc.
@@ -67,7 +67,7 @@ root_h_code = "\n".join((
 decaf_root_hxx = gen_file(
     name = "decaf.h",
     doc = """
-        @brief Master header for Decaf library.
+        Master header for Decaf library.
         
         The Decaf library implements cryptographic operations on a elliptic curve
         groups of prime order p.  It accomplishes this by using a twisted Edwards

@@ -67,6 +67,8 @@ typedef struct keccak_sponge_s {
 
 #define INTERNAL_SPONGE_STRUCT 1
 #include <decaf/shake.h>
+#include <decaf/strobe.h>
+#include <decaf/spongerng.h>
 
 #define FLAG_ABSORBING 'A'
 #define FLAG_SQUEEZING 'Z'

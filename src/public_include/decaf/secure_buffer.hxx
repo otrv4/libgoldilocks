@@ -48,46 +48,30 @@ public:
    typedef const T& const_reference;
    typedef size_t size_type;
    typedef std::ptrdiff_t difference_type;
-
+   
    template<typename U> struct rebind { typedef SanitizingAllocator<U> other; };
    inline SanitizingAllocator() NOEXCEPT {}
    inline ~SanitizingAllocator() NOEXCEPT {}
    inline SanitizingAllocator(const SanitizingAllocator &) NOEXCEPT {}
    template<typename U, size_t a> inline SanitizingAllocator(const SanitizingAllocator<U, a> &) NOEXCEPT {}
-
+   
    inline T* address(T& r) const NOEXCEPT { return &r; }
    inline const T* address(const T& r) const NOEXCEPT { return &r; }
-
    inline T* allocate (
-       size_type cnt, 
+       size_type cnt,
        typename std::allocator<void>::const_pointer = 0
-   ) throw(std::bad_alloc) { 
-       void *v;
-       int ret = 0;
-    
-       if (alignment) ret = posix_memalign(&v, alignment, cnt * sizeof(T));
-       else v = malloc(cnt * sizeof(T));
-    
-       if (ret || v==NULL) throw(std::bad_alloc());
-       return reinterpret_cast<T*>(v);
-   }
-
-   inline void deallocate(T* p, size_t size) NOEXCEPT {
-       if (p==NULL) return;
-       really_bzero(reinterpret_cast<void*>(p), size);
-       free(reinterpret_cast<void*>(p));
-   }
-
+    ) throw(std::bad_alloc);
+   inline void deallocate(T* p, size_t size) NOEXCEPT;
    inline size_t max_size() const NOEXCEPT { return std::numeric_limits<size_t>::max() / sizeof(T); }
-
    inline void construct(T* p, const T& t) { new(p) T(t); }
    inline void destroy(T* p) { p->~T(); }
-
+   
    inline bool operator==(SanitizingAllocator const&) const NOEXCEPT { return true; }
    inline bool operator!=(SanitizingAllocator const&) const NOEXCEPT { return false; }
 /** @endcond */
 };
 
+/** A variant of std::vector which securely zerozes its state when destructed. */
 typedef std::vector<unsigned char, SanitizingAllocator<unsigned char, 0> > SecureBuffer;
 
 /** Constant-time compare two buffers */
@@ -170,8 +154,10 @@ public:
 /** A reference to a block of data, which (when accessed through this base class) is const. */
 class Block {
 protected:
+    /** @cond internal */
     unsigned char *data_;
     size_t size_;
+    /** @endcond */
 
 public:
     /** Null initialization */
@@ -219,13 +205,13 @@ public:
         return Block(data()+off, length);
     }
     
-    /* Content-wise comparison; constant-time if they are the same length. */ 
+    /** Content-wise comparison; constant-time if they are the same length. */ 
     inline decaf_bool_t contents_equal(const Block &b) const NOEXCEPT {
         if (b.size() != size()) return false;
         return decaf_memeq(b.data(),data(),size());
     }
     
-    /* Create new block from this */
+    /** Create new block from this */
     inline operator SecureBuffer() const throw(std::bad_alloc) {
         return SecureBuffer(data_,data_+size_);
     }
@@ -304,7 +290,9 @@ public:
     inline void zeroize() NOEXCEPT { really_bzero(data(),size()); }
     
 private:
+    /** @cond internal */
     inline void operator= (const Block &b) const NOEXCEPT DELETE;
+    /** @endcond */
 };
 
 
@@ -330,7 +318,9 @@ public:
     }
     
 private:
+    /** @cond internal */
     inline void operator= (const Block &b) const NOEXCEPT DELETE;
+    /** @endcond */
 };
 
 /** A fixed-size stack-allocated buffer (for NOEXCEPT semantics) */
@@ -462,6 +452,35 @@ protected:
     }
 #endif
 };
+/** @endcond */
+
+/*******************************************/
+/* Inline implementations below this point */
+/*******************************************/
+
+/** @cond internal */
+template<typename T, size_t alignment>
+T* SanitizingAllocator<T,alignment>::allocate (
+    size_type cnt, 
+    typename std::allocator<void>::const_pointer
+) throw(std::bad_alloc) { 
+    void *v;
+    int ret = 0;
+ 
+    if (alignment) ret = posix_memalign(&v, alignment, cnt * sizeof(T));
+    else v = malloc(cnt * sizeof(T));
+ 
+    if (ret || v==NULL) throw(std::bad_alloc());
+    return reinterpret_cast<T*>(v);
+}
+
+template<typename T, size_t alignment>
+void SanitizingAllocator<T,alignment>::deallocate(T* p, size_t size) NOEXCEPT {
+    if (p==NULL) return;
+    really_bzero(reinterpret_cast<void*>(p), size);
+    free(reinterpret_cast<void*>(p));
+}
+
 /** @endcond */
 
 } /* namespace decaf */

@@ -13,6 +13,9 @@
 #define __SHAKE_HXX__
 
 #include <decaf/shake.h>
+#include <decaf/strobe.h> /* TODO remove */
+#include <decaf/spongerng.h> /* TODO remove */
+
 #include <string>
 #include <sys/types.h>
 #include <errno.h>
@@ -32,6 +35,7 @@ namespace decaf {
 /** A Keccak sponge internal class */
 class KeccakSponge {
 protected:
+    /** @cond internal */
     /** The C-wrapper sponge state */
     keccak_sponge_t sp;
 
@@ -40,6 +44,7 @@ protected:
     
     /** No initialization */
     inline KeccakSponge(const NOINIT &) NOEXCEPT { }
+    /** @endcond */
 
 public:
     /** Destructor zeroizes state */
@@ -149,13 +154,16 @@ public:
 /** Sponge-based random-number generator */
 class SpongeRng : public Rng, private KeccakSponge {
 public:
+    /** Exception thrown when The RNG fails (to seed itself) */
     class RngException : public std::exception {
     private:
+        /** @cond internal */
         const char *const what_;
+        /** @endcond */
     public:
-        const int err_code;
-        const char *what() const NOEXCEPT { return what_; }
-        RngException(int err_code, const char *what_) NOEXCEPT : what_(what_), err_code(err_code) {}
+        const int err_code; /**< errno that caused the reseed to fail. */
+        const char *what() const NOEXCEPT { return what_; } /**< Description of exception. */
+        RngException(int err_code, const char *what_) NOEXCEPT : what_(what_), err_code(err_code) {} /**< Construct */
     };
     
     /** Initialize, deterministically by default, from block */
@@ -189,116 +197,127 @@ private:
 };
 /**@endcond*/
 
+/** STROBE protocol framework object */
 class Strobe : private KeccakSponge {
 public:
-    /* TODO: pull out parameters */
+    /** Number of bytes in a default authentication size. */
     static const uint16_t DEFAULT_AUTH_SIZE = 16;
     
     /** Am I a server or a client? */
     enum client_or_server { SERVER, CLIENT };
     
+    /** Create protocol object. */
     inline Strobe (
-        const char *description,
-        client_or_server whoami,
-        const kparams_s &params = STROBE_256
+        const char *description, /**< Description of this protocol. */
+        client_or_server whoami, /**< Am I client or server? */
+        const kparams_s &params = STROBE_256 /**< Strength parameters */
     ) NOEXCEPT : KeccakSponge(NOINIT()) {
         strobe_init(sp, &params, description, whoami == CLIENT);
         keyed = false;
     }
 
+    /** Stir in fixed key, from a C++ block. */
     inline void fixed_key (
-        const Block &data
+        const Block &data /**< The key. */
     ) throw(ProtocolException) {
         strobe_fixed_key(sp, data.data(), data.size());
         keyed = true;
     }
 
+    /** Stir in fixed key, from a serializeable object. */
     template<class T> inline void fixed_key (
-        const Serializable<T> &data
+        const Serializable<T> &data /**< The key. */
     ) throw(ProtocolException) {
         fixed_key(data.serialize());
     }
 
+    /** Stir in DH key, from a C++ block. */
     inline void dh_key (
-        const Block &data
+        const Block &data /**< The key. */
     ) throw(ProtocolException) {
         strobe_dh_key(sp, data.data(), data.size());
         keyed = true;
     }
 
+    /** Stir in DH key, from a serializeable object. */
     template<class T> inline void dh_key (
-        const Serializable<T> &data
+        const Serializable<T> &data /**< The key. */
     ) throw(ProtocolException) {
         dh_key(data.serialize());
     }
 
+    /** Stir in an explicit nonce. */
     inline void nonce(const Block &data) NOEXCEPT {
         strobe_nonce(sp, data.data(), data.size());
     }
 
-    /* TODO: this doesn't actually send ... maybe think about gluing to socket code? */
+    /** Stir in data we sent as plaintext.  NB This doesn't actually send anything. */
     inline void send_plaintext(const Block &data) NOEXCEPT {
         strobe_plaintext(sp, data.data(), data.size(), true);
     }
 
+    /** Stir in serializeable data we sent as plaintext.  NB This doesn't actually send anything. */
     template<class T> inline void send_plaintext(const Serializable<T> &data) NOEXCEPT {
         send_plaintext(data.serialize());
     }
 
+    /** Stir in data we received as plaintext.  NB This doesn't actually receive anything. */
     inline void recv_plaintext(const Block &data) NOEXCEPT {
         strobe_plaintext(sp, data.data(), data.size(), false);
     }
 
-    template<class T> inline void recv_plaintext(const Serializable<T> &data) NOEXCEPT {
-        recv_plaintext(data.serialize());
-    }
-
+    /** Stir in associated data. */
     inline void ad(const Block &data) {
         strobe_ad(sp, data.data(), data.size());
     }
 
+    /** Stir in associated serializable data. */
     template<class T> inline void ad(const Serializable<T> &data) NOEXCEPT {
         ad(data.serialize());
     }
     
+    /** Encrypt into a buffer, without appending authentication data */
     inline void encrypt_no_auth(Buffer out, const Block &data) throw(LengthException,ProtocolException) {
         if (!keyed) throw ProtocolException();
         if (out.size() != data.size()) throw LengthException();
         strobe_encrypt(sp, out.data(), data.data(), data.size());
     }
     
+    /** Encrypt, without appending authentication data */
     inline SecureBuffer encrypt_no_auth(const Block &data) throw(ProtocolException) {
         SecureBuffer out(data.size()); encrypt_no_auth(out, data); return out;
     }
     
+    /** Encrypt a serializable object, without appending authentication data */
     template<class T> inline SecureBuffer encrypt_no_auth(const Serializable<T> &data) throw(ProtocolException) {
         return encrypt_no_auth(data.serialize());
     }
     
+    /** Decrypt into a buffer, without checking authentication data. */
     inline void decrypt_no_auth(Buffer out, const Block &data) throw(LengthException,ProtocolException) {
         if (!keyed) throw ProtocolException();
         if (out.size() != data.size()) throw LengthException();
         strobe_decrypt(sp, out.data(), data.data(), data.size());
     }
     
+    /** Decrypt, without checking authentication data. */
     inline SecureBuffer decrypt_no_auth(const Block &data) throw(ProtocolException) {
         SecureBuffer out(data.size()); decrypt_no_auth(out, data); return out;
     }
     
-    template<class T> inline SecureBuffer decrypt_no_auth(const Serializable<T> &data) throw(ProtocolException) {
-        return decrypt_no_auth(data.serialize());
-    }
-    
+    /** Produce an authenticator into a buffer. */
     inline void produce_auth(Buffer out) throw(LengthException,ProtocolException) {
         if (!keyed) throw ProtocolException(); /* TODO: maybe.  Could use for eg sanity or dos protection */
         if (out.size() > STROBE_MAX_AUTH_BYTES) throw LengthException();
         strobe_produce_auth(sp, out.data(), out.size());
     }
     
+    /** Produce an authenticator. */
     inline SecureBuffer produce_auth(uint8_t bytes = DEFAULT_AUTH_SIZE) throw(ProtocolException) {
         SecureBuffer out(bytes); produce_auth(out); return out;
     }
     
+    /** Encrypt into a buffer and append authentication data */
     inline void encrypt(
         Buffer out, const Block &data, uint8_t auth = DEFAULT_AUTH_SIZE
     ) throw(LengthException,ProtocolException) {
@@ -307,18 +326,21 @@ public:
         produce_auth(out.slice(data.size(),auth));
     }
     
+    /** Encrypt and append authentication data */
     inline SecureBuffer encrypt (
         const Block &data, uint8_t auth = DEFAULT_AUTH_SIZE
     ) throw(LengthException,ProtocolException,std::bad_alloc ){
         SecureBuffer out(data.size() + auth); encrypt(out, data, auth); return out;
     }
     
+    /** Encrypt a serializable object and append authentication data */
     template<class T> inline SecureBuffer encrypt (
         const Serializable<T> &data, uint8_t auth = DEFAULT_AUTH_SIZE
     ) throw(LengthException,ProtocolException,std::bad_alloc ){
         return encrypt(data.serialize(), auth);
     }
     
+    /** Decrypt into a buffer and check authentication data */
     inline void decrypt (
         Buffer out, const Block &data, uint8_t bytes = DEFAULT_AUTH_SIZE
     ) throw(LengthException, CryptoException, ProtocolException) {
@@ -327,12 +349,7 @@ public:
         verify_auth(data.slice(out.size(),bytes));
     }
     
-    template<class T> inline SecureBuffer decrypt (
-        const Serializable<T> &data, uint8_t auth = DEFAULT_AUTH_SIZE
-    ) throw(LengthException,ProtocolException,CryptoException, std::bad_alloc ){
-        return decrypt(data.serialize(), auth);
-    }
-    
+    /** Decrypt and check authentication data */
     inline SecureBuffer decrypt (
         const Block &data, uint8_t bytes = DEFAULT_AUTH_SIZE
     ) throw(LengthException,CryptoException,ProtocolException,std::bad_alloc) {
@@ -340,19 +357,25 @@ public:
         SecureBuffer out(data.size() - bytes); decrypt(out, data, bytes); return out;
     }
     
+    /** Check authentication data */
     inline void verify_auth(const Block &auth) throw(LengthException,CryptoException) {
         if (auth.size() == 0 || auth.size() > STROBE_MAX_AUTH_BYTES) throw LengthException();
         if (strobe_verify_auth(sp, auth.data(), auth.size()) != DECAF_SUCCESS) throw CryptoException();
     }
     
+    /** Fill pseudorandom data into a buffer */
     inline void prng(Buffer out) NOEXCEPT {
         (void)strobe_prng(sp, out.data(), out.size());
     }
     
+    /** Return pseudorandom data */
     inline SecureBuffer prng(size_t bytes) {
         SecureBuffer out(bytes); prng(out); return out;
     }
     
+    /** Change specs, perhaps to a faster spec that takes advantage of being keyed.
+     * @warning Experimental.
+     */
     inline void respec(const kparams_s &params) throw(ProtocolException) {
         if (!keyed) throw(ProtocolException());
         strobe_respec(sp, &params);

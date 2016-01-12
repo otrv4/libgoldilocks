@@ -3,7 +3,7 @@ from gen_file import gen_file
 decaf_hxx = gen_file(
     name = "decaf/%(c_ns)s.hxx",
     doc = """
-        @brief A group of prime order p, C++ wrapper.
+        A group of prime order p, C++ wrapper.
 
         The Decaf library implements cryptographic operations on a an elliptic curve
         group of prime order p. It accomplishes this by using a twisted Edwards
@@ -40,7 +40,7 @@ decaf_hxx = gen_file(
 namespace decaf {
 
 /**
- * @brief %(iso_to)s/Decaf instantiation of group.
+ * %(iso_to)s/Decaf instantiation of group.
  */
 struct %(cxx_ns)s {
 
@@ -59,61 +59,63 @@ class Precomputed;
 /** @endcond */
 
 /**
- * @brief A scalar modulo the curve order.
+ * A scalar modulo the curve order.
  * Supports the usual arithmetic operations, all in constant time.
  */
 class Scalar : public Serializable<Scalar> {
 private:
-    /** @brief wrapped C type */
+    /** wrapped C type */
     typedef %(c_ns)s_scalar_t Wrapped;
 
 public:
-    /** @brief Size of a serialized element */
+    /** Size of a serialized element */
     static const size_t SER_BYTES = %(C_NS)s_SCALAR_BYTES;
 
-    /** @brief access to the underlying scalar object */
+    /** access to the underlying scalar object */
     Wrapped s;
 
-    /** @brief Don't initialize. */
+    /** @cond internal */
+    /** Don't initialize. */
     inline Scalar(const NOINIT &) NOEXCEPT {}
+    /** @endcond */
 
-    /** @brief Set to an unsigned word */
+    /** Set to an unsigned word */
     inline Scalar(const decaf_word_t w) NOEXCEPT { *this = w; }
 
-    /** @brief Set to a signed word */
+    /** Set to a signed word */
     inline Scalar(const int w) NOEXCEPT { *this = w; }
 
-    /** @brief Construct from RNG */
+    /** Construct from RNG */
     inline explicit Scalar(Rng &rng) NOEXCEPT {
         FixedArrayBuffer<SER_BYTES> sb(rng);
         *this = sb;
     }
 
-    /** @brief Construct from decaf_scalar_t object. */
+    /** Construct from decaf_scalar_t object. */
     inline Scalar(const Wrapped &t = %(c_ns)s_scalar_zero) NOEXCEPT { %(c_ns)s_scalar_copy(s,t); }
 
-    /** @brief Copy constructor. */
+    /** Copy constructor. */
     inline Scalar(const Scalar &x) NOEXCEPT { *this = x; }
 
-    /** @brief Construct from arbitrary-length little-endian byte sequence. */
+    /** Construct from arbitrary-length little-endian byte sequence. */
     inline Scalar(const Block &buffer) NOEXCEPT { *this = buffer; }
 
-    /** @brief Serializable instance */
+    /** Serializable instance */
     inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
 
-    /** @brief Serializable instance */
+    /** Serializable instance */
     inline void serializeInto(unsigned char *buffer) const NOEXCEPT {
         %(c_ns)s_scalar_encode(buffer, s);
     }
 
-    /** @brief Assignment. */
+    /** Assignment. */
     inline Scalar& operator=(const Scalar &x) NOEXCEPT { %(c_ns)s_scalar_copy(s,x.s); return *this; }
 
-    /** @brief Assign from unsigned word. */
+    /** Assign from unsigned word. */
     inline Scalar& operator=(decaf_word_t w) NOEXCEPT { %(c_ns)s_scalar_set_unsigned(s,w); return *this; }
 
 
-    /** @brief Assign from signed int. */
+    /** Assign from signed int. */
     inline Scalar& operator=(int w) NOEXCEPT {
         Scalar t(-(decaf_word_t)INT_MIN);
         %(c_ns)s_scalar_set_unsigned(s,(decaf_word_t)w - (decaf_word_t)INT_MIN);
@@ -124,13 +126,13 @@ public:
     /** Destructor securely zeorizes the scalar. */
     inline ~Scalar() NOEXCEPT { %(c_ns)s_scalar_destroy(s); }
 
-    /** @brief Assign from arbitrary-length little-endian byte sequence in a Block. */
+    /** Assign from arbitrary-length little-endian byte sequence in a Block. */
     inline Scalar &operator=(const Block &bl) NOEXCEPT {
         %(c_ns)s_scalar_decode_long(s,bl.data(),bl.size()); return *this;
     }
 
     /**
-     * @brief Decode from correct-length little-endian byte sequence.
+     * Decode from correct-length little-endian byte sequence.
      * @return DECAF_FAILURE if the scalar is greater than or equal to the group order q.
      */
     static inline decaf_error_t __attribute__((warn_unused_result)) decode (
@@ -160,7 +162,7 @@ public:
     /** Negate */
     inline Scalar operator- () const NOEXCEPT { Scalar r((NOINIT())); %(c_ns)s_scalar_sub(r.s,%(c_ns)s_scalar_zero,s); return r; }
 
-    /** @brief Invert with Fermat's Little Theorem (slow!). If *this == 0, return 0. */
+    /** Invert with Fermat's Little Theorem (slow!). If *this == 0, return 0. */
     inline Scalar inverse() const throw(CryptoException) {
         Scalar r;
         if (DECAF_SUCCESS != %(c_ns)s_scalar_invert(r.s,s)) {
@@ -169,25 +171,25 @@ public:
         return r;
     }
 
-    /** @brief Divide by inverting q. If q == 0, return 0. */
+    /** Divide by inverting q. If q == 0, return 0. */
     inline Scalar operator/ (const Scalar &q) const throw(CryptoException) { return *this * q.inverse(); }
 
-    /** @brief Divide by inverting q. If q == 0, return 0. */
+    /** Divide by inverting q. If q == 0, return 0. */
     inline Scalar &operator/=(const Scalar &q) throw(CryptoException) { return *this *= q.inverse(); }
 
-    /** @brief Compare in constant time */
+    /** Compare in constant time */
     inline bool operator!=(const Scalar &q) const NOEXCEPT { return !(*this == q); }
 
-    /** @brief Compare in constant time */
+    /** Compare in constant time */
     inline bool operator==(const Scalar &q) const NOEXCEPT { return !!%(c_ns)s_scalar_eq(s,q.s); }
 
-    /** @brief Scalarmul with scalar on left. */
+    /** Scalarmul with scalar on left. */
     inline Point operator* (const Point &q) const NOEXCEPT { return q * (*this); }
 
-    /** @brief Scalarmul-precomputed with scalar on left. */
+    /** Scalarmul-precomputed with scalar on left. */
     inline Point operator* (const Precomputed &q) const NOEXCEPT { return q * (*this); }
 
-    /** @brief Direct scalar multiplication. */
+    /** Direct scalar multiplication. */
     inline SecureBuffer direct_scalarmul(
         const Block &in,
         decaf_bool_t allow_identity=DECAF_FALSE,
@@ -196,42 +198,44 @@ public:
 };
 
 /**
- * @brief Element of prime-order group.
+ * Element of prime-order group.
  */
 class Point : public Serializable<Point> {
 private:
-    /** @brief wrapped C type */
+    /** wrapped C type */
     typedef %(c_ns)s_point_t Wrapped;
     
 public:
-    /** @brief Size of a serialized element */
+    /** Size of a serialized element */
     static const size_t SER_BYTES = %(C_NS)s_SER_BYTES;
 
-    /** @brief Bytes required for hash */
+    /** Bytes required for hash */
     static const size_t HASH_BYTES = SER_BYTES;
 
-    /** @brief Size of a stegged element */
+    /** Size of a stegged element */
     static const size_t STEG_BYTES = HASH_BYTES * 2;
 
     /** The c-level object. */
     Wrapped p;
 
-    /** @brief Don't initialize. */
+    /** @cond internal */
+    /** Don't initialize. */
     inline Point(const NOINIT &) NOEXCEPT {}
+    /** @endcond */
 
-    /** @brief Constructor sets to identity by default. */
+    /** Constructor sets to identity by default. */
     inline Point(const Wrapped &q = %(c_ns)s_point_identity) NOEXCEPT { %(c_ns)s_point_copy(p,q); }
 
-    /** @brief Copy constructor. */
+    /** Copy constructor. */
     inline Point(const Point &q) NOEXCEPT { *this = q; }
 
-    /** @brief Assignment. */
+    /** Assignment. */
     inline Point& operator=(const Point &q) NOEXCEPT { %(c_ns)s_point_copy(p,q.p); return *this; }
 
-    /** @brief Destructor securely zeorizes the point. */
+    /** Destructor securely zeorizes the point. */
     inline ~Point() NOEXCEPT { %(c_ns)s_point_destroy(p); }
 
-    /** @brief Construct from RNG */
+    /** Construct from RNG */
     inline explicit Point(Rng &rng, bool uniform = true) NOEXCEPT {
         if (uniform) {
             FixedArrayBuffer<2*HASH_BYTES> b(rng);
@@ -243,7 +247,7 @@ public:
     }
 
    /**
-    * @brief Initialize from a fixed-length byte string.
+    * Initialize from a fixed-length byte string.
     * The all-zero string maps to the identity.
     *
     * @throw CryptoException the string was the wrong length, or wasn't the encoding of a point,
@@ -257,7 +261,7 @@ public:
     }
 
     /**
-     * @brief Initialize from C++ fixed-length byte string.
+     * Initialize from C++ fixed-length byte string.
      * The all-zero string maps to the identity.
      *
      * @retval DECAF_SUCCESS the string was successfully decoded.
@@ -271,7 +275,7 @@ public:
     }
 
     /**
-     * @brief Map uniformly to the curve from a hash buffer.
+     * Map uniformly to the curve from a hash buffer.
      * The empty or all-zero string maps to the identity, as does the string "\\x01".
      * If the buffer is shorter than 2*HASH_BYTES, well, it won't be as uniform,
      * but the buffer will be zero-padded on the right.
@@ -281,7 +285,7 @@ public:
     }
 
     /**
-     * @brief Map to the curve from a hash buffer.
+     * Map to the curve from a hash buffer.
      * The empty or all-zero string maps to the identity, as does the string "\\x01".
      * If the buffer is shorter than 2*HASH_BYTES, well, it won't be as uniform,
      * but the buffer will be zero-padded on the right.
@@ -303,7 +307,7 @@ public:
     }
 
     /**
-     * @brief Encode to string. The identity encodes to the all-zero string.
+     * Encode to string. The identity encodes to the all-zero string.
      */
     inline operator SecureBuffer() const {
         SecureBuffer buffer(SER_BYTES);
@@ -311,64 +315,64 @@ public:
         return buffer;
     }
 
-    /** @brief Serializable instance */
+    /** Serializable instance */
     inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
 
-    /** @brief Serializable instance */
+    /** Serializable instance */
     inline void serializeInto(unsigned char *buffer) const NOEXCEPT {
         %(c_ns)s_point_encode(buffer, p);
     }
 
-    /** @brief Point add. */
+    /** Point add. */
     inline Point operator+ (const Point &q) const NOEXCEPT { Point r((NOINIT())); %(c_ns)s_point_add(r.p,p,q.p); return r; }
 
-    /** @brief Point add. */
+    /** Point add. */
     inline Point &operator+=(const Point &q) NOEXCEPT { %(c_ns)s_point_add(p,p,q.p); return *this; }
 
-    /** @brief Point subtract. */
+    /** Point subtract. */
     inline Point operator- (const Point &q) const NOEXCEPT { Point r((NOINIT())); %(c_ns)s_point_sub(r.p,p,q.p); return r; }
 
-    /** @brief Point subtract. */
+    /** Point subtract. */
     inline Point &operator-=(const Point &q) NOEXCEPT { %(c_ns)s_point_sub(p,p,q.p); return *this; }
 
-    /** @brief Point negate. */
+    /** Point negate. */
     inline Point operator- () const NOEXCEPT { Point r((NOINIT())); %(c_ns)s_point_negate(r.p,p); return r; }
 
-    /** @brief Double the point out of place. */
+    /** Double the point out of place. */
     inline Point times_two () const NOEXCEPT { Point r((NOINIT())); %(c_ns)s_point_double(r.p,p); return r; }
 
-    /** @brief Double the point in place. */
+    /** Double the point in place. */
     inline Point &double_in_place() NOEXCEPT { %(c_ns)s_point_double(p,p); return *this; }
 
-    /** @brief Constant-time compare. */
+    /** Constant-time compare. */
     inline bool operator!=(const Point &q) const NOEXCEPT { return ! %(c_ns)s_point_eq(p,q.p); }
 
-    /** @brief Constant-time compare. */
+    /** Constant-time compare. */
     inline bool operator==(const Point &q) const NOEXCEPT { return !!%(c_ns)s_point_eq(p,q.p); }
 
-    /** @brief Scalar multiply. */
+    /** Scalar multiply. */
     inline Point operator* (const Scalar &s) const NOEXCEPT { Point r((NOINIT())); %(c_ns)s_point_scalarmul(r.p,p,s.s); return r; }
 
-    /** @brief Scalar multiply in place. */
+    /** Scalar multiply in place. */
     inline Point &operator*=(const Scalar &s) NOEXCEPT { %(c_ns)s_point_scalarmul(p,p,s.s); return *this; }
 
-    /** @brief Multiply by s.inverse(). If s=0, maps to the identity. */
+    /** Multiply by s.inverse(). If s=0, maps to the identity. */
     inline Point operator/ (const Scalar &s) const throw(CryptoException) { return (*this) * s.inverse(); }
 
-    /** @brief Multiply by s.inverse(). If s=0, maps to the identity. */
+    /** Multiply by s.inverse(). If s=0, maps to the identity. */
     inline Point &operator/=(const Scalar &s) throw(CryptoException) { return (*this) *= s.inverse(); }
 
-    /** @brief Validate / sanity check */
+    /** Validate / sanity check */
     inline bool validate() const NOEXCEPT { return %(c_ns)s_point_valid(p); }
 
-    /** @brief Double-scalar multiply, equivalent to q*qs + r*rs but faster. */
+    /** Double-scalar multiply, equivalent to q*qs + r*rs but faster. */
     static inline Point double_scalarmul (
         const Point &q, const Scalar &qs, const Point &r, const Scalar &rs
     ) NOEXCEPT {
         Point p((NOINIT())); %(c_ns)s_point_double_scalarmul(p.p,q.p,qs.s,r.p,rs.s); return p;
     }
 
-    /** @brief Dual-scalar multiply, equivalent to this*r1, this*r2 but faster. */
+    /** Dual-scalar multiply, equivalent to this*r1, this*r2 but faster. */
     inline void dual_scalarmul (
         Point &q1, Point &q2, const Scalar &r1, const Scalar &r2
     ) const NOEXCEPT {
@@ -376,7 +380,7 @@ public:
     }
 
     /**
-     * @brief Double-scalar multiply, equivalent to q*qs + r*rs but faster.
+     * Double-scalar multiply, equivalent to q*qs + r*rs but faster.
      * For those who like their scalars before the point.
      */
     static inline Point double_scalarmul (
@@ -386,7 +390,7 @@ public:
     }
 
     /**
-     * @brief Double-scalar multiply: this point by the first scalar and base by the second scalar.
+     * Double-scalar multiply: this point by the first scalar and base by the second scalar.
      * @warning This function takes variable time, and may leak the scalars (or points, but currently
      * it doesn't).
      */
@@ -394,21 +398,21 @@ public:
         Point r((NOINIT())); %(c_ns)s_base_double_scalarmul_non_secret(r.p,s_base.s,p,s.s); return r;
     }
 
-    /** @brief Return a point equal to *this, whose internal data is rotated by a torsion element. */
+    /** Return a point equal to *this, whose internal data is rotated by a torsion element. */
     inline Point debugging_torque() const NOEXCEPT {
         Point q;
         %(c_ns)s_point_debugging_torque(q.p,p);
         return q;
     }
 
-    /** @brief Return a point equal to *this, whose internal data has a modified representation. */
+    /** Return a point equal to *this, whose internal data has a modified representation. */
     inline Point debugging_pscale(const FixedBlock<SER_BYTES> factor) const NOEXCEPT {
         Point q;
         %(c_ns)s_point_debugging_pscale(q.p,p,factor.data());
         return q;
     }
 
-    /** @brief Return a point equal to *this, whose internal data has a randomized representation. */
+    /** Return a point equal to *this, whose internal data has a randomized representation. */
     inline Point debugging_pscale(Rng &r) const NOEXCEPT {
         FixedArrayBuffer<SER_BYTES> sb(r);
         return debugging_pscale(sb);
@@ -441,7 +445,7 @@ public:
         return decaf_succeed_if(ret);
     }
 
-    /** @brief Steganographically encode this */
+    /** Steganographically encode this */
     inline SecureBuffer steg_encode(Rng &rng, size_t size=STEG_BYTES) const throw(std::bad_alloc, LengthException) {
         if (size <= HASH_BYTES + 4 || size > 2*HASH_BYTES) throw LengthException();
         SecureBuffer out(STEG_BYTES);
@@ -453,15 +457,15 @@ public:
         return out;
     }
 
-    /** @brief Return the base point */
+    /** Return the base point */
     static inline const Point base() NOEXCEPT { return Point(%(c_ns)s_point_base); }
 
-    /** @brief Return the identity point */
+    /** Return the identity point */
     static inline const Point identity() NOEXCEPT { return Point(%(c_ns)s_point_identity); }
 };
 
 /**
- * @brief Precomputed table of points.
+ * Precomputed table of points.
  * Minor difficulties arise here because the decaf API doesn't expose, as a constant, how big such an object is.
  * Therefore we have to call malloc() or friends, but that's probably for the best, because you don't want to
  * stack-allocate a 15kiB object anyway.
@@ -481,7 +485,7 @@ public:
     inline ~Precomputed() NOEXCEPT { clear(); }
 
     /**
-     * @brief Initialize from underlying type, declared as a reference to prevent
+     * Initialize from underlying type, declared as a reference to prevent
      * it from being called with 0, thereby breaking override.
      *
      * The underlying object must remain valid throughout the lifetime of this one.
@@ -497,18 +501,18 @@ public:
 
 
 #if __cplusplus >= 201103L
-    /** @brief Move-assign operator */
+    /** Move-assign operator */
     inline Precomputed &operator=(Precomputed &&it) NOEXCEPT {
         OwnedOrUnowned<Precomputed,Precomputed_U>::operator= (it);
         return *this;
     }
 
-    /** @brief Move constructor */
+    /** Move constructor */
     inline Precomputed(Precomputed &&it) NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>() {
         *this = it;
     }
 
-    /** @brief Undelete copy operator */
+    /** Undelete copy operator */
     inline Precomputed &operator=(const Precomputed &it) NOEXCEPT {
         OwnedOrUnowned<Precomputed,Precomputed_U>::operator= (it);
         return *this;
@@ -516,7 +520,7 @@ public:
 #endif
 
     /**
-     * @brief Initilaize from point. Must allocate memory, and may throw.
+     * Initilaize from point. Must allocate memory, and may throw.
      */
     inline Precomputed &operator=(const Point &it) throw(std::bad_alloc) {
         alloc();
@@ -525,24 +529,24 @@ public:
     }
 
     /**
-     * @brief Copy constructor.
+     * Copy constructor.
      */
     inline Precomputed(const Precomputed &it) throw(std::bad_alloc)
         : OwnedOrUnowned<Precomputed,Precomputed_U>() { *this = it; }
 
     /**
-     * @brief Constructor which initializes from point.
+     * Constructor which initializes from point.
      */
     inline explicit Precomputed(const Point &it) throw(std::bad_alloc)
         : OwnedOrUnowned<Precomputed,Precomputed_U>() { *this = it; }
 
-    /** @brief Fixed base scalarmul. */
+    /** Fixed base scalarmul. */
     inline Point operator* (const Scalar &s) const NOEXCEPT { Point r; %(c_ns)s_precomputed_scalarmul(r.p,get(),s.s); return r; }
 
-    /** @brief Multiply by s.inverse(). If s=0, maps to the identity. */
+    /** Multiply by s.inverse(). If s=0, maps to the identity. */
     inline Point operator/ (const Scalar &s) const throw(CryptoException) { return (*this) * s.inverse(); }
 
-    /** @brief Return the table for the base point. */
+    /** Return the table for the base point. */
     static inline const Precomputed base() NOEXCEPT { return Precomputed(); }
 
 public:
@@ -570,7 +574,7 @@ inline SecureBuffer %(cxx_ns)s::Scalar::direct_scalarmul (
     }
     return out;
 }
-/** endcond */
+/** @endcond */
 
 #undef NOEXCEPT
 } /* namespace decaf */
