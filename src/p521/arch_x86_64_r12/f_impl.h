@@ -4,6 +4,7 @@
 
 /* FIXME: Currently this file desn't work at all, because the struct is declared [9] and not [12] */
 #define LIMBPERM(x) (((x)%3)*4 + (x)/3)
+#define LIMB_PLACE_VALUE(i) ((((i)&4)==3) ? 0 : 57)
 #define USE_P521_3x3_TRANSPOSE
 
 typedef uint64x4_t uint64x3_t; /* fit it in a vector register */

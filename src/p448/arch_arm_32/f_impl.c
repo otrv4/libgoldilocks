@@ -834,9 +834,7 @@ void gf_mulw (
     c[1] += accum8 >> 28;
 }
 
-void gf_strong_reduce (
-    gf a
-) {
+void gf_strong_reduce (gf a) {
     word_t mask = (1ull<<28)-1;
 
     /* first, clear high */
@@ -874,60 +872,4 @@ void gf_strong_reduce (
     }
 
     assert(word_is_zero(carry + scarry));
-}
-
-void gf_serialize (
-    uint8_t *serial,
-    const gf x
-) {
-    int i,j;
-    gf red;
-    gf_copy(red, x);
-    gf_strong_reduce(red);
-    for (i=0; i<8; i++) {
-        uint64_t limb = red->limb[2*i] + (((uint64_t)red->limb[2*i+1])<<28);
-        for (j=0; j<7; j++) {
-            serial[7*i+j] = limb;
-            limb >>= 8;
-        }
-        assert(limb == 0);
-    }
-}
-
-mask_t
-gf_deserialize (
-    gf x,
-    const uint8_t serial[56]
-) {
-    int i,j;
-    for (i=0; i<8; i++) {
-        uint64_t out = 0;
-        for (j=0; j<7; j++) {
-            out |= ((uint64_t)serial[7*i+j])<<(8*j);
-        }
-        x->limb[2*i] = out & ((1ull<<28)-1);
-        x->limb[2*i+1] = out >> 28;
-    }
-    
-    /* Check for reduction.
-     *
-     * The idea is to create a variable ge which is all ones (rather, 56 ones)
-     * if and only if the low $i$ words of $x$ are >= those of p.
-     *
-     * Remember p = little_endian(1111,1111,1111,1111,1110,1111,1111,1111)
-     */
-    uint32_t ge = -1, mask = (1ull<<28)-1;
-    for (i=0; i<8; i++) {
-        ge &= x->limb[i];
-    }
-    
-    /* At this point, ge = 1111 iff bottom are all 1111.  Now propagate if 1110, or set if 1111 */
-    ge = (ge & (x->limb[8] + 1)) | word_is_zero(x->limb[8] ^ mask);
-    
-    /* Propagate the rest */
-    for (i=9; i<16; i++) {
-        ge &= x->limb[i];
-    }
-    
-    return ~word_is_zero(ge ^ mask);
 }

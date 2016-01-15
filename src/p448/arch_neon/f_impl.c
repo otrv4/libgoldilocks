@@ -684,4 +684,3 @@ mask_t gf_deserialize (gf x, const uint8_t serial[56]) {
     
     return ~word_is_zero(ge ^ mask);
 }
-

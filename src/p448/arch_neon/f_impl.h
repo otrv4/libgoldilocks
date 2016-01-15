@@ -11,6 +11,8 @@
       LIMBLO(b),LIMBLO(f), LIMBHI(b),LIMBHI(f), \
       LIMBLO(c),LIMBLO(g), LIMBHI(c),LIMBHI(g), \
       LIMBLO(d),LIMBLO(h), LIMBHI(d),LIMBHI(h)}}
+    
+#define LIMB_PLACE_VALUE(i) 28
 
 void gf_add_RAW (gf out, const gf a, const gf b) {
     for (unsigned int i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {

@@ -4,6 +4,8 @@
 
 #define FIELD_LITERAL(a,b,c,d,e) {{ a,b,c,d,e }}
 
+#define LIMB_PLACE_VALUE(i) 51
+
 void gf_add_RAW (gf out, const gf a, const gf b) {
     for (unsigned int i=0; i<5; i++) {
         out->limb[i] = a->limb[i] + b->limb[i];

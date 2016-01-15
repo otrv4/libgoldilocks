@@ -2,6 +2,8 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
+#define LIMB_PLACE_VALUE(i) 60
+
 void gf_add_RAW (gf out, const gf a, const gf b) {
     for (unsigned int i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
         ((uint64xn_t*)out)[i] = ((const uint64xn_t*)a)[i] + ((const uint64xn_t*)b)[i];
@@ -24,12 +26,6 @@ void gf_sub_RAW (gf out, const gf a, const gf b) {
         out->limb[i] = a->limb[i] - b->limb[i];
     }
     */
-}
-
-void gf_copy (gf out, const gf a) {
-    for (unsigned int i=0; i<sizeof(*out)/sizeof(big_register_t); i++) {
-        ((big_register_t *)out)[i] = ((const big_register_t *)a)[i];
-    }
 }
 
 void gf_bias (

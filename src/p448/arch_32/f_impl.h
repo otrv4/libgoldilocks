@@ -5,6 +5,8 @@
 #define LIMB(x) (x##ull)&((1ull<<28)-1), (x##ull)>>28
 #define FIELD_LITERAL(a,b,c,d,e,f,g,h) \
     {{LIMB(a),LIMB(b),LIMB(c),LIMB(d),LIMB(e),LIMB(f),LIMB(g),LIMB(h)}}
+    
+#define LIMB_PLACE_VALUE(i) 28
 
 void gf_add_RAW (gf out, const gf a, const gf b) {
     for (unsigned int i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {

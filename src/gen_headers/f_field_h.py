@@ -13,8 +13,9 @@ f_field_h = gen_file(
 #include "word.h"
 
 #define __DECAF_%(gf_shortname)s_GF_DEFINED__ 1
+#define NLIMBS (%(gf_impl_bits)d/sizeof(word_t)/8)
 typedef struct gf_%(gf_shortname)s_s {
-    word_t limb[%(gf_impl_bits)d/sizeof(word_t)/8];
+    word_t limb[NLIMBS];
 } __attribute__((aligned(32))) gf_%(gf_shortname)s_s, gf_%(gf_shortname)s_t[1];
 
 #define GF_LIT_LIMB_BITS  %(gf_lit_limb_bits)d
@@ -33,6 +34,7 @@ typedef struct gf_%(gf_shortname)s_s {
 #define gf_isr            gf_%(gf_shortname)s_isr
 #define gf_serialize      gf_%(gf_shortname)s_serialize
 #define gf_deserialize    gf_%(gf_shortname)s_deserialize
+#define MODULUS           gf_%(gf_shortname)s_MODULUS
 
 #define SQRT_MINUS_ONE    P%(gf_shortname)s_SQRT_MINUS_ONE /* might not be defined */
 
@@ -41,6 +43,8 @@ typedef struct gf_%(gf_shortname)s_s {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+const gf MODULUS;
 
 /* Defined below in f_impl.h */
 static INLINE_UNUSED void gf_copy (gf out, const gf a) { *out = *a; }
@@ -61,4 +65,9 @@ mask_t gf_deserialize (gf x, const uint8_t serial[(GF_BITS-1)/8+1]);
 #endif
 
 #include "f_impl.h" /* Bring in the inline implementations */
+
+#ifndef LIMBPERM
+  #define LIMBPERM(i) (i)
+#endif
+#define LIMB_MASK(i) (((1ull)<<LIMB_PLACE_VALUE(i))-1)
 """)

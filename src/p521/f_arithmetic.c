@@ -10,6 +10,12 @@
 
 #include "field.h"
 
+const gf MODULUS = {FIELD_LITERAL(
+    0x3ffffffffffffff, 0x3ffffffffffffff, 0x3ffffffffffffff,
+    0x3ffffffffffffff, 0x3ffffffffffffff, 0x3ffffffffffffff,
+    0x3ffffffffffffff, 0x3ffffffffffffff, 0x1ffffffffffffff
+)};
+
 void 
 gf_isr (
     gf_a_t a,

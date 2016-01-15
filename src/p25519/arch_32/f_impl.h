@@ -3,8 +3,9 @@
  */
 
 #define LIMB(x) (x##ull)&((1ull<<26)-1), (x##ull)>>26
-#define FIELD_LITERAL(a,b,c,d,e) \
-    {{LIMB(a),LIMB(b),LIMB(c),LIMB(d),LIMB(e)}}
+#define FIELD_LITERAL(a,b,c,d,e) {{LIMB(a),LIMB(b),LIMB(c),LIMB(d),LIMB(e)}}
+
+#define LIMB_PLACE_VALUE(i) (((i)&1)?25:26)
 
 void gf_add_RAW (gf out, const gf a, const gf b) {
     for (unsigned int i=0; i<10; i++) {

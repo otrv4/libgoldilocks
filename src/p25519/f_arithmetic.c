@@ -18,14 +18,17 @@ const gf_25519_t P25519_SQRT_MINUS_ONE = {FIELD_LITERAL(
     0x78595a6804c9e,
     0x2b8324804fc1d
 )};
+
+const gf MODULUS = {FIELD_LITERAL(
+    0x7ffffffffffed, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff
+)};
     
 /* TODO put in header */
 extern const gf_25519_t decaf_255_ONE;
 extern mask_t decaf_255_gf_eq(const gf_25519_t a, const gf_25519_t b);
 
 /* Guarantee: a^2 x = 0 if x = 0; else a^2 x = 1 or SQRT_MINUS_ONE; */
-void 
-gf_isr (
+void gf_isr (
     gf_25519_t a,
     const gf_25519_t x
 ) {

@@ -86,12 +86,45 @@ const size_t API_NS2(alignof,precomputed_s) = 32;
 #define UNROLL
 #endif
 
-#define FOR_LIMB(i,op) { unsigned int i=0; for (i=0; i<sizeof(gf)/sizeof(word_t); i++)  { op; }}
-#define FOR_LIMB_U(i,op) { unsigned int i=0; UNROLL for (i=0; i<sizeof(gf)/sizeof(word_t); i++)  { op; }}
+#define FOR_LIMB(i,op) { unsigned int i=0; for (i=0; i<NLIMBS; i++)  { op; }}
+#define FOR_LIMB_U(i,op) { unsigned int i=0; UNROLL for (i=0; i<NLIMBS; i++)  { op; }}
 
-/** Copy x = y */
-static INLINE void
-gf_cpy(gf x, const gf y) { x[0] = y[0]; }
+void gf_serialize (uint8_t serial[SER_BYTES], const gf x) {
+    gf red;
+    gf_copy(red, x);
+    gf_strong_reduce(red);
+    
+    unsigned int j=0, fill=0;
+    dword_t buffer = 0;
+    UNROLL for (unsigned int i=0; i<SER_BYTES; i++) {
+        if (fill < 8 && j < NLIMBS) {
+            buffer |= ((dword_t)red->limb[LIMBPERM(j)]) << fill;
+            fill += LIMB_PLACE_VALUE(LIMBPERM(j));
+            j++;
+        }
+        serial[i] = buffer;
+        fill -= 8;
+        buffer >>= 8;
+    }
+}
+
+mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES]) {
+    unsigned int j=0, fill=0;
+    dword_t buffer = 0;
+    dsword_t scarry = 0;
+    UNROLL for (unsigned int i=0; i<NLIMBS; i++) {
+        UNROLL while (fill < LIMB_PLACE_VALUE(LIMBPERM(i)) && j < SER_BYTES) {
+            buffer |= ((dword_t)serial[j]) << fill;
+            fill += 8;
+            j++;
+        }
+        x->limb[LIMBPERM(i)] = (i<NLIMBS-1) ? buffer & LIMB_MASK(LIMBPERM(i)) : buffer;
+        fill -= LIMB_PLACE_VALUE(LIMBPERM(i));
+        buffer >>= LIMB_PLACE_VALUE(LIMBPERM(i));
+        scarry = (scarry + x->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)]) >> (8*sizeof(word_t));
+    }
+    return word_is_zero(buffer) & ~word_is_zero(scarry);
+}
 
 /** Constant time, x = is_z ? z : y */
 static INLINE void
@@ -120,9 +153,7 @@ cond_swap(gf x, gf_s *__restrict__ y, decaf_bool_t swap) {
 /** Compare a==b */
 /* Not static because it's used in inverse square root. */
 decaf_word_t gf_eq(const gf a, const gf b);
-
-decaf_word_t
-gf_eq(const gf a, const gf b) {
+decaf_word_t gf_eq(const gf a, const gf b) {
     gf c;
     gf_sub(c,a,b);
     gf_strong_reduce(c);
@@ -153,13 +184,10 @@ gf_invert(gf y, const gf x) {
     (void)ret; assert(ret);
     gf_sqr(t1, t2);
     gf_mul(t2, t1, x); // not direct to y in case of alias.
-    gf_cpy(y, t2);
+    gf_copy(y, t2);
 }
 
-/**
- * Mul by signed int.  Not constant-time WRT the sign of that int.
- * Just uses a full mul (PERF)
- */
+/** Mul by signed int.  Not constant-time WRT the sign of that int. */
 static INLINE void
 gf_mulw_sgn(gf c, const gf a, int w) {
     if (w>0) {
@@ -182,7 +210,7 @@ static decaf_word_t hibit(const gf x) {
 /** Return high bit of x = low bit of 2x mod p */
 static decaf_word_t lobit(const gf x) {
     gf y;
-    gf_cpy(y,x);
+    gf_copy(y,x);
     gf_strong_reduce(y);
     return -(y->limb[0]&1);
 }
@@ -394,15 +422,8 @@ API_NS(scalar_eq) (
     return word_is_zero(diff);
 }
 
-/* *** API begins here *** */    
-
 /** identity = (0,1) */
 const point_t API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
-
-static void
-gf_encode ( unsigned char ser[SER_BYTES], gf a ) {
-    gf_serialize(ser, (gf_s *)a);
-}
 
 static void
 deisogenize (
@@ -508,14 +529,7 @@ deisogenize (
 void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
     gf s, mtos;
     deisogenize(s,mtos,p,0,0,0);
-    gf_encode ( ser, s );
-}
-
-/**
- * Deserialize a field element, return TRUE if < p.
- */
-static decaf_bool_t gf_deser(gf s, const unsigned char ser[SER_BYTES]) {
-    return gf_deserialize((gf_s *)s, ser);
+    gf_serialize ( ser, s );
 }
 
 decaf_error_t API_NS(point_decode) (
@@ -524,7 +538,7 @@ decaf_error_t API_NS(point_decode) (
     decaf_bool_t allow_identity
 ) {
     gf s, a, b, c, d, e, f;
-    decaf_bool_t succ = gf_deser(s, ser), zero = gf_eq(s, ZERO);
+    decaf_bool_t succ = gf_deserialize(s, ser), zero = gf_eq(s, ZERO);
     allow_identity = ~word_is_zero(allow_identity);
     succ &= allow_identity | ~zero;
     succ &= ~hibit(s);
@@ -591,8 +605,6 @@ decaf_error_t API_NS(point_decode) (
 #define EFF_D TWISTED_D
 #define NEG_D 0
 #endif
-
-
 
 void API_NS(point_sub) (
     point_t p,
@@ -688,8 +700,8 @@ void API_NS(point_negate) (
    const point_t a
 ) {
     gf_sub(nega->x, ZERO, a->x);
-    gf_cpy(nega->y, a->y);
-    gf_cpy(nega->z, a->z);
+    gf_copy(nega->y, a->y);
+    gf_copy(nega->z, a->z);
     gf_sub(nega->t, ZERO, a->t);
 }
 
@@ -827,7 +839,7 @@ niels_to_pt (
     gf_add ( e->y, n->b, n->a );
     gf_sub ( e->x, n->b, n->a );
     gf_mul ( e->t, e->y, e->x );
-    gf_cpy ( e->z, ONE );
+    gf_copy ( e->z, ONE );
 }
 
 static NOINLINE void
@@ -882,7 +894,7 @@ add_pniels_to_pt (
 ) {
     gf L0;
     gf_mul ( L0, p->z, pn->z );
-    gf_cpy ( p->z, L0 );
+    gf_copy ( p->z, L0 );
     add_niels_to_pt( p, pn->n, before_double );
 }
 
@@ -894,7 +906,7 @@ sub_pniels_from_pt (
 ) {
     gf L0;
     gf_mul ( L0, p->z, pn->z );
-    gf_cpy ( p->z, L0 );
+    gf_copy ( p->z, L0 );
     sub_niels_from_pt( p, pn->n, before_double );
 }
 
@@ -1203,7 +1215,7 @@ void API_NS(point_from_hash_nonuniform) (
     // TODO: simplify since we don't return a hint anymore
     // TODO: test pathological case ur0^2 = 1/(1-d)
     gf r0,r,a,b,c,dee,D,N,rN,e;
-    gf_deser(r0,ser);
+    gf_deserialize(r0,ser);
     gf_strong_reduce(r0);
     gf_sqr(a,r0);
 #if P_MOD_8 == 5
@@ -1265,7 +1277,7 @@ void API_NS(point_from_hash_nonuniform) (
     /* isogenize */
 #if IMAGINE_TWIST
     gf_mul(c,a,SQRT_MINUS_ONE);
-    gf_cpy(a,c);
+    gf_copy(a,c);
 #endif
     
     gf_sqr(c,a); /* s^2 */
@@ -1326,7 +1338,7 @@ API_NS(invert_elligator_nonuniform) (
     succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
 #endif
     
-    gf_encode(recovered_hash, b); 
+    gf_serialize(recovered_hash, b); 
     /* TODO: deal with overflow flag */
     return decaf_succeed_if(succ);
 }
@@ -1380,14 +1392,14 @@ void API_NS(point_debugging_torque) (
     gf tmp;
     gf_mul(tmp,p->x,SQRT_MINUS_ONE);
     gf_mul(q->x,p->y,SQRT_MINUS_ONE);
-    gf_cpy(q->y,tmp);
-    gf_cpy(q->z,p->z);
+    gf_copy(q->y,tmp);
+    gf_copy(q->z,p->z);
     gf_sub(q->t,ZERO,p->t);
 #else
     gf_sub(q->x,ZERO,p->x);
     gf_sub(q->y,ZERO,p->y);
-    gf_cpy(q->z,p->z);
-    gf_cpy(q->t,p->t);
+    gf_copy(q->z,p->z);
+    gf_copy(q->t,p->t);
 #endif
 }
 
@@ -1397,16 +1409,16 @@ void API_NS(point_debugging_pscale) (
     const uint8_t factor[SER_BYTES]
 ) {
     gf gfac,tmp;
-    ignore_result(gf_deser(gfac,factor));
+    ignore_result(gf_deserialize(gfac,factor));
     cond_sel(gfac,gfac,ONE,gf_eq(gfac,ZERO));
     gf_mul(tmp,p->x,gfac);
-    gf_cpy(q->x,tmp);
+    gf_copy(q->x,tmp);
     gf_mul(tmp,p->y,gfac);
-    gf_cpy(q->y,tmp);
+    gf_copy(q->y,tmp);
     gf_mul(tmp,p->z,gfac);
-    gf_cpy(q->z,tmp);
+    gf_copy(q->z,tmp);
     gf_mul(tmp,p->t,gfac);
-    gf_cpy(q->t,tmp);
+    gf_copy(q->t,tmp);
 }
 
 static void gf_batch_invert (
@@ -1417,7 +1429,7 @@ static void gf_batch_invert (
     gf t1;
     assert(n>1);
   
-    gf_cpy(out[1], in[0]);
+    gf_copy(out[1], in[0]);
     int i;
     for (i=1; i<(int) (n-1); i++) {
         gf_mul(out[i+1], out[i], in[i]);
@@ -1428,9 +1440,9 @@ static void gf_batch_invert (
 
     for (i=n-1; i>0; i--) {
         gf_mul(t1, out[i], out[0]);
-        gf_cpy(out[i], t1);
+        gf_copy(out[i], t1);
         gf_mul(t1, out[0], in[i]);
-        gf_cpy(out[0], t1);
+        gf_copy(out[0], t1);
     }
 }
 
@@ -1447,15 +1459,15 @@ static void batch_normalize_niels (
     for (i=0; i<n; i++) {
         gf_mul(product, table[i]->a, zis[i]);
         gf_strong_reduce(product);
-        gf_cpy(table[i]->a, product);
+        gf_copy(table[i]->a, product);
         
         gf_mul(product, table[i]->b, zis[i]);
         gf_strong_reduce(product);
-        gf_cpy(table[i]->b, product);
+        gf_copy(table[i]->b, product);
         
         gf_mul(product, table[i]->c, zis[i]);
         gf_strong_reduce(product);
-        gf_cpy(table[i]->c, product);
+        gf_copy(table[i]->c, product);
     }
     
     decaf_bzero(product,sizeof(product));
@@ -1500,7 +1512,7 @@ void API_NS(precompute) (
 
             pt_to_pniels(pn_tmp, start);
             memcpy(table->table[idx], pn_tmp->n, sizeof(pn_tmp->n));
-            gf_cpy(zs[idx], pn_tmp->z);
+            gf_copy(zs[idx], pn_tmp->z);
 			
             if (j >= (1u<<(t-1)) - 1) break;
             int delta = (j+1) ^ ((j+1)>>1) ^ gray;
@@ -1733,7 +1745,7 @@ void API_NS(precompute_wnafs) (
     prepare_wnaf_table(tmp,base,DECAF_WNAF_FIXED_TABLE_BITS);
     for (i=0; i<1<<DECAF_WNAF_FIXED_TABLE_BITS; i++) {
         memcpy(out[i], tmp[i]->n, sizeof(niels_t));
-        gf_cpy(zs[i], tmp[i]->z);
+        gf_copy(zs[i], tmp[i]->z);
     }
     batch_normalize_niels(out, (const gf *)zs, zis, 1<<DECAF_WNAF_FIXED_TABLE_BITS);
     
