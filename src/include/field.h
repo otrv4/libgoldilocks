@@ -13,20 +13,8 @@
 #include "constant_time.h"
 #include "f_field.h"
 #include <string.h>
-
-/**
- * Returns 1/sqrt(+- x).
- * 
- * The Legendre symbol of the result is the same as that of the
- * input.
- * 
- * If x=0, returns 0.
- */
-void gf_isr(gf a, const gf x);
     
-/**
- * Square x, n times.
- */
+/** Square x, n times. */
 static INLINE UNUSED void
 gf_sqrn (
     gf_s *__restrict__ y,
@@ -47,27 +35,6 @@ gf_sqrn (
         gf_sqr(tmp,y);
         gf_sqr(y,tmp);
     }
-}
-
-static __inline__ void
-gf_sub (
-    gf d,
-    const gf a,
-    const gf b
-) {
-    gf_sub_RAW ( d, a, b );
-    gf_bias( d, 2 );
-    gf_weak_reduce ( d );
-}
-
-static __inline__ void
-gf_add (
-    gf d,
-    const gf a,
-    const gf b
-) {
-    gf_add_RAW ( d, a, b );
-    gf_weak_reduce ( d );
 }
 
 #define gf_add_nr gf_add_RAW

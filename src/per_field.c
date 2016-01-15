@@ -85,6 +85,19 @@ void gf_strong_reduce (gf a) {
     assert(word_is_zero(carry + scarry_0));
 }
 
+/** Add two gf elements */
+void gf_sub (gf d, const gf a, const gf b) {
+    gf_sub_RAW ( d, a, b );
+    gf_bias( d, 2 );
+    gf_weak_reduce ( d );
+}
+
+/** Subtract d = a-b */
+void gf_add (gf d, const gf a, const gf b) {
+    gf_add_RAW ( d, a, b );
+    gf_weak_reduce ( d );
+}
+
 /** Compare a==b */
 mask_t gf_eq(const gf a, const gf b) {
     gf c;

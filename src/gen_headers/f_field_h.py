@@ -28,6 +28,8 @@ typedef struct gf_%(gf_shortname)s_s {
 #define gf_s              gf_%(gf_shortname)s_s
 #define gf_eq             gf_%(gf_shortname)s_eq
 #define gf_copy           gf_%(gf_shortname)s_copy
+#define gf_add            gf_%(gf_shortname)s_add
+#define gf_sub            gf_%(gf_shortname)s_sub
 #define gf_add_RAW        gf_%(gf_shortname)s_add_RAW
 #define gf_sub_RAW        gf_%(gf_shortname)s_sub_RAW
 #define gf_bias           gf_%(gf_shortname)s_bias
@@ -58,12 +60,16 @@ static INLINE_UNUSED void gf_bias (gf inout, int amount);
 static INLINE_UNUSED void gf_weak_reduce (gf inout);
 
 void gf_strong_reduce (gf inout);   
+void gf_add (gf out, const gf a, const gf b);
+void gf_sub (gf out, const gf a, const gf b);
 void gf_mul (gf_s *__restrict__ out, const gf a, const gf b);
 void gf_mulw (gf_s *__restrict__ out, const gf a, uint64_t b);
 void gf_sqr (gf_s *__restrict__ out, const gf a);
 void gf_serialize (uint8_t *serial, const gf x);
+void gf_isr(gf a, const gf x); /** a^2 x = 1, QNR, or 0 if x=0 */
 mask_t gf_eq (const gf x, const gf y);
 mask_t gf_deserialize (gf x, const uint8_t serial[(GF_BITS-1)/8+1]);
+
 
 #ifdef __cplusplus
 } /* extern "C" */
