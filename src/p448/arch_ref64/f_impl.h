@@ -4,17 +4,12 @@
 #ifndef __P448_H__
 #define __P448_H__ 1
 
+#include "f_field.h"
+
 #include <stdint.h>
 #include <assert.h>
 #include <string.h>
 
-#include "word.h"
-
-typedef struct gf_448_s {
-  uint64_t limb[8];
-} __attribute__((aligned(32))) gf_448_s, gf_448_t[1];
-
-#define LBITS 56
 #define FIELD_LITERAL(a,b,c,d,e,f,g,h) {{a,b,c,d,e,f,g,h}}
 
 #ifdef __cplusplus
@@ -23,46 +18,29 @@ extern "C" {
 
 /* -------------- Inline functions begin here -------------- */
 
-void
-gf_448_add_RAW (
-    gf_448_t out,
-    const gf_448_t a,
-    const gf_448_t b
-) {
+void gf_add_RAW (gf  out, const gf  a, const gf  b) {
     unsigned int i;
     for (i=0; i<8; i++) {
         out->limb[i] = a->limb[i] + b->limb[i];
     }
-    gf_448_weak_reduce(out);
+    gf_weak_reduce(out);
 }
 
-void
-gf_448_sub_RAW (
-    gf_448_t out,
-    const gf_448_t a,
-    const gf_448_t b
-) {
+void gf_sub_RAW (gf  out, const gf  a, const gf  b) {
     unsigned int i;
     uint64_t co1 = ((1ull<<56)-1)*2, co2 = co1-2;
     for (i=0; i<8; i++) {
         out->limb[i] = a->limb[i] - b->limb[i] + ((i==4) ? co2 : co1);
     }
-    gf_448_weak_reduce(out);
+    gf_weak_reduce(out);
 }
 
-void
-gf_448_bias (
-    gf_448_t a,
-    int amt
-) {
+void gf_bias (gf  a, int amt) {
     (void) a;
     (void) amt;
 }
 
-void
-gf_448_weak_reduce (
-    gf_448_t a
-) {
+void gf_weak_reduce (gf  a) {
     uint64_t mask = (1ull<<56) - 1;
     uint64_t tmp = a->limb[7] >> 56;
     int i;

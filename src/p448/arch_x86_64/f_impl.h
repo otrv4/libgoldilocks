@@ -4,13 +4,11 @@
 #ifndef __P448_H__
 #define __P448_H__ 1
 
+#include "f_field.h"
+
 #include <stdint.h>
 #include <assert.h>
 
-#include "decaf/decaf_448.h"
-#include "word.h"
-
-#define LBITS 56
 #define FIELD_LITERAL(a,b,c,d,e,f,g,h) {{a,b,c,d,e,f,g,h}}
 
 #ifdef __cplusplus
@@ -19,12 +17,7 @@ extern "C" {
 
 /* -------------- Inline functions begin here -------------- */
 
-void
-gf_448_add_RAW (
-    gf_448_t out,
-    const gf_448_t a,
-    const gf_448_t b
-) {
+void gf_add_RAW (gf  out, const gf  a, const gf  b) {
     unsigned int i;
     for (i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
         ((uint64xn_t*)out)[i] = ((const uint64xn_t*)a)[i] + ((const uint64xn_t*)b)[i];
@@ -37,12 +30,7 @@ gf_448_add_RAW (
     */
 }
 
-void
-gf_448_sub_RAW (
-    gf_448_t out,
-    const gf_448_t a,
-    const gf_448_t b
-) {
+void gf_sub_RAW (gf  out, const gf  a, const gf  b) {
     unsigned int i;
     for (i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
         ((uint64xn_t*)out)[i] = ((const uint64xn_t*)a)[i] - ((const uint64xn_t*)b)[i];
@@ -55,11 +43,7 @@ gf_448_sub_RAW (
     */
 }
 
-void
-gf_448_bias (
-    gf_448_t a,
-    int amt
-) {
+void gf_bias (gf  a, int amt) {
     uint64_t co1 = ((1ull<<56)-1)*amt, co2 = co1-amt;
     
 #if __AVX2__
@@ -82,10 +66,7 @@ gf_448_bias (
 #endif
 }
 
-void
-gf_448_weak_reduce (
-    gf_448_t a
-) {
+void gf_weak_reduce (gf  a) {
     /* PERF: use pshufb/palignr if anyone cares about speed of this */
     uint64_t mask = (1ull<<56) - 1;
     uint64_t tmp = a->limb[7] >> 56;

@@ -4,17 +4,12 @@
 #ifndef __P448_H__
 #define __P448_H__ 1
 
-#include "word.h"
+#include "f_field.h"
 
 #include <stdint.h>
 #include <assert.h>
 
-typedef struct gf_448_s {
-  uint32_t limb[16];
-} __attribute__((aligned(32))) gf_448_s, gf_448_t[1];
-
-#define LBITS 28
-#define LIMB(x) (x##ull)&((1ull<<LBITS)-1), (x##ull)>>LBITS
+#define LIMB(x) (x##ull)&((1ull<<28)-1), (x##ull)>>28
 #define FIELD_LITERAL(a,b,c,d,e,f,g,h) \
     {{LIMB(a),LIMB(b),LIMB(c),LIMB(d),LIMB(e),LIMB(f),LIMB(g),LIMB(h)}}
 
@@ -24,12 +19,7 @@ extern "C" {
 
 /* -------------- Inline functions begin here -------------- */
 
-void
-gf_448_add_RAW (
-    gf_448_t out,
-    const gf_448_t a,
-    const gf_448_t b
-) {
+void gf_add_RAW (gf out, const gf a, const gf b) {
     unsigned int i;
     for (i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {
         ((uint32xn_t*)out)[i] = ((const uint32xn_t*)a)[i] + ((const uint32xn_t*)b)[i];
@@ -42,12 +32,7 @@ gf_448_add_RAW (
     */
 }
 
-void
-gf_448_sub_RAW (
-    gf_448_t out,
-    const gf_448_t a,
-    const gf_448_t b
-) {
+void gf_sub_RAW (gf out, const gf a, const gf b) {
     unsigned int i;
     for (i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {
         ((uint32xn_t*)out)[i] = ((const uint32xn_t*)a)[i] - ((const uint32xn_t*)b)[i];
@@ -60,11 +45,7 @@ gf_448_sub_RAW (
     */
 }
 
-void
-gf_448_bias (
-    gf_448_t a,
-    int amt
-) {
+void gf_bias (gf a, int amt) {
     uint32_t co1 = ((1ull<<28)-1)*amt, co2 = co1-amt;
     uint32x4_t lo = {co1,co1,co1,co1}, hi = {co2,co1,co1,co1};
     uint32x4_t *aa = (uint32x4_t*) a;
@@ -74,10 +55,7 @@ gf_448_bias (
     aa[3] += lo;
 }
 
-void
-gf_448_weak_reduce (
-    gf_448_t a
-) {
+void gf_weak_reduce (gf a) {
     uint64_t mask = (1ull<<28) - 1;
     uint64_t tmp = a->limb[15] >> 28;
     int i;
