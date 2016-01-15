@@ -2,7 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
-#include "f_impl.h"
+#include "f_field.h"
 
 static __inline__ __uint128_t widemul(
     const uint64_t a,

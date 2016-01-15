@@ -2,8 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
-#include "word.h"
-#include "f_impl.h"
+#include "f_field.h"
 
 static inline mask_t __attribute__((always_inline))
 is_zero (

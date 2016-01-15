@@ -2,7 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
-#include "f_impl.h"
+#include "f_field.h"
 
 typedef struct {
   uint64x3_t lo, hi, hier;
@@ -168,10 +168,10 @@ static inline void hexad_sqr_signed (
 
 
 void
-p521_mul (
-    p521_t *__restrict__ cs,
-    const p521_t *as,
-    const p521_t *bs
+gf_521_mul (
+    gf_521_t *__restrict__ cs,
+    const gf_521_t *as,
+    const gf_521_t *bs
 ) {
     int i;
     
@@ -254,9 +254,9 @@ p521_mul (
 
 
 void
-p521_sqr (
-    p521_t *__restrict__ cs,
-    const p521_t *as
+gf_521_sqr (
+    gf_521_t *__restrict__ cs,
+    const gf_521_t *as
 ) {
     
 
@@ -313,9 +313,9 @@ p521_sqr (
 }
 
 void
-p521_mulw (
-    p521_t *__restrict__ cs,
-    const p521_t *as,
+gf_521_mulw (
+    gf_521_t *__restrict__ cs,
+    const gf_521_t *as,
     uint64_t b
 ) {
     
@@ -375,8 +375,8 @@ p521_mulw (
 
 
 void
-p521_strong_reduce (
-    p521_t *a
+gf_521_strong_reduce (
+    gf_521_t *a
 ) {
     uint64_t mask = (1ull<<58)-1, mask2 = (1ull<<57)-1;
 
@@ -418,14 +418,14 @@ p521_strong_reduce (
 }
 
 void
-p521_serialize (
+gf_521_serialize (
     uint8_t *serial,
-    const struct p521_t *x
+    const struct gf_521_t *x
 ) {
     unsigned int i,k=0;
-    p521_t red;
-    p521_copy(&red, x);
-    p521_strong_reduce(&red);
+    gf_521_t red;
+    gf_521_copy(&red, x);
+    gf_521_strong_reduce(&red);
     
     uint64_t r=0;
     int bits = 0;
@@ -442,8 +442,8 @@ p521_serialize (
 }
 
 mask_t
-p521_deserialize (
-    p521_t *x,
+gf_521_deserialize (
+    gf_521_t *x,
     const uint8_t serial[LIMBPERM(66)]
 ) {
     int i,k=0,bits=0;

@@ -1,97 +1,77 @@
 /* Copyright (c) 2014 Cryptography Research, Inc.
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
-#ifndef __p480_H__
-#define __p480_H__ 1
+#ifndef __gf_480_H__
+#define __gf_480_H__ 1
 
 #include <stdint.h>
 #include <assert.h>
 
 #include "word.h"
 
-typedef struct p480_t {
+typedef struct gf_480_t {
   uint64_t limb[8];
-} __attribute__((aligned(32))) p480_t;
+} __attribute__((aligned(32))) gf_480_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-static __inline__ void
-p480_add_RAW (
-    p480_t *out,
-    const p480_t *a,
-    const p480_t *b
-) __attribute__((unused,always_inline));
              
 static __inline__ void
-p480_sub_RAW (
-    p480_t *out,
-    const p480_t *a,
-    const p480_t *b
-) __attribute__((unused,always_inline));
-             
-static __inline__ void
-p480_copy (
-    p480_t *out,
-    const p480_t *a
-) __attribute__((unused,always_inline));
-             
-static __inline__ void
-p480_weak_reduce (
-    p480_t *inout
+gf_480_weak_reduce (
+    gf_480_t *inout
 ) __attribute__((unused,always_inline));
              
 void
-p480_strong_reduce (
-    p480_t *inout
+gf_480_strong_reduce (
+    gf_480_t *inout
 );
   
 static __inline__ void
-p480_bias (
-    p480_t *inout,
+gf_480_bias (
+    gf_480_t *inout,
     int amount
 ) __attribute__((unused,always_inline));
          
 void
-p480_mul (
-    p480_t *__restrict__ out,
-    const p480_t *a,
-    const p480_t *b
+gf_480_mul (
+    gf_480_t *__restrict__ out,
+    const gf_480_t *a,
+    const gf_480_t *b
 );
 
 void
-p480_mulw (
-    p480_t *__restrict__ out,
-    const p480_t *a,
+gf_480_mulw (
+    gf_480_t *__restrict__ out,
+    const gf_480_t *a,
     uint64_t b
 );
 
 void
-p480_sqr (
-    p480_t *__restrict__ out,
-    const p480_t *a
+gf_480_sqr (
+    gf_480_t *__restrict__ out,
+    const gf_480_t *a
 );
 
 void
-p480_serialize (
+gf_480_serialize (
     uint8_t *serial,
-    const struct p480_t *x
+    const struct gf_480_t *x
 );
 
 mask_t
-p480_deserialize (
-    p480_t *x,
+gf_480_deserialize (
+    gf_480_t *x,
     const uint8_t serial[60]
 );
 
 /* -------------- Inline functions begin here -------------- */
 
 void
-p480_add_RAW (
-    p480_t *out,
-    const p480_t *a,
-    const p480_t *b
+gf_480_add_RAW (
+    gf_480_t *out,
+    const gf_480_t *a,
+    const gf_480_t *b
 ) {
     unsigned int i;
     for (i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
@@ -106,10 +86,10 @@ p480_add_RAW (
 }
 
 void
-p480_sub_RAW (
-    p480_t *out,
-    const p480_t *a,
-    const p480_t *b
+gf_480_sub_RAW (
+    gf_480_t *out,
+    const gf_480_t *a,
+    const gf_480_t *b
 ) {
     unsigned int i;
     for (i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
@@ -124,9 +104,9 @@ p480_sub_RAW (
 }
 
 void
-p480_copy (
-    p480_t *out,
-    const p480_t *a
+gf_480_copy (
+    gf_480_t *out,
+    const gf_480_t *a
 ) {
     unsigned int i;
     for (i=0; i<sizeof(*out)/sizeof(big_register_t); i++) {
@@ -135,8 +115,8 @@ p480_copy (
 }
 
 void
-p480_bias (
-    p480_t *a,
+gf_480_bias (
+    gf_480_t *a,
     int amt
 ) {
     uint64_t co1 = ((1ull<<60)-1)*amt, co2 = co1-amt;
@@ -162,8 +142,8 @@ p480_bias (
 }
 
 void
-p480_weak_reduce (
-    p480_t *a
+gf_480_weak_reduce (
+    gf_480_t *a
 ) {
     /* PERF: use pshufb/palignr if anyone cares about speed of this */
     uint64_t mask = (1ull<<60) - 1;
@@ -180,4 +160,4 @@ p480_weak_reduce (
 }; /* extern "C" */
 #endif
 
-#endif /* __p480_H__ */
+#endif /* __gf_480_H__ */

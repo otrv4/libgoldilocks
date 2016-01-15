@@ -14,81 +14,13 @@
 #define LIMBPERM(x) (((x)%3)*4 + (x)/3)
 #define USE_P521_3x3_TRANSPOSE
 
-typedef struct p521_t {
+typedef struct gf_521_s {
   uint64_t limb[12];
-} __attribute__((aligned(32))) p521_t;
+} __attribute__((aligned(32))) gf_521_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-static __inline__ void
-p521_add_RAW (
-    p521_t *out,
-    const p521_t *a,
-    const p521_t *b
-) __attribute__((unused));
-             
-static __inline__ void
-p521_sub_RAW (
-    p521_t *out,
-    const p521_t *a,
-    const p521_t *b
-) __attribute__((unused));
-             
-static __inline__ void
-p521_copy (
-    p521_t *out,
-    const p521_t *a
-) __attribute__((unused));
-             
-static __inline__ void
-p521_weak_reduce (
-    p521_t *inout
-) __attribute__((unused));
-             
-void
-p521_strong_reduce (
-    p521_t *inout
-);
-
-static __inline__ void
-p521_bias (
-    p521_t *inout,
-    int amount
-) __attribute__((unused));
-         
-void
-p521_mul (
-    p521_t *__restrict__ out,
-    const p521_t *a,
-    const p521_t *b
-);
-
-void
-p521_mulw (
-    p521_t *__restrict__ out,
-    const p521_t *a,
-    uint64_t b
-);
-
-void
-p521_sqr (
-    p521_t *__restrict__ out,
-    const p521_t *a
-);
-
-void
-p521_serialize (
-    uint8_t *serial,
-    const struct p521_t *x
-);
-
-mask_t
-p521_deserialize (
-    p521_t *x,
-    const uint8_t serial[66]
-);
 
 /* -------------- Inline functions begin here -------------- */
 
@@ -106,10 +38,10 @@ timesW (
 }
 
 void
-p521_add_RAW (
-    p521_t *out,
-    const p521_t *a,
-    const p521_t *b
+gf_521_add_RAW (
+    gf_521_t *out,
+    const gf_521_t *a,
+    const gf_521_t *b
 ) {
     unsigned int i;
     for (i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
@@ -118,10 +50,10 @@ p521_add_RAW (
 }
 
 void
-p521_sub_RAW (
-    p521_t *out,
-    const p521_t *a,
-    const p521_t *b
+gf_521_sub_RAW (
+    gf_521_t *out,
+    const gf_521_t *a,
+    const gf_521_t *b
 ) {
     unsigned int i;
     for (i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
@@ -130,16 +62,8 @@ p521_sub_RAW (
 }
 
 void
-p521_copy (
-    p521_t *out,
-    const p521_t *a
-) {
-    memcpy(out,a,sizeof(*a));
-}
-
-void
-p521_bias (
-    p521_t *a,
+gf_521_bias (
+    gf_521_t *a,
     int amt
 ) {
     uint64_t co0 = ((1ull<<58)-2)*amt, co1 = ((1ull<<58)-1)*amt;
@@ -150,8 +74,8 @@ p521_bias (
 }
 
 void
-p521_weak_reduce (
-    p521_t *a
+gf_521_weak_reduce (
+    gf_521_t *a
 ) {
 #if 0
     int i;

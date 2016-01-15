@@ -2,14 +2,13 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
-#include "f_impl.h"
-#include "x86-64-arith.h"
+#include "f_field.h"
 
 void
-p480_mul (
-    p480_t *__restrict__ cs,
-    const p480_t *as,
-    const p480_t *bs
+gf_480_mul (
+    gf_480_t *__restrict__ cs,
+    const gf_480_t *as,
+    const gf_480_t *bs
 ) {
     const uint64_t *a = as->limb, *b = bs->limb;
     uint64_t *c = cs->limb;
@@ -146,9 +145,9 @@ p480_mul (
 }
 
 void
-p480_mulw (
-    p480_t *__restrict__ cs,
-    const p480_t *as,
+gf_480_mulw (
+    gf_480_t *__restrict__ cs,
+    const gf_480_t *as,
     uint64_t b
 ) {
     const uint64_t *a = as->limb;
@@ -191,9 +190,9 @@ p480_mulw (
 }
 
 void
-p480_sqr (
-    p480_t *__restrict__ cs,
-    const p480_t *as
+gf_480_sqr (
+    gf_480_t *__restrict__ cs,
+    const gf_480_t *as
 ) {
     const uint64_t *a = as->limb;
     uint64_t *c = cs->limb;
@@ -306,8 +305,8 @@ p480_sqr (
 }
 
 void
-p480_strong_reduce (
-    p480_t *a
+gf_480_strong_reduce (
+    gf_480_t *a
 ) {
     uint64_t mask = (1ull<<60)-1;
 
@@ -349,14 +348,14 @@ p480_strong_reduce (
 }
 
 void
-p480_serialize (
+gf_480_serialize (
     uint8_t *serial,
-    const struct p480_t *x
+    const struct gf_480_t *x
 ) {
     int i,j,k=0;
-    p480_t red;
-    p480_copy(&red, x);
-    p480_strong_reduce(&red);
+    gf_480_t red;
+    gf_480_copy(&red, x);
+    gf_480_strong_reduce(&red);
     word_t r = 0;
     for (i=0; i<8; i+=2) {
         r = red.limb[i];
@@ -375,8 +374,8 @@ p480_serialize (
 }
 
 mask_t
-p480_deserialize (
-    p480_t *x,
+gf_480_deserialize (
+    gf_480_t *x,
     const uint8_t serial[60]
 ) {
     int i,j,k=0;

@@ -14,88 +14,6 @@
 #define DECAF_255_LIMB_BITS 51
 #define FIELD_LITERAL(a,b,c,d,e) {{ a,b,c,d,e }}
 
-/*
-#define FIELD_LITERAL(a,b,c,d) {{ \
-    (a##ull) & LMASK, \
-    ((a##ull)>>51 | (b##ull)<<13) & LMASK, \
-    ((b##ull)>>38 | (c##ull)<<26) & LMASK, \
-    ((c##ull)>>25 | (d##ull)<<39) & LMASK, \
-    (d##ull)>>12 \
-}}
-*/
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-static __inline__ void
-gf_25519_add_RAW (
-    gf_25519_t out,
-    const gf_25519_t a,
-    const gf_25519_t b
-) __attribute__((unused));
-             
-static __inline__ void
-gf_25519_sub_RAW (
-    gf_25519_t out,
-    const gf_25519_t a,
-    const gf_25519_t b
-) __attribute__((unused));
-             
-static __inline__ void
-gf_25519_copy (
-    gf_25519_t out,
-    const gf_25519_t a
-) __attribute__((unused));
-             
-static __inline__ void
-gf_25519_weak_reduce (
-    gf_25519_t inout
-) __attribute__((unused));
-             
-void
-gf_25519_strong_reduce (
-    gf_25519_t inout
-);
-
-static __inline__ void
-gf_25519_bias (
-    gf_25519_t inout,
-    int amount
-) __attribute__((unused));
-         
-void
-gf_25519_mul (
-    gf_25519_s *__restrict__ out,
-    const gf_25519_t a,
-    const gf_25519_t b
-);
-
-void
-gf_25519_mulw (
-    gf_25519_s *__restrict__ out,
-    const gf_25519_t a,
-    uint64_t b
-);
-
-void
-gf_25519_sqr (
-    gf_25519_s *__restrict__ out,
-    const gf_25519_t a
-);
-
-void
-gf_25519_serialize (
-    uint8_t serial[32],
-    const gf_25519_t x
-);
-
-mask_t
-gf_25519_deserialize (
-    gf_25519_t x,
-    const uint8_t serial[32]
-);
-
 /* -------------- Inline functions begin here -------------- */
 
 void
@@ -121,14 +39,6 @@ gf_25519_sub_RAW (
     for (i=0; i<5; i++) {
         out->limb[i] = a->limb[i] - b->limb[i] + ((i==0) ? co2 : co1);
     }
-}
-
-void
-gf_25519_copy (
-    gf_25519_t out,
-    const gf_25519_t a
-) {
-    memcpy(out,a,sizeof(*a));
 }
 
 void
