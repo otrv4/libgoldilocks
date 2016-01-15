@@ -1,23 +1,10 @@
-/* Copyright (c) 2014 Cryptography Research, Inc.
+/* Copyright (c) 2014-2016 Cryptography Research, Inc.
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
-#ifndef __P448_H__
-#define __P448_H__ 1
-
-#include "f_field.h"
-
-#include <stdint.h>
-#include <assert.h>
 
 #define FIELD_LITERAL(a,b,c,d,e,f,g,h) {{a,b,c,d,e,f,g,h}}
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* -------------- Inline functions begin here -------------- */
-
-void gf_add_RAW (gf  out, const gf  a, const gf  b) {
+void gf_add_RAW (gf out, const gf a, const gf b) {
     for (unsigned int i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
         ((uint64xn_t*)out)[i] = ((const uint64xn_t*)a)[i] + ((const uint64xn_t*)b)[i];
     }
@@ -29,7 +16,7 @@ void gf_add_RAW (gf  out, const gf  a, const gf  b) {
     */
 }
 
-void gf_sub_RAW (gf  out, const gf  a, const gf  b) {
+void gf_sub_RAW (gf out, const gf a, const gf b) {
     for (unsigned int i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
         ((uint64xn_t*)out)[i] = ((const uint64xn_t*)a)[i] - ((const uint64xn_t*)b)[i];
     }
@@ -41,7 +28,7 @@ void gf_sub_RAW (gf  out, const gf  a, const gf  b) {
     */
 }
 
-void gf_bias (gf  a, int amt) {
+void gf_bias (gf a, int amt) {
     uint64_t co1 = ((1ull<<56)-1)*amt, co2 = co1-amt;
     
 #if __AVX2__
@@ -63,7 +50,7 @@ void gf_bias (gf  a, int amt) {
 #endif
 }
 
-void gf_weak_reduce (gf  a) {
+void gf_weak_reduce (gf a) {
     /* PERF: use pshufb/palignr if anyone cares about speed of this */
     uint64_t mask = (1ull<<56) - 1;
     uint64_t tmp = a->limb[7] >> 56;
@@ -74,8 +61,3 @@ void gf_weak_reduce (gf  a) {
     a->limb[0] = (a->limb[0] & mask) + tmp;
 }
 
-#ifdef __cplusplus
-}; /* extern "C" */
-#endif
-
-#endif /* __P448_H__ */

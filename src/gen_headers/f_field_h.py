@@ -8,7 +8,7 @@ f_field_h = gen_file(
     code = """
 #include "constant_time.h"
 #include <string.h>
-
+#include <assert.h>
 
 #include "decaf/decaf_%(gf_bits)s.h" /* HACK in genheader */
 #include "word.h"

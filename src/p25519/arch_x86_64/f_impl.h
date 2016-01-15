@@ -1,18 +1,8 @@
-/* Copyright (c) 2014 Cryptography Research, Inc.
+/* Copyright (c) 2014-2016 Cryptography Research, Inc.
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
-#ifndef __P25519_H__
-#define __P25519_H__ 1
-
-#include "f_field.h"
-
-#include <stdint.h>
-#include <assert.h>
-#include <string.h>
 
 #define FIELD_LITERAL(a,b,c,d,e) {{ a,b,c,d,e }}
-
-/* -------------- Inline functions begin here -------------- */
 
 void gf_add_RAW (gf out, const gf a, const gf b) {
     for (unsigned int i=0; i<5; i++) {
@@ -41,9 +31,3 @@ void gf_weak_reduce (gf a) {
     }
     a->limb[0] = (a->limb[0] & mask) + tmp*19;
 }
-
-#ifdef __cplusplus
-}; /* extern "C" */
-#endif
-
-#endif /* __P25519_H__ */

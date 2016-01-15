@@ -1,13 +1,6 @@
-/* Copyright (c) 2014 Cryptography Research, Inc.
+/* Copyright (c) 2014-2016 Cryptography Research, Inc.
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
-#ifndef __P448_H__
-#define __P448_H__ 1
-
-#include "f_field.h"
-
-#include <stdint.h>
-#include <assert.h>
 
 #define LIMBPERM(x) (((x)<<1 | (x)>>3) & 15)
 #define USE_NEON_PERM 1
@@ -18,12 +11,6 @@
       LIMBLO(b),LIMBLO(f), LIMBHI(b),LIMBHI(f), \
       LIMBLO(c),LIMBLO(g), LIMBHI(c),LIMBHI(g), \
       LIMBLO(d),LIMBLO(h), LIMBHI(d),LIMBHI(h)}}
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-    
-/* -------------- Inline functions begin here -------------- */
 
 void gf_add_RAW (gf out, const gf a, const gf b) {
     for (unsigned int i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {
@@ -64,8 +51,3 @@ void gf_weak_reduce (gf a) {
     aa[0] = (aa[0] & vmask) + vrev64_u32(tmp) + (tmp&vm2);
 }
 
-#ifdef __cplusplus
-}; /* extern "C" */
-#endif
-
-#endif /* __P448_H__ */
