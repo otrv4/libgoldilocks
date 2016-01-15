@@ -1,2 +1,0 @@
-#define WORD_BITS 64
-#define DECAF_255_LIMB_BITS 51

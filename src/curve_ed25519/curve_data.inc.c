@@ -5,7 +5,6 @@
 
 #define SCALAR_LIMBS DECAF_255_SCALAR_LIMBS
 #define SCALAR_BITS DECAF_255_SCALAR_BITS
-#define NLIMBS DECAF_255_LIMBS
 #define scalar_t decaf_255_scalar_t
 #define point_t decaf_255_point_t
 #define precomputed_s decaf_255_precomputed_s

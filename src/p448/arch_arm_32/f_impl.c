@@ -4,19 +4,6 @@
 
 #include "f_field.h"
 
-static inline mask_t is_zero (word_t x) {
-    dword_t xx = x;
-    xx--;
-    return xx >> WORD_BITS;
-}
-
-static uint64_t widemul (
-    const uint32_t a,
-    const uint32_t b
-) {
-    return ((uint64_t)a)* b;
-}
-
 static inline void __attribute__((gnu_inline,always_inline))
 smlal (
     uint64_t *acc,
@@ -874,7 +861,7 @@ void gf_strong_reduce (
     * so let's add back in p.  will carry back off the top for 2^448.
     */
 
-    assert(is_zero(scarry) | is_zero(scarry+1));
+    assert(word_is_zero(scarry) | word_is_zero(scarry+1));
 
     word_t scarry_mask = scarry & mask;
     dword_t carry = 0;
@@ -886,7 +873,7 @@ void gf_strong_reduce (
         carry >>= 28;
     }
 
-    assert(is_zero(carry + scarry));
+    assert(word_is_zero(carry + scarry));
 }
 
 void gf_serialize (
@@ -935,12 +922,12 @@ gf_deserialize (
     }
     
     /* At this point, ge = 1111 iff bottom are all 1111.  Now propagate if 1110, or set if 1111 */
-    ge = (ge & (x->limb[8] + 1)) | is_zero(x->limb[8] ^ mask);
+    ge = (ge & (x->limb[8] + 1)) | word_is_zero(x->limb[8] ^ mask);
     
     /* Propagate the rest */
     for (i=9; i<16; i++) {
         ge &= x->limb[i];
     }
     
-    return ~is_zero(ge ^ mask);
+    return ~word_is_zero(ge ^ mask);
 }

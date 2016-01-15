@@ -13,7 +13,6 @@ extern "C" {
 #endif
 
 /** @cond internal */
-#define %(C_NS)s_LIMBS (%(gf_impl_bits)d/DECAF_WORD_BITS)
 #define %(C_NS)s_SCALAR_LIMBS ((%(scalar_bits)d-1)/DECAF_WORD_BITS+1)
 /** @endcond */
 
@@ -21,13 +20,13 @@ extern "C" {
 #define %(C_NS)s_SCALAR_BITS %(scalar_bits)d
 
 /** @cond internal */
-#ifndef __%(C_NS)s_GF_DEFINED__
-#define __%(C_NS)s_GF_DEFINED__ 1
+#ifndef __DECAF_%(gf_shortname)s_GF_DEFINED__
+#define __DECAF_%(gf_shortname)s_GF_DEFINED__ 1
 /** @brief Galois field element internal structure */
-typedef struct gf_%(longnum)s_s {
-    decaf_word_t limb[%(C_NS)s_LIMBS];
-} __attribute__((aligned(32))) gf_%(longnum)s_s, gf_%(longnum)s_t[1];
-#endif /* __%(C_NS)s_GF_DEFINED__ */
+typedef struct gf_%(gf_shortname)s_s {
+    decaf_word_t limb[%(gf_impl_bits)d/DECAF_WORD_BITS];
+} __attribute__((aligned(32))) gf_%(gf_shortname)s_s, gf_%(gf_shortname)s_t[1];
+#endif /* __DECAF_%(gf_shortname)s_GF_DEFINED__ */
 /** @endcond */
 
 /** Number of bytes in a serialized point. */
@@ -39,7 +38,7 @@ typedef struct gf_%(longnum)s_s {
 /** Twisted Edwards extended homogeneous coordinates */
 typedef struct %(c_ns)s_point_s {
     /** @cond internal */
-    gf_%(longnum)s_t x,y,z,t;
+    gf_%(gf_shortname)s_t x,y,z,t;
     /** @endcond */
 } %(c_ns)s_point_t[1];
 

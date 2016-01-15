@@ -8,7 +8,7 @@
 /* for posix_memalign */
 #define _XOPEN_SOURCE 600
 
-#include "arch_config.h"
+#include <stdint.h>
 #include "arch_intrinsics.h"
 
 #include <decaf/common.h>
@@ -21,7 +21,6 @@
 #include <endian.h>
 #endif
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <inttypes.h>
@@ -64,7 +63,7 @@
     #define U56LE(x) (x##ull)&((1ull<<28)-1), (x##ull)>>28
     #define U60LE(x) (x##ull)&((1ull<<30)-1), (x##ull)>>30
     #define letohWORD letoh32
-    #define SC_LIMB(x) (x##ull)
+    #define SC_LIMB(x) ((uint32_t)x##ull),(x##ull>>32)
 #else
     #error "For now, libdecaf only supports 32- and 64-bit architectures."
 #endif
@@ -159,14 +158,6 @@ typedef struct {
 typedef struct {
     uint32xn_t unaligned;
 } __attribute__((packed)) unaligned_uint32xn_t;
-    
-/**
- * Return -1 if x==0, and 0 otherwise.
- */
-static INLINE UNUSED mask_t
-word_is_zero(word_t x) {
-    return (mask_t)((((dword_t)(x)) - 1)>>WORD_BITS);
-}
 
 #if __AVX2__
     static INLINE big_register_t
@@ -185,13 +176,8 @@ word_is_zero(word_t x) {
         return vceqq_u32(x,x^x);
     }
 #else
-    static INLINE mask_t
-    br_is_zero(word_t x) {
-        return (((dword_t)x) - 1)>>WORD_BITS;
-    }
+    #define br_is_zero word_is_zero
 #endif
-
-
 
 
 #ifdef __APPLE__

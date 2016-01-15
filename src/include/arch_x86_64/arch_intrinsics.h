@@ -5,6 +5,8 @@
 #ifndef __ARCH_X86_64_ARCH_INTRINSICS_H__
 #define __ARCH_X86_64_ARCH_INTRINSICS_H__
 
+#define WORD_BITS 64
+
 #include <stdint.h>
 
 /* FUTURE: non x86-64 versions of these.
@@ -294,7 +296,7 @@ static __inline__ void mrs(__uint128_t *acc, const uint64_t *a, const uint64_t *
   *acc = (((__uint128_t)(d))<<64) | c;
 }
 
-static __inline__ uint64_t is_zero(uint64_t x) {
+static __inline__ uint64_t word_is_zero(uint64_t x) {
   __asm__ volatile("neg %0; sbb %0, %0;" : "+r"(x));
   return ~x;
 }

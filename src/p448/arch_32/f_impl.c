@@ -4,19 +4,6 @@
 
 #include "f_field.h"
 
-static inline mask_t is_zero (word_t x) {
-    dword_t xx = x;
-    xx--;
-    return xx >> WORD_BITS;
-}
-
-static uint64_t widemul (
-    const uint32_t a,
-    const uint32_t b
-) {
-    return ((uint64_t)a)* b;
-}
-
 void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) { 
     const uint32_t *a = as->limb, *b = bs->limb;
     uint32_t *c = cs->limb;
@@ -141,7 +128,7 @@ void gf_strong_reduce (gf a) {
     * so let's add back in p.  will carry back off the top for 2^448.
     */
 
-    assert(is_zero(scarry) | is_zero(scarry+1));
+    assert(word_is_zero(scarry) | word_is_zero(scarry+1));
 
     word_t scarry_mask = scarry & mask;
     dword_t carry = 0;
@@ -153,7 +140,7 @@ void gf_strong_reduce (gf a) {
         carry >>= 28;
     }
 
-    assert(is_zero(carry + scarry));
+    assert(word_is_zero(carry + scarry));
 }
 
 void gf_serialize (uint8_t *serial, const gf x) {
@@ -195,13 +182,13 @@ mask_t gf_deserialize (gf x, const uint8_t serial[56]) {
     }
     
     /* At this point, ge = 1111 iff bottom are all 1111.  Now propagate if 1110, or set if 1111 */
-    ge = (ge & (x->limb[8] + 1)) | is_zero(x->limb[8] ^ mask);
+    ge = (ge & (x->limb[8] + 1)) | word_is_zero(x->limb[8] ^ mask);
     
     /* Propagate the rest */
     for (i=9; i<16; i++) {
         ge &= x->limb[i];
     }
     
-    return ~is_zero(ge ^ mask);
+    return ~word_is_zero(ge ^ mask);
 }
 

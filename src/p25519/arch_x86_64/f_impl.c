@@ -194,7 +194,7 @@ void gf_strong_reduce (gf a) {
     * so let's add back in p.  will carry back off the top for 2^255.
     */
 
-    assert(is_zero(scarry) | is_zero(scarry+1));
+    assert(word_is_zero(scarry) | word_is_zero(scarry+1));
 
     uint64_t scarry_mask = scarry & mask;
     __uint128_t carry = 0;
@@ -206,7 +206,7 @@ void gf_strong_reduce (gf a) {
         carry >>= 51;
     }
 
-    assert(is_zero(carry + scarry));
+    assert(word_is_zero(carry + scarry));
 }
 
 void gf_serialize (uint8_t serial[32], const gf x) {
@@ -248,5 +248,5 @@ mask_t gf_deserialize (gf x, const uint8_t serial[32]) {
     x->limb[3] = (ser64[2]>>25 | ser64[3]<<39) & mask;
     x->limb[4] = ser64[3]>>12;
     
-    return ~is_zero(~ge);
+    return ~word_is_zero(~ge);
 }

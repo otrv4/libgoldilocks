@@ -10,8 +10,12 @@ f_field_h = gen_file(
 #include <string.h>
 #include <assert.h>
 
-#include "decaf/decaf_%(gf_bits)s.h" /* HACK in genheader */
 #include "word.h"
+
+#define __DECAF_%(gf_shortname)s_GF_DEFINED__ 1
+typedef struct gf_%(gf_shortname)s_s {
+    word_t limb[%(gf_impl_bits)d/sizeof(word_t)/8];
+} __attribute__((aligned(32))) gf_%(gf_shortname)s_s, gf_%(gf_shortname)s_t[1];
 
 #define GF_LIT_LIMB_BITS  %(gf_lit_limb_bits)d
 #define GF_BITS           %(gf_bits)d

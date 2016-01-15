@@ -4,15 +4,6 @@
 
 #include "f_field.h"
 
-static inline mask_t __attribute__((always_inline))
-is_zero (
-    word_t x
-) {
-    dword_t xx = x;
-    xx--;
-    return xx >> WORD_BITS;
-}
-
 static __inline__ uint64x2_t __attribute__((gnu_inline,always_inline,unused))
 xx_vaddup_u64(uint64x2_t x) {
     __asm__ ("vadd.s64 %f0, %e0" : "+w"(x));
@@ -629,7 +620,7 @@ void gf_strong_reduce (gf a) {
     * so let's add back in p.  will carry back off the top for 2^448.
     */
 
-    assert(is_zero(scarry) | is_zero(scarry+1));
+    assert(word_is_zero(scarry) | word_is_zero(scarry+1));
 
     word_t scarry_mask = scarry & mask;
     dword_t carry = 0;
@@ -641,7 +632,7 @@ void gf_strong_reduce (gf a) {
         carry >>= 28;
     }
 
-    assert(is_zero(carry + scarry));
+    assert(word_is_zero(carry + scarry));
 }
 
 void gf_serialize (uint8_t *serial, const gf x) {
@@ -684,13 +675,13 @@ mask_t gf_deserialize (gf x, const uint8_t serial[56]) {
     }
     
     /* At this point, ge = 1111 iff bottom are all 1111.  Now propagate if 1110, or set if 1111 */
-    ge = (ge & (x->limb[LIMBPERM(8)] + 1)) | is_zero(x->limb[LIMBPERM(8)] ^ mask);
+    ge = (ge & (x->limb[LIMBPERM(8)] + 1)) | word_is_zero(x->limb[LIMBPERM(8)] ^ mask);
     
     /* Propagate the rest */
     for (i=9; i<16; i++) {
         ge &= x->limb[LIMBPERM(i)];
     }
     
-    return ~is_zero(ge ^ mask);
+    return ~word_is_zero(ge ^ mask);
 }
 

@@ -4,18 +4,6 @@
 
 #include "f_field.h"
 
-static __inline__ __uint128_t widemul(
-    const uint64_t a,
-    const uint64_t b
-) {
-    return ((__uint128_t)a) * ((__uint128_t)b);
-}
-
-static __inline__ uint64_t is_zero(uint64_t a) {
-    /* let's hope the compiler isn't clever enough to optimize this. */
-    return (((__uint128_t)a)-1)>>64;
-}
-
 void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     const uint64_t *a = as->limb, *b = bs->limb, mask = ((1ull<<51)-1);
     
@@ -95,7 +83,7 @@ void gf_strong_reduce (gf a) {
     * so let's add back in p.  will carry back off the top for 2^255.
     */
 
-    assert(is_zero(scarry) | is_zero(scarry+1));
+    assert(word_is_zero(scarry) | word_is_zero(scarry+1));
 
     uint64_t scarry_mask = scarry & mask;
     __uint128_t carry = 0;
@@ -107,15 +95,15 @@ void gf_strong_reduce (gf a) {
         carry >>= 51;
     }
 
-    assert(is_zero(carry + scarry));
+    assert(word_is_zero(carry + scarry));
 }
 
-void gf_serialize (uint8_t serial[32], const struct gf x) {
+void gf_serialize (uint8_t serial[32], const gf x) {
     int i,j;
     gf red;
-    gf_copy(&red, x);
-    gf_strong_reduce(&red);
-    uint64_t *r = red.limb;
+    gf_copy(red, x);
+    gf_strong_reduce(red);
+    uint64_t *r = red->limb;
     uint64_t ser64[4] = {r[0] | r[1]<<51, r[1]>>13|r[2]<<38, r[2]>>26|r[3]<<25, r[3]>>39|r[4]<<12};
     for (i=0; i<4; i++) {
         for (j=0; j<8; j++) {
@@ -149,5 +137,5 @@ mask_t gf_deserialize (gf x, const uint8_t serial[32]) {
     x->limb[3] = (ser64[2]>>25 | ser64[3]<<39) & mask;
     x->limb[4] = ser64[3]>>12;
     
-    return ~is_zero(~ge);
+    return ~word_is_zero(~ge);
 }

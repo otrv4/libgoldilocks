@@ -74,7 +74,6 @@ gf_add (
 
 /** Subtract mod p.  Bias by 2 and don't reduce  */
 static inline void gf_sub_nr ( gf c, const gf a, const gf b ) {
-//    FOR_LIMB_U(i, c->limb[i] = a->limb[i] - b->limb[i] + 2*P->limb[i] );
     gf_sub_RAW(c,a,b);
     gf_bias(c, 2);
     if (DECAF_WORD_BITS==32) gf_weak_reduce(c); // HACK

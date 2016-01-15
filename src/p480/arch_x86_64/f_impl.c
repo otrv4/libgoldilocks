@@ -315,7 +315,7 @@ void gf_strong_reduce (gf *a) {
     * so let's add back in p.  will carry back off the top for 2^480.
     */
 
-    assert(is_zero(scarry) | is_zero(scarry+1));
+    assert(word_is_zero(scarry) | word_is_zero(scarry+1));
 
     uint64_t scarry_mask = scarry & mask;
     __uint128_t carry = 0;
@@ -327,7 +327,7 @@ void gf_strong_reduce (gf *a) {
         carry >>= 60;
     }
 
-    assert(is_zero(carry + scarry));
+    assert(word_is_zero(carry + scarry));
 }
 
 void gf_serialize (uint8_t *serial, const struct gf *x) {
@@ -381,13 +381,13 @@ mask_t gf_deserialize (gf *x, const uint8_t serial[60]) {
     }
     
     /* At this point, ge = 1111 iff bottom are all 1111.  Now propagate if 1110, or set if 1111 */
-    ge = (ge & (x->limb[4] + 1)) | is_zero(x->limb[4] ^ mask);
+    ge = (ge & (x->limb[4] + 1)) | word_is_zero(x->limb[4] ^ mask);
     
     /* Propagate the rest */
     for (i=5; i<8; i++) {
         ge &= x->limb[i];
     }
     
-    return ~is_zero(ge ^ mask);
+    return ~word_is_zero(ge ^ mask);
 }
 

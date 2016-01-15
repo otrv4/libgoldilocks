@@ -11,9 +11,10 @@
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "field.h"
 #include "decaf.h"
 #include "decaf_config.h"
-#include "field.h"
 
 #define GEN_TABLES
 #include "curve_data.inc.c"
@@ -91,8 +92,8 @@ int main(int argc, char **argv) {
     unsigned i;
     
     printf("/** @warning: this file was automatically generated. */\n");
-    printf("#include <decaf.h>\n\n");
     printf("#include \"field.h\"\n\n");
+    printf("#include <decaf.h>\n\n");
     printf("#define API_NS(_id) %s_##_id\n", API_NAME);
     printf("#define API_NS2(_pref,_id) _pref##_%s_##_id\n", API_NAME);
     

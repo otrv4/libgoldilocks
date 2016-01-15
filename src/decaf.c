@@ -10,12 +10,13 @@
 
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #define __STDC_WANT_LIB_EXT1__ 1 /* for memset_s */
-#include <decaf.h>
 #include <string.h>
 
 #include "word.h"
 #include "field.h"
 #include "decaf_config.h"
+
+#include <decaf.h>
 
 /* Include the curve data here */
 #include "curve_data.inc.c"
@@ -41,7 +42,10 @@ extern const gf SQRT_MINUS_ONE;
 extern const gf SQRT_ONE_MINUS_D; /* TODO: Intern this? */
 #endif
 
-#define WBITS DECAF_WORD_BITS
+/* FIXME: this can be different from DECAF_WORD_BITS, and word_t can be different from decaf_word_t,
+ * eg when mixing and matching implementations for different curves.  Homogenize this.
+ */
+#define WBITS WORD_BITS
 
 const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
 extern const scalar_t API_NS(sc_r2);
@@ -82,8 +86,8 @@ const size_t API_NS2(alignof,precomputed_s) = 32;
 #define UNROLL
 #endif
 
-#define FOR_LIMB(i,op) { unsigned int i=0; for (i=0; i<NLIMBS; i++)  { op; }}
-#define FOR_LIMB_U(i,op) { unsigned int i=0; UNROLL for (i=0; i<NLIMBS; i++)  { op; }}
+#define FOR_LIMB(i,op) { unsigned int i=0; for (i=0; i<sizeof(gf)/sizeof(word_t); i++)  { op; }}
+#define FOR_LIMB_U(i,op) { unsigned int i=0; UNROLL for (i=0; i<sizeof(gf)/sizeof(word_t); i++)  { op; }}
 
 /** Copy x = y */
 static INLINE void
@@ -106,11 +110,11 @@ cond_neg(gf x, decaf_bool_t neg) {
 /** Constant time, if (swap) (x,y) = (y,x); */
 static INLINE void
 cond_swap(gf x, gf_s *__restrict__ y, decaf_bool_t swap) {
-    FOR_LIMB_U(i, {
+    UNROLL for (unsigned int i=0; i<sizeof(x->limb)/sizeof(x->limb[0]); i++) {
         decaf_word_t s = (x->limb[i] ^ y->limb[i]) & swap;
         x->limb[i] ^= s;
         y->limb[i] ^= s;
-    });
+    }
 }
 
 /** Compare a==b */
@@ -123,9 +127,11 @@ gf_eq(const gf a, const gf b) {
     gf_sub(c,a,b);
     gf_strong_reduce(c);
     decaf_word_t ret=0;
-    FOR_LIMB(i, ret |= c->limb[i] );
-    /* Hope the compiler is too dumb to optimize this, thus noinline */
-    return ((decaf_dword_t)ret - 1) >> WBITS;
+    for (unsigned int i=0; i<sizeof(c->limb)/sizeof(c->limb[0]); i++) {
+        ret |= c->limb[i];
+    }
+
+    return word_is_zero(ret);
 }
 
 /** Inverse square root using addition chain. */
@@ -385,7 +391,7 @@ API_NS(scalar_eq) (
     for (i=0; i<SCALAR_LIMBS; i++) {
         diff |= a->limb[i] ^ b->limb[i];
     }
-    return (((decaf_dword_t)diff)-1)>>WBITS;
+    return word_is_zero(diff);
 }
 
 /* *** API begins here *** */    
@@ -1280,7 +1286,7 @@ API_NS(invert_elligator_nonuniform) (
     const point_t p,
     uint16_t hint_
 ) {
-    uint64_t hint = hint_;
+    decaf_bool_t hint = hint_;
     decaf_bool_t sgn_s = -(hint & 1),
         sgn_t_over_s = -(hint>>1 & 1),
         sgn_r0 = -(hint>>2 & 1),
@@ -1293,13 +1299,13 @@ API_NS(invert_elligator_nonuniform) (
     gf_sub(b,ONE,b); /* t+1 */
     gf_sqr(c,a); /* s^2 */
     decaf_bool_t is_identity = gf_eq(p->t,ZERO);
-    {   /* identity adjustments */
+    {
+        /* identity adjustments */
         /* in case of identity, currently c=0, t=0, b=1, will encode to 1 */
         /* if hint is 0, -> 0 */
         /* if hint is to neg t/s, then go to infinity, effectively set s to 1 */
         cond_sel(c,c,ONE,is_identity & sgn_t_over_s);
-        cond_sel(b,b,ZERO,is_identity & ~sgn_t_over_s & ~sgn_s); /* identity adjust */
-        
+        cond_sel(b,b,ZERO,is_identity & ~sgn_t_over_s & ~sgn_s); /* identity adjust */        
     }
     gf_mulw_sgn(d,c,2*EDWARDS_D-1); /* $d = (2d-a)s^2 */
     gf_add(a,b,d); /* num? */

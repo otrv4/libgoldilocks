@@ -8,11 +8,6 @@ typedef struct {
   uint64x3_t lo, hi, hier;
 } nonad_t;
 
-static __inline__ uint64_t is_zero(uint64_t a) {
-    /* let's hope the compiler isn't clever enough to optimize this. */
-    return (((__uint128_t)a)-1)>>64;
-}
-
 static inline __uint128_t widemulu(uint64_t a, uint64_t b) {
     return ((__uint128_t)(a)) * b;
 }
@@ -378,7 +373,7 @@ void gf_strong_reduce (gf *a) {
     * so let's add back in p.  will carry back off the top for 2^521.
     */
 
-    assert(is_zero(scarry) | is_zero(scarry+1));
+    assert(word_is_zero(scarry) | word_is_zero(scarry+1));
 
     uint64_t scarry_mask = scarry & mask;
     __uint128_t carry = 0;
@@ -390,7 +385,7 @@ void gf_strong_reduce (gf *a) {
         carry >>= (i==8) ? 57 : 58;
     }
 
-    assert(is_zero(carry + scarry));
+    assert(word_is_zero(carry + scarry));
 
     a->limb[3] = a->limb[7] = a->limb[11] = 0;
 }
@@ -429,14 +424,14 @@ mask_t gf_deserialize (gf *x, const uint8_t serial[LIMBPERM(66)]) {
     }
     
     /* Check for reduction.  First, high has to be < 2^57 */
-    mask_t good = is_zero(out>>57);
+    mask_t good = word_is_zero(out>>57);
     
     uint64_t and = -1ull;
     for (i=0; i<8; i++) {
         and &= x->limb[LIMBPERM(i)];
     }
     and &= (2*out+1);
-    good &= is_zero((and+1)>>58);
+    good &= word_is_zero((and+1)>>58);
 
     x->limb[3] = x->limb[7] = x->limb[11] = 0;
     

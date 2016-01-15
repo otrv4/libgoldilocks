@@ -4,7 +4,6 @@
 
 #define SCALAR_LIMBS DECAF_448_SCALAR_LIMBS
 #define SCALAR_BITS DECAF_448_SCALAR_BITS
-#define NLIMBS DECAF_448_LIMBS
 #define scalar_t decaf_448_scalar_t
 #define point_t decaf_448_point_t
 #define precomputed_s decaf_448_precomputed_s

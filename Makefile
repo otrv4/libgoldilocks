@@ -31,13 +31,6 @@ LD = $(CC)
 LDXX = $(CXX)
 ASM ?= $(CC)
 
-ifneq (,$(findstring x86_64,$(MACHINE)))
-ARCH ?= arch_x86_64
-else
-# no i386 port yet
-ARCH ?= arch_ref32
-endif
-
 WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 	 -Wmissing-declarations -Wunused-function -Wno-overlength-strings $(EXWARN)
 
@@ -55,17 +48,8 @@ endif
 
 TODAY = $(shell date "+%Y-%m-%d")
 
-ifneq (,$(findstring arm,$(MACHINE)))
-ifneq (,$(findstring neon,$(ARCH)))
-ARCHFLAGS += -mfpu=neon
-else
-ARCHFLAGS += -mfpu=vfpv3-d16
-endif
-ARCHFLAGS += -mcpu=cortex-a8 # FIXME
-GENFLAGS += -DN_TESTS_BASE=1000 # sooooo sloooooow
-else
-ARCHFLAGS += -maes -mavx2 -mbmi2 #TODO
-endif
+#FIXME ARCHFLAGS
+ARCHFLAGS ?= -maes -mavx2 -mbmi2 #TODO
 
 ifeq ($(CC),clang)
 WARNFLAGS += -Wgcc-compat
@@ -141,18 +125,18 @@ $(GEN_HEADERS): src/gen_headers/*.py src/public_include/decaf/*
 # Per-field code: call with field, arch
 ################################################################
 define define_field
-ARCH_FOR_$(1) = $(2)
+ARCH_FOR_$(1) ?= $(2)
 COMPONENTS_OF_$(1) = $$(BUILD_OBJ)/$(1)_impl.o $$(BUILD_OBJ)/$(1)_arithmetic.o
 LIBCOMPONENTS += $$(COMPONENTS_OF_$(1))
 
 $$(BUILD_ASM)/$(1)_arithmetic.s: src/$(1)/f_arithmetic.c $$(HEADERS)
-	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$(2) -I $(BUILD_H)/$(1) \
-	-I $(BUILD_H)/$(1)/$(2) -I src/include/$(2) \
+	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
+	-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
 	-S -c -o $$@ $$<
 
-$$(BUILD_ASM)/$(1)_impl.s: src/$(1)/$(2)/f_impl.c $$(HEADERS)
-	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$(2) -I $(BUILD_H)/$(1) \
-	-I $(BUILD_H)/$(1)/$(2) -I src/include/$(2) \
+$$(BUILD_ASM)/$(1)_impl.s: src/$(1)/$$(ARCH_FOR_$(1))/f_impl.c $$(HEADERS)
+	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
+	-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
 	-S -c -o $$@ $$<
 endef
 
