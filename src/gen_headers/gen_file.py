@@ -1,4 +1,4 @@
-from curve_data import curve_data
+from curve_data import curve_data, field_data
 from textwrap import dedent
 
 def redoc(filename,doc,author):
@@ -22,10 +22,12 @@ def redoc(filename,doc,author):
 
 gend_files = {}
 
-def gen_file(name,doc,code,author="Mike Hamburg"):
+per_map = {"field":field_data, "curve":curve_data, "global":{"global":{}} }
+
+def gen_file(public,name,doc,code,per="global",author="Mike Hamburg"):
     is_header = name.endswith(".h") or name.endswith(".hxx") or name.endswith(".h++")
     
-    for curve,data in curve_data.iteritems():
+    for curve,data in per_map[per].iteritems():
         ns_name = name % data
         
         _,_,name_base = ns_name.rpartition("/")
@@ -44,8 +46,5 @@ def gen_file(name,doc,code,author="Mike Hamburg"):
                 #endif /* %(header_guard)s */
                 """) % { "header_guard" : header_guard, "code": ns_code }
         ret += ns_code[1:-1]
-        gend_files[ns_name] = ret
         
-        if ns_name == name:
-            # It's not namespaced
-            break
+        gend_files[ns_name] = (public,ret)

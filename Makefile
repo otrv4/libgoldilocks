@@ -11,6 +11,7 @@ MACHINE := $(shell uname -m)
 BUILD_ASM = build/obj
 BUILD_OBJ = build/obj
 BUILD_C   = build/obj
+BUILD_H   = build/obj/include
 BUILD_PY  = build/obj
 BUILD_LIB = build/lib
 BUILD_INC = build/include
@@ -40,8 +41,8 @@ endif
 WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 	 -Wmissing-declarations -Wunused-function -Wno-overlength-strings $(EXWARN)
 
-INCFLAGS = -Isrc/include -Ibuild/include
-PUB_INCFLAGS = -Ibuild/include
+INCFLAGS = -Isrc/include -I$(BUILD_INC) -I$(BUILD_H)
+PUB_INCFLAGS = -I$(BUILD_INC)
 LANGFLAGS = -std=c99 -fno-strict-aliasing
 LANGXXFLAGS = -fno-strict-aliasing
 GENFLAGS = -ffunction-sections -fdata-sections -fvisibility=hidden -fomit-frame-pointer -fPIC
@@ -124,7 +125,7 @@ endif
 # Create all the build subdirectories
 $(BUILD_OBJ)/timestamp:
 	mkdir -p $(BUILD_ASM) $(BUILD_OBJ) $(BUILD_C) $(BUILD_PY) \
-		$(BUILD_LIB) $(BUILD_INC) $(BUILD_BIN) $(BUILD_IBIN) $(BUILD_INC)/decaf
+		$(BUILD_LIB) $(BUILD_INC) $(BUILD_BIN) $(BUILD_IBIN) $(BUILD_H) $(BUILD_INC)/decaf
 	touch $@
 
 $(BUILD_OBJ)/%.o: $(BUILD_ASM)/%.s
@@ -133,7 +134,7 @@ $(BUILD_OBJ)/%.o: $(BUILD_ASM)/%.s
 gen_headers: $(GEN_HEADERS)
 	
 $(GEN_HEADERS): src/gen_headers/*.py src/public_include/decaf/*
-	python -B src/gen_headers/main.py --hpre=$(BUILD_INC) --cpre=$(BUILD_C)
+	python -B src/gen_headers/main.py --hpre=$(BUILD_INC) --ihpre=$(BUILD_H) --cpre=$(BUILD_C)
 	cp src/public_include/decaf/* $(BUILD_INC)/decaf/
 
 ################################################################
@@ -145,17 +146,18 @@ COMPONENTS_OF_$(1) = $$(BUILD_OBJ)/$(1)_impl.o $$(BUILD_OBJ)/$(1)_arithmetic.o
 LIBCOMPONENTS += $$(COMPONENTS_OF_$(1))
 
 $$(BUILD_ASM)/$(1)_arithmetic.s: src/$(1)/f_arithmetic.c $$(HEADERS)
-	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$(2) -S -c -o $$@ $$<
+	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$(2) -I $(BUILD_H)/$(1) -I $(BUILD_H)/$(1)/$(2) -S -c -o $$@ $$<
 
 $$(BUILD_ASM)/$(1)_impl.s: src/$(1)/$(2)/f_impl.c $$(HEADERS)
-	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$(2) -S -c -o $$@ $$<
+	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$(2) -I $(BUILD_H)/$(1) -I $(BUILD_H)/$(1)/$(2) -S -c -o $$@ $$<
 endef
 
 ################################################################
 # Per-field, per-curve code: call with curve, field
 ################################################################
 define define_curve
-$$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/decaf_gen_tables_$(1).o $$(BUILD_OBJ)/decaf_$(1).o $$(BUILD_OBJ)/utils.o \
+$$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/decaf_gen_tables_$(1).o \
+		$$(BUILD_OBJ)/decaf_$(1).o $$(BUILD_OBJ)/utils.o \
 		$$(COMPONENTS_OF_$(2))
 	$$(LD) $$(LDFLAGS) -o $$@ $$^
 
@@ -165,20 +167,24 @@ $$(BUILD_C)/decaf_tables_$(1).c: $$(BUILD_IBIN)/decaf_gen_tables_$(1)
 $$(BUILD_ASM)/decaf_tables_$(1).s: $$(BUILD_C)/decaf_tables_$(1).c $$(HEADERS)
 	$$(CC) $$(CFLAGS) -S -c -o $$@ $$< \
 		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) \
+		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2))
 
 $$(BUILD_ASM)/decaf_gen_tables_$(1).s: src/decaf_gen_tables.c $$(HEADERS)
 	$$(CC) $$(CFLAGS) \
-		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) \
+		-I src/curve_$(1) -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) \
+		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
 		-S -c -o $$@ $$<
 
 $$(BUILD_ASM)/decaf_$(1).s: src/decaf.c $$(HEADERS)
 	$$(CC) $$(CFLAGS) \
 		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) \
+		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
 		-S -c -o $$@ $$<
 
 $$(BUILD_ASM)/decaf_crypto_$(1).s: src/decaf_crypto.c $$(HEADERS)
 	$$(CC) $$(CFLAGS) \
 		-I src/curve_$(1)/ \
+		-I $(BUILD_H)/curve_$(1) \
 		-S -c -o $$@ $$<
 
 LIBCOMPONENTS += $$(BUILD_OBJ)/decaf_$(1).o $$(BUILD_OBJ)/decaf_tables_$(1).o

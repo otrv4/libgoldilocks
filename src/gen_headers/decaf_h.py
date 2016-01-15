@@ -1,6 +1,8 @@
 from gen_file import gen_file
 
 decaf_h = gen_file(
+    public = True,
+    per = "curve",
     name = "decaf/%(c_ns)s.h",
     doc = """@brief A group of prime order p, based on %(iso_to)s.""",
     code = """
@@ -11,7 +13,7 @@ extern "C" {
 #endif
 
 /** @cond internal */
-#define %(C_NS)s_LIMBS (%(gf_bits)d/DECAF_WORD_BITS)
+#define %(C_NS)s_LIMBS (%(gf_impl_bits)d/DECAF_WORD_BITS)
 #define %(C_NS)s_SCALAR_LIMBS ((%(scalar_bits)d-1)/DECAF_WORD_BITS+1)
 /** @endcond */
 

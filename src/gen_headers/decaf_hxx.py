@@ -1,6 +1,8 @@
 from gen_file import gen_file
 
 decaf_hxx = gen_file(
+    public = True,
+    per = "curve",
     name = "decaf/%(c_ns)s.hxx",
     doc = """
         A group of prime order p, C++ wrapper.

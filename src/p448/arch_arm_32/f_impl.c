@@ -99,7 +99,7 @@ smull2 (
 }
 
 void
-p448_mul (
+gf_448_mul (
     gf_448_s *__restrict__ cs,
     const gf_448_t as,
     const gf_448_t bs
@@ -450,7 +450,7 @@ p448_mul (
 }
 
 void
-p448_sqr (
+gf_448_sqr (
     gf_448_s *__restrict__ cs,
     const gf_448_t as
 ) {
@@ -748,7 +748,7 @@ p448_sqr (
 }
 
 void
-p448_mulw (
+gf_448_mulw (
     gf_448_s *__restrict__ cs,
     const gf_448_t as,
     uint64_t b
@@ -862,7 +862,7 @@ p448_mulw (
 }
 
 void
-p448_strong_reduce (
+gf_448_strong_reduce (
     gf_448_t a
 ) {
     word_t mask = (1ull<<28)-1;
@@ -905,14 +905,14 @@ p448_strong_reduce (
 }
 
 void
-p448_serialize (
+gf_448_serialize (
     uint8_t *serial,
     const gf_448_t x
 ) {
     int i,j;
     gf_448_t red;
-    p448_copy(red, x);
-    p448_strong_reduce(red);
+    gf_448_copy(red, x);
+    gf_448_strong_reduce(red);
     for (i=0; i<8; i++) {
         uint64_t limb = red->limb[2*i] + (((uint64_t)red->limb[2*i+1])<<28);
         for (j=0; j<7; j++) {
@@ -924,7 +924,7 @@ p448_serialize (
 }
 
 mask_t
-p448_deserialize (
+gf_448_deserialize (
     gf_448_t x,
     const uint8_t serial[56]
 ) {

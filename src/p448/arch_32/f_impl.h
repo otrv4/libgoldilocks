@@ -23,69 +23,69 @@ extern "C" {
 #endif
 
 static __inline__ void
-p448_add_RAW (
+gf_448_add_RAW (
     gf_448_t out,
     const gf_448_t a,
     const gf_448_t b
 ) __attribute__((unused,always_inline));
              
 static __inline__ void
-p448_sub_RAW (
+gf_448_sub_RAW (
     gf_448_t out,
     const gf_448_t a,
     const gf_448_t b
 ) __attribute__((unused,always_inline));
              
 static __inline__ void
-p448_copy (
+gf_448_copy (
     gf_448_t out,
     const gf_448_t a
 ) __attribute__((unused,always_inline));
              
 static __inline__ void
-p448_weak_reduce (
+gf_448_weak_reduce (
     gf_448_t inout
 ) __attribute__((unused,always_inline));
              
 void
-p448_strong_reduce (
+gf_448_strong_reduce (
     gf_448_t inout
 );
              
 static __inline__ void
-p448_bias (
+gf_448_bias (
     gf_448_t inout,
     int amount
 ) __attribute__((unused,always_inline));
 
 void
-p448_mul (
+gf_448_mul (
     gf_448_s *__restrict__ out,
     const gf_448_t a,
     const gf_448_t b
 );
 
 void
-p448_mulw (
+gf_448_mulw (
     gf_448_s *__restrict__ out,
     const gf_448_t a,
     uint64_t b
 );
 
 void
-p448_sqr (
+gf_448_sqr (
     gf_448_s *__restrict__ out,
     const gf_448_t a
 );
 
 void
-p448_serialize (
+gf_448_serialize (
     uint8_t *serial,
     const gf_448_t x
 );
 
 mask_t
-p448_deserialize (
+gf_448_deserialize (
     gf_448_t x,
     const uint8_t serial[56]
 );
@@ -93,7 +93,7 @@ p448_deserialize (
 /* -------------- Inline functions begin here -------------- */
 
 void
-p448_add_RAW (
+gf_448_add_RAW (
     gf_448_t out,
     const gf_448_t a,
     const gf_448_t b
@@ -111,7 +111,7 @@ p448_add_RAW (
 }
 
 void
-p448_sub_RAW (
+gf_448_sub_RAW (
     gf_448_t out,
     const gf_448_t a,
     const gf_448_t b
@@ -129,7 +129,7 @@ p448_sub_RAW (
 }
 
 void
-p448_copy (
+gf_448_copy (
     gf_448_t out,
     const gf_448_t a
 ) {
@@ -137,7 +137,7 @@ p448_copy (
 }
 
 void
-p448_bias (
+gf_448_bias (
     gf_448_t a,
     int amt
 ) {
@@ -151,7 +151,7 @@ p448_bias (
 }
 
 void
-p448_weak_reduce (
+gf_448_weak_reduce (
     gf_448_t a
 ) {
     uint64_t mask = (1ull<<28) - 1;

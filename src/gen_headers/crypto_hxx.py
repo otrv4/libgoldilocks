@@ -1,6 +1,8 @@
 from gen_file import gen_file
 
 crypto_hxx = gen_file(
+    public = True,
+    per = "curve",
     name = "decaf/crypto_%(shortname)s.hxx",
     doc = """
         Example Decaf cyrpto routines, C++ wrapper.

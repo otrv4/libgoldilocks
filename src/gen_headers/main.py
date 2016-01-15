@@ -5,16 +5,18 @@ import argparse
 import re
 
 parser = argparse.ArgumentParser(description='Generate Decaf headers and other such files.')
-parser.add_argument('--hpre', required = True, help = "Where to put the header files")
+parser.add_argument('--hpre', required = True, help = "Where to put the public header files")
+parser.add_argument('--ihpre', required = True, help = "Where to put the internal header files")
 parser.add_argument('--cpre', required = True, help = "Where to put the C/C++ implementation files")
 args = parser.parse_args()
 
-prefixes = { "h" : args.hpre, "hxx" : args.hpre, "c" : args.cpre }
+prefixes = { (True,"h") : args.hpre, (True,"hxx") : args.hpre, (False,"c") : args.cpre, (False,"h") : args.ihpre }
 
 from decaf_hxx import decaf_hxx
 from decaf_h import decaf_h
 from crypto_h import crypto_h
 from crypto_hxx import crypto_hxx
+from f_field_h import f_field_h
 
 root_hxx_code = "\n".join((
     "#include <%s>" % name
@@ -22,6 +24,8 @@ root_hxx_code = "\n".join((
     if re.match("^decaf/decaf_\d+.hxx$",name)
 ))
 decaf_root_hxx = gen_file(
+    public = True,
+    per = "global",
     name = "decaf.hxx",
     doc = """@brief Decaf curve metaheader.""",
     code = "\n"+root_hxx_code+"\n"
@@ -33,6 +37,8 @@ crypto_h_code = "\n".join((
     if re.match("^decaf/crypto_\d+.h$",name)
 ))
 crypto_h = gen_file(
+    public = True,
+    per = "global",
     name = "decaf/crypto.h",
     doc = """
         Example Decaf crypto routines, metaheader.
@@ -49,6 +55,8 @@ crypto_hxx_code = "\n".join((
     if re.match("^decaf/crypto_\d+.hxx$",name)
 ))
 crypto_hxx = gen_file(
+    public = True,
+    per = "global",
     name = "decaf/crypto.hxx",
     doc = """
         Example Decaf crypto routines, C++, metaheader.
@@ -65,6 +73,8 @@ root_h_code = "\n".join((
     if re.match("^decaf/decaf_\d+.h$",name)
 ))
 decaf_root_hxx = gen_file(
+    public = True,
+    per = "global",
     name = "decaf.h",
     doc = """
         Master header for Decaf library.
@@ -84,9 +94,9 @@ decaf_root_hxx = gen_file(
 )
 
 
-for name,code in gend_files.iteritems():        
+for name,(public,code) in gend_files.iteritems():        
     _,_,name_suffix = name.partition(".")
-    prefix = prefixes[name_suffix]
+    prefix = prefixes[(public,name_suffix)]
     if not os.path.exists(os.path.dirname(prefix + "/" + name)):
         os.makedirs(os.path.dirname(prefix + "/" + name))
     with open(prefix + "/" + name,"w") as f:

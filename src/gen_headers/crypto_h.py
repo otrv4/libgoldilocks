@@ -1,6 +1,8 @@
 from gen_file import gen_file
 
 crypto_h = gen_file(
+    public = True,
+    per = "curve",
     name = "decaf/crypto_%(shortname)s.h",
     doc = """
         Example Decaf crypto routines.
