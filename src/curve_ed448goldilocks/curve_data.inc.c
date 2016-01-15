@@ -7,7 +7,6 @@
 #define scalar_t decaf_448_scalar_t
 #define point_t decaf_448_point_t
 #define precomputed_s decaf_448_precomputed_s
-#define SER_BYTES DECAF_448_SER_BYTES
 #define IMAGINE_TWIST 0
 #define P_MOD_8 7
 #define COFACTOR 4

@@ -8,6 +8,7 @@
  * @brief Example Decaf crypto routines
  */
 
+#include "f_field.h" /* for SER_BYTES; FUTURE: find a better way to do this? */
 #include <decaf/crypto.h>
 #include <string.h>
 

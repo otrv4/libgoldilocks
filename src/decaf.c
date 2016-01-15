@@ -50,16 +50,7 @@ extern const gf SQRT_ONE_MINUS_D; /* TODO: Intern this? */
 const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
 extern const scalar_t API_NS(sc_r2);
 extern const decaf_word_t API_NS(MONTGOMERY_FACTOR);
-
 extern const point_t API_NS(point_base);
-
-/* These are externally exposed (but private) instead of static so that
- * f_arithmetic.c can use it
- */
-#define ONE API_NS(ONE)
-#define ZERO API_NS(ZERO)
-#define gf_eq API_NS(gf_eq)
-const gf ZERO = {{{0}}}, ONE = {{{1}}};
 
 /* Projective Niels coordinates */
 typedef struct { gf a, b, c; } niels_s, niels_t[1];
@@ -75,92 +66,8 @@ const precomputed_s *API_NS(precomputed_base) =
 const size_t API_NS2(sizeof,precomputed_s) = sizeof(precomputed_s);
 const size_t API_NS2(alignof,precomputed_s) = 32;
 
-/* TODO PERF: Vectorize vs unroll */
-#ifdef __clang__
-#if 100*__clang_major__ + __clang_minor__ > 305
-#define UNROLL _Pragma("clang loop unroll(full)") // PERF TODO: vectorize?
-#endif
-#endif
-
-#ifndef UNROLL
-#define UNROLL
-#endif
-
 #define FOR_LIMB(i,op) { unsigned int i=0; for (i=0; i<NLIMBS; i++)  { op; }}
 #define FOR_LIMB_U(i,op) { unsigned int i=0; UNROLL for (i=0; i<NLIMBS; i++)  { op; }}
-
-/* FUTURE: move this code from per-curve to per-field header
- * (like f_arithmetic.c but same for all fields)
- */
-void gf_serialize (uint8_t serial[SER_BYTES], const gf x) {
-    gf red;
-    gf_copy(red, x);
-    gf_strong_reduce(red);
-    
-    unsigned int j=0, fill=0;
-    dword_t buffer = 0;
-    UNROLL for (unsigned int i=0; i<SER_BYTES; i++) {
-        if (fill < 8 && j < NLIMBS) {
-            buffer |= ((dword_t)red->limb[LIMBPERM(j)]) << fill;
-            fill += LIMB_PLACE_VALUE(LIMBPERM(j));
-            j++;
-        }
-        serial[i] = buffer;
-        fill -= 8;
-        buffer >>= 8;
-    }
-}
-
-mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES]) {
-    unsigned int j=0, fill=0;
-    dword_t buffer = 0;
-    dsword_t scarry = 0;
-    UNROLL for (unsigned int i=0; i<NLIMBS; i++) {
-        UNROLL while (fill < LIMB_PLACE_VALUE(LIMBPERM(i)) && j < SER_BYTES) {
-            buffer |= ((dword_t)serial[j]) << fill;
-            fill += 8;
-            j++;
-        }
-        x->limb[LIMBPERM(i)] = (i<NLIMBS-1) ? buffer & LIMB_MASK(LIMBPERM(i)) : buffer;
-        fill -= LIMB_PLACE_VALUE(LIMBPERM(i));
-        buffer >>= LIMB_PLACE_VALUE(LIMBPERM(i));
-        scarry = (scarry + x->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)]) >> (8*sizeof(word_t));
-    }
-    return word_is_zero(buffer) & ~word_is_zero(scarry);
-}
-
-void gf_strong_reduce (gf a) {
-    /* first, clear high */
-    gf_weak_reduce(a); /* PERF: only really need one step of this, but whatevs */
-
-    /* now the total is less than 2p */
-
-    /* compute total_value - p.  No need to reduce mod p. */
-    dsword_t scarry = 0;
-    for (unsigned int i=0; i<NLIMBS; i++) {
-        scarry = scarry + a->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)];
-        a->limb[i] = scarry & LIMB_MASK(LIMBPERM(i));
-        scarry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
-    }
-
-    /* uncommon case: it was >= p, so now scarry = 0 and this = x
-     * common case: it was < p, so now scarry = -1 and this = x - p + 2^255
-     * so let's add back in p.  will carry back off the top for 2^255.
-     */
-    assert(word_is_zero(scarry) | word_is_zero(scarry+1));
-
-    word_t scarry_0 = scarry;
-    dword_t carry = 0;
-
-    /* add it back */
-    for (unsigned int i=0; i<NLIMBS; i++) {
-        carry = carry + a->limb[LIMBPERM(i)] + (scarry_0 & MODULUS->limb[LIMBPERM(i)]);
-        a->limb[i] = carry & LIMB_MASK(LIMBPERM(i));
-        carry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
-    }
-
-    assert(word_is_zero(carry + scarry_0));
-}
 
 /** Constant time, x = is_z ? z : y */
 static INLINE void
@@ -184,21 +91,6 @@ cond_swap(gf x, gf_s *__restrict__ y, decaf_bool_t swap) {
         x->limb[i] ^= s;
         y->limb[i] ^= s;
     }
-}
-
-/** Compare a==b */
-/* Not static because it's used in inverse square root. */
-decaf_word_t gf_eq(const gf a, const gf b);
-decaf_word_t gf_eq(const gf a, const gf b) {
-    gf c;
-    gf_sub(c,a,b);
-    gf_strong_reduce(c);
-    decaf_word_t ret=0;
-    for (unsigned int i=0; i<sizeof(c->limb)/sizeof(c->limb[0]); i++) {
-        ret |= c->limb[i];
-    }
-
-    return word_is_zero(ret);
 }
 
 /** Inverse square root using addition chain. */

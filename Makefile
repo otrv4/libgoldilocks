@@ -126,7 +126,7 @@ $(GEN_HEADERS): src/gen_headers/*.py src/public_include/decaf/*
 ################################################################
 define define_field
 ARCH_FOR_$(1) ?= $(2)
-COMPONENTS_OF_$(1) = $$(BUILD_OBJ)/$(1)_impl.o $$(BUILD_OBJ)/$(1)_arithmetic.o
+COMPONENTS_OF_$(1) = $$(BUILD_OBJ)/$(1)_impl.o $$(BUILD_OBJ)/$(1)_arithmetic.o $$(BUILD_OBJ)/$(1)_per_field.o
 LIBCOMPONENTS += $$(COMPONENTS_OF_$(1))
 
 $$(BUILD_ASM)/$(1)_arithmetic.s: src/$(1)/f_arithmetic.c $$(HEADERS)
@@ -135,6 +135,11 @@ $$(BUILD_ASM)/$(1)_arithmetic.s: src/$(1)/f_arithmetic.c $$(HEADERS)
 	-S -c -o $$@ $$<
 
 $$(BUILD_ASM)/$(1)_impl.s: src/$(1)/$$(ARCH_FOR_$(1))/f_impl.c $$(HEADERS)
+	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
+	-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
+	-S -c -o $$@ $$<
+
+$$(BUILD_ASM)/$(1)_per_field.s: src/per_field.c $$(HEADERS)
 	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
 	-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
 	-S -c -o $$@ $$<
@@ -171,8 +176,8 @@ $$(BUILD_ASM)/decaf_$(1).s: src/decaf.c $$(HEADERS)
 
 $$(BUILD_ASM)/decaf_crypto_$(1).s: src/decaf_crypto.c $$(HEADERS)
 	$$(CC) $$(CFLAGS) \
-		-I src/curve_$(1)/ \
-		-I $(BUILD_H)/curve_$(1) \
+		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
+		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
 		-S -c -o $$@ $$<
 
 LIBCOMPONENTS += $$(BUILD_OBJ)/decaf_$(1).o $$(BUILD_OBJ)/decaf_tables_$(1).o

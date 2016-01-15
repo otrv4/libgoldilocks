@@ -11,7 +11,7 @@
 #include "field.h"
 #include "constant_time.h"
 
-const gf_25519_t P25519_SQRT_MINUS_ONE = {FIELD_LITERAL(
+const gf_25519_t SQRT_MINUS_ONE = {FIELD_LITERAL(
     0x61b274a0ea0b0,
     0x0d5a5fc8f189d,
     0x7ef5e9cbd0c60,
@@ -22,10 +22,6 @@ const gf_25519_t P25519_SQRT_MINUS_ONE = {FIELD_LITERAL(
 const gf MODULUS = {FIELD_LITERAL(
     0x7ffffffffffed, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff
 )};
-    
-/* TODO put in header */
-extern const gf_25519_t decaf_255_ONE;
-extern mask_t decaf_255_gf_eq(const gf_25519_t a, const gf_25519_t b);
 
 /* Guarantee: a^2 x = 0 if x = 0; else a^2 x = 1 or SQRT_MINUS_ONE; */
 void gf_isr (
@@ -44,8 +40,8 @@ void gf_isr (
         st[i&1][0] = tmp2[0];
     }
     
-    mask_t mask = decaf_255_gf_eq(st[1],decaf_255_ONE) | decaf_255_gf_eq(st[1],SQRT_MINUS_ONE);
+    mask_t mask = gf_eq(st[1],ONE) | gf_eq(st[1],SQRT_MINUS_ONE);
     
-    constant_time_select(tmp1, decaf_255_ONE, SQRT_MINUS_ONE, sizeof(tmp1), mask, 0);
+    constant_time_select(tmp1, ONE, SQRT_MINUS_ONE, sizeof(tmp1), mask, 0);
     gf_mul(a,tmp1,st[0]);
 }

@@ -14,14 +14,19 @@ f_field_h = gen_file(
 
 #define __DECAF_%(gf_shortname)s_GF_DEFINED__ 1
 #define NLIMBS (%(gf_impl_bits)d/sizeof(word_t)/8)
+#define SER_BYTES ((%(gf_bits)d-1)/8 + 1)
 typedef struct gf_%(gf_shortname)s_s {
     word_t limb[NLIMBS];
 } __attribute__((aligned(32))) gf_%(gf_shortname)s_s, gf_%(gf_shortname)s_t[1];
 
 #define GF_LIT_LIMB_BITS  %(gf_lit_limb_bits)d
 #define GF_BITS           %(gf_bits)d
+#define ZERO              gf_%(gf_shortname)s_ZERO
+#define ONE               gf_%(gf_shortname)s_ONE
+#define MODULUS           gf_%(gf_shortname)s_MODULUS
 #define gf                gf_%(gf_shortname)s_t
 #define gf_s              gf_%(gf_shortname)s_s
+#define gf_eq             gf_%(gf_shortname)s_eq
 #define gf_copy           gf_%(gf_shortname)s_copy
 #define gf_add_RAW        gf_%(gf_shortname)s_add_RAW
 #define gf_sub_RAW        gf_%(gf_shortname)s_sub_RAW
@@ -34,7 +39,6 @@ typedef struct gf_%(gf_shortname)s_s {
 #define gf_isr            gf_%(gf_shortname)s_isr
 #define gf_serialize      gf_%(gf_shortname)s_serialize
 #define gf_deserialize    gf_%(gf_shortname)s_deserialize
-#define MODULUS           gf_%(gf_shortname)s_MODULUS
 
 #define SQRT_MINUS_ONE    P%(gf_shortname)s_SQRT_MINUS_ONE /* might not be defined */
 
@@ -44,7 +48,7 @@ typedef struct gf_%(gf_shortname)s_s {
 extern "C" {
 #endif
 
-const gf MODULUS;
+const gf MODULUS, ZERO, ONE;
 
 /* Defined below in f_impl.h */
 static INLINE_UNUSED void gf_copy (gf out, const gf a) { *out = *a; }
@@ -58,6 +62,7 @@ void gf_mul (gf_s *__restrict__ out, const gf a, const gf b);
 void gf_mulw (gf_s *__restrict__ out, const gf a, uint64_t b);
 void gf_sqr (gf_s *__restrict__ out, const gf a);
 void gf_serialize (uint8_t *serial, const gf x);
+mask_t gf_eq (const gf x, const gf y);
 mask_t gf_deserialize (gf x, const uint8_t serial[(GF_BITS-1)/8+1]);
 
 #ifdef __cplusplus
