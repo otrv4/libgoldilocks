@@ -10,7 +10,7 @@
 
 #include "field.h"
 
-const gf ZERO = {{{0}}}, ONE = {{{1}}};
+const gf ZERO = {{{0}}}, ONE = {{{ [LIMBPERM(0)] = 1 }}};
 
 /** Serialize to wire format. */
 void gf_serialize (uint8_t serial[SER_BYTES], const gf x) {
@@ -62,7 +62,7 @@ void gf_strong_reduce (gf a) {
     dsword_t scarry = 0;
     for (unsigned int i=0; i<NLIMBS; i++) {
         scarry = scarry + a->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)];
-        a->limb[i] = scarry & LIMB_MASK(LIMBPERM(i));
+        a->limb[LIMBPERM(i)] = scarry & LIMB_MASK(LIMBPERM(i));
         scarry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
     }
 
@@ -78,7 +78,7 @@ void gf_strong_reduce (gf a) {
     /* add it back */
     for (unsigned int i=0; i<NLIMBS; i++) {
         carry = carry + a->limb[LIMBPERM(i)] + (scarry_0 & MODULUS->limb[LIMBPERM(i)]);
-        a->limb[i] = carry & LIMB_MASK(LIMBPERM(i));
+        a->limb[LIMBPERM(i)] = carry & LIMB_MASK(LIMBPERM(i));
         carry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
     }
 
@@ -91,8 +91,8 @@ mask_t gf_eq(const gf a, const gf b) {
     gf_sub(c,a,b);
     gf_strong_reduce(c);
     mask_t ret=0;
-    for (unsigned int i=0; i<sizeof(c->limb)/sizeof(c->limb[0]); i++) {
-        ret |= c->limb[i];
+    for (unsigned int i=0; i<NLIMBS; i++) {
+        ret |= c->limb[LIMBPERM(i)];
     }
 
     return word_is_zero(ret);
