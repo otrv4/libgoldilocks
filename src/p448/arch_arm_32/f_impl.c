@@ -4,16 +4,13 @@
 
 #include "f_field.h"
 
-static inline mask_t __attribute__((always_inline))
-is_zero (
-    word_t x
-) {
+static inline mask_t is_zero (word_t x) {
     dword_t xx = x;
     xx--;
     return xx >> WORD_BITS;
 }
 
-static uint64_t widemul_32 (
+static uint64_t widemul (
     const uint32_t a,
     const uint32_t b
 ) {
@@ -97,12 +94,7 @@ smull2 (
 #endif
 }
 
-void
-gf_448_mul (
-    gf_448_s *__restrict__ cs,
-    const gf_448_t as,
-    const gf_448_t bs
-) {
+void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     
     const uint32_t *a = as->limb, *b = bs->limb;
     uint32_t *c = cs->limb;
@@ -448,11 +440,7 @@ gf_448_mul (
     c[1] += ((uint32_t)(accum1));
 }
 
-void
-gf_448_sqr (
-    gf_448_s *__restrict__ cs,
-    const gf_448_t as
-) {
+void gf_sqr (gf_s *__restrict__ cs, const gf as) {
     const uint32_t *a = as->limb;
     uint32_t *c = cs->limb;
 
@@ -746,10 +734,9 @@ gf_448_sqr (
     c[1] += ((uint32_t)(accum1));
 }
 
-void
-gf_448_mulw (
-    gf_448_s *__restrict__ cs,
-    const gf_448_t as,
+void gf_mulw (
+    gf_s *__restrict__ cs,
+    const gf as,
     uint64_t b
 ) {
     uint32_t mask = (1ull<<28)-1;  
@@ -763,8 +750,8 @@ gf_448_mulw (
     int i;
 
     uint32_t c0, c8, n0, n8;
-    accum0 = widemul_32(bhi, a[15]);
-    accum8 = widemul_32(bhi, a[15] + a[7]);
+    accum0 = widemul(bhi, a[15]);
+    accum8 = widemul(bhi, a[15] + a[7]);
     c0 = a[0]; c8 = a[8];
     smlal(&accum0, blo, c0);
     smlal(&accum8, blo, c8);
@@ -860,9 +847,8 @@ gf_448_mulw (
     c[1] += accum8 >> 28;
 }
 
-void
-gf_448_strong_reduce (
-    gf_448_t a
+void gf_strong_reduce (
+    gf a
 ) {
     word_t mask = (1ull<<28)-1;
 
@@ -903,15 +889,14 @@ gf_448_strong_reduce (
     assert(is_zero(carry + scarry));
 }
 
-void
-gf_448_serialize (
+void gf_serialize (
     uint8_t *serial,
-    const gf_448_t x
+    const gf x
 ) {
     int i,j;
-    gf_448_t red;
-    gf_448_copy(red, x);
-    gf_448_strong_reduce(red);
+    gf red;
+    gf_copy(red, x);
+    gf_strong_reduce(red);
     for (i=0; i<8; i++) {
         uint64_t limb = red->limb[2*i] + (((uint64_t)red->limb[2*i+1])<<28);
         for (j=0; j<7; j++) {
@@ -923,8 +908,8 @@ gf_448_serialize (
 }
 
 mask_t
-gf_448_deserialize (
-    gf_448_t x,
+gf_deserialize (
+    gf x,
     const uint8_t serial[56]
 ) {
     int i,j;

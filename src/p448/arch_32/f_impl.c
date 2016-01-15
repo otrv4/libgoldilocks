@@ -4,28 +4,20 @@
 
 #include "f_field.h"
 
-static inline mask_t __attribute__((always_inline))
-is_zero (
-    word_t x
-) {
+static inline mask_t is_zero (word_t x) {
     dword_t xx = x;
     xx--;
     return xx >> WORD_BITS;
 }
 
-static uint64_t widemul_32 (
+static uint64_t widemul (
     const uint32_t a,
     const uint32_t b
 ) {
     return ((uint64_t)a)* b;
 }
 
-void
-gf_448_mul (
-    gf_448_s *__restrict__ cs,
-    const gf_448_t as,
-    const gf_448_t bs
-) { 
+void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) { 
     const uint32_t *a = as->limb, *b = bs->limb;
     uint32_t *c = cs->limb;
 
@@ -44,9 +36,9 @@ gf_448_mul (
         accum2 = 0;
     
         for (i=0; i<=j; i++) {      
-            accum2 += widemul_32(a[j-i],b[i]);
-            accum1 += widemul_32(aa[j-i],bb[i]);
-            accum0 += widemul_32(a[8+j-i], b[8+i]);
+            accum2 += widemul(a[j-i],b[i]);
+            accum1 += widemul(aa[j-i],bb[i]);
+            accum0 += widemul(a[8+j-i], b[8+i]);
         }
         
         accum1 -= accum2;
@@ -54,9 +46,9 @@ gf_448_mul (
         accum2 = 0;
         
         for (; i<8; i++) {
-            accum0 -= widemul_32(a[8+j-i], b[i]);
-            accum2 += widemul_32(aa[8+j-i], bb[i]);
-            accum1 += widemul_32(a[16+j-i], b[8+i]);
+            accum0 -= widemul(a[8+j-i], b[i]);
+            accum2 += widemul(aa[8+j-i], bb[i]);
+            accum1 += widemul(a[16+j-i], b[8+i]);
         }
 
         accum1 += accum2;
@@ -81,12 +73,7 @@ gf_448_mul (
     c[1] += ((uint32_t)(accum1));
 }
 
-void
-gf_448_mulw (
-    gf_448_s *__restrict__ cs,
-    const gf_448_t as,
-    uint64_t b
-) {
+void gf_mulw (gf_s *__restrict__ cs, const gf as, uint64_t b) {
     const uint32_t bhi = b>>28, blo = b & ((1<<28)-1);
     
     const uint32_t *a = as->limb;
@@ -97,20 +84,20 @@ gf_448_mulw (
 
     int i;
 
-    accum0 = widemul_32(blo, a[0]);
-    accum8 = widemul_32(blo, a[8]);
-    accum0 += widemul_32(bhi, a[15]);
-    accum8 += widemul_32(bhi, a[15] + a[7]);
+    accum0 = widemul(blo, a[0]);
+    accum8 = widemul(blo, a[8]);
+    accum0 += widemul(bhi, a[15]);
+    accum8 += widemul(bhi, a[15] + a[7]);
 
     c[0] = accum0 & mask; accum0 >>= 28;
     c[8] = accum8 & mask; accum8 >>= 28;
     
     for (i=1; i<8; i++) {
-        accum0 += widemul_32(blo, a[i]);
-        accum8 += widemul_32(blo, a[i+8]);
+        accum0 += widemul(blo, a[i]);
+        accum8 += widemul(blo, a[i+8]);
         
-        accum0 += widemul_32(bhi, a[i-1]);
-        accum8 += widemul_32(bhi, a[i+7]);
+        accum0 += widemul(bhi, a[i-1]);
+        accum8 += widemul(bhi, a[i+7]);
 
         c[i] = accum0 & mask; accum0 >>= 28;
         c[i+8] = accum8 & mask; accum8 >>= 28;
@@ -125,18 +112,11 @@ gf_448_mulw (
     c[1] += accum8 >> 28;
 }
 
-void
-gf_448_sqr (
-    gf_448_s *__restrict__ cs,
-    const gf_448_t as
-) {
-    gf_448_mul(cs,as,as); /* PERF */
+void gf_sqr (gf_s *__restrict__ cs, const gf as) {
+    gf_mul(cs,as,as); /* PERF */
 }
 
-void
-gf_448_strong_reduce (
-    gf_448_t a
-) {
+void gf_strong_reduce (gf a) {
     word_t mask = (1ull<<28)-1;
 
     /* first, clear high */
@@ -176,15 +156,11 @@ gf_448_strong_reduce (
     assert(is_zero(carry + scarry));
 }
 
-void
-gf_448_serialize (
-    uint8_t *serial,
-    const gf_448_t x
-) {
+void gf_serialize (uint8_t *serial, const gf x) {
     int i,j;
-    gf_448_t red;
-    gf_448_copy(red, x);
-    gf_448_strong_reduce(red);
+    gf red;
+    gf_copy(red, x);
+    gf_strong_reduce(red);
     for (i=0; i<8; i++) {
         uint64_t limb = red->limb[2*i] + (((uint64_t)red->limb[2*i+1])<<28);
         for (j=0; j<7; j++) {
@@ -195,11 +171,7 @@ gf_448_serialize (
     }
 }
 
-mask_t
-gf_448_deserialize (
-    gf_448_t x,
-    const uint8_t serial[56]
-) {
+mask_t gf_deserialize (gf x, const uint8_t serial[56]) {
     int i,j;
     for (i=0; i<8; i++) {
         uint64_t out = 0;

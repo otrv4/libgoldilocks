@@ -16,12 +16,7 @@ static __inline__ uint64_t is_zero(uint64_t a) {
     return (((__uint128_t)a)-1)>>64;
 }
 
-void
-gf_25519_mul (
-    gf_25519_t __restrict__ cs,
-    const gf_25519_t as,
-    const gf_25519_t bs
-) {
+void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     const uint64_t *a = as->limb, *b = bs->limb, mask = ((1ull<<51)-1);
     
     uint64_t bh[4];
@@ -51,12 +46,7 @@ gf_25519_mul (
     c[1] += accum;
 }
 
-void
-gf_25519_mulw (
-    gf_25519_t __restrict__ cs,
-    const gf_25519_t as,
-    uint64_t b
-) {
+void gf_mulw (gf_s *__restrict__ cs, const gf as, uint64_t b) {
     const uint64_t *a = as->limb, mask = ((1ull<<51)-1);
     int i;
     
@@ -78,18 +68,11 @@ gf_25519_mulw (
     c[1] += accum;
 }
 
-void
-gf_25519_sqr (
-    gf_25519_t __restrict__ cs,
-    const gf_25519_t as
-) {
-    gf_25519_mul(cs,as,as); // PERF
+void gf_sqr (gf_s *__restrict__ cs, const gf as) {
+    gf_mul(cs,as,as); // PERF
 }
 
-void
-gf_25519_strong_reduce (
-    gf_25519_t a
-) {
+void gf_strong_reduce (gf a) {
     uint64_t mask = (1ull<<51)-1;
 
     /* first, clear high */
@@ -127,15 +110,11 @@ gf_25519_strong_reduce (
     assert(is_zero(carry + scarry));
 }
 
-void
-gf_25519_serialize (
-    uint8_t serial[32],
-    const struct gf_25519_t x
-) {
+void gf_serialize (uint8_t serial[32], const struct gf x) {
     int i,j;
-    gf_25519_t red;
-    gf_25519_copy(&red, x);
-    gf_25519_t trong_reduce(&red);
+    gf red;
+    gf_copy(&red, x);
+    gf_strong_reduce(&red);
     uint64_t *r = red.limb;
     uint64_t ser64[4] = {r[0] | r[1]<<51, r[1]>>13|r[2]<<38, r[2]>>26|r[3]<<25, r[3]>>39|r[4]<<12};
     for (i=0; i<4; i++) {
@@ -146,11 +125,7 @@ gf_25519_serialize (
     }
 }
 
-mask_t
-gf_25519_deserialize (
-    gf_25519_t x,
-    const uint8_t serial[32]
-) {
+mask_t gf_deserialize (gf x, const uint8_t serial[32]) {
     int i,j;
     uint64_t ser64[4], mask = ((1ull<<51)-1);
     for (i=0; i<4; i++) {

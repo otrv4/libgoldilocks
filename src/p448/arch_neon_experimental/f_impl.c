@@ -67,12 +67,7 @@ smull2 (
     *acc = (int64_t)(int32_t)a * (int64_t)(int32_t)b * 2;
 }
 
-void
-gf_448_mul (
-    gf_448_s *__restrict__ cs,
-    const gf_448_t as,
-    const gf_448_t bs
-) {
+void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     #define _bl0 "q0"
     #define _bl0_0 "d0"
     #define _bl0_1 "d1"
@@ -366,11 +361,7 @@ gf_448_mul (
     );
 }
 
-void
-gf_448_sqr (
-    gf_448_s *__restrict__ cs,
-    const gf_448_t bs
-) {
+void gf_sqr (gf_s *__restrict__ cs, const gf bs) {
     int32x2_t *vc = (int32x2_t*) cs->limb;
 
     __asm__ __volatile__ (
@@ -567,12 +558,7 @@ gf_448_sqr (
     );
 }
 
-void
-gf_448_mulw (
-    gf_448_s *__restrict__ cs,
-    const gf_448_t as,
-    uint64_t b
-) { 
+void gf_mulw (gf_s *__restrict__ cs, const gf as, uint64_t b) { 
     uint32x2_t vmask = {(1<<28) - 1, (1<<28)-1};
     
     uint64x2_t accum;
@@ -618,10 +604,7 @@ gf_448_mulw (
 }
 
 /* PERF: vectorize? */
-void
-gf_448_strong_reduce (
-    gf_448_t a
-) { 
+void gf_strong_reduce (gf a) { 
     word_t mask = (1ull<<28)-1;
 
     /* first, clear high */
@@ -661,15 +644,11 @@ gf_448_strong_reduce (
     assert(is_zero(carry + scarry));
 }
 
-void
-gf_448_serialize (
-    uint8_t *serial,
-    const gf_448_t x
-) {
+void gf_serialize (uint8_t *serial, const gf x) {
     int i,j;
-    gf_448_t red;
-    gf_448_copy(red, x);
-    gf_448_strong_reduce(red);
+    gf red;
+    gf_copy(red, x);
+    gf_strong_reduce(red);
     
     for (i=0; i<8; i++) {
         uint64_t limb = red->limb[LIMBPERM(2*i)] + (((uint64_t)red->limb[LIMBPERM(2*i+1)])<<28);
@@ -681,11 +660,7 @@ gf_448_serialize (
     }
 }
 
-mask_t
-gf_448_deserialize (
-    gf_448_t x,
-    const uint8_t serial[56]
-) {
+mask_t gf_deserialize (gf x, const uint8_t serial[56]) {
     int i,j;
     for (i=0; i<8; i++) {
         uint64_t out = 0;

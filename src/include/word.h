@@ -9,6 +9,7 @@
 #define _XOPEN_SOURCE 600
 
 #include "arch_config.h"
+#include "arch_intrinsics.h"
 
 #include <decaf/common.h>
 
@@ -32,7 +33,6 @@
 #endif
 
 #if (WORD_BITS == 64)
-    typedef uint32_t hword_t;
     typedef uint64_t word_t, mask_t;
     typedef __uint128_t dword_t;
     typedef int32_t hsword_t;
@@ -50,7 +50,6 @@
     #define letohWORD letoh64
     #define SC_LIMB(x) (x##ull)
 #elif (WORD_BITS == 32)
-    typedef uint16_t hword_t;
     typedef uint32_t word_t, mask_t;
     typedef uint64_t dword_t;
     typedef int16_t hsword_t;

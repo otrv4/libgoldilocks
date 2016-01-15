@@ -167,12 +167,7 @@ static inline void hexad_sqr_signed (
 
 
 
-void
-gf_521_mul (
-    gf_521_t *__restrict__ cs,
-    const gf_521_t *as,
-    const gf_521_t *bs
-) {
+void gf_mul (gf *__restrict__ cs, const gf *as, const gf *bs) {
     int i;
     
 #if 0
@@ -253,13 +248,7 @@ gf_521_mul (
 }
 
 
-void
-gf_521_sqr (
-    gf_521_t *__restrict__ cs,
-    const gf_521_t *as
-) {
-    
-
+void gf_sqr (gf *__restrict__ cs, const gf *as) {
     int i;
 #if 0
     assert(as->limb[3] == 0 && as->limb[7] == 0 && as->limb[11] == 0);
@@ -312,15 +301,7 @@ gf_521_sqr (
     *(uint64x4_t *)&c[8] = out2;
 }
 
-void
-gf_521_mulw (
-    gf_521_t *__restrict__ cs,
-    const gf_521_t *as,
-    uint64_t b
-) {
-    
-    
-
+void gf_mulw (gf *__restrict__ cs, const gf *as, uint64_t b) {
 #if 0
     int i;
     assert(as->limb[3] == 0 && as->limb[7] == 0 && as->limb[11] == 0);
@@ -374,10 +355,7 @@ gf_521_mulw (
 }
 
 
-void
-gf_521_strong_reduce (
-    gf_521_t *a
-) {
+void gf_strong_reduce (gf *a) {
     uint64_t mask = (1ull<<58)-1, mask2 = (1ull<<57)-1;
 
     /* first, clear high */
@@ -417,15 +395,11 @@ gf_521_strong_reduce (
     a->limb[3] = a->limb[7] = a->limb[11] = 0;
 }
 
-void
-gf_521_serialize (
-    uint8_t *serial,
-    const struct gf_521_t *x
-) {
+void gf_serialize (uint8_t *serial, const struct gf *x) {
     unsigned int i,k=0;
-    gf_521_t red;
-    gf_521_copy(&red, x);
-    gf_521_strong_reduce(&red);
+    gf red;
+    gf_copy(&red, x);
+    gf_strong_reduce(&red);
     
     uint64_t r=0;
     int bits = 0;
@@ -441,11 +415,7 @@ gf_521_serialize (
     serial[k++] = r;
 }
 
-mask_t
-gf_521_deserialize (
-    gf_521_t *x,
-    const uint8_t serial[LIMBPERM(66)]
-) {
+mask_t gf_deserialize (gf *x, const uint8_t serial[LIMBPERM(66)]) {
     int i,k=0,bits=0;
     __uint128_t out = 0;
     uint64_t mask = (1ull<<58)-1;
