@@ -20,8 +20,7 @@ extern "C" {
 /* -------------- Inline functions begin here -------------- */
 
 void gf_add_RAW (gf out, const gf a, const gf b) {
-    unsigned int i;
-    for (i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {
+    for (unsigned int i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {
         ((uint32xn_t*)out)[i] = ((const uint32xn_t*)a)[i] + ((const uint32xn_t*)b)[i];
     }
     /*
@@ -33,8 +32,7 @@ void gf_add_RAW (gf out, const gf a, const gf b) {
 }
 
 void gf_sub_RAW (gf out, const gf a, const gf b) {
-    unsigned int i;
-    for (i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {
+    for (unsigned int i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {
         ((uint32xn_t*)out)[i] = ((const uint32xn_t*)a)[i] - ((const uint32xn_t*)b)[i];
     }
     /*
@@ -58,9 +56,8 @@ void gf_bias (gf a, int amt) {
 void gf_weak_reduce (gf a) {
     uint64_t mask = (1ull<<28) - 1;
     uint64_t tmp = a->limb[15] >> 28;
-    int i;
     a->limb[8] += tmp;
-    for (i=15; i>0; i--) {
+    for (unsigned int i=15; i>0; i--) {
         a->limb[i] = (a->limb[i] & mask) + (a->limb[i-1]>>28);
     }
     a->limb[0] = (a->limb[0] & mask) + tmp;

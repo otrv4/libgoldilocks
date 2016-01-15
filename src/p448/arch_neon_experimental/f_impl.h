@@ -26,15 +26,13 @@ extern "C" {
 /* -------------- Inline functions begin here -------------- */
 
 void gf_add_RAW (gf out, const gf a, const gf b) {
-    unsigned int i;
-    for (i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {
+    for (unsigned int i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {
         ((uint32xn_t*)out)[i] = ((const uint32xn_t*)a)[i] + ((const uint32xn_t*)b)[i];
     }
 }
 
 void gf_sub_RAW (gf out, const gf a, const gf b) {
-    unsigned int i;
-    for (i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {
+    for (unsigned int i=0; i<sizeof(*out)/sizeof(uint32xn_t); i++) {
         ((uint32xn_t*)out)[i] = ((const uint32xn_t*)a)[i] - ((const uint32xn_t*)b)[i];
     }
     /*
@@ -60,8 +58,7 @@ void gf_weak_reduce (gf a) {
     uint32x2_t *aa = (uint32x2_t*) a, vmask = {(1ull<<28)-1, (1ull<<28)-1}, vm2 = {0,-1},
        tmp = vshr_n_u32(aa[7],28);
        
-    int i;
-    for (i=7; i>=1; i--) {
+    for (unsigned int i=7; i>=1; i--) {
         aa[i] = vsra_n_u32(aa[i] & vmask, aa[i-1], 28);
     }
     aa[0] = (aa[0] & vmask) + vrev64_u32(tmp) + (tmp&vm2);

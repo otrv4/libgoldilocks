@@ -32,15 +32,13 @@ static inline uint64x3_t timesW (uint64x3_t u) {
 }
 
 void gf_add_RAW (gf  *out, const gf  *a, const gf  *b) {
-    unsigned int i;
-    for (i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
+    for (unsigned int i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
         ((uint64xn_t*)out)[i] = ((const uint64xn_t*)a)[i] + ((const uint64xn_t*)b)[i];
     }
 }
 
 void gf_sub_RAW (gf  *out, const gf  *a, const gf  *b) {
-    unsigned int i;
-    for (i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
+    for (unsigned int i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
         ((uint64xn_t*)out)[i] = ((const uint64xn_t*)a)[i] - ((const uint64xn_t*)b)[i];
     }
 }
