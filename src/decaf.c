@@ -89,6 +89,9 @@ const size_t API_NS2(alignof,precomputed_s) = 32;
 #define FOR_LIMB(i,op) { unsigned int i=0; for (i=0; i<NLIMBS; i++)  { op; }}
 #define FOR_LIMB_U(i,op) { unsigned int i=0; UNROLL for (i=0; i<NLIMBS; i++)  { op; }}
 
+/* FUTURE: move this code from per-curve to per-field header
+ * (like f_arithmetic.c but same for all fields)
+ */
 void gf_serialize (uint8_t serial[SER_BYTES], const gf x) {
     gf red;
     gf_copy(red, x);
@@ -124,6 +127,39 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES]) {
         scarry = (scarry + x->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)]) >> (8*sizeof(word_t));
     }
     return word_is_zero(buffer) & ~word_is_zero(scarry);
+}
+
+void gf_strong_reduce (gf a) {
+    /* first, clear high */
+    gf_weak_reduce(a); /* PERF: only really need one step of this, but whatevs */
+
+    /* now the total is less than 2p */
+
+    /* compute total_value - p.  No need to reduce mod p. */
+    dsword_t scarry = 0;
+    for (unsigned int i=0; i<NLIMBS; i++) {
+        scarry = scarry + a->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)];
+        a->limb[i] = scarry & LIMB_MASK(LIMBPERM(i));
+        scarry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
+    }
+
+    /* uncommon case: it was >= p, so now scarry = 0 and this = x
+     * common case: it was < p, so now scarry = -1 and this = x - p + 2^255
+     * so let's add back in p.  will carry back off the top for 2^255.
+     */
+    assert(word_is_zero(scarry) | word_is_zero(scarry+1));
+
+    word_t scarry_0 = scarry;
+    dword_t carry = 0;
+
+    /* add it back */
+    for (unsigned int i=0; i<NLIMBS; i++) {
+        carry = carry + a->limb[LIMBPERM(i)] + (scarry_0 & MODULUS->limb[LIMBPERM(i)]);
+        a->limb[i] = carry & LIMB_MASK(LIMBPERM(i));
+        carry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
+    }
+
+    assert(word_is_zero(carry + scarry_0));
 }
 
 /** Constant time, x = is_z ? z : y */

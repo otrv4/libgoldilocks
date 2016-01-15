@@ -90,38 +90,4 @@ void gf_sqr (gf_s *__restrict__ cs, const gf as) {
     gf_mul(cs,as,as); // PERF
 }
 
-void gf_strong_reduce (gf a) {
-    /* first, clear high */
-    a->limb[0] += (a->limb[9]>>25)*19;
-    a->limb[9] &= LIMB_MASK(9);
-
-    /* now the total is less than 2p */
-
-    /* compute total_value - p.  No need to reduce mod p. */
-    dsword_t scarry = 0;
-    for (unsigned int i=0; i<10; i++) {
-        scarry = scarry + a->limb[i] - MODULUS->limb[i];
-        a->limb[i] = scarry & LIMB_MASK(i);
-        scarry >>= LIMB_PLACE_VALUE(i);
-    }
-
-    /* uncommon case: it was >= p, so now scarry = 0 and this = x
-     * common case: it was < p, so now scarry = -1 and this = x - p + 2^255
-     * so let's add back in p.  will carry back off the top for 2^255.
-     */
-    assert(word_is_zero(scarry) | word_is_zero(scarry+1));
-
-    word_t scarry_0 = scarry;
-    dword_t carry = 0;
-
-    /* add it back */
-    for (unsigned int i=0; i<10; i++) {
-        carry = carry + a->limb[i] + (scarry_0 & MODULUS->limb[i]);
-        a->limb[i] = carry & LIMB_MASK(i);
-        carry >>= LIMB_PLACE_VALUE(i);
-        i++;
-    }
-
-    assert(word_is_zero(carry + scarry_0));
-}
 
