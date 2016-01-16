@@ -1,3 +1,40 @@
+January 15, 2016:
+    Lots of changes since the last entry in HISTORY.TXT.
+    
+    Pushing eventually toward a 1.0 release, at least for the curves
+    themselves (i.e. not for STROBE), still a fair amount of stuff to
+    do.
+    
+    I have pretty much all the functions I want implemented, except
+    that maybe there should be a compatibility mode for whatever CFRG
+    decides the real life format should be.
+    
+    The library now supports multiple curves at once.  A decaffeinated
+    curve isogenous to Curve25519 is now supported, but not especially
+    fast.  This is all still a little rough around the edges.  To make
+    it work in a sane way, most of the headers are generated using
+    Python templates.  Probably those should be turned back into .h
+    files for syntax hilighting purposes; the code generation system
+    in general needs quite a tuneup.
+    
+    The plus side is that this reduces the source code size, especially
+    for supporting many curves over many fields.
+    
+    Currently the code only kind of halfway works on ARM, and not as
+    fast as it used to (on NEON anyway), by maybe 15-20%.  I'm
+    investigating why.  It's about as fast as it used to be on x86,
+    maybe a hair slower.
+    
+    Montgomery ladder is currently out.  Putting it back in might help
+    pin down the ARM NEON performance regression.
+
+    The BAT is currently broken.
+    
+    Tracking at 55 TODO items, about half of which are important-ish.
+    Source code size is currently 12.8k wc-lines, including tests and
+    old fields (p480 and p521).  I'm still trying to get that down, but
+    with things like 600 lines of NEON f_impl.c, that's not an easy task.
+
 April 23, 2015:
     Removed the original Goldilocks code; Decaf now stands on its own.
     This cuts the source code approximately in half, to a still-large
