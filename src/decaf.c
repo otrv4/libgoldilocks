@@ -38,10 +38,6 @@
 extern const gf SQRT_MINUS_ONE;
 #endif
 
-#if COFACTOR == 8
-extern const gf SQRT_ONE_MINUS_D; /* TODO: Intern this? */
-#endif
-
 /* FIXME: this can be different from DECAF_WORD_BITS, and word_t can be different from decaf_word_t,
  * eg when mixing and matching implementations for different curves.  Homogenize this.
  */

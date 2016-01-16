@@ -37,18 +37,28 @@ void API_NS(precompute_wnafs) (
     const API_NS(point_t) base
 );
 
-/* TODO: use SC_LIMB? */
-static void scalar_print(const char *name, const API_NS(scalar_t) sc) {
+static void scalar_print(const char *name, const API_NS(scalar_t) sc) { /* UNIFY */
     printf("const API_NS(scalar_t) %s = {{{\n", name);
-    unsigned i;
-    for (i=0; i<sizeof(API_NS(scalar_t))/sizeof(decaf_word_t); i++) {
-        if (i) printf(", ");
-        printf("0x%0*llxull", (int)sizeof(decaf_word_t)*2, (unsigned long long)sc->limb[i] );
+    const int SCALAR_BYTES = (SCALAR_BITS + 7) / 8;
+    unsigned char ser[SCALAR_BYTES];
+    API_NS(scalar_encode)(ser,sc);
+    int b=0, i, comma=0;
+    unsigned long long limb = 0;
+    for (i=0; i<SCALAR_BYTES; i++) {
+        limb |= ((uint64_t)ser[i])<<b;
+        b += 8;
+        if (b == 64 || i==SCALAR_BYTES-1) {
+            b = 0;
+            if (comma) printf(",");
+            comma = 1;
+            printf("SC_LIMB(0x%016llx)", limb);
+            limb = ((uint64_t)ser[i])>>(8-b);
+        }
     }
     printf("}}};\n\n");
 }
 
-static void field_print(const gf f) {
+static void field_print(const gf f) { /* UNIFY */
     const int GF_SER_BYTES = (GF_BITS + 7) / 8;
     unsigned char ser[GF_SER_BYTES];
     gf_serialize(ser,f);
@@ -58,7 +68,7 @@ static void field_print(const gf f) {
     for (i=0; i<GF_SER_BYTES; i++) {
         limb |= ((uint64_t)ser[i])<<b;
         b += 8;
-        if (b >= GF_LIT_LIMB_BITS) {
+        if (b >= GF_LIT_LIMB_BITS || i == GF_SER_BYTES-1) {
             limb &= (1ull<<GF_LIT_LIMB_BITS) -1;
             b -= GF_LIT_LIMB_BITS;
             if (comma) printf(",");

@@ -266,7 +266,7 @@ doc: Doxyfile $(BUILD_OBJ)/timestamp $(HEADERS)
 # 	(cd $(BATNAME)/.. && tar czf $(BATBASE).tgz $(BATBASE) )
 	
 # Finds todo items in .h and .c files
-TODO_TYPES ?= HACK TODO FIXME BUG XXX PERF FUTURE REMOVE MAGIC
+TODO_TYPES ?= HACK TODO FIXME BUG XXX PERF FUTURE REMOVE MAGIC UNIFY
 TODO_LOCATIONS ?= src test Makefile Doxyfile
 todo::
 	@(find $(TODO_LOCATIONS) -name '*.h' -or -name '*.c' -or -name '*.cxx' -or -name '*.hxx') | xargs egrep --color=auto -w \

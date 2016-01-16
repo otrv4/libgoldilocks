@@ -9,10 +9,7 @@
 
 #include <stdint.h>
 
-/* FUTURE: non x86-64 versions of these.
- * FUTURE: autogenerate
- */
-
+/* FUTURE: autogenerate */
 static __inline__ __uint128_t widemul(const uint64_t *a, const uint64_t *b) {
   uint64_t c,d;
   #ifndef __BMI2__
