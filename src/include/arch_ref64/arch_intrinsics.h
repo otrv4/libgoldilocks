@@ -5,7 +5,7 @@
 #ifndef __ARCH_REF64_ARCH_INTRINSICS_H__
 #define __ARCH_REF64_ARCH_INTRINSICS_H__
 
-#define WORD_BITS 64
+#define ARCH_WORD_BITS 64
 
 static __inline__ __attribute((always_inline,unused))
 uint64_t word_is_zero(uint64_t a) {

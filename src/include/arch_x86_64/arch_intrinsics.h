@@ -5,7 +5,7 @@
 #ifndef __ARCH_X86_64_ARCH_INTRINSICS_H__
 #define __ARCH_X86_64_ARCH_INTRINSICS_H__
 
-#define WORD_BITS 64
+#define ARCH_WORD_BITS 64
 
 #include <stdint.h>
 

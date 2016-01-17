@@ -38,10 +38,7 @@
 extern const gf SQRT_MINUS_ONE;
 #endif
 
-/* FIXME: this can be different from DECAF_WORD_BITS, and word_t can be different from decaf_word_t,
- * eg when mixing and matching implementations for different curves.  Homogenize this.
- */
-#define WBITS WORD_BITS
+#define WBITS DECAF_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
 const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
 extern const scalar_t API_NS(sc_r2);
@@ -65,15 +62,41 @@ const size_t API_NS2(alignof,precomputed_s) = 32;
 #define FOR_LIMB(i,op) { unsigned int i=0; for (i=0; i<NLIMBS; i++)  { op; }}
 #define FOR_LIMB_U(i,op) { unsigned int i=0; UNROLL for (i=0; i<NLIMBS; i++)  { op; }}
 
+/* The plan on booleans:
+ *
+ * The external interface uses decaf_bool_t, but this might be a different
+ * size than our particular arch's word_t (and thus mask_t).  Also, the caller
+ * isn't guaranteed to pass it as nonzero.  So bool_to_mask converts word sizes
+ * and checks nonzero.
+ *
+ * On the flip side, mask_t is always -1 or 0, but it might be a different size
+ * than decaf_bool_t.
+ *
+ * On the third hand, we have success vs boolean types, but that's handled in
+ * common.h: it converts between decaf_bool_t and decaf_error_t.
+ */
+static INLINE decaf_bool_t mask_to_bool (mask_t m) {
+    return (decaf_sword_t)(sword_t)m;
+}
+
+static INLINE mask_t bool_to_mask (decaf_bool_t m) {
+    /* On most arches this will be optimized to a simple cast. */
+    mask_t ret = 0;
+    for (unsigned int i=0; i<1 || i<sizeof(decaf_bool_t)/sizeof(mask_t); i++) {
+        ret |= ~ word_is_zero(m >> (i*8*sizeof(word_t)));
+    }
+    return ret;
+}
+
 /** Constant time, x = is_z ? z : y */
 static INLINE void
-cond_sel(gf x, const gf y, const gf z, decaf_bool_t is_z) {
+cond_sel(gf x, const gf y, const gf z, mask_t is_z) {
     constant_time_select(x,z,y,sizeof(gf),is_z,0);
 }
 
 /** Constant time, if (neg) x=-x; */
 static void
-cond_neg(gf x, decaf_bool_t neg) {
+cond_neg(gf x, mask_t neg) {
     gf y;
     gf_sub(y,ZERO,x);
     cond_sel(x,x,y,neg);
@@ -81,7 +104,7 @@ cond_neg(gf x, decaf_bool_t neg) {
 
 /** Constant time, if (swap) (x,y) = (y,x); */
 static INLINE void
-cond_swap(gf x, gf_s *__restrict__ y, decaf_bool_t swap) {
+cond_swap(gf x, gf_s *__restrict__ y, mask_t swap) {
     UNROLL for (unsigned int i=0; i<sizeof(x->limb)/sizeof(x->limb[0]); i++) {
         decaf_word_t s = (x->limb[i] ^ y->limb[i]) & swap;
         x->limb[i] ^= s;
@@ -90,8 +113,8 @@ cond_swap(gf x, gf_s *__restrict__ y, decaf_bool_t swap) {
 }
 
 /** Inverse square root using addition chain. */
-static decaf_bool_t
-gf_isqrt_chk(gf y, const gf x, decaf_bool_t allow_zero) {
+static mask_t
+gf_isqrt_chk(gf y, const gf x, mask_t allow_zero) {
     gf tmp0, tmp1;
     gf_isr((gf_s *)y, (const gf_s *)x);
     gf_sqr(tmp0,y);
@@ -151,14 +174,14 @@ sc_subx(
     const scalar_t p,
     decaf_word_t extra
 ) {
-    dsword_t chain = 0;
+    decaf_dsword_t chain = 0;
     unsigned int i;
     for (i=0; i<SCALAR_LIMBS; i++) {
         chain = (chain + accum[i]) - sub->limb[i];
         out->limb[i] = chain;
         chain >>= WBITS;
     }
-    decaf_bool_t borrow = chain+extra; /* = 0 or -1 */
+    decaf_word_t borrow = chain+extra; /* = 0 or -1 */
     
     chain = 0;
     for (i=0; i<SCALAR_LIMBS; i++) {
@@ -343,7 +366,7 @@ API_NS(scalar_eq) (
     for (i=0; i<SCALAR_LIMBS; i++) {
         diff |= a->limb[i] ^ b->limb[i];
     }
-    return word_is_zero(diff);
+    return mask_to_bool(word_is_zero(diff));
 }
 
 /** identity = (0,1) */
@@ -354,9 +377,9 @@ deisogenize (
     gf_s *__restrict__ s,
     gf_s *__restrict__ minus_t_over_s,
     const point_t p,
-    decaf_bool_t toggle_hibit_s,
-    decaf_bool_t toggle_hibit_t_over_s,
-    decaf_bool_t toggle_rotation
+    mask_t toggle_hibit_s,
+    mask_t toggle_hibit_t_over_s,
+    mask_t toggle_rotation
 ) {
 #if COFACTOR == 4 && !IMAGINE_TWIST
     (void) toggle_rotation;
@@ -372,7 +395,7 @@ deisogenize (
     gf_sub ( b, p->z, p->y ); 
     gf_mul ( c, b, a );
     gf_mulw_sgn ( b, c, -EDWARDS_D ); /* (a-d)(Z+Y)(Z-Y) */
-    decaf_bool_t ok = gf_isqrt_chk ( a, b, DECAF_TRUE ); /* r in the paper */
+    mask_t ok = gf_isqrt_chk ( a, b, DECAF_TRUE ); /* r in the paper */
     (void)ok; assert(ok);
     gf_mulw_sgn ( b, a, -EDWARDS_D ); /* u in the paper */
     gf_mul ( c, b, a ); /* ur */
@@ -413,13 +436,13 @@ deisogenize (
     gf_mul ( a, p->z, t ); /* "tz" = T*Z */
     gf_sqr ( b, a );
     gf_mul ( d, b, c ); /* (TZ)^2 * (Z^2-aX^2) */
-    decaf_bool_t ok = gf_isqrt_chk ( b, d, DECAF_TRUE );
+    mask_t ok = gf_isqrt_chk ( b, d, DECAF_TRUE );
     (void)ok; assert(ok);
     gf_mul ( d, b, a ); /* "osx" = 1 / sqrt(z^2-ax^2) */
     gf_mul ( a, b, c ); 
     gf_mul ( b, a, d ); /* 1/tz */
 
-    decaf_bool_t rotate;
+    mask_t rotate;
 #if (COFACTOR == 8)
     {
         gf e;
@@ -439,7 +462,7 @@ deisogenize (
     gf_mul ( c, a, d ); // new "osx"
     gf_mul ( a, c, p->z );
     gf_add ( a, a, a ); // 2 * "osx" * Z
-    decaf_bool_t tg1 = rotate ^ toggle_hibit_t_over_s ^~ hibit(a);
+    mask_t tg1 = rotate ^ toggle_hibit_t_over_s ^~ hibit(a);
     cond_neg ( c, tg1 );
     cond_neg ( a, rotate ^ tg1 );
     gf_mul ( d, b, p->z );
@@ -462,9 +485,9 @@ decaf_error_t API_NS(point_decode) (
     decaf_bool_t allow_identity
 ) {
     gf s, a, b, c, d, e, f;
-    decaf_bool_t succ = gf_deserialize(s, ser), zero = gf_eq(s, ZERO);
-    allow_identity = ~word_is_zero(allow_identity);
-    succ &= allow_identity | ~zero;
+    mask_t succ = gf_deserialize(s, ser);
+    mask_t zero = gf_eq(s, ZERO);
+    succ &= bool_to_mask(allow_identity) | ~zero;
     succ &= ~hibit(s);
     gf_sqr ( a, s );
 #if IMAGINE_TWIST
@@ -484,7 +507,7 @@ decaf_error_t API_NS(point_decode) (
     gf_mul ( b, e, d ); /* 1/t */
     gf_mul ( d, e, c ); /* d = t / (s(1-as^2)) */
     gf_mul ( e, d, f ); /* t/s */
-    decaf_bool_t negtos = hibit(e);
+    mask_t negtos = hibit(e);
     cond_neg(b, negtos);
     cond_neg(d, negtos);
 
@@ -513,7 +536,7 @@ decaf_error_t API_NS(point_decode) (
     
     assert(API_NS(point_valid)(p) | ~succ);
     
-    return decaf_succeed_if(succ);
+    return decaf_succeed_if(mask_to_bool(succ));
 }
 
 #if IMAGINE_TWIST
@@ -596,7 +619,7 @@ static NOINLINE void
 point_double_internal (
     point_t p,
     const point_t q,
-    decaf_bool_t before_double
+    int before_double
 ) {
     gf a, b, c, d;
     gf_sqr ( c, q->x );
@@ -651,7 +674,7 @@ decaf_error_t API_NS(scalar_decode)(
 ) {
     unsigned int i;
     scalar_decode_short(s, ser, SER_BYTES);
-    dsword_t accum = 0;
+    decaf_dsword_t accum = 0;
     for (i=0; i<SCALAR_LIMBS; i++) {
         accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
     }
@@ -659,7 +682,7 @@ decaf_error_t API_NS(scalar_decode)(
     
     API_NS(scalar_mul)(s,s,API_NS(scalar_one)); /* ham-handed reduce */
     
-    return decaf_succeed_if(accum);
+    return decaf_succeed_if(~word_is_zero(accum));
 }
 
 void API_NS(scalar_destroy) (
@@ -726,7 +749,7 @@ void API_NS(scalar_encode)(
 static INLINE void
 cond_neg_niels (
     niels_t n,
-    decaf_bool_t neg
+    mask_t neg
 ) {
     cond_swap(n->a, n->b, neg);
     cond_neg(n->c, neg);
@@ -770,7 +793,7 @@ static NOINLINE void
 add_niels_to_pt (
     point_t d,
     const niels_t e,
-    decaf_bool_t before_double
+    int before_double
 ) {
     gf a, b, c;
     gf_sub_nr ( b, d->y, d->x );
@@ -792,7 +815,7 @@ static NOINLINE void
 sub_niels_from_pt (
     point_t d,
     const niels_t e,
-    decaf_bool_t before_double
+    int before_double
 ) {
     gf a, b, c;
     gf_sub_nr ( b, d->y, d->x );
@@ -814,7 +837,7 @@ static void
 add_pniels_to_pt (
     point_t p,
     const pniels_t pn,
-    decaf_bool_t before_double
+    int before_double
 ) {
     gf L0;
     gf_mul ( L0, p->z, pn->z );
@@ -826,7 +849,7 @@ static void
 sub_pniels_from_pt (
     point_t p,
     const pniels_t pn,
-    decaf_bool_t before_double
+    int before_double
 ) {
     gf L0;
     gf_mul ( L0, p->z, pn->z );
@@ -1111,7 +1134,7 @@ decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     gf a, b;
     gf_mul ( a, p->y, q->x );
     gf_mul ( b, q->y, p->x );
-    decaf_bool_t succ = gf_eq(a,b);
+    mask_t succ = gf_eq(a,b);
     
     #if (COFACTOR == 8) && IMAGINE_TWIST
         gf_mul ( a, p->y, q->y );
@@ -1129,7 +1152,7 @@ decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
         succ |= gf_eq(a,b);
     #endif
     
-    return succ;
+    return mask_to_bool(succ);
 }
 
 void API_NS(point_from_hash_nonuniform) (
@@ -1166,7 +1189,7 @@ void API_NS(point_from_hash_nonuniform) (
     gf_mul(rN,r,N);
     gf_mul(a,rN,D);
     
-    decaf_bool_t square = gf_isqrt_chk(e,a,DECAF_FALSE);
+    mask_t square = gf_isqrt_chk(e,a,DECAF_FALSE);
     
     /* b <- t/s */
     cond_sel(c,r0,r,square); /* r? = sqr ? r : 1 */
@@ -1192,7 +1215,7 @@ void API_NS(point_from_hash_nonuniform) (
     gf_mul(c,a,b);
     
     /* Normalize/negate */
-    decaf_bool_t neg_s = hibit(a) ^ ~square;
+    mask_t neg_s = hibit(a) ^ ~square;
     cond_neg(a,neg_s); /* ends up negative if ~square */
     
     /* b <- t */
@@ -1222,8 +1245,8 @@ API_NS(invert_elligator_nonuniform) (
     const point_t p,
     uint16_t hint_
 ) {
-    decaf_bool_t hint = hint_;
-    decaf_bool_t sgn_s = -(hint & 1),
+    mask_t hint = hint_;
+    mask_t sgn_s = -(hint & 1),
         sgn_t_over_s = -(hint>>1 & 1),
         sgn_r0 = -(hint>>2 & 1),
         sgn_ed_T = -(hint>>3 & 1);
@@ -1234,7 +1257,7 @@ API_NS(invert_elligator_nonuniform) (
     gf_mul(b,c,a);
     gf_sub(b,ONE,b); /* t+1 */
     gf_sqr(c,a); /* s^2 */
-    decaf_bool_t is_identity = gf_eq(p->t,ZERO);
+    mask_t is_identity = gf_eq(p->t,ZERO);
     {
         /* identity adjustments */
         /* in case of identity, currently c=0, t=0, b=1, will encode to 1 */
@@ -1253,7 +1276,7 @@ API_NS(invert_elligator_nonuniform) (
 #else
     gf_sub(d,ZERO,b);
 #endif
-    decaf_bool_t succ = gf_isqrt_chk(c,d,DECAF_TRUE);
+    mask_t succ = gf_isqrt_chk(c,d,DECAF_TRUE);
     gf_mul(b,a,c);
     cond_neg(b, sgn_r0^hibit(b));
     
@@ -1264,7 +1287,7 @@ API_NS(invert_elligator_nonuniform) (
     
     gf_serialize(recovered_hash, b); 
     /* TODO: deal with overflow flag */
-    return decaf_succeed_if(succ);
+    return decaf_succeed_if(mask_to_bool(succ));
 }
 
 void API_NS(point_from_hash_uniform) (
@@ -1295,7 +1318,7 @@ decaf_bool_t API_NS(point_valid) (
     gf a,b,c;
     gf_mul(a,p->x,p->y);
     gf_mul(b,p->z,p->t);
-    decaf_bool_t out = gf_eq(a,b);
+    mask_t out = gf_eq(a,b);
     gf_sqr(a,p->x);
     gf_sqr(b,p->y);
     gf_sub(a,b,a);
@@ -1305,7 +1328,7 @@ decaf_bool_t API_NS(point_valid) (
     gf_add(b,b,c);
     out &= gf_eq(a,b);
     out &= ~gf_eq(p->z,ZERO);
-    return out;
+    return mask_to_bool(out);
 }
 
 void API_NS(point_debugging_torque) (
@@ -1502,7 +1525,7 @@ void API_NS(precomputed_scalarmul) (
                 }
             }
             
-            decaf_bool_t invert = (tab>>(t-1))-1;
+            mask_t invert = (tab>>(t-1))-1;
             tab ^= invert;
             tab &= (1<<(t-1)) - 1;
 
@@ -1527,8 +1550,7 @@ void API_NS(point_cond_sel) (
     const point_t b,
     decaf_bool_t pick_b
 ) {
-    pick_b = ~word_is_zero(pick_b);
-    constant_time_select(out,b,a,sizeof(point_t),pick_b,0);
+    constant_time_select(out,b,a,sizeof(point_t),bool_to_mask(pick_b),0);
 }
 
 void API_NS(scalar_cond_sel) (
@@ -1537,8 +1559,7 @@ void API_NS(scalar_cond_sel) (
     const scalar_t b,
     decaf_bool_t pick_b
 ) {
-    pick_b = ~word_is_zero(pick_b);
-    constant_time_select(out,b,a,sizeof(scalar_t),pick_b,sizeof(out->limb[0]));
+    constant_time_select(out,b,a,sizeof(scalar_t),bool_to_mask(pick_b),sizeof(out->limb[0]));
 }
 
 /* FUTURE: restore Curve25519 Montgomery ladder? */
@@ -1550,13 +1571,13 @@ decaf_error_t API_NS(direct_scalarmul) (
     decaf_bool_t short_circuit
 ) {
     point_t basep;
-    decaf_bool_t succ = decaf_successful(API_NS(point_decode)(basep, base, allow_identity));
-    if (short_circuit && ~succ) return DECAF_FAILURE;
+    decaf_error_t succ = API_NS(point_decode)(basep, base, allow_identity);
+    if (short_circuit && succ != DECAF_SUCCESS) return succ;
     API_NS(point_cond_sel)(basep, API_NS(point_base), basep, succ);
     API_NS(point_scalarmul)(basep, basep, scalar);
     API_NS(point_encode)(scaled, basep);
     API_NS(point_destroy)(basep);
-    return decaf_succeed_if(succ);
+    return succ;
 }
 
 /**
@@ -1580,7 +1601,7 @@ static int recode_wnaf (
      * PERF MINOR: not technically WNAF, since last digits can be adjacent.  Could be rtl.
      */
     for (i=SCALAR_BITS-1; i >= 0; i--) {
-        int bit = (scalar->limb[i/WORD_BITS] >> (i%WORD_BITS)) & 1;
+        int bit = (scalar->limb[i/WBITS] >> (i%WBITS)) & 1;
         current = 2*current + bit;
 
         /*

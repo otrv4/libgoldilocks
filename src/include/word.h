@@ -31,7 +31,7 @@
 #include <immintrin.h>
 #endif
 
-#if (WORD_BITS == 64)
+#if (ARCH_WORD_BITS == 64)
     typedef uint64_t word_t, mask_t;
     typedef __uint128_t dword_t;
     typedef int32_t hsword_t;
@@ -47,8 +47,7 @@
     #define U56LE(x) x##ull
     #define U60LE(x) x##ull
     #define letohWORD letoh64
-    #define SC_LIMB(x) (x##ull)
-#elif (WORD_BITS == 32)
+#elif (ARCH_WORD_BITS == 32)
     typedef uint32_t word_t, mask_t;
     typedef uint64_t dword_t;
     typedef int16_t hsword_t;
@@ -63,6 +62,14 @@
     #define U56LE(x) (x##ull)&((1ull<<28)-1), (x##ull)>>28
     #define U60LE(x) (x##ull)&((1ull<<30)-1), (x##ull)>>30
     #define letohWORD letoh32
+#else
+    #error "For now, libdecaf only supports 32- and 64-bit architectures."
+#endif
+    
+/* Scalar limbs are keyed off of the API word size instead of the arch word size. */
+#if DECAF_WORD_BITS == 64
+    #define SC_LIMB(x) (x##ull)
+#elif DECAF_WORD_BITS == 32
     #define SC_LIMB(x) ((uint32_t)x##ull),(x##ull>>32)
 #else
     #error "For now, libdecaf only supports 32- and 64-bit architectures."

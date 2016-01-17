@@ -5,7 +5,7 @@
 #ifndef __ARCH_NEON_ARCH_INTRINSICS_H__
 #define __ARCH_NEON_ARCH_INTRINSICS_H__
 
-#define WORD_BITS 32
+#define ARCH_WORD_BITS 32
 
 static __inline__ __attribute((always_inline,unused))
 uint32_t word_is_zero(uint32_t a) {
