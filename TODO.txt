@@ -1,13 +1,10 @@
 Important work items for Ed448-Goldilocks / decaf:
 
-* Factor out hash, crandom from core library?
-    [DONE, except for C++ headers]
-
 * Signed 32-bit NEON implementation to avoid bias/reduce after subtract
 
 * Documentation: write high-level API docs, and internal docs to help
   other implementors.
-    * Partial progress on Doxygenating the code.
+    * Pretty good progress on Doxygenating the code.
 
 * Documentation: write a spec or add to Watson's
 
@@ -15,44 +12,42 @@ Important work items for Ed448-Goldilocks / decaf:
     * namespace_op or op_namespace?  namespace_op_type?
     * We don't have to be super-careful with the namespacing, because
       symbols will be scrubbed by visibility
+    * Mostly done.
 
 * Cleanup: unify intrinsics code
     * Word_t, mask_t, bigregister_t, etc.
+        * [ MOSTLY DONE ]
     * Generate asm intrinsics with a script?
 
 * Testing:
     * More testing.  Testing, testing and testing.
     * Test corner cases better.
 
-* Safety: add static analysis attributes for compilers that support them
-    * Most functions now have warn on ignored return.
-    * [ MOSTLY DONE ]
-
 * Safety:
     * Decide what to do about RNG failures
         * abort
-        * return error and zeroize
+        * return error and zeroize [ THIS ]
         * return error but continue if RNG is kind of mostly OK
-
-* High-level API: [DONE]
 
 * Portability: test and make clean with other compilers
     * Using a fair amount of __attribute__ code.
-    * [DONE] Should work for GCC now.
+    * [Should work for GCC now.  But not really on ARM.
 
 * Portability: try to make the vector code as portable as possible
     * Currently using clang ext_vector_length.
     * I can't get a simple for-loop to autovectorize :-/
     * SAGE tool?
 
-* [DONE] Portability: make the outer layers of the code 32-bit clean.
-
-* [DONE] Performance/flexibility: decide which parameters should be hard-coded.
-    * Perhaps useful for comb precomputation.
+* Portability: make the outer layers of the code 32-bit clean.
+    * Was [DONE], but a regression on ARM GCC.
 
 * Performance: Improve SHAKE.
     * Improve speed.  (Maybe)
 
 * Clear other TODO/FIXME/HACK/PERF items in the code
+
+* More curves?  E-521 at least?  Ed41417?
+
+* CFRG compat modes.
 
 * Submit Decaf to SUPERCOP

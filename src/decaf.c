@@ -755,7 +755,7 @@ cond_neg_niels (
     cond_neg(n->c, neg);
 }
 
-static void pt_to_pniels (
+static NOINLINE void pt_to_pniels (
     pniels_t b,
     const point_t a
 ) {
@@ -765,7 +765,7 @@ static void pt_to_pniels (
     gf_add ( b->z, a->z, a->z );
 }
 
-static void pniels_to_pt (
+static NOINLINE void pniels_to_pt (
     point_t e,
     const pniels_t d
 ) {
