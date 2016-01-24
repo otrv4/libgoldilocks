@@ -65,11 +65,10 @@ class Precomputed;
  * Supports the usual arithmetic operations, all in constant time.
  */
 class Scalar : public Serializable<Scalar> {
-private:
+public:
     /** wrapped C type */
     typedef %(c_ns)s_scalar_t Wrapped;
-
-public:
+    
     /** Size of a serialized element */
     static const size_t SER_BYTES = %(C_NS)s_SCALAR_BYTES;
 
@@ -203,11 +202,10 @@ public:
  * Element of prime-order group.
  */
 class Point : public Serializable<Point> {
-private:
+public:
     /** wrapped C type */
     typedef %(c_ns)s_point_t Wrapped;
     
-public:
     /** Size of a serialized element */
     static const size_t SER_BYTES = %(C_NS)s_SER_BYTES;
 
