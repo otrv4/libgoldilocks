@@ -66,7 +66,7 @@ SAGE ?= sage
 SAGES= $(shell ls test/*.sage)
 BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 
-.PHONY: clean all test bench todo doc lib bat sage sagetest gen_headers
+.PHONY: clean all test test_ct bench todo doc lib bat sage sagetest gen_headers
 .PRECIOUS: $(BUILD_ASM)/%.s $(BUILD_C)/%.c $(BUILD_IBIN)/%
 
 GEN_HEADERS=\
@@ -93,6 +93,14 @@ scan: clean
 
 # Internal test programs, which are not part of the final build/bin directory.
 $(BUILD_IBIN)/test: $(BUILD_OBJ)/test_decaf.o lib
+ifeq ($(UNAME),Darwin)
+	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -ldecaf
+else
+	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -ldecaf
+endif
+
+# Internal test programs, which are not part of the final build/bin directory.
+$(BUILD_IBIN)/test_ct: $(BUILD_OBJ)/test_ct.o lib
 ifeq ($(UNAME),Darwin)
 	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -ldecaf
 else
@@ -287,6 +295,9 @@ bench: $(BUILD_IBIN)/bench
 
 test: $(BUILD_IBIN)/test
 	./$<
+
+test_ct: $(BUILD_IBIN)/test_ct
+	valgrind ./$<
 	
 microbench: $(BUILD_IBIN)/bench
 	./$< --micro
