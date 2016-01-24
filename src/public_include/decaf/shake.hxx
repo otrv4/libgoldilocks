@@ -182,11 +182,6 @@ public:
     }
     
     /** Stir in new data */
-    inline void stir( const std::string &data ) NOEXCEPT {
-        spongerng_stir(sp,(const unsigned char *__restrict__)data.data(),data.size());
-    }
-    
-    /** Stir in new data */
     inline void stir( const Block &data ) NOEXCEPT {
         spongerng_stir(sp,data.data(),data.size());
     }
