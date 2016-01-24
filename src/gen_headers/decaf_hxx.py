@@ -105,7 +105,7 @@ public:
     inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
 
     /** Serializable instance */
-    inline void serializeInto(unsigned char *buffer) const NOEXCEPT {
+    inline void serialize_into(unsigned char *buffer) const NOEXCEPT {
         %(c_ns)s_scalar_encode(buffer, s);
     }
 
@@ -163,13 +163,21 @@ public:
     /** Negate */
     inline Scalar operator- () const NOEXCEPT { Scalar r((NOINIT())); %(c_ns)s_scalar_sub(r.s,%(c_ns)s_scalar_zero,s); return r; }
 
-    /** Invert with Fermat's Little Theorem (slow!). If *this == 0, return 0. */
+    /** Invert with Fermat's Little Theorem (slow!). If *this == 0,
+     * throw CryptoException. */
     inline Scalar inverse() const throw(CryptoException) {
         Scalar r;
         if (DECAF_SUCCESS != %(c_ns)s_scalar_invert(r.s,s)) {
             throw CryptoException();
         }
         return r;
+    }
+
+    /** Invert with Fermat's Little Theorem (slow!). If *this == 0, set r=0
+     * and return DECAF_FAILURE. */
+    inline decaf_error_t __attribute__((warn_unused_result))
+    inverse_noexcept(Scalar &r) const NOEXCEPT {
+        return %(c_ns)s_scalar_invert(r.s,s);
     }
 
     /** Divide by inverting q. If q == 0, return 0. */
@@ -319,7 +327,7 @@ public:
     inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
 
     /** Serializable instance */
-    inline void serializeInto(unsigned char *buffer) const NOEXCEPT {
+    inline void serialize_into(unsigned char *buffer) const NOEXCEPT {
         %(c_ns)s_point_encode(buffer, p);
     }
 

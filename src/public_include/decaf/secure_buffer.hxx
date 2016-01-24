@@ -88,14 +88,14 @@ public:
     inline size_t serSize() const NOEXCEPT { return static_cast<const Base*>(this)->serSize(); }
     
     /** @brief Serialize this object into a buffer */
-    inline void serializeInto(unsigned char *buf) const NOEXCEPT {
-        static_cast<const Base*>(this)->serializeInto(buf);
+    inline void serialize_into(unsigned char *buf) const NOEXCEPT {
+        static_cast<const Base*>(this)->serialize_into(buf);
     }
     
     /** @brief Serialize this object into a SecureBuffer and return it */
     inline SecureBuffer serialize() const throw(std::bad_alloc) {
         SecureBuffer out(serSize());
-        serializeInto(out.data());
+        serialize_into(out.data());
         return out;
     }
     

@@ -51,7 +51,7 @@ typedef typename Group::Precomputed Precomputed;
 
 static void print(const char *name, const Scalar &x) {
     unsigned char buffer[Scalar::SER_BYTES];
-    x.serializeInto(buffer);
+    x.serialize_into(buffer);
     printf("  %s = 0x", name);
     for (int i=sizeof(buffer)-1; i>=0; i--) {
         printf("%02x", buffer[i]);
@@ -69,7 +69,7 @@ static void hexprint(const char *name, const SecureBuffer &buffer) {
 
 static void print(const char *name, const Point &x) {
     unsigned char buffer[Point::SER_BYTES];
-    x.serializeInto(buffer);
+    x.serialize_into(buffer);
     printf("  %s = 0x", name);
     for (int i=Point::SER_BYTES-1; i>=0; i--) {
         printf("%02x", buffer[i]);
@@ -347,7 +347,7 @@ static void test_crypto() {
     }
 }
 
-}; // template<GroupId GROUP>
+}; /* template<GroupId GROUP> */
 
 int main(int argc, char **argv) {
     (void) argc; (void) argv;

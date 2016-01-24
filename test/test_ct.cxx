@@ -18,7 +18,7 @@
 
 using namespace decaf;
 
-static const long NTESTS = 1;
+static const long NTESTS = 10;
 
 const char *undef_str = "Valgrind thinks this string is undefined.";
 const Block undef_block(undef_str);
@@ -44,10 +44,10 @@ static void test_arithmetic() {
         (void)(x+y);
         (void)(x-y);
         (void)(x*y);
-        //(void)(x/y); // TODO: Fails due to zero check, but needs to be tested anyway.
+        ignore(x.inverse_noexcept(y));
         (void)(x==y);
         (void)(z=y);
-        x.serializeInto(ser);
+        x.serialize_into(ser);
         x = y;
     }
 }
@@ -73,7 +73,7 @@ static void test_ec() {
         Scalar y(rng),z(rng);
         Point p(rng),q(rng),r;
 
-        p.serializeInto(ser);
+        p.serialize_into(ser);
         ignore(Group::Point::decode(p,FixedBlock<Group::Point::SER_BYTES>(ser)));
         (void)(p*y);
         (void)(p+q);
@@ -91,10 +91,20 @@ static void test_ec() {
 }
 
 static void test_crypto() {
-    /* TODO */
+    SpongeRng rng(Block("test_crypto"));
+    rng.stir(undef_block);
+    
+    for (int i=0; i<NTESTS; i++) {
+        PrivateKey<Group> sk1(rng);
+        PrivateKey<Group> sk2(rng);
+        SecureBuffer sig = sk1.sign(undef_block);
+        //sk.pub().verify(undef_block,sig); would fail.  FUTURE: ct version of this?
+        
+        /* TODO: shared_secret nothrow? have to test shared_secret... */
+    }
 }
 
-}; // template<GroupId GROUP>
+}; /* template<GroupId GROUP> */
 
 int main(int argc, char **argv) {
     (void) argc; (void) argv;

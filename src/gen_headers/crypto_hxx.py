@@ -63,7 +63,7 @@ public:
     inline explicit PublicKey(const NOINIT&) NOEXCEPT { }
     
     /** Serialize into a buffer. */
-    inline void serializeInto(unsigned char *x) const NOEXCEPT {
+    inline void serialize_into(unsigned char *x) const NOEXCEPT {
         memcpy(x,wrapped,sizeof(wrapped));
     }
     
@@ -133,7 +133,7 @@ public:
     inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
     
     /** Serialize into a buffer. */
-    inline void serializeInto(unsigned char *x) const NOEXCEPT {
+    inline void serialize_into(unsigned char *x) const NOEXCEPT {
         memcpy(x,wrapped,sizeof(wrapped));
     }
     
