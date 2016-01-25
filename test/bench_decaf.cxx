@@ -11,6 +11,8 @@
 
 #include <decaf.hxx>
 #include <decaf/shake.hxx>
+#include <decaf/strobe.hxx>
+#include <decaf/spongerng.hxx>
 #include <decaf/crypto_255.h>
 #include <decaf/crypto_448.h>
 #include <decaf/crypto.hxx>

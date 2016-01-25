@@ -57,5 +57,5 @@ void gf_mulw (gf_s *__restrict__ cs, const gf as, uint64_t b) {
 }
 
 void gf_sqr (gf_s *__restrict__ cs, const gf as) {
-    gf_mul(cs,as,as); // PERF
+    gf_mul(cs,as,as); /* Performs better with dedicated square */
 }

@@ -10,7 +10,7 @@
  */
 
 #include <decaf.hxx>
-#include <decaf/shake.hxx>
+#include <decaf/spongerng.hxx>
 #include <decaf/crypto.h>
 #include <decaf/crypto.hxx>
 #include <stdio.h>

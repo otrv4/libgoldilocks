@@ -251,7 +251,7 @@ malloc_vector(size_t size) {
 /* PERF: vectorize vs unroll */
 #ifdef __clang__
 #if 100*__clang_major__ + __clang_minor__ > 305
-#define UNROLL _Pragma("clang loop unroll(full)") // PERF TODO: vectorize?
+#define UNROLL _Pragma("clang loop unroll(full)")
 #endif
 #endif
 

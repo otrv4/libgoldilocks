@@ -32,9 +32,6 @@
  * a naive autovectorizer will do with constant_time_lookup on Intel).
  *
  * Instead, we're putting our trust in the loop unroller and unswitcher.
- * 
- * TODO: verify correctness and performance on each platform, to make sure
- * that there are no regressions.
  */
 
 

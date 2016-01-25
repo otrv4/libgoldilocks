@@ -13,6 +13,7 @@
 #include <stdlib.h>
 
 #include "field.h"
+#include "f_field.h"
 #include "decaf.h"
 #include "decaf_config.h"
 
@@ -59,16 +60,15 @@ static void scalar_print(const char *name, const API_NS(scalar_t) sc) { /* UNIFY
 }
 
 static void field_print(const gf f) { /* UNIFY */
-    const int GF_SER_BYTES = (GF_BITS + 7) / 8;
-    unsigned char ser[GF_SER_BYTES];
+    unsigned char ser[SER_BYTES];
     gf_serialize(ser,f);
     int b=0, i, comma=0;
     unsigned long long limb = 0;
     printf("{FIELD_LITERAL(");
-    for (i=0; i<GF_SER_BYTES; i++) {
+    for (i=0; i<SER_BYTES; i++) {
         limb |= ((uint64_t)ser[i])<<b;
         b += 8;
-        if (b >= GF_LIT_LIMB_BITS || i == GF_SER_BYTES-1) {
+        if (b >= GF_LIT_LIMB_BITS || i == SER_BYTES-1) {
             limb &= (1ull<<GF_LIT_LIMB_BITS) -1;
             b -= GF_LIT_LIMB_BITS;
             if (comma) printf(",");

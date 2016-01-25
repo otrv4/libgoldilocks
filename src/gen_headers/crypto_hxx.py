@@ -49,8 +49,6 @@ public:
     /** Serialization size. */
     static const size_t SER_BYTES = sizeof(Wrapped);
     
-    /* TODO: convenience types like signature? */
-    
     /** Read a private key from a string*/
     inline explicit PublicKey(const FixedBlock<SER_BYTES> &b) NOEXCEPT {
         memcpy(wrapped,b.data(),sizeof(wrapped));
@@ -70,7 +68,7 @@ public:
     /** Serialization size. */
     inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
     
-    /* TODO: verify_strobe */
+    /* FUTURE: verify_strobe */
     
     /** Verify a message */
     inline void verify(
