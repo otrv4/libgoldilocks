@@ -161,6 +161,16 @@ public:
         }
         return ret;
     }
+    
+    /** Derive a shared secret */
+    inline decaf_error_t __attribute__((warn_unused_result))
+    sharedSecretNoexcept(
+        Buffer ret,
+        const PublicKey<%(cxx_ns)s> &pub,
+        bool me_first
+    ) const NOEXCEPT {
+        return %(c_ns)s_shared_secret(ret.data(),ret.size(),wrapped,pub.wrapped,me_first);
+    }
 
     /** Sign a message. */ 
     inline SecureBuffer sign(const Block &message) const {

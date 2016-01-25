@@ -88,7 +88,7 @@ public:
 
     /** Construct from RNG */
     inline explicit Scalar(Rng &rng) NOEXCEPT {
-        FixedArrayBuffer<SER_BYTES> sb(rng);
+        FixedArrayBuffer<SER_BYTES + 16> sb(rng);
         *this = sb;
     }
 
@@ -445,9 +445,8 @@ public:
         if (buf.size() < HASH_BYTES) {
             ret &= decaf_memeq(&buf2[buf.size()], &buf2[HASH_BYTES], HASH_BYTES - buf.size());
         }
-        if (ret) {
-            /* TODO: make this constant time?? */
-            memcpy(buf.data(),buf2,(buf.size() < HASH_BYTES) ? buf.size() : HASH_BYTES);
+        for (size_t i=0; i<buf.size() && i<HASH_BYTES; i++) {
+            buf[i] = (buf[i] & ~ret) | (buf2[i] &ret);
         }
         decaf_bzero(buf2,sizeof(buf2));
         return decaf_succeed_if(ret);

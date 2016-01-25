@@ -55,11 +55,13 @@ static void test_arithmetic() {
 static void test_elligator() {
     SpongeRng rng(Block("test_elligator"));
     rng.stir(undef_block);
+    
+    FixedArrayBuffer<Group::Point::HASH_BYTES> inv;
         
     for (int i=0; i<NTESTS; i++) {
-        Point x(rng);
-        (void)x;
-        /* TODO: uniform, nonuniform... */
+        Point x(rng), y(rng,false);
+        
+        ignore((x+y).invert_elligator(inv,i));
     }
 }
 
@@ -82,7 +84,7 @@ static void test_ec() {
         (void)(p.times_two());
         (void)(p==q);
         (void)(p.debugging_torque());
-        //(void)(p.non_secret_combo_with_base(y,z)); // Should fail
+        /* (void)(p.non_secret_combo_with_base(y,z)); */ /* Should fail */
         (void)(Precomputed(p)*y);
         p.dual_scalarmul(q,r,y,z);
         Group::Point::double_scalarmul(p,y,q,z);
@@ -90,17 +92,32 @@ static void test_ec() {
     }
 }
 
+/* Specify the same value as you did when compiling decaf_crypto.c */
+#ifndef DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
+#define DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT DECAF_FALSE
+#endif
+
 static void test_crypto() {
     SpongeRng rng(Block("test_crypto"));
     rng.stir(undef_block);
+
+#if DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
+    SpongeRng defrng(Block("test_crypto_defined"));
+#endif
+    
+    FixedArrayBuffer<Group::Point::SER_BYTES> shared;
     
     for (int i=0; i<NTESTS; i++) {
         PrivateKey<Group> sk1(rng);
-        PrivateKey<Group> sk2(rng);
         SecureBuffer sig = sk1.sign(undef_block);
-        //sk.pub().verify(undef_block,sig); would fail.  FUTURE: ct version of this?
-        
-        /* TODO: shared_secret nothrow? have to test shared_secret... */
+
+#if DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
+        PrivateKey<Group> sk2(defrng);
+        (void)sk1.sharedSecretNoexcept(shared,sk2.pub(),i&1);
+#else
+        PrivateKey<Group> sk3(rng);
+        (void)sk1.sharedSecretNoexcept(shared,sk3.pub(),i&1);
+#endif
     }
 }
 

@@ -61,6 +61,14 @@ void API_NS(private_to_public) (
     memcpy(pub, priv->pub, sizeof(API_NS(public_key_t)));
 }
 
+/* Performance vs consttime tuning.
+ * Specifying true here might give better DOS resistance in certain corner
+ * cases.  Specifying false gives a tighter result in test_ct.
+ */
+#ifndef DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
+#define DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT DECAF_FALSE
+#endif
+
 decaf_error_t
 API_NS(shared_secret) (
     uint8_t *shared,
@@ -82,7 +90,8 @@ API_NS(shared_secret) (
         strobe_ad(strobe,my_privkey->pub,sizeof(API_NS(public_key_t)));
     }
     decaf_error_t ret = API_NS(direct_scalarmul)(
-        ss_ser, your_pubkey, my_privkey->secret_scalar, DECAF_FALSE, DECAF_TRUE
+        ss_ser, your_pubkey, my_privkey->secret_scalar, DECAF_FALSE,
+        DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
     );
     
     strobe_transact(strobe,NULL,ss_ser,sizeof(ss_ser),STROBE_CW_DH_KEY);
