@@ -157,17 +157,20 @@ protected:
     /** @cond internal */
     unsigned char *data_;
     size_t size_;
+    const bool zero_on_destroy_;
     /** @endcond */
 
 public:
     /** Null initialization */
-    inline Block() : data_(NULL), size_(0) {}
+    inline Block() : data_(NULL), size_(0), zero_on_destroy_(false) {}
     
     /** Init from C string */
-    inline Block(const char *data) NOEXCEPT : data_((unsigned char *)data), size_(strlen(data)) {}
+    inline Block(const char *data) NOEXCEPT : data_((unsigned char *)data),
+        size_(strlen(data)), zero_on_destroy_(false) {}
 
     /** Unowned init */
-    inline Block(const unsigned char *data, size_t size) NOEXCEPT : data_((unsigned char *)data), size_(size) {}
+    inline Block(const unsigned char *data, size_t size, bool zero_on_destroy=false) NOEXCEPT : data_((unsigned char *)data),
+        size_(size), zero_on_destroy_(zero_on_destroy) {}
     
     /** Block from std::string */
     inline Block(const std::string &s) : data_(
@@ -176,11 +179,11 @@ public:
     #else
         ((unsigned char *)(s.data()))
     #endif
-    ), size_(s.size()) {}
+    ), size_(s.size()), zero_on_destroy_(false) {}
     
     /** Block from std::vector */
     template<class alloc> inline Block(const std::vector<unsigned char,alloc> &s)
-        : data_(((unsigned char *)&(s)[0])), size_(s.size()) {}
+        : data_(((unsigned char *)&(s)[0])), size_(s.size()), zero_on_destroy_(false) {}
 
     /** Get const data */
     inline const unsigned char *data() const NOEXCEPT { return data_; }
@@ -216,8 +219,8 @@ public:
         return SecureBuffer(data_,data_+size_);
     }
 
-    /** Virtual destructor for SecureBlock. TODO: probably means vtable?  Make bool? */
-    inline virtual ~Block() {};
+    /** Securely set the buffer to 0. */
+    inline void zeroize() NOEXCEPT { really_bzero(data_,size()); }
     
     /** Debugging print in hex */
     inline void debug_print_hex(const char *name = NULL) {
@@ -260,7 +263,7 @@ public:
     inline Buffer() NOEXCEPT : Block() {}
 
     /** Unowned init */
-    inline Buffer(unsigned char *data, size_t size) NOEXCEPT : Block(data,size) {}
+    inline Buffer(unsigned char *data, size_t size, bool zero_on_destroy=false) NOEXCEPT : Block(data,size,zero_on_destroy) {}
     
     /** Block from std::vector */
     template<class alloc> inline Buffer(std::vector<unsigned char,alloc> &s) : Block(s) {}
@@ -286,9 +289,6 @@ public:
         memmove(data(),b.data(),size());
     }
     
-    /** Securely set the buffer to 0. */
-    inline void zeroize() NOEXCEPT { really_bzero(data(),size()); }
-    
 private:
     /** @cond internal */
     inline void operator= (const Block &b) const NOEXCEPT DELETE;
@@ -310,7 +310,7 @@ public:
     }
     
     /** Explicitly pass a C buffer. */
-    inline explicit FixedBuffer(uint8_t dat[Size]) NOEXCEPT : Buffer(dat,Size) {}
+    inline explicit FixedBuffer(uint8_t dat[Size],bool zero_on_destroy = false) NOEXCEPT : Buffer(dat,Size,zero_on_destroy) {}
     
     /** Cast to a FixedBlock. */
     inline operator FixedBlock<Size>() const NOEXCEPT {
@@ -331,16 +331,16 @@ public:
     using Buffer::zeroize;
     
     /** New buffer initialized to zero. */
-    inline explicit FixedArrayBuffer() NOEXCEPT : FixedBuffer<Size>(storage) { memset(storage,0,Size); }
+    inline explicit FixedArrayBuffer() NOEXCEPT : FixedBuffer<Size>(storage,true) { memset(storage,0,Size); }
 
     /** New uninitialized buffer. */
-    inline explicit FixedArrayBuffer(const NOINIT &) NOEXCEPT : FixedBuffer<Size>(storage) { }
+    inline explicit FixedArrayBuffer(const NOINIT &) NOEXCEPT : FixedBuffer<Size>(storage,true) { }
     
     /** New random buffer */
-    inline explicit FixedArrayBuffer(Rng &r) NOEXCEPT : FixedBuffer<Size>(storage) { r.read(*this); }
+    inline explicit FixedArrayBuffer(Rng &r) NOEXCEPT : FixedBuffer<Size>(storage,true) { r.read(*this); }
     
     /** Copy constructor */
-    inline explicit FixedArrayBuffer(const FixedBlock<Size> &b) NOEXCEPT : FixedBuffer<Size>(storage) {
+    inline explicit FixedArrayBuffer(const FixedBlock<Size> &b) NOEXCEPT : FixedBuffer<Size>(storage,true) {
         memcpy(storage,b.data(),Size);
     }
     
@@ -360,13 +360,13 @@ public:
     }
     
     /** Copy constructor */
-    inline explicit FixedArrayBuffer(const Block &b) throw(LengthException) : FixedBuffer<Size>(storage) {
+    inline explicit FixedArrayBuffer(const Block &b) throw(LengthException) : FixedBuffer<Size>(storage,true) {
         if (b.size() != Size) throw LengthException();
         memcpy(storage,b.data(),Size);
     }
     
     /** Copy constructor */
-    inline explicit FixedArrayBuffer(const FixedArrayBuffer<Size> &b) NOEXCEPT : FixedBuffer<Size>(storage) {
+    inline explicit FixedArrayBuffer(const FixedArrayBuffer<Size> &b) NOEXCEPT : FixedBuffer<Size>(storage,true) {
         memcpy(storage,b.data(),Size);
     }
     
