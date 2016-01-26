@@ -331,19 +331,24 @@ static void test_crypto() {
     SpongeRng rng(Block("test_decaf_crypto"),SpongeRng::DETERMINISTIC);
 
     for (int i=0; i<NTESTS && test.passing_now; i++) {
-        PrivateKey<Group> priv1(rng), priv2(rng);
-        PublicKey<Group> pub1(priv1), pub2(priv2);
-        
-        SecureBuffer message = rng.read(i);
-        SecureBuffer sig(priv1.sign(message));
+        try {
+            PrivateKey<Group> priv1(rng), priv2(rng);
+            PublicKey<Group> pub1(priv1), pub2(priv2);
+    
+            SecureBuffer message = rng.read(i);
+            SecureBuffer sig(priv1.sign(message));
 
-        pub1.verify(message, sig);
-        
-        SecureBuffer s1(priv1.sharedSecret(pub2,32,true));
-        SecureBuffer s2(priv2.sharedSecret(pub1,32,false));
-        if (!memeq(s1,s2)) {
+            pub1.verify(message, sig);
+    
+            SecureBuffer s1(priv1.sharedSecret(pub2,32,true));
+            SecureBuffer s2(priv2.sharedSecret(pub1,32,false));
+            if (!memeq(s1,s2)) {
+                test.fail();
+                printf("    Shared secrets disagree on iteration %d.\n",i);
+            }
+        } catch (CryptoException) {
             test.fail();
-            printf("    Shared secrets disagree on iteration %d.\n",i);
+            printf("    Threw CryptoException.\n");
         }
     }
 }

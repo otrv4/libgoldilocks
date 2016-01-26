@@ -59,7 +59,7 @@ typedef uint32_t decaf_word_t;      /**< Word size for internal computations */
 typedef int32_t decaf_sword_t;      /**< Signed word size for internal computations */
 typedef uint32_t decaf_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
 typedef uint64_t decaf_dword_t;     /**< Double-word size for internal computations */
-typedef uint64_t decaf_dsword_t;     /**< Signed double-word size for internal computations */
+typedef int64_t decaf_dsword_t;     /**< Signed double-word size for internal computations */
 #endif
     
 /** DECAF_TRUE = -1 so that DECAF_TRUE & x = x */
