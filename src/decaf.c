@@ -389,54 +389,56 @@ deisogenize (
 #if COFACTOR == 4 && !IMAGINE_TWIST
     (void) toggle_rotation;
     
-    /* TODO: Can shave off one mul here; not important but makes consistent with paper */
     gf b, d;
-    gf_s *a = s, *c = minus_t_over_s;
-    gf_mulw_sgn ( a, p->y, 1-EDWARDS_D );
-    gf_mul ( c, a, p->t );     /* -dYT, with EDWARDS_D = d-1 */
-    gf_mul ( a, p->x, p->z ); 
-    gf_sub ( d, c, a );  /* aXZ-dYT with a=-1 */
-    gf_add ( a, p->z, p->y ); 
-    gf_sub ( b, p->z, p->y ); 
-    gf_mul ( c, b, a );
-    gf_mulw_sgn ( b, c, -EDWARDS_D ); /* (a-d)(Z+Y)(Z-Y) */
-    mask_t ok = gf_isqrt_chk ( a, b, DECAF_TRUE ); /* r in the paper */
+    gf_s *c = s, *a = minus_t_over_s;
+    gf_mulw_sgn(a, p->y, 1-EDWARDS_D);
+    gf_mul(c, a, p->t);     /* -dYT, with EDWARDS_D = d-1 */
+    gf_mul(a, p->x, p->z); 
+    gf_sub(d, c, a);  /* aXZ-dYT with a=-1 */
+    gf_add(a, p->z, p->y); 
+    gf_sub(b, p->z, p->y); 
+    gf_mul(c, b, a);
+    gf_mulw_sgn(b, c, -EDWARDS_D); /* (a-d)(Z+Y)(Z-Y) */
+    mask_t ok = gf_isqrt_chk ( a, b, DECAF_TRUE); /* r in the paper */
     (void)ok; assert(ok);
-    gf_mulw_sgn ( b, a, -EDWARDS_D ); /* u in the paper */
-    gf_mul ( c, b, a ); /* ur */
-    gf_mul ( a, c, d ); /* ur (aZX-dYT) */
-    gf_add ( d, b, b );  /* 2u = -2au since a=-1 */
-    gf_mul ( c, d, p->z ); /* 2uZ */
-    cond_neg ( b, toggle_hibit_t_over_s ^ ~hibit(c) ); /* u <- -u if negative. */
-    cond_neg ( c, toggle_hibit_t_over_s ^ ~hibit(c) ); /* u <- -u if negative. */
-    gf_mul ( d, b, p->y ); 
-    gf_add ( s, a, d );
-    cond_neg ( s, toggle_hibit_s ^ hibit(s) );
+    gf_mulw_sgn (b, a, -EDWARDS_D); /* u in the paper */
+
+    gf_mul(c,a,d); /* r(aZX-dYT) */
+    gf_mul(a,b,p->z); /* uZ */
+    gf_add(a,a,a); /* 2uZ */
+    
+    cond_neg(c, toggle_hibit_t_over_s ^ ~hibit(a)); /* u <- -u if negative. */
+    cond_neg(a, toggle_hibit_t_over_s ^ ~hibit(a)); /* t/s <-? -t/s */
+    
+    gf_add(d,c,p->y);
+    gf_mul(s,b,d);
+    cond_neg(s, toggle_hibit_s ^ hibit(s));
 #else
     /* More complicated because of rotation */
-    /* MAGIC This code is wrong for certain non-Curve25519 curves; check if it's because of Cofactor==8 or IMAGINE_ROTATION */
+    /* MAGIC This code is wrong for certain non-Curve25519 curves;
+     * check if it's because of Cofactor==8 or IMAGINE_ROTATION */
     
     gf c, d;
     gf_s *b = s, *a = minus_t_over_s;
 
-#if IMAGINE_TWIST
-    gf x, t;
-    gf_mul ( x, p->x, SQRT_MINUS_ONE);
-    gf_mul ( t, p->t, SQRT_MINUS_ONE);
-    gf_sub ( x, ZERO, x );
-    gf_sub ( t, ZERO, t );
+    #if IMAGINE_TWIST
+        gf x, t;
+        gf_mul ( x, p->x, SQRT_MINUS_ONE);
+        gf_mul ( t, p->t, SQRT_MINUS_ONE);
+        gf_sub ( x, ZERO, x );
+        gf_sub ( t, ZERO, t );
     
-    gf_add ( a, p->z, x );
-    gf_sub ( b, p->z, x );
-    gf_mul ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 - X^2 */
-#else
-    const gf_s *x = p->x, *t = p->t;
-    /* Won't hit the cond_sel below because COFACTOR==8 requires IMAGINE_TWIST for now. */
+        gf_add ( a, p->z, x );
+        gf_sub ( b, p->z, x );
+        gf_mul ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 - X^2 */
+    #else
+        const gf_s *x = p->x, *t = p->t;
+        /* Won't hit the cond_sel below because COFACTOR==8 requires IMAGINE_TWIST for now. */
     
-    gf_sqr ( a, p->z );
-    gf_sqr ( b, p->x );
-    gf_add ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 + X^2 */
-#endif
+        gf_sqr ( a, p->z );
+        gf_sqr ( b, p->x );
+        gf_add ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 + X^2 */
+    #endif
     
     gf_mul ( a, p->z, t ); /* "tz" = T*Z */
     gf_sqr ( b, a );
@@ -448,8 +450,7 @@ deisogenize (
     gf_mul ( b, a, d ); /* 1/tz */
 
     mask_t rotate;
-#if (COFACTOR == 8)
-    {
+    #if (COFACTOR == 8)
         gf e;
         gf_sqr(e, p->z);
         gf_mul(a, e, b); /* z^2 / tz = z/t = 1/xy */
@@ -458,11 +459,10 @@ deisogenize (
         gf_mul ( a, b, c ); 
         cond_sel ( a, a, SQRT_ONE_MINUS_D, rotate );
         cond_sel ( x, p->y, x, rotate );
-    }
-#else
-    (void)toggle_rotation;
-    rotate = 0;
-#endif
+    #else
+        (void)toggle_rotation;
+        rotate = 0;
+    #endif
     
     gf_mul ( c, a, d ); // new "osx"
     gf_mul ( a, c, p->z );
