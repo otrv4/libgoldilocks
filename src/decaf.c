@@ -414,7 +414,7 @@ deisogenize (
     cond_neg ( s, toggle_hibit_s ^ hibit(s) );
 #else
     /* More complicated because of rotation */
-    /* FIXME This code is wrong for certain non-Curve25519 curves; check if it's because of Cofactor==8 or IMAGINE_ROTATION */
+    /* MAGIC This code is wrong for certain non-Curve25519 curves; check if it's because of Cofactor==8 or IMAGINE_ROTATION */
     
     gf c, d;
     gf_s *b = s, *a = minus_t_over_s;
@@ -1164,67 +1164,49 @@ void API_NS(point_from_hash_nonuniform) (
     point_t p,
     const unsigned char ser[SER_BYTES]
 ) {
-    // TODO: simplify since we don't return a hint anymore
-    // TODO: test pathological case ur0^2 = 1/(1-d)
-    gf r0,r,a,b,c,dee,D,N,rN,e;
+    /* TODO: test pathological case ur0^2 = 1/(1-d) */
+    gf r0,r,a,b,c,D,N,e;
     gf_deserialize(r0,ser);
     gf_strong_reduce(r0);
     gf_sqr(a,r0);
 #if P_MOD_8 == 5
-    /* r = QNR * a */
+    /* r = QNR * r0^2 */
     gf_mul(r,a,SQRT_MINUS_ONE);
-#else
+#elif P_MOD_8 == 3 || P_MOD_8 == 7
     gf_sub(r,ZERO,a);
+#else
+#error "Only supporting p=3,5,7 mod 8"
 #endif
-    gf_mulw_sgn(dee,ONE,EDWARDS_D);
-    gf_mulw_sgn(c,r,EDWARDS_D);
-    
+
     /* Compute D := (dr+a-d)(dr-ar-d) with a=1 */
-    gf_sub(a,c,dee);
-    gf_add(a,a,ONE);
-    gf_sub(b,c,r);
-    gf_sub(b,b,dee);
+    gf_sub(a,r,ONE);
+    gf_mulw_sgn(b,a,EDWARDS_D); /* dr-d */
+    gf_add(a,b,ONE);
+    gf_sub(b,b,r);
     gf_mul(D,a,b);
     
     /* compute N := (r+1)(a-2d) */
     gf_add(a,r,ONE);
     gf_mulw_sgn(N,a,1-2*EDWARDS_D);
     
-    /* e = +-1/sqrt(+-ND) */
-    gf_mul(rN,r,N);
-    gf_mul(a,rN,D);
+    /* e = +-sqrt(1/ND) or +-r0 * sqrt(qnr/ND) */
+    gf_mul(a,D,N);
+    mask_t square = gf_isqrt_chk(b,a,DECAF_FALSE);
+    cond_sel(c,r0,ONE,square); /* r? = square ? 1 : r0 */
+    gf_mul(e,b,c);
     
-    mask_t square = gf_isqrt_chk(e,a,DECAF_FALSE);
+    /* s@a = +-|N.e| */
+    gf_mul(a,N,e);
+    cond_neg(a,hibit(a)^square); /* NB this is - what is listen in the paper */
     
-    /* b <- t/s */
-    cond_sel(c,r0,r,square); /* r? = sqr ? r : 1 */
-    /* In two steps to avoid overflow on 32-bit arch */
-    gf_mulw_sgn(a,c,1-2*EDWARDS_D);
-    gf_mulw_sgn(b,a,1-2*EDWARDS_D);
-    gf_sub(c,r,ONE);
-    gf_mul(a,b,c); /* = r? * (r-1) * (a-2d)^2 with a=1 */
-    gf_mul(b,a,e);
-    cond_neg(b,~square);
-    cond_sel(c,r0,ONE,square);
-    gf_mul(a,e,c);
-    gf_mul(c,a,D); /* 1/s except for sign.  FUTURE: simplify using this. */
-    gf_sub(b,b,c);
-
-    /* a <- s = e * N * (sqr ? r : r0)
-     * e^2 r N D = 1
-     * 1/s =  1/(e * N * (sqr ? r : r0)) = e * D * (sqr ? 1 : r0)
-     */
-    gf_mul(a,N,r0);
-    cond_sel(rN,a,rN,square);
-    gf_mul(a,rN,e);
-    gf_mul(c,a,b);
-    
-    /* Normalize/negate */
-    mask_t neg_s = hibit(a) ^ ~square;
-    cond_neg(a,neg_s); /* ends up negative if ~square */
-    
-    /* b <- t */
-    cond_sel(b,c,ONE,gf_eq(c,ZERO)); /* 0,0 -> 1,0 */
+    /* t@b = -+ cN(r-1)((a-2d)e)^2 - 1 */
+    gf_mulw_sgn(c,e,1-2*EDWARDS_D); /* (a-2d)e */
+    gf_sqr(b,c);
+    gf_sub(e,r,ONE);
+    gf_mul(c,b,e);
+    gf_mul(b,c,N);
+    cond_neg(b,square);
+    gf_sub(b,b,ONE);
 
     /* isogenize */
 #if IMAGINE_TWIST

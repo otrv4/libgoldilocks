@@ -474,7 +474,7 @@ int main(int argc, char **argv) {
     Tests<IsoEd25519>::test_cfrg_crypto();
     Tests<IsoEd25519>::test_cfrg_vectors();
     Tests<IsoEd25519>::test_crypto();
-    
+
     printf("\n");
     printf("Testing %s:\n", Ed448Goldilocks::name());
     Tests<Ed448Goldilocks>::test_arithmetic();
