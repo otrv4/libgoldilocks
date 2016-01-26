@@ -136,7 +136,7 @@ public:
      * Decode from correct-length little-endian byte sequence.
      * @return DECAF_FAILURE if the scalar is greater than or equal to the group order q.
      */
-    static inline decaf_error_t __attribute__((warn_unused_result)) decode (
+    static inline decaf_error_t WARN_UNUSED decode (
         Scalar &sc, const FixedBlock<SER_BYTES> buffer
     ) NOEXCEPT {
         return %(c_ns)s_scalar_decode(sc.s,buffer.data());
@@ -175,7 +175,7 @@ public:
 
     /** Invert with Fermat's Little Theorem (slow!). If *this == 0, set r=0
      * and return DECAF_FAILURE. */
-    inline decaf_error_t __attribute__((warn_unused_result))
+    inline decaf_error_t WARN_UNUSED
     inverse_noexcept(Scalar &r) const NOEXCEPT {
         return %(c_ns)s_scalar_invert(r.s,s);
     }
@@ -276,7 +276,7 @@ public:
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point,
      * or was the identity and allow_identity was DECAF_FALSE. Contents of the buffer are undefined.
      */
-    static inline decaf_error_t __attribute__((warn_unused_result)) decode (
+    static inline decaf_error_t WARN_UNUSED decode (
         Point &p, const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE
     ) NOEXCEPT {
         return %(c_ns)s_point_decode(p.p,buffer.data(),allow_identity);
@@ -563,6 +563,64 @@ public:
     static inline size_t alignment() NOEXCEPT { return alignof_%(c_ns)s_precomputed_s; }
     static inline const Precomputed_U * defaultValue() NOEXCEPT { return %(c_ns)s_precomputed_base; }
     /** @endcond */
+};
+
+struct DhLadder {
+public:
+    /** Bytes in an X%(gf_shortname)s public key. */
+    static const size_t PUBLIC_BYTES = X%(gf_shortname)s_PUBLIC_BYTES;
+
+    /** Bytes in an X%(gf_shortname)s private key. */
+    static const size_t PRIVATE_BYTES = X%(gf_shortname)s_PRIVATE_BYTES;
+
+    /** Base point for a scalar multiplication. */
+    static const FixedBlock<PUBLIC_BYTES> base_point() NOEXCEPT {
+        return FixedBlock<PUBLIC_BYTES>(%(c_ns)s_x_base_point);
+    }
+
+    /** Generate and return a shared secret with public key.  */
+    static inline SecureBuffer shared_secret(
+        const FixedBlock<PUBLIC_BYTES> &pk,
+        const FixedBlock<PRIVATE_BYTES> &scalar
+    ) throw(std::bad_alloc,CryptoException) {
+        SecureBuffer out(PUBLIC_BYTES);
+        if (DECAF_SUCCESS != %(c_ns)s_x_direct_scalarmul(out.data(), pk.data(), scalar.data())) {
+            throw CryptoException();
+        }
+        return out;
+    }
+
+    /** Generate and return a shared secret with public key, noexcept version.  */
+    static inline decaf_error_t WARN_UNUSED
+    shared_secret_noexcept (
+        FixedBuffer<PUBLIC_BYTES> &out,
+        const FixedBlock<PUBLIC_BYTES> &pk,
+        const FixedBlock<PRIVATE_BYTES> &scalar
+    ) NOEXCEPT {
+       return %(c_ns)s_x_direct_scalarmul(out.data(), pk.data(), scalar.data());
+    }
+
+    /** Generate and return a public key; equivalent to shared_secret(base_point(),scalar)
+     * but possibly faster.
+     */
+    static inline SecureBuffer generate_key(
+        const FixedBlock<PRIVATE_BYTES> &scalar
+    ) throw(std::bad_alloc) {
+        SecureBuffer out(PUBLIC_BYTES);
+        %(c_ns)s_x_base_scalarmul(out.data(), scalar.data());
+        return out;
+    }
+
+    /** Generate and return a public key into a fixed buffer;
+     * equivalent to shared_secret(base_point(),scalar) but possibly faster.
+     */
+    static inline void
+    generate_key_noexcept (
+        FixedBuffer<PUBLIC_BYTES> &out,
+        const FixedBlock<PRIVATE_BYTES> &scalar
+    ) NOEXCEPT {
+        %(c_ns)s_x_base_scalarmul(out.data(), scalar.data());
+    }
 };
 
 }; /* struct %(cxx_ns)s */

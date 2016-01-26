@@ -49,6 +49,15 @@ def ceil_log2(x):
 for field,data in field_data.iteritems():
     if "gf_bits" not in data:
         data["gf_bits"] = ceil_log2(data["modulus"])
+        
+    if "x_pub_bytes" not in data:
+        data["x_pub_bytes"] = (data["gf_bits"]-1)//8 + 1
+        
+    if "x_priv_bytes" not in data:
+        data["x_priv_bytes"] = (data["gf_bits"]-1)//8 + 1
+        
+    if "x_priv_bits" not in data:
+        data["x_priv_bits"] = ceil_log2(data["modulus"]*0.99)
 
 for curve,data in curve_data.iteritems():
     for key in field_data[data["field"]]:
@@ -66,7 +75,7 @@ for curve,data in curve_data.iteritems():
         data["bits"] = ceil_log2(data["modulus"])
         
     if "ser_bytes" not in data:
-        data["ser_bytes"] = (data["bits"]-1)//8 + 1
+        data["ser_bytes"] = (data["bits"]-2)//8 + 1
     
     if "scalar_ser_bytes" not in data:
         data["scalar_ser_bytes"] = (data["scalar_bits"]-1)//8 + 1

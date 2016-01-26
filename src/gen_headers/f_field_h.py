@@ -14,7 +14,7 @@ f_field_h = gen_file(
 
 #define __DECAF_%(gf_shortname)s_GF_DEFINED__ 1
 #define NLIMBS (%(gf_impl_bits)d/sizeof(word_t)/8)
-#define SER_BYTES ((%(gf_bits)d-1)/8 + 1)
+#define SER_BYTES ((%(gf_bits)d-1)/8 + 1) /* MAGIC: depends on if high bit known to be clear (eg p521) */
 typedef struct gf_%(gf_shortname)s_s {
     word_t limb[NLIMBS];
 } __attribute__((aligned(32))) gf_%(gf_shortname)s_s, gf_%(gf_shortname)s_t[1];
@@ -41,6 +41,11 @@ typedef struct gf_%(gf_shortname)s_s {
 #define gf_isr            gf_%(gf_shortname)s_isr
 #define gf_serialize      gf_%(gf_shortname)s_serialize
 #define gf_deserialize    gf_%(gf_shortname)s_deserialize
+
+/* RFC 7748 support */
+#define X_PUBLIC_BYTES  %(x_pub_bytes)d
+#define X_PRIVATE_BYTES %(x_priv_bytes)d
+#define X_PRIVATE_BITS  %(x_priv_bits)d
 
 #define SQRT_MINUS_ONE    P%(gf_shortname)s_SQRT_MINUS_ONE /* might not be defined */
 

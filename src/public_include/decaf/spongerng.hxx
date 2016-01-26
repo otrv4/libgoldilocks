@@ -41,6 +41,12 @@ private:
     keccak_prng_t sp;
     
 public:
+    /** Deterministic flag.
+     * The idea is that DETERMINISTIC is used for testing or for lockstep computations,
+     * and NONDETERMINISTIC is used in production.
+     */
+    enum Deterministic { RANDOM = 0, DETERMINISTIC = 1 };
+    
     /** Exception thrown when The RNG fails (to seed itself) */
     class RngException : public std::exception {
     private:
@@ -54,14 +60,14 @@ public:
     };
     
     /** Initialize, deterministically by default, from block */
-    inline SpongeRng( const Block &in, bool deterministic = true ) {
-        spongerng_init_from_buffer(sp,in.data(),in.size(),deterministic);
+    inline SpongeRng( const Block &in, Deterministic det ) {
+        spongerng_init_from_buffer(sp,in.data(),in.size(),(int)det);
     }
     
     /** Initialize, non-deterministically by default, from C/C++ filename */
-    inline SpongeRng( const std::string &in = "/dev/urandom", size_t len = 32, bool deterministic = false )
+    inline SpongeRng( const std::string &in = "/dev/urandom", size_t len = 32, Deterministic det = RANDOM )
         throw(RngException) {
-        decaf_error_t ret = spongerng_init_from_file(sp,in.c_str(),len,deterministic);
+        decaf_error_t ret = spongerng_init_from_file(sp,in.c_str(),len,det);
         if (!decaf_successful(ret)) {
             throw RngException(errno, "Couldn't load from file");
         }

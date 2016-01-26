@@ -28,6 +28,7 @@ const API_NS(scalar_t) API_NS(sc_r2) = {{{0}}};
 const decaf_word_t API_NS(MONTGOMERY_FACTOR) = 0;
 
 const API_NS(point_t) API_NS(point_base);
+const uint8_t API_NS(x_base_point)[X_PUBLIC_BYTES] = {0};
 
 struct niels_s;
 const gf_s *API_NS(precomputed_wnaf_as_fe);
@@ -170,6 +171,19 @@ int main(int argc, char **argv) {
         w *= w*plo + 2;
     }
     printf("const decaf_word_t API_NS(MONTGOMERY_FACTOR) = (decaf_word_t)0x%016llxull;\n\n", w);
+
+    /* Generate the Montgomery ladder version of the base point */
+    gf base1,base2;
+    ret = gf_deserialize(base1,base_point_ser_for_pregen);
+    if (ret != DECAF_SUCCESS) return 1;
+    gf_sqr(base2,base1);
+    uint8_t x_ser[X_PUBLIC_BYTES] = {0};
+    gf_serialize(x_ser, base2);
+    printf("const uint8_t API_NS(x_base_point)[%d] = {", X_PUBLIC_BYTES);
+    for (i=0; i<X_PUBLIC_BYTES; i++) {
+        printf("%s%s%d",i?",":"",(i%32==0)?"\n  ":"",x_ser[i]);
+    }
+    printf("\n};\n");
     
     return 0;
 }

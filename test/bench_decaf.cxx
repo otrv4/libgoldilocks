@@ -288,10 +288,21 @@ static void spake2ee(
     server.respec(STROBE_KEYED_128);
 }
 
+static void cfrg() {
+    SpongeRng rng(Block("bench_cfrg_crypto"),SpongeRng::DETERMINISTIC);
+    FixedArrayBuffer<Group::DhLadder::PUBLIC_BYTES> base(rng);
+    FixedArrayBuffer<Group::DhLadder::PRIVATE_BYTES> s1(rng);
+    for (Benchmark b("RFC 7748 keygen"); b.iter(); ) { Group::DhLadder::generate_key(s1); }
+    for (Benchmark b("RFC 7748 shared secret"); b.iter(); ) { Group::DhLadder::shared_secret(base,s1); }
+}
+
 static void macro() {
     printf("\nMacro-benchmarks for %s:\n", Group::name());
-    printf("Crypto benchmarks:\n");
-    SpongeRng rng(Block("macro rng seed"));
+    printf("CFRG crypto benchmarks:\n");
+    cfrg();
+    
+    printf("\nSample crypto benchmarks:\n");
+    SpongeRng rng(Block("macro rng seed"),SpongeRng::DETERMINISTIC);
     PrivateKey<Group> s1((NOINIT())), s2(rng);
     PublicKey<Group> p1((NOINIT())), p2(s2);
 
@@ -317,8 +328,8 @@ static void macro() {
     }
     
     printf("\nProtocol benchmarks:\n");
-    SpongeRng clientRng(Block("client rng seed"));
-    SpongeRng serverRng(Block("server rng seed"));
+    SpongeRng clientRng(Block("client rng seed"),SpongeRng::DETERMINISTIC);
+    SpongeRng serverRng(Block("server rng seed"),SpongeRng::DETERMINISTIC);
     SecureBuffer hashedPassword(Block("hello world"));
     for (Benchmark b("Spake2ee c+s",0.1); b.iter(); ) {
         spake2ee(clientRng, serverRng, hashedPassword,false);
@@ -343,7 +354,7 @@ static void macro() {
 }
 
 static void micro() {
-    SpongeRng rng(Block("per-curve-benchmarks"));
+    SpongeRng rng(Block("per-curve-benchmarks"),SpongeRng::DETERMINISTIC);
     Precomputed pBase;
     Point p,q;
     Scalar s(1),t(2);
@@ -382,7 +393,7 @@ int main(int argc, char **argv) {
     if (argc >= 2 && !strcmp(argv[1], "--micro"))
         micro = true;
 
-    SpongeRng rng(Block("micro-benchmarks"));
+    SpongeRng rng(Block("micro-benchmarks"),SpongeRng::DETERMINISTIC);
     if (micro) {
         printf("\nMicro-benchmarks:\n");
         SHAKE<128> shake1;
@@ -414,7 +425,6 @@ int main(int argc, char **argv) {
         Benches<IsoEd25519>::micro();
         Benches<Ed448Goldilocks>::micro();
     }
-
 
     Benches<IsoEd25519>::macro();
     Benches<Ed448Goldilocks>::macro();

@@ -35,6 +35,12 @@ typedef struct gf_%(gf_shortname)s_s {
 /** Number of bytes in a serialized scalar. */
 #define %(C_NS)s_SCALAR_BYTES %(scalar_ser_bytes)d
 
+/** Number of bytes in an x%(gf_shortname)s public key */
+#define X%(gf_shortname)s_PUBLIC_BYTES %(x_pub_bytes)d
+
+/** Number of bytes in an x%(gf_shortname)s private key */
+#define X%(gf_shortname)s_PRIVATE_BYTES %(x_priv_bytes)d
+
 /** Twisted Edwards extended homogeneous coordinates */
 typedef struct %(c_ns)s_point_s {
     /** @cond internal */
@@ -345,6 +351,39 @@ decaf_error_t %(c_ns)s_direct_scalarmul (
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
 ) API_VIS NONNULL3 WARN_UNUSED NOINLINE;
+
+/**
+ * @brief RFC 7748 Diffie-Hellman scalarmul.  This function uses a different
+ * (non-Decaf) encoding.
+ *
+ * @param [out] scaled The scaled point base*scalar
+ * @param [in] base The point to be scaled.
+ * @param [in] scalar The scalar to multiply by.
+ *
+ * @retval DECAF_SUCCESS The scalarmul succeeded.
+ * @retval DECAF_FAILURE The scalarmul didn't succeed, because the base
+ * point is in a small subgroup.
+ */
+decaf_error_t %(c_ns)s_x_direct_scalarmul ( /* TODO: rename? */
+    uint8_t out[X%(gf_shortname)s_PUBLIC_BYTES],
+    const uint8_t base[X%(gf_shortname)s_PUBLIC_BYTES],
+    const uint8_t scalar[X%(gf_shortname)s_PRIVATE_BYTES]
+) API_VIS NONNULL3 WARN_UNUSED NOINLINE;
+
+/** The base point for X%(gf_shortname)s Diffie-Hellman */
+extern const uint8_t %(c_ns)s_x_base_point[X%(gf_shortname)s_PUBLIC_BYTES] API_VIS;
+
+/**
+ * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
+ * a different (non-Decaf) encoding.
+ *
+ * @param [out] scaled The scaled point base*scalar
+ * @param [in] scalar The scalar to multiply by.
+ */
+void %(c_ns)s_x_base_scalarmul (
+    uint8_t out[X%(gf_shortname)s_PUBLIC_BYTES],
+    const uint8_t scalar[X%(gf_shortname)s_PRIVATE_BYTES]
+) API_VIS NONNULL2 NOINLINE;
 
 /**
  * @brief Precompute a table for fast scalar multiplication.

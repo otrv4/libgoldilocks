@@ -92,6 +92,10 @@ static void test_ec() {
     }
 }
 
+/* TODO: test x25519/x448 */
+
+/* FUTURE: test ed25519/ed448 */
+
 /* Specify the same value as you did when compiling decaf_crypto.c */
 #ifndef DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
 #define DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT DECAF_FALSE

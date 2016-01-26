@@ -47,6 +47,7 @@ template<typename Group> struct Tests {
 
 typedef typename Group::Scalar Scalar;
 typedef typename Group::Point Point;
+typedef typename Group::DhLadder DhLadder;
 typedef typename Group::Precomputed Precomputed;
 
 static void print(const char *name, const Scalar &x) {
@@ -128,7 +129,7 @@ static bool point_check(
 }
 
 static void test_arithmetic() {
-    SpongeRng rng(Block("test_arithmetic"));
+    SpongeRng rng(Block("test_arithmetic"),SpongeRng::DETERMINISTIC);
     
     Test test("Arithmetic");
     Scalar x(0),y(0),z(0);
@@ -169,7 +170,7 @@ static void test_arithmetic() {
 }
 
 static void test_elligator() {
-    SpongeRng rng(Block("test_elligator"));
+    SpongeRng rng(Block("test_elligator"),SpongeRng::DETERMINISTIC);
     Test test("Elligator");
     
     const int NHINTS = Group::REMOVED_COFACTOR * 2;
@@ -265,7 +266,7 @@ static void test_elligator() {
 }
 
 static void test_ec() {
-    SpongeRng rng(Block("test_ec"));
+    SpongeRng rng(Block("test_ec"),SpongeRng::DETERMINISTIC);
     
     Test test("EC");
 
@@ -327,7 +328,7 @@ static void test_ec() {
 
 static void test_crypto() {
     Test test("Sample crypto");
-    SpongeRng rng(Block("test_decaf_crypto"));
+    SpongeRng rng(Block("test_decaf_crypto"),SpongeRng::DETERMINISTIC);
 
     for (int i=0; i<NTESTS && test.passing_now; i++) {
         PrivateKey<Group> priv1(rng), priv2(rng);
@@ -340,14 +341,123 @@ static void test_crypto() {
         
         SecureBuffer s1(priv1.sharedSecret(pub2,32,true));
         SecureBuffer s2(priv2.sharedSecret(pub1,32,false));
-        if (memcmp(s1.data(),s2.data(),s1.size())) {
+        if (!memeq(s1,s2)) {
             test.fail();
-            printf("    Shared secrets disagree.");
+            printf("    Shared secrets disagree on iteration %d.\n",i);
         }
     }
 }
 
-}; /* template<GroupId GROUP> */
+static const uint8_t rfc7748_1[DhLadder::PUBLIC_BYTES];
+static const uint8_t rfc7748_1000[DhLadder::PUBLIC_BYTES];
+static const uint8_t rfc7748_1000000[DhLadder::PUBLIC_BYTES];
+
+static void test_cfrg_crypto() {
+    Test test("CFRG crypto");
+    SpongeRng rng(Block("test_cfrg_crypto"),SpongeRng::DETERMINISTIC);
+    for (int i=0; i<NTESTS && test.passing_now; i++) {
+        
+        FixedArrayBuffer<DhLadder::PUBLIC_BYTES> base(rng);
+        FixedArrayBuffer<DhLadder::PRIVATE_BYTES> s1(rng), s2(rng);
+        
+        SecureBuffer p1  = DhLadder::shared_secret(base,s1);
+        SecureBuffer p2  = DhLadder::shared_secret(base,s2);
+        SecureBuffer ss1 = DhLadder::shared_secret(p2,s1);
+        SecureBuffer ss2 = DhLadder::shared_secret(p1,s2);
+
+        if (!memeq(ss1,ss2)) {
+            test.fail();
+            printf("    Shared secrets disagree on iteration %d.\n",i);
+        }
+        
+        if (!memeq(
+            DhLadder::shared_secret(DhLadder::base_point(),s1),
+            DhLadder::generate_key(s1)
+        )) {
+            test.fail();
+            printf("    Generated keys disagree on iteration %d.\n",i);
+        }
+    }
+}
+
+static void test_cfrg_vectors() {
+    Test test("CFRG test vectors");
+    SecureBuffer k = DhLadder::base_point();
+    SecureBuffer u = DhLadder::base_point();
+    
+    int the_ntests = (NTESTS < 1000000) ? 1000 : 1000000;
+    
+    for (int i=0; i<the_ntests && test.passing_now; i++) {
+        SecureBuffer n = DhLadder::shared_secret(u,k);
+        u = k; k = n;
+        if (i==1-1) {
+            if (!memeq(k,SecureBuffer(FixedBlock<DhLadder::PUBLIC_BYTES>(rfc7748_1)))) {
+                test.fail();
+                printf("    Test vectors disagree at 1.");
+            }
+        } else if (i==1000-1) {
+            if (!memeq(k,SecureBuffer(FixedBlock<DhLadder::PUBLIC_BYTES>(rfc7748_1000)))) {
+                test.fail();
+                printf("    Test vectors disagree at 1000.");
+            }
+        } else if (i==1000000-1) {
+            if (!memeq(k,SecureBuffer(FixedBlock<DhLadder::PUBLIC_BYTES>(rfc7748_1000000)))) {
+                test.fail();
+                printf("    Test vectors disagree at 1000000.");
+            }
+        }
+    }
+}
+
+}; /* template<GroupId GROUP> struct Tests */
+
+template<> const uint8_t Tests<IsoEd25519>::rfc7748_1[32] = {
+    0x42,0x2c,0x8e,0x7a,0x62,0x27,0xd7,0xbc,
+    0xa1,0x35,0x0b,0x3e,0x2b,0xb7,0x27,0x9f,
+    0x78,0x97,0xb8,0x7b,0xb6,0x85,0x4b,0x78,
+    0x3c,0x60,0xe8,0x03,0x11,0xae,0x30,0x79
+};
+template<> const uint8_t Tests<IsoEd25519>::rfc7748_1000[32] = {
+    0x68,0x4c,0xf5,0x9b,0xa8,0x33,0x09,0x55,
+    0x28,0x00,0xef,0x56,0x6f,0x2f,0x4d,0x3c,
+    0x1c,0x38,0x87,0xc4,0x93,0x60,0xe3,0x87,
+    0x5f,0x2e,0xb9,0x4d,0x99,0x53,0x2c,0x51
+};
+template<> const uint8_t Tests<IsoEd25519>::rfc7748_1000000[32] = {
+    0x7c,0x39,0x11,0xe0,0xab,0x25,0x86,0xfd,
+    0x86,0x44,0x97,0x29,0x7e,0x57,0x5e,0x6f,
+    0x3b,0xc6,0x01,0xc0,0x88,0x3c,0x30,0xdf,
+    0x5f,0x4d,0xd2,0xd2,0x4f,0x66,0x54,0x24
+};
+template<> const uint8_t Tests<Ed448Goldilocks>::rfc7748_1[56] = {
+    0x3f,0x48,0x2c,0x8a,0x9f,0x19,0xb0,0x1e,
+    0x6c,0x46,0xee,0x97,0x11,0xd9,0xdc,0x14,
+    0xfd,0x4b,0xf6,0x7a,0xf3,0x07,0x65,0xc2,
+    0xae,0x2b,0x84,0x6a,0x4d,0x23,0xa8,0xcd,
+    0x0d,0xb8,0x97,0x08,0x62,0x39,0x49,0x2c,
+    0xaf,0x35,0x0b,0x51,0xf8,0x33,0x86,0x8b,
+    0x9b,0xc2,0xb3,0xbc,0xa9,0xcf,0x41,0x13
+};
+template<> const uint8_t Tests<Ed448Goldilocks>::rfc7748_1000[56] = {
+    0xaa,0x3b,0x47,0x49,0xd5,0x5b,0x9d,0xaf,
+    0x1e,0x5b,0x00,0x28,0x88,0x26,0xc4,0x67,
+    0x27,0x4c,0xe3,0xeb,0xbd,0xd5,0xc1,0x7b,
+    0x97,0x5e,0x09,0xd4,0xaf,0x6c,0x67,0xcf,
+    0x10,0xd0,0x87,0x20,0x2d,0xb8,0x82,0x86,
+    0xe2,0xb7,0x9f,0xce,0xea,0x3e,0xc3,0x53,
+    0xef,0x54,0xfa,0xa2,0x6e,0x21,0x9f,0x38
+};
+template<> const uint8_t Tests<Ed448Goldilocks>::rfc7748_1000000[56] = {
+    0x07,0x7f,0x45,0x36,0x81,0xca,0xca,0x36,
+    0x93,0x19,0x84,0x20,0xbb,0xe5,0x15,0xca,
+    0xe0,0x00,0x24,0x72,0x51,0x9b,0x3e,0x67,
+    0x66,0x1a,0x7e,0x89,0xca,0xb9,0x46,0x95,
+    0xc8,0xf4,0xbc,0xd6,0x6e,0x61,0xb9,0xb9,
+    0xc9,0x46,0xda,0x8d,0x52,0x4d,0xe3,0xd6,
+    0x9b,0xd9,0xd9,0xd6,0x6b,0x99,0x7e,0x37
+};
+        
+    
 
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
@@ -356,6 +466,8 @@ int main(int argc, char **argv) {
     Tests<IsoEd25519>::test_arithmetic();
     Tests<IsoEd25519>::test_elligator();
     Tests<IsoEd25519>::test_ec();
+    Tests<IsoEd25519>::test_cfrg_crypto();
+    Tests<IsoEd25519>::test_cfrg_vectors();
     Tests<IsoEd25519>::test_crypto();
     
     printf("\n");
@@ -363,6 +475,8 @@ int main(int argc, char **argv) {
     Tests<Ed448Goldilocks>::test_arithmetic();
     Tests<Ed448Goldilocks>::test_elligator();
     Tests<Ed448Goldilocks>::test_ec();
+    Tests<Ed448Goldilocks>::test_cfrg_crypto();
+    Tests<Ed448Goldilocks>::test_cfrg_vectors();
     Tests<Ed448Goldilocks>::test_crypto();
     
     if (passing) printf("Passed all tests.\n");
