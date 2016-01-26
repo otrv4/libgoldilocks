@@ -34,7 +34,7 @@ typedef typename Group::Point Point;
 typedef typename Group::Precomputed Precomputed;
 
 static void test_arithmetic() {
-    SpongeRng rng(Block("test_arithmetic"));
+    SpongeRng rng(Block("test_arithmetic"),SpongeRng::DETERMINISTIC);
     rng.stir(undef_block);
     
     Scalar x(rng),y(rng),z;
@@ -53,7 +53,7 @@ static void test_arithmetic() {
 }
 
 static void test_elligator() {
-    SpongeRng rng(Block("test_elligator"));
+    SpongeRng rng(Block("test_elligator"),SpongeRng::DETERMINISTIC);
     rng.stir(undef_block);
     
     FixedArrayBuffer<Group::Point::HASH_BYTES> inv;
@@ -66,7 +66,7 @@ static void test_elligator() {
 }
 
 static void test_ec() {
-    SpongeRng rng(Block("test_ec"));
+    SpongeRng rng(Block("test_ec"),SpongeRng::DETERMINISTIC);
     rng.stir(undef_block);
 
     uint8_t ser[Group::Point::SER_BYTES];
@@ -92,9 +92,18 @@ static void test_ec() {
     }
 }
 
-/* TODO: test x25519/x448 */
-
-/* FUTURE: test ed25519/ed448 */
+static void test_cfrg() {
+    SpongeRng rng(Block("test_cfrg"),SpongeRng::DETERMINISTIC);
+    rng.stir(undef_block);
+    
+    for (int i=0; i<NTESTS; i++) {
+        FixedArrayBuffer<Group::DhLadder::PUBLIC_BYTES> pub(rng);
+        FixedArrayBuffer<Group::DhLadder::PRIVATE_BYTES> priv(rng);
+        
+        Group::DhLadder::generate_key(priv);
+        ignore(Group::DhLadder::shared_secret_noexcept(pub,pub,priv));
+    }
+}
 
 /* Specify the same value as you did when compiling decaf_crypto.c */
 #ifndef DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
@@ -102,7 +111,7 @@ static void test_ec() {
 #endif
 
 static void test_crypto() {
-    SpongeRng rng(Block("test_crypto"));
+    SpongeRng rng(Block("test_crypto"),SpongeRng::DETERMINISTIC);
     rng.stir(undef_block);
 
 #if DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
@@ -136,6 +145,7 @@ int main(int argc, char **argv) {
     Tests<IsoEd25519>::test_arithmetic();
     Tests<IsoEd25519>::test_elligator();
     Tests<IsoEd25519>::test_ec();
+    Tests<IsoEd25519>::test_cfrg();
     Tests<IsoEd25519>::test_crypto();
     
     printf("\n");
@@ -143,6 +153,7 @@ int main(int argc, char **argv) {
     Tests<Ed448Goldilocks>::test_arithmetic();
     Tests<Ed448Goldilocks>::test_elligator();
     Tests<Ed448Goldilocks>::test_ec();
+    Tests<Ed448Goldilocks>::test_cfrg();
     Tests<Ed448Goldilocks>::test_crypto();
     
     return 0;

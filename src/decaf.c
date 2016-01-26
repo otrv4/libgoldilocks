@@ -105,11 +105,14 @@ cond_neg(gf x, mask_t neg) {
 /** Constant time, if (swap) (x,y) = (y,x); */
 static INLINE void
 cond_swap(gf x, gf_s *__restrict__ y, mask_t swap) {
+    constant_time_cond_swap(x,y,sizeof(gf_s),swap);
+    /*
     UNROLL for (unsigned int i=0; i<sizeof(x->limb)/sizeof(x->limb[0]); i++) {
         decaf_word_t s = (x->limb[i] ^ y->limb[i]) & swap;
         x->limb[i] ^= s;
         y->limb[i] ^= s;
     }
+    */
 }
 
 /** Inverse square root using addition chain. */
@@ -1610,25 +1613,25 @@ decaf_error_t API_NS(x_direct_scalarmul) (
         cond_swap(z2,z3,swap);
         swap = k_t;
         
-        gf_add(t1,x2,z2); /* A = x2 + z2 */
-        gf_sub(t2,x2,z2); /* B = x2 - z2 */
-        gf_sub(z2,x3,z3); /* D = x3 - z3 */
-        gf_mul(x2,t1,z2); /* DA */
-        gf_add(z2,z3,x3); /* C = x3 + z3 */
-        gf_mul(x3,t2,z2); /* CB */
-        gf_sub(z3,x2,x3); /* DA-CB */
-        gf_sqr(z2,z3);    /* (DA-CB)^2 */
-        gf_mul(z3,x1,z2); /* z3 = x1(DA-CB)^2 */
-        gf_add(z2,x2,x3); /* (DA+CB) */
-        gf_sqr(x3,z2);    /* x3 = (DA+CB)^2 */
+        gf_add_nr(t1,x2,z2); /* A = x2 + z2 */
+        gf_sub_nr(t2,x2,z2); /* B = x2 - z2 */
+        gf_sub_nr(z2,x3,z3); /* D = x3 - z3 */
+        gf_mul(x2,t1,z2);    /* DA */
+        gf_add_nr(z2,z3,x3); /* C = x3 + z3 */
+        gf_mul(x3,t2,z2);    /* CB */
+        gf_sub_nr(z3,x2,x3); /* DA-CB */
+        gf_sqr(z2,z3);       /* (DA-CB)^2 */
+        gf_mul(z3,x1,z2);    /* z3 = x1(DA-CB)^2 */
+        gf_add_nr(z2,x2,x3); /* (DA+CB) */
+        gf_sqr(x3,z2);       /* x3 = (DA+CB)^2 */
         
-        gf_sqr(z2,t1);    /* AA = A^2 */
-        gf_sqr(t1,t2);    /* BB = B^2 */
-        gf_mul(x2,z2,t1); /* x2 = AA*BB */
-        gf_sub(t2,z2,t1); /* E = AA-BB */
+        gf_sqr(z2,t1);       /* AA = A^2 */
+        gf_sqr(t1,t2);       /* BB = B^2 */
+        gf_mul(x2,z2,t1);    /* x2 = AA*BB */
+        gf_sub_nr(t2,z2,t1); /* E = AA-BB */
         
         gf_mulw_sgn(t1,t2,-EDWARDS_D); /* E*-d = a24*E */
-        gf_add(t1,t1,z2); /* AA + a24*E */
+        gf_add_nr(t1,t1,z2); /* AA + a24*E */
         gf_mul(z2,t2,t1); /* z2 = E(AA+a24*E) */
     }
     
@@ -1679,8 +1682,18 @@ void API_NS(x_base_scalarmul) (
      * we pick up only a factor of 2 over Jacobi -> Montgomery. 
      */
     sc_halve(the_scalar,the_scalar,sc_p);
+#if COFACTOR==8
+    /* If the base point isn't in the prime-order subgroup (PERF:
+     * guarantee that it is?) then a 4-isogeny isn't necessarily
+     * enough to clear the cofactor.  So add another doubling.
+     */
+    sc_halve(the_scalar,the_scalar,sc_p);
+#endif
     point_t p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),the_scalar);
+#if COFACTOR==8
+    API_NS(point_double)(p,p);
+#endif
     
     /* Isogenize to Montgomery curve */
     gf_invert(p->t,p->x); /* 1/x */
