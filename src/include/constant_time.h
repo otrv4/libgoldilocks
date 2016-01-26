@@ -303,16 +303,13 @@ constant_time_mask (
  *
  * Note that the output is not __restrict__, but if it overlaps either
  * input, it must be equal and not partially overlap.
- *
- * TODO: this has the opposite convention of certain other cond select functions,
- * because they are effectively [a,b][bool(mask)] instead of mask ? a : b.
  */
 static __inline__ void
 __attribute__((unused,always_inline))
 constant_time_select (
     void *a_,
-    const void *bTrue_,
     const void *bFalse_,
+    const void *bTrue_,
     word_t elem_bytes,
     mask_t mask,
     size_t alignment_bytes

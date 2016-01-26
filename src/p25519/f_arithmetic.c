@@ -39,6 +39,6 @@ void gf_isr (gf a, const gf x) {
     
     mask_t mask = gf_eq(st[1],ONE) | gf_eq(st[1],SQRT_MINUS_ONE);
     
-    constant_time_select(tmp1, ONE, SQRT_MINUS_ONE, sizeof(tmp1), mask, 0);
+    constant_time_select(tmp1, SQRT_MINUS_ONE, ONE, sizeof(tmp1), mask, 0);
     gf_mul(a,tmp1,st[0]);
 }

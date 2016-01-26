@@ -93,7 +93,7 @@ static INLINE mask_t bool_to_mask (decaf_bool_t m) {
 /** Constant time, x = is_z ? z : y */
 static INLINE void
 cond_sel(gf x, const gf y, const gf z, mask_t is_z) {
-    constant_time_select(x,z,y,sizeof(gf),is_z,0);
+    constant_time_select(x,y,z,sizeof(gf),is_z,0);
 }
 
 /** Constant time, if (neg) x=-x; */
@@ -1537,7 +1537,7 @@ void API_NS(point_cond_sel) (
     const point_t b,
     decaf_bool_t pick_b
 ) {
-    constant_time_select(out,b,a,sizeof(point_t),bool_to_mask(pick_b),0);
+    constant_time_select(out,a,b,sizeof(point_t),bool_to_mask(pick_b),0);
 }
 
 void API_NS(scalar_cond_sel) (
@@ -1546,7 +1546,7 @@ void API_NS(scalar_cond_sel) (
     const scalar_t b,
     decaf_bool_t pick_b
 ) {
-    constant_time_select(out,b,a,sizeof(scalar_t),bool_to_mask(pick_b),sizeof(out->limb[0]));
+    constant_time_select(out,a,b,sizeof(scalar_t),bool_to_mask(pick_b),sizeof(out->limb[0]));
 }
 
 /* FUTURE: restore Curve25519 Montgomery ladder? */
