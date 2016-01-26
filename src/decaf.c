@@ -1165,7 +1165,7 @@ void API_NS(point_from_hash_nonuniform) (
     const unsigned char ser[SER_BYTES]
 ) {
     /* TODO: test pathological case ur0^2 = 1/(1-d) */
-    gf r0,r,a,b,c,D,N,e;
+    gf r0,r,a,b,c,N,e;
     gf_deserialize(r0,ser);
     gf_strong_reduce(r0);
     gf_sqr(a,r0);
@@ -1178,19 +1178,19 @@ void API_NS(point_from_hash_nonuniform) (
 #error "Only supporting p=3,5,7 mod 8"
 #endif
 
-    /* Compute D := (dr+a-d)(dr-ar-d) with a=1 */
+    /* Compute D@c := (dr+a-d)(dr-ar-d) with a=1 */
     gf_sub(a,r,ONE);
     gf_mulw_sgn(b,a,EDWARDS_D); /* dr-d */
     gf_add(a,b,ONE);
     gf_sub(b,b,r);
-    gf_mul(D,a,b);
+    gf_mul(c,a,b);
     
     /* compute N := (r+1)(a-2d) */
     gf_add(a,r,ONE);
     gf_mulw_sgn(N,a,1-2*EDWARDS_D);
     
     /* e = +-sqrt(1/ND) or +-r0 * sqrt(qnr/ND) */
-    gf_mul(a,D,N);
+    gf_mul(a,c,N);
     mask_t square = gf_isqrt_chk(b,a,DECAF_FALSE);
     cond_sel(c,r0,ONE,square); /* r? = square ? 1 : r0 */
     gf_mul(e,b,c);
