@@ -18,6 +18,7 @@ from crypto_h import crypto_h
 from crypto_hxx import crypto_hxx
 from f_field_h import f_field_h
 from curve_data import curve_data
+from curve_data_inc_c import curve_data_inc_c
 
 root_hxx_code = "\n".join((
     "#include <%s>" % name
@@ -110,7 +111,7 @@ decaf_root_hxx = gen_file(
 
 
 for name,(public,code) in gend_files.iteritems():        
-    _,_,name_suffix = name.partition(".")
+    _,_,name_suffix = name.rpartition(".")
     prefix = prefixes[(public,name_suffix)]
     if not os.path.exists(os.path.dirname(prefix + "/" + name)):
         os.makedirs(os.path.dirname(prefix + "/" + name))

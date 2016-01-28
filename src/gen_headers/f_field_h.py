@@ -55,8 +55,6 @@ typedef struct gf_%(gf_shortname)s_s {
 extern "C" {
 #endif
 
-const gf MODULUS, ZERO, ONE;
-
 /* Defined below in f_impl.h */
 static INLINE_UNUSED void gf_copy (gf out, const gf a) { *out = *a; }
 static INLINE_UNUSED void gf_add_RAW (gf out, const gf a, const gf b);
@@ -82,8 +80,21 @@ mask_t gf_deserialize (gf x, const uint8_t serial[(GF_BITS-1)/8+1]);
 
 #include "f_impl.h" /* Bring in the inline implementations */
 
+static const gf MODULUS = {FIELD_LITERAL(
+    %(ser_modulus)s
+)};
+
+#define P_MOD_8 %(p_mod_8)d
+#if P_MOD_8 == 5
+    static const gf SQRT_MINUS_ONE = {FIELD_LITERAL( /* TODO make not static */
+        %(sqrt_minus_one)s
+    )};
+#endif
+
 #ifndef LIMBPERM
   #define LIMBPERM(i) (i)
 #endif
 #define LIMB_MASK(i) (((1ull)<<LIMB_PLACE_VALUE(i))-1)
+
+static const gf ZERO = {{{0}}}, ONE = {{{ [LIMBPERM(0)] = 1 }}};
 """)

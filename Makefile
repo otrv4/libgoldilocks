@@ -78,7 +78,7 @@ GEN_HEADERS=\
 HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_HEADERS)
 
 # components needed by the lib
-LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/decaf_crypto_ed25519.o $(BUILD_OBJ)/decaf_crypto_ed448goldilocks.o # and per-field components
+LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/decaf_crypto_curve25519.o $(BUILD_OBJ)/decaf_crypto_ed448goldilocks.o # and per-field components
 
 BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o
 
@@ -167,24 +167,24 @@ $$(BUILD_C)/decaf_tables_$(1).c: $$(BUILD_IBIN)/decaf_gen_tables_$(1)
 
 $$(BUILD_ASM)/decaf_tables_$(1).s: $$(BUILD_C)/decaf_tables_$(1).c $$(HEADERS)
 	$$(CC) $$(CFLAGS) -S -c -o $$@ $$< \
-		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
+		-I build/obj/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
 		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2))
 
 $$(BUILD_ASM)/decaf_gen_tables_$(1).s: src/decaf_gen_tables.c $$(HEADERS)
 	$$(CC) $$(CFLAGS) \
-		-I src/curve_$(1) -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
+		-I build/obj/curve_$(1) -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
 		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
 		-S -c -o $$@ $$<
 
 $$(BUILD_ASM)/decaf_$(1).s: src/decaf.c $$(HEADERS)
 	$$(CC) $$(CFLAGS) \
-		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
+		-I build/obj/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
 		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
 		-S -c -o $$@ $$<
 
 $$(BUILD_ASM)/decaf_crypto_$(1).s: src/decaf_crypto.c $$(HEADERS)
 	$$(CC) $$(CFLAGS) \
-		-I src/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
+		-I build/obj/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
 		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
 		-S -c -o $$@ $$<
 
@@ -194,7 +194,7 @@ endef
 ################################################################
 # call code above to generate curves and fields
 $(eval $(call define_field,p25519,arch_x86_64))
-$(eval $(call define_curve,ed25519,p25519))
+$(eval $(call define_curve,curve25519,p25519))
 $(eval $(call define_field,p448,arch_x86_64))
 $(eval $(call define_curve,ed448goldilocks,p448))
 

@@ -10,8 +10,6 @@
 
 #include "field.h"
 
-const gf ZERO = {{{0}}}, ONE = {{{ [LIMBPERM(0)] = 1 }}};
-
 /** Serialize to wire format. */
 void gf_serialize (uint8_t serial[SER_BYTES], const gf x) {
     gf red;

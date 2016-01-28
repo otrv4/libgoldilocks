@@ -11,18 +11,6 @@
 #include "field.h"
 #include "constant_time.h"
 
-const gf SQRT_MINUS_ONE = {FIELD_LITERAL(
-    0x61b274a0ea0b0,
-    0x0d5a5fc8f189d,
-    0x7ef5e9cbd0c60,
-    0x78595a6804c9e,
-    0x2b8324804fc1d
-)};
-
-const gf MODULUS = {FIELD_LITERAL(
-    0x7ffffffffffed, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff, 0x7ffffffffffff
-)};
-
 /* Guarantee: a^2 x = 0 if x = 0; else a^2 x = 1 or SQRT_MINUS_ONE; */
 void gf_isr (gf a, const gf x) {
     gf st[3], tmp1, tmp2;
