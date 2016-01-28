@@ -17,12 +17,27 @@ from decaf_h import decaf_h
 from crypto_h import crypto_h
 from crypto_hxx import crypto_hxx
 from f_field_h import f_field_h
+from curve_data import curve_data
 
 root_hxx_code = "\n".join((
     "#include <%s>" % name
     for name in sorted(gend_files)
     if re.match("^decaf/decaf_\d+.hxx$",name)
 ))
+root_hxx_code += """
+
+namespace decaf {
+    template <template<typename Group> class Run>
+    void run_for_all_curves() {
+"""
+root_hxx_code += "\n".join((
+    "        Run<%s>::run();" % cd["cxx_ns"]
+    for cd in sorted(curve_data.values(), key=lambda x:x["c_ns"])
+))
+root_hxx_code += """
+    }
+}
+"""
 decaf_root_hxx = gen_file(
     public = True,
     per = "global",

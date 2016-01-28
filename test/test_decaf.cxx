@@ -489,6 +489,20 @@ static void test_cfrg_vectors() {
     }
 }
 
+
+static void run() {
+    printf("Testing %s:\n",Group::name());
+    test_arithmetic();
+    test_elligator();
+    test_ec();
+    test_cfrg_crypto();
+    test_cfrg_vectors();
+    test_crypto();
+    printf("\n");
+}
+
+
+
 }; /* template<GroupId GROUP> struct Tests */
 
 template<> const uint8_t Tests<IsoEd25519>::rfc7748_1[32] = {
@@ -566,30 +580,10 @@ const uint8_t elli_patho_448[56] = {
 };
 template<> const Block Tests<Ed448Goldilocks>::elli_patho(elli_patho_448,56);
 template<> const Block Tests<IsoEd25519>::elli_patho(NULL,0);
-        
-    
 
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
-    
-    printf("Testing %s:\n",IsoEd25519::name());
-    Tests<IsoEd25519>::test_arithmetic();
-    Tests<IsoEd25519>::test_elligator();
-    Tests<IsoEd25519>::test_ec();
-    Tests<IsoEd25519>::test_cfrg_crypto();
-    Tests<IsoEd25519>::test_cfrg_vectors();
-    Tests<IsoEd25519>::test_crypto();
-
-    printf("\n");
-    printf("Testing %s:\n", Ed448Goldilocks::name());
-    Tests<Ed448Goldilocks>::test_arithmetic();
-    Tests<Ed448Goldilocks>::test_elligator();
-    Tests<Ed448Goldilocks>::test_ec();
-    Tests<Ed448Goldilocks>::test_cfrg_crypto();
-    Tests<Ed448Goldilocks>::test_cfrg_vectors();
-    Tests<Ed448Goldilocks>::test_crypto();
-    
+    run_for_all_curves<Tests>();
     if (passing) printf("Passed all tests.\n");
-    
     return passing ? 0 : 1;
 }

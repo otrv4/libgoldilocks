@@ -134,27 +134,21 @@ static void test_crypto() {
     }
 }
 
-}; /* template<GroupId GROUP> */
+static void run() {
+    printf("Testing %s:\n",Group::name());
+    test_arithmetic();
+    test_elligator();
+    test_ec();
+    test_cfrg();
+    test_crypto();
+    printf("\n");
+}
+
+}; /* template<GroupId GROUP> struct Tests */
 
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
-    
     VALGRIND_MAKE_MEM_UNDEFINED(undef_str, strlen(undef_str));
-    
-    printf("Testing %s:\n",IsoEd25519::name());
-    Tests<IsoEd25519>::test_arithmetic();
-    Tests<IsoEd25519>::test_elligator();
-    Tests<IsoEd25519>::test_ec();
-    Tests<IsoEd25519>::test_cfrg();
-    Tests<IsoEd25519>::test_crypto();
-    
-    printf("\n");
-    printf("Testing %s:\n", Ed448Goldilocks::name());
-    Tests<Ed448Goldilocks>::test_arithmetic();
-    Tests<Ed448Goldilocks>::test_elligator();
-    Tests<Ed448Goldilocks>::test_ec();
-    Tests<Ed448Goldilocks>::test_cfrg();
-    Tests<Ed448Goldilocks>::test_crypto();
-    
+    run_for_all_curves<Tests>();    
     return 0;
 }

@@ -387,6 +387,9 @@ static void micro() {
 
 }; /* template <typename group> struct Benches */
 
+template <typename Group> struct Macro { static void run() { Benches<Group>::macro(); } };
+template <typename Group> struct Micro { static void run() { Benches<Group>::micro(); } };
+
 int main(int argc, char **argv) {
     
     bool micro = false;
@@ -422,13 +425,10 @@ int main(int argc, char **argv) {
             strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024));
         }
         
-        Benches<IsoEd25519>::micro();
-        Benches<Ed448Goldilocks>::micro();
+        run_for_all_curves<Micro>();
     }
-
-    Benches<IsoEd25519>::macro();
-    Benches<Ed448Goldilocks>::macro();
-
+    
+    run_for_all_curves<Macro>();
     
     printf("\n");
     Benchmark::calib();
