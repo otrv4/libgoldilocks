@@ -195,7 +195,7 @@ static void test_arithmetic() {
 
 static const Block sqrt_minus_one;
 static const Block minus_sqrt_minus_one;
-static const Block elli_patho;
+static const Block elli_patho; /* sqrt(1/(u(1-d))) */
 
 static void test_elligator() {
     SpongeRng rng(Block("test_elligator"),SpongeRng::DETERMINISTIC);

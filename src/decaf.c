@@ -1169,7 +1169,6 @@ void API_NS(point_from_hash_nonuniform) (
     point_t p,
     const unsigned char ser[SER_BYTES]
 ) {
-    /* TODO: test pathological case ur0^2 = 1/(1-d) */
     gf r0,r,a,b,c,N,e;
     gf_deserialize(r0,ser);
     gf_strong_reduce(r0);
