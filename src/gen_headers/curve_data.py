@@ -1,14 +1,12 @@
 field_data = {
     "p25519" : {
         "gf_desc" : "2^255 - 19",
-        "modulus" : 2**255 - 19,
         "gf_shortname" : "25519",
         "gf_impl_bits" : 320,
         "gf_lit_limb_bits" : 51
     },
     "p448" : {
         "gf_desc" : "2^448 - 2^224 - 1",
-        "modulus" : 2**448 - 2**224 - 1,
         "gf_shortname" : "448",
         "gf_impl_bits" : 512,
         "gf_lit_limb_bits" : 56
@@ -18,20 +16,13 @@ field_data = {
 curve_data = {
     "Curve25519" : {
         "iso_to" : "Curve25519",
-        "name" : "IsoEd25519",
-        "cxx_ns" : "IsoEd25519",
-        "shortname" : "255",
-        "c_ns" : "decaf_255",
+        "name" : "Iso-Ed25519",
         "cofactor" : 8,
         "field" : "p25519",
         "scalar_bits" : 253
     },
     "Ed448" : {
-        "iso_to" : "Ed448-Goldilocks",
         "name" : "Ed448-Goldilocks",
-        "cxx_ns" : "Ed448Goldilocks",
-        "shortname" : "448",
-        "c_ns" : "decaf_448",
         "cofactor" : 4,
         "field" : "p448",
         "scalar_bits" : 446
@@ -47,6 +38,10 @@ def ceil_log2(x):
     return out
 
 for field,data in field_data.iteritems():
+    
+    if "modulus" not in data:
+        data["modulus"] = eval(data["gf_desc"].replace("^","**"))
+    
     if "gf_bits" not in data:
         data["gf_bits"] = ceil_log2(data["modulus"])
         
@@ -64,6 +59,12 @@ for curve,data in curve_data.iteritems():
         if key not in data:
             data[key] = field_data[data["field"]][key]
     
+    if "iso_to" not in data:
+        data["iso_to"] = data["name"]
+    
+    if "cxx_ns" not in data:
+        data["cxx_ns"] = data["name"].replace("-","")
+    
     if "modulus_type" not in data:
         mod = data["modulus"]
         ptwo = 2
@@ -73,6 +74,12 @@ for curve,data in curve_data.iteritems():
     
     if "bits" not in data:
         data["bits"] = ceil_log2(data["modulus"])
+    
+    if "shortname" not in data:
+        data["shortname"] = str(data["bits"])
+    
+    if "c_ns" not in data:
+        data["c_ns"] = "decaf_" + data["shortname"]
         
     if "ser_bytes" not in data:
         data["ser_bytes"] = (data["bits"]-2)//8 + 1
