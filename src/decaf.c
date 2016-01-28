@@ -359,14 +359,10 @@ API_NS(scalar_set_unsigned) (
     uint64_t w
 ) {
     memset(out,0,sizeof(scalar_t));
-    if (sizeof(uint64_t) > sizeof(decaf_word_t)) {
-        unsigned int i = 0;
-        for (; i<sizeof(uint64_t)/sizeof(decaf_word_t); i++) {
-            out->limb[i] = w;
-            w >>= 8*sizeof(decaf_word_t);
-        }
-    } else {
-        out->limb[0] = w;
+    unsigned int i = 0;
+    for (; i<sizeof(uint64_t)/sizeof(decaf_word_t); i++) {
+        out->limb[i] = w;
+        w >>= (sizeof(uint64_t) > sizeof(decaf_word_t)) ? 8*sizeof(decaf_word_t) : 0;
     }
 }
 
