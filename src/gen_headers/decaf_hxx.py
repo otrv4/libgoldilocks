@@ -81,10 +81,16 @@ public:
     /** @endcond */
 
     /** Set to an unsigned word */
-    inline Scalar(const decaf_word_t w) NOEXCEPT { *this = w; }
+    inline Scalar(uint64_t w) NOEXCEPT { *this = w; }
 
     /** Set to a signed word */
-    inline Scalar(const int w) NOEXCEPT { *this = w; }
+    inline Scalar(int64_t w) NOEXCEPT { *this = w; }
+
+    /** Set to an unsigned word */
+    inline Scalar(unsigned int w) NOEXCEPT { *this = w; }
+
+    /** Set to a signed word */
+    inline Scalar(int w) NOEXCEPT { *this = w; }
 
     /** Construct from RNG */
     inline explicit Scalar(Rng &rng) NOEXCEPT {
@@ -112,17 +118,23 @@ public:
     /** Assignment. */
     inline Scalar& operator=(const Scalar &x) NOEXCEPT { %(c_ns)s_scalar_copy(s,x.s); return *this; }
 
-    /** Assign from unsigned word. */
-    inline Scalar& operator=(decaf_word_t w) NOEXCEPT { %(c_ns)s_scalar_set_unsigned(s,w); return *this; }
+    /** Assign from unsigned 64-bit integer. */
+    inline Scalar& operator=(uint64_t w) NOEXCEPT { %(c_ns)s_scalar_set_unsigned(s,w); return *this; }
 
 
     /** Assign from signed int. */
-    inline Scalar& operator=(int w) NOEXCEPT {
-        Scalar t(-(decaf_word_t)INT_MIN);
-        %(c_ns)s_scalar_set_unsigned(s,(decaf_word_t)w - (decaf_word_t)INT_MIN);
+    inline Scalar& operator=(int64_t w) NOEXCEPT {
+        Scalar t(-(uint64_t)INT_MIN);
+        %(c_ns)s_scalar_set_unsigned(s,(uint64_t)w - (uint64_t)INT_MIN);
         *this -= t;
         return *this;
     }
+
+    /** Assign from unsigned int. */
+    inline Scalar& operator=(unsigned int w) NOEXCEPT { return *this = (uint64_t)w; }
+
+    /** Assign from signed int. */
+    inline Scalar& operator=(int w) NOEXCEPT { return *this = (int64_t)w; }
 
     /** Destructor securely zeorizes the scalar. */
     inline ~Scalar() NOEXCEPT { %(c_ns)s_scalar_destroy(s); }

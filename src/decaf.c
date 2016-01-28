@@ -356,10 +356,18 @@ sc_halve (
 void
 API_NS(scalar_set_unsigned) (
     scalar_t out,
-    decaf_word_t w
+    uint64_t w
 ) {
     memset(out,0,sizeof(scalar_t));
-    out->limb[0] = w;
+    if (sizeof(uint64_t) > sizeof(decaf_word_t)) {
+        unsigned int i = 0;
+        for (; i<sizeof(uint64_t)/sizeof(decaf_word_t); i++) {
+            out->limb[i] = w;
+            w >>= 8*sizeof(decaf_word_t);
+        }
+    } else {
+        out->limb[0] = w;
+    }
 }
 
 decaf_bool_t

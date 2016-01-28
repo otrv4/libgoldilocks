@@ -199,13 +199,13 @@ static inline void NONNULL2 %(c_ns)s_scalar_copy (
 }
 
 /**
- * @brief Set a scalar to an unsigned integer.
+ * @brief Set a scalar to an unsigned 64-bit integer.
  * @param [in] a An integer.
  * @param [out] out Will become equal to a.
  */  
 void %(c_ns)s_scalar_set_unsigned (
     %(c_ns)s_scalar_t out,
-    decaf_word_t a
+    uint64_t a
 ) API_VIS NONNULL1;
 
 /**

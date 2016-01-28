@@ -43,6 +43,14 @@ public:
     }
 };
 
+static uint64_t leint(const SecureBuffer &xx) {
+    uint64_t out = 0;
+    for (unsigned int i=0; i<xx.size() && i<sizeof(out); i++) {
+        out |= uint64_t(xx[i]) << (8*i);
+    }
+    return out;
+}
+
 template<typename Group> struct Tests {
 
 typedef typename Group::Scalar Scalar;
@@ -137,16 +145,20 @@ static void test_arithmetic() {
     arith_check(test,x,y,z,INT_MIN,-Scalar(1+(decaf_word_t)INT_MAX),"cast from min");
         
     for (int i=0; i<NTESTS*10 && test.passing_now; i++) {
-        /* TODO: pathological cases */
-        size_t sob = DECAF_255_SCALAR_BYTES + 8 - (i%16);
-        Scalar x(rng.read(sob));
-        Scalar y(rng.read(sob));
-        Scalar z(rng.read(sob));
+        size_t sob = i % (2*Group::Scalar::SER_BYTES);
         
+        SecureBuffer xx = rng.read(sob), yy = rng.read(sob), zz = rng.read(sob);
+        
+        Scalar x(xx);
+        Scalar y(yy);
+        Scalar z(zz);
 
         arith_check(test,x,y,z,x+y,y+x,"commute add");
         arith_check(test,x,y,z,x,x+0,"ident add");
         arith_check(test,x,y,z,x,x-0,"ident sub");
+        arith_check(test,x,y,z,x+-x,0,"inverse add");
+        arith_check(test,x,y,z,x-x,0,"inverse sub");
+        arith_check(test,x,y,z,x-(x+1),-1,"inverse add2");
         arith_check(test,x,y,z,x+(y+z),(x+y)+z,"assoc add");
         arith_check(test,x,y,z,x*(y+z),x*y + x*z,"distributive mul/add");
         arith_check(test,x,y,z,x*(y-z),x*y - x*z,"distributive mul/add");
@@ -156,6 +168,18 @@ static void test_arithmetic() {
         arith_check(test,x,y,z,0,x*0,"mul by 0");
         arith_check(test,x,y,z,-x,x*-1,"mul by -1");
         arith_check(test,x,y,z,x+x,x*2,"mul by 2");
+        arith_check(test,x,y,z,-(x*y),(-x)*y,"neg prop mul");
+        arith_check(test,x,y,z,x*y,(-x)*(-y),"double neg prop mul");
+        arith_check(test,x,y,z,-(x+y),(-x)+(-y),"neg prop add");
+        arith_check(test,x,y,z,x-y,(x)+(-y),"add neg sub");
+        arith_check(test,x,y,z,(-x)-y,-(x+y),"neg add");
+        
+        if (sob <= 4) {
+            uint64_t xi = leint(xx), yi = leint(yy);
+            arith_check(test,x,y,z,x,xi,"parse consistency");
+            arith_check(test,x,y,z,x+y,xi+yi,"add consistency");
+            arith_check(test,x,y,z,x*y,xi*yi,"mul consistency");
+        }
         
         if (i%20) continue;
         if (y!=0) arith_check(test,x,y,z,x*y/y,x,"invert");
@@ -169,6 +193,10 @@ static void test_arithmetic() {
     }
 }
 
+static const Block sqrt_minus_one;
+static const Block minus_sqrt_minus_one;
+static const Block elli_patho;
+
 static void test_elligator() {
     SpongeRng rng(Block("test_elligator"),SpongeRng::DETERMINISTIC);
     Test test("Elligator");
@@ -179,12 +207,19 @@ static void test_elligator() {
     SecureBuffer *alts2[NHINTS];
     bool successes2[NHINTS];
 
-    for (int i=0; i<NTESTS/10 && (test.passing_now || i < 100); i++) {
+    for (int i=0; i<NTESTS/10 && test.passing_now; i++) {
         size_t len =  (i % (2*Point::HASH_BYTES + 3));
         SecureBuffer b1(len);
         if (i!=Point::HASH_BYTES) rng.read(b1); /* special test case */
-        if (i==1) b1[0] = 1; /* special case test */
         if (len >= Point::HASH_BYTES) b1[Point::HASH_BYTES-1] &= 0x7F; // FIXME MAGIC
+        
+        /* Pathological cases */
+        if (i==1) b1[0] = 1;
+        if (i==2 && sqrt_minus_one.size()) b1 = sqrt_minus_one;
+        if (i==3 && minus_sqrt_minus_one.size()) b1 = minus_sqrt_minus_one;
+        if (i==4 && elli_patho.size()) b1 = elli_patho;
+        len = b1.size();
+        
         
         Point s = Point::from_hash(b1), ss=s;
         for (int j=0; j<(i&3); j++) ss = ss.debugging_torque();
@@ -273,6 +308,8 @@ static void test_ec() {
     Point id = Point::identity(), base = Point::base();
     point_check(test,id,id,id,0,0,Point::from_hash(""),id,"fh0");
     
+    unsigned char enc[Point::SER_BYTES] = {0};
+    
     if (Group::FIELD_MODULUS_TYPE == 3) {
         /* When p == 3 mod 4, the QNR is -1, so u*1^2 = -1 also produces the
          * identity.
@@ -280,8 +317,37 @@ static void test_ec() {
         point_check(test,id,id,id,0,0,Point::from_hash("\x01"),id,"fh1");
     }
     
+    point_check(test,id,id,id,0,0,Point(FixedBlock<sizeof(enc)>(enc)),id,"decode [0]");
+    try {
+        enc[0] = 1;
+        Point f((FixedBlock<sizeof(enc)>(enc)));
+        test.fail();
+        printf("    Allowed deserialize of [1]: %d", f==id);
+    } catch (CryptoException) {
+        /* ok */
+    }
+    
+    if (sqrt_minus_one.size()) {
+        try {
+            Point f(sqrt_minus_one);
+            test.fail();
+            printf("    Allowed deserialize of [i]: %d", f==id);
+        } catch (CryptoException) {
+            /* ok */
+        }
+    }
+    
+    if (minus_sqrt_minus_one.size()) {
+        try {
+            Point f(minus_sqrt_minus_one);
+            test.fail();
+            printf("    Allowed deserialize of [-i]: %d", f==id);
+        } catch (CryptoException) {
+            /* ok */
+        }
+    }
+    
     for (int i=0; i<NTESTS && test.passing_now; i++) {
-        /* TODO: pathological cases */
         Scalar x(rng);
         Scalar y(rng);
         Point p(rng);
@@ -297,7 +363,15 @@ static void test_ec() {
         Point pp = p.debugging_torque().debugging_pscale(rng);
         if (!memeq(pp.serialize(),p.serialize())) {
             test.fail();
-            printf("Fail torque seq test\n");
+            printf("    Fail torque seq test\n");
+        }
+        if (!memeq((p-pp).serialize(),id.serialize())) {
+            test.fail();
+            printf("    Fail torque id test\n");
+        }
+        if (!memeq((p-p).serialize(),id.serialize())) {
+            test.fail();
+            printf("    Fail id test\n");
         }
         point_check(test,p,q,r,0,0,p,pp,"torque eq");
         point_check(test,p,q,r,0,0,p+q,q+p,"commute add");
@@ -306,6 +380,7 @@ static void test_ec() {
         point_check(test,p,q,r,0,0,p.times_two(),p+p,"dbl add");
         
         if (i%10) continue;
+        point_check(test,p,q,r,0,0,p.times_two(),p*Scalar(2),"add times two");
         point_check(test,p,q,r,x,0,x*(p+q),x*p+x*q,"distr mul");
         point_check(test,p,q,r,x,y,(x*y)*p,x*(y*p),"assoc mul");
         point_check(test,p,q,r,x,y,x*p+y*q,Point::double_scalarmul(x,p,y,q),"double mul");
@@ -461,6 +536,36 @@ template<> const uint8_t Tests<Ed448Goldilocks>::rfc7748_1000000[56] = {
     0xc9,0x46,0xda,0x8d,0x52,0x4d,0xe3,0xd6,
     0x9b,0xd9,0xd9,0xd6,0x6b,0x99,0x7e,0x37
 };
+
+template<> const Block Tests<Ed448Goldilocks>::sqrt_minus_one(NULL,0);
+const uint8_t sm1_25519[32] = {
+    0xb0,0xa0,0x0e,0x4a,0x27,0x1b,0xee,0xc4,
+    0x78,0xe4,0x2f,0xad,0x06,0x18,0x43,0x2f,
+    0xa7,0xd7,0xfb,0x3d,0x99,0x00,0x4d,0x2b,
+    0x0b,0xdf,0xc1,0x4f,0x80,0x24,0x83,0x2b
+};
+template<> const Block Tests<IsoEd25519>::sqrt_minus_one(sm1_25519,32);
+
+template<> const Block Tests<Ed448Goldilocks>::minus_sqrt_minus_one(NULL,0);
+const uint8_t msm1_25519[32] = {
+    0x3d,0x5f,0xf1,0xb5,0xd8,0xe4,0x11,0x3b,
+    0x87,0x1b,0xd0,0x52,0xf9,0xe7,0xbc,0xd0,
+    0x58,0x28,0x04,0xc2,0x66,0xff,0xb2,0xd4,
+    0xf4,0x20,0x3e,0xb0,0x7f,0xdb,0x7c,0x54
+};
+template<> const Block Tests<IsoEd25519>::minus_sqrt_minus_one(msm1_25519,32);
+
+const uint8_t elli_patho_448[56] = {
+    0x14,0xf0,0x70,0x58,0x41,0xc7,0xf9,0xa5,
+    0xfa,0x2c,0x7d,0x87,0x07,0x89,0xe8,0x61,
+    0x63,0xe8,0xc8,0xdc,0x06,0x2d,0x39,0x8f,
+    0x18,0x83,0x1e,0xc6,0x8c,0x6d,0x73,0x24,
+    0xd4,0xb3,0xd3,0xe1,0xf3,0x51,0x8c,0xee,
+    0x65,0x79,0x88,0xc1,0x0b,0xcf,0x8e,0xa5,
+    0x86,0xa9,0x2e,0xc9,0x17,0x68,0x9b,0x20
+};
+template<> const Block Tests<Ed448Goldilocks>::elli_patho(elli_patho_448,56);
+template<> const Block Tests<IsoEd25519>::elli_patho(NULL,0);
         
     
 
