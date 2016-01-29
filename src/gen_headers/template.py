@@ -1,4 +1,5 @@
 from textwrap import dedent
+from curve_data import field_data,curve_data,ser,msqrt
 
 import os
 import argparse
@@ -11,8 +12,6 @@ parser.add_argument('--item', required = False, default = "global", help = "Whic
 parser.add_argument('--guard', required = False, default = None, help = "header guard")
 parser.add_argument('files', metavar='file', type=str, nargs='+', help='a list of files to fill')
 args = parser.parse_args()
-
-from curve_data import field_data,curve_data
 
 per_map = {"field":field_data, "curve":curve_data, "global":{"global":{}} }
 
@@ -51,7 +50,7 @@ def fillin(template,data):
             if template[position] == '(': parens += 1
             elif template[position] == ')': parens -= 1
             position += 1
-        ret += str(eval(template[dollars+2:position-1],data))
+        ret += str(eval(template[dollars+2:position-1],{'ser':ser,'msqrt':msqrt},data))
 
 author = "Mike Hamburg" # FUTURE
 for name in args.files:

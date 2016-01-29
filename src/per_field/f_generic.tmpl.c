@@ -10,6 +10,10 @@
 
 #include "field.h"
 
+static const gf MODULUS = {FIELD_LITERAL(
+    $(ser(modulus,gf_lit_limb_bits))
+)};
+
 /** Serialize to wire format. */
 void gf_serialize (uint8_t serial[SER_BYTES], const gf x) {
     gf red;

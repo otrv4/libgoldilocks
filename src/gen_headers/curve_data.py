@@ -74,8 +74,6 @@ def ceil_log2(x):
 for field,data in field_data.iteritems():
     if "modulus" not in data:
         data["modulus"] = eval(data["gf_desc"].replace("^","**"))
-        
-    data["p_mod_8"] = data["modulus"] % 8
     
     if "gf_bits" not in data:
         data["gf_bits"] = ceil_log2(data["modulus"])
@@ -88,10 +86,6 @@ for field,data in field_data.iteritems():
         
     if "x_priv_bits" not in data:
         data["x_priv_bits"] = ceil_log2(data["modulus"]*0.99) # not per curve at least in 7748
-        
-    data["ser_modulus"] = ser(data["modulus"], data["gf_lit_limb_bits"])
-    if data["modulus"] % 4 == 1: data["sqrt_minus_one"] = ser(msqrt(-1,data["modulus"]), data["gf_lit_limb_bits"])
-    else: data["sqrt_minus_one"] = "/* NONE */"
 
 for curve,data in curve_data.iteritems():
     for key in field_data[data["field"]]:
@@ -121,7 +115,6 @@ for curve,data in curve_data.iteritems():
     data["q"] = (data["modulus"]+1-data["trace"]) // data["cofactor"]
     data["bits"] = ceil_log2(data["modulus"])
     data["decaf_base"] = ser(msqrt(data["mont_base"],data["modulus"]),8)
-    data["scalar_p"] = ser(data["q"],64,"SC_LIMB")
     
     if data["cofactor"] > 4: data["sqrt_one_minus_d"] = ser(msqrt(1-data["d"],data["modulus"]),data["gf_lit_limb_bits"])
     else: data["sqrt_one_minus_d"] = "/* NONE */"

@@ -10,6 +10,7 @@
 
 #include <decaf.h>
 
+/* Template stuff */
 #define API_NS(_id) $(c_ns)_##_id
 #define SCALAR_BITS $(C_NS)_SCALAR_BITS
 #define SCALAR_LIMBS $(C_NS)_SCALAR_LIMBS
@@ -20,7 +21,11 @@
 #define COFACTOR $(cofactor)
 
 static const int EDWARDS_D = $(d);
-static const scalar_t sc_p = {{{ $(scalar_p) }}};
+static const scalar_t sc_p = {{{ $(ser(q,64,"SC_LIMB")) }}};
+static const scalar_t sc_r2 = {{{ $(ser(((2**128)**((scalar_bits+63)/64))%q,64,"SC_LIMB")) }}};
+extern const scalar_t API_NS(point_scalarmul_adjustment); /* TODO: auto template these too. */
+extern const scalar_t API_NS(precomputed_scalarmul_adjustment);
+static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x$("%x" % pow(-q,2**64-1,2**64))ull;
 
 #if COFACTOR==8
     static const gf SQRT_ONE_MINUS_D = {FIELD_LITERAL(
@@ -49,8 +54,6 @@ extern const gf SQRT_MINUS_ONE;
 #define WBITS DECAF_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
 const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
-extern const scalar_t API_NS(sc_r2);
-extern const decaf_word_t API_NS(MONTGOMERY_FACTOR);
 extern const point_t API_NS(point_base);
 
 /* Projective Niels coordinates */
@@ -220,7 +223,7 @@ sc_montmul (
         }
         accum[j] = chain;
         
-        mand = accum[0] * API_NS(MONTGOMERY_FACTOR);
+        mand = accum[0] * MONTGOMERY_FACTOR;
         chain = 0;
         mier = sc_p->limb;
         for (j=0; j<SCALAR_LIMBS; j++) {
@@ -243,7 +246,7 @@ void API_NS(scalar_mul) (
     const scalar_t b
 ) {
     sc_montmul(out,a,b);
-    sc_montmul(out,out,API_NS(sc_r2));
+    sc_montmul(out,out,sc_r2);
 }
 
 /* PERF: could implement this */
@@ -263,7 +266,7 @@ decaf_error_t API_NS(scalar_invert) (
     const int LAST = (1<<SCALAR_WINDOW_BITS)-1;
 
     /* Precompute precmp = [a^1,a^3,...] */
-    sc_montmul(precmp[0],a,API_NS(sc_r2));
+    sc_montmul(precmp[0],a,sc_r2);
     if (LAST > 0) sc_montmul(precmp[LAST],precmp[0],precmp[0]);
 
     int i;
@@ -734,7 +737,7 @@ void API_NS(scalar_decode_long)(
 
     while (i) {
         i -= SER_BYTES;
-        sc_montmul(t1,t1,API_NS(sc_r2));
+        sc_montmul(t1,t1,sc_r2);
         ignore_result( API_NS(scalar_decode)(t2, ser+i) );
         API_NS(scalar_add)(t1, t1, t2);
     }
@@ -867,8 +870,6 @@ sub_pniels_from_pt (
     gf_copy ( p->z, L0 );
     sub_niels_from_pt( p, pn->n, before_double );
 }
-
-extern const scalar_t API_NS(point_scalarmul_adjustment);
 
 static INLINE void
 constant_time_lookup_xx (
@@ -1476,8 +1477,6 @@ void API_NS(precompute) (
     decaf_bzero(start,sizeof(start));
     decaf_bzero(doubles,sizeof(doubles));
 }
-
-extern const scalar_t API_NS(precomputed_scalarmul_adjustment);
 
 static INLINE void
 constant_time_lookup_xx_niels (

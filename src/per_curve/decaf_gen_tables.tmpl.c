@@ -19,8 +19,6 @@ static const unsigned char base_point_ser_for_pregen[SER_BYTES] = {
 const gf API_NS(precomputed_base_as_fe)[1];
 const API_NS(scalar_t) API_NS(precomputed_scalarmul_adjustment);
 const API_NS(scalar_t) API_NS(point_scalarmul_adjustment);
-const API_NS(scalar_t) API_NS(sc_r2) = {{{0}}};
-const decaf_word_t API_NS(MONTGOMERY_FACTOR) = 0;
 
 const API_NS(point_t) API_NS(point_base);
 const uint8_t API_NS(x_base_point)[X_PUBLIC_BYTES] = {0};
@@ -148,23 +146,8 @@ int main(int argc, char **argv) {
     API_NS(scalar_sub)(smadj, smadj, API_NS(scalar_one));
     scalar_print("API_NS(point_scalarmul_adjustment)", smadj);
     
-    API_NS(scalar_copy)(smadj,API_NS(scalar_one));
-    for (i=0; i<sizeof(API_NS(scalar_t))*8*2; i++) {
-        API_NS(scalar_add)(smadj,smadj,smadj);
-    }
-    scalar_print("API_NS(sc_r2)", smadj);
-    
     
     API_NS(scalar_sub)(smadj,API_NS(scalar_zero),API_NS(scalar_one)); /* get p-1 */
-    
-    unsigned long long w = 1, plo = smadj->limb[0]+1;
-#if DECAF_WORD_BITS == 32
-    plo |= ((unsigned long long)smadj->limb[1]) << 32;
-#endif
-    for (i=0; i<6; i++) {
-        w *= w*plo + 2;
-    }
-    printf("const decaf_word_t API_NS(MONTGOMERY_FACTOR) = (decaf_word_t)0x%016llxull;\n\n", w);
 
     /* Generate the Montgomery ladder version of the base point */
     gf base1,base2;

@@ -74,14 +74,10 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES]);
 
 #include "f_impl.h" /* Bring in the inline implementations */
 
-static const gf MODULUS = {FIELD_LITERAL(
-    $(ser_modulus)
-)};
-
-#define P_MOD_8 $(p_mod_8)
+#define P_MOD_8 $(modulus % 8)
 #if P_MOD_8 == 5
     static const gf SQRT_MINUS_ONE = {FIELD_LITERAL( /* TODO make not static */
-        $(sqrt_minus_one)
+        $(ser(msqrt(-1,modulus),gf_lit_limb_bits) if modulus % 4 == 1 else "/* NOPE */")
     )};
 #endif
 
