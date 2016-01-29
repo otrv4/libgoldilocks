@@ -1704,7 +1704,7 @@ static int recode_wnaf (
     unsigned int tableBits
 ) {
     unsigned int table_size = SCALAR_BITS/(tableBits+1) + 3;
-    unsigned int position = table_size - 1; /* at the end */
+    int position = table_size - 1; /* at the end */
     
     /* place the end marker */
     control[position].power = -1;
