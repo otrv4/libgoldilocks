@@ -43,8 +43,8 @@ void gf_bias (gf a, int amt) {
 }
 
 void gf_weak_reduce (gf a) {
-    uint64_t mask = (1ull<<28) - 1;
-    uint64_t tmp = a->limb[15] >> 28;
+    uint32_t mask = (1ull<<28) - 1;
+    uint32_t tmp = a->limb[15] >> 28;
     a->limb[8] += tmp;
     for (unsigned int i=15; i>0; i--) {
         a->limb[i] = (a->limb[i] & mask) + (a->limb[i-1]>>28);

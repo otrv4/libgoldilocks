@@ -34,7 +34,7 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     c[1] += accum;
 }
 
-void gf_mulw (gf_s *__restrict__ cs, const gf as, uint64_t b) {
+void gf_mulw (gf_s *__restrict__ cs, const gf as, uint32_t b) {
     const uint64_t *a = as->limb, mask = ((1ull<<51)-1);
     int i;
     

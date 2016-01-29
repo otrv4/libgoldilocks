@@ -4,6 +4,7 @@
 
 #include "f_field.h"
 
+/** Requires: input limbs < 9*2^51 */
 void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     const uint64_t *a = as->limb, *b = bs->limb, mask = ((1ull<<51)-1);
     uint64_t *c = cs->limb;
@@ -65,6 +66,7 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     
     ai = a[4];
     mac_rm(&accum1, ai, &b[0]);
+    /* Here accum1 < 5*(9*2^51)^2 */
     
     c[3] = accum0 & mask;
     accum1 += shrld(accum0, 51);
@@ -72,13 +74,16 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     
     /* 2^102 * 16 * 5 * 19 * (1+ep) >> 64
      * = 2^(-13 + <13)
-     * PERF: good enough to fit into uint64_t?
+     * PERF: good enough to fit into uint64_t.
      */
     
     uint64_t a1 = shrld(accum1,51);
-    accum1 = (__uint128_t)a1 * 19 + c0;
+    /* Here a1 < (5*(9*2^51)^2 + small) >> 51 = 405 * 2^51 + small
+     * a1 * 19 + c0 < (405*19+1)*2^51 + small < 2^13 * 2^51.
+     */
+    accum1 = a1 * 19 + c0;
     c[0] = accum1 & mask;
-    c[1] = c1 + shrld(accum1,51);
+    c[1] = c1 + (accum1>>51);
 }
 
 void gf_sqr (gf_s *__restrict__ cs, const gf as) {
@@ -132,16 +137,15 @@ void gf_sqr (gf_s *__restrict__ cs, const gf as) {
     
     /* 2^102 * 16 * 5 * 19 * (1+ep) >> 64
      * = 2^(-13 + <13)
-     * PERF: good enough to fit into uint64_t?
      */
     
     uint64_t a1 = shrld(accum1,51);
-    accum1 = (__uint128_t)a1 * 19 + c0;
+    accum1 = a1 * 19 + c0;
     c[0] = accum1 & mask;
-    c[1] = c1 + shrld(accum1,51);
+    c[1] = c1 + (accum1>>51);
 }
 
-void gf_mulw (gf_s *__restrict__ cs, const gf as, uint64_t b) {
+void gf_mulw (gf_s *__restrict__ cs, const gf as, uint32_t b) {
     const uint64_t *a = as->limb, mask = ((1ull<<51)-1);
     uint64_t *c = cs->limb;
 
@@ -164,9 +168,9 @@ void gf_mulw (gf_s *__restrict__ cs, const gf as, uint64_t b) {
     mac_rm(&accum, b, &a[4]);
     c[4] = accum & mask;
 
-    accum = shrld(accum,51);
-    accum = accum * 19 + c0;
+    uint64_t a1 = shrld(accum,51);
+    a1 = a1*19+c0;
     
-    c[0] = accum & mask;
-    c[1] = c1 + shrld(accum,51);
+    c[0] = a1 & mask;
+    c[1] = c1 + (a1>>51);
 }

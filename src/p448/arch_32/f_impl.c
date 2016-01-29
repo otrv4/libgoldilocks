@@ -60,8 +60,8 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     c[1] += ((uint32_t)(accum1));
 }
 
-void gf_mulw (gf_s *__restrict__ cs, const gf as, uint64_t b) {
-    const uint32_t bhi = b>>28, blo = b & ((1<<28)-1);
+void gf_mulw (gf_s *__restrict__ cs, const gf as, uint32_t b) {
+    assert(b<1<<28);
     
     const uint32_t *a = as->limb;
     uint32_t *c = cs->limb;
@@ -71,20 +71,15 @@ void gf_mulw (gf_s *__restrict__ cs, const gf as, uint64_t b) {
 
     int i;
 
-    accum0 = widemul(blo, a[0]);
-    accum8 = widemul(blo, a[8]);
-    accum0 += widemul(bhi, a[15]);
-    accum8 += widemul(bhi, a[15] + a[7]);
+    accum0 = widemul(b, a[0]);
+    accum8 = widemul(b, a[8]);
 
     c[0] = accum0 & mask; accum0 >>= 28;
     c[8] = accum8 & mask; accum8 >>= 28;
     
     for (i=1; i<8; i++) {
-        accum0 += widemul(blo, a[i]);
-        accum8 += widemul(blo, a[i+8]);
-        
-        accum0 += widemul(bhi, a[i-1]);
-        accum8 += widemul(bhi, a[i+7]);
+        accum0 += widemul(b, a[i]);
+        accum8 += widemul(b, a[i+8]);
 
         c[i] = accum0 & mask; accum0 >>= 28;
         c[i+8] = accum8 & mask; accum8 >>= 28;

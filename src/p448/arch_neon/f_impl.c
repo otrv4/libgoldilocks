@@ -549,20 +549,18 @@ void gf_sqr (gf_s *__restrict__ cs, const gf bs) {
     );
 }
 
-void gf_mulw (gf_s *__restrict__ cs, const gf as, uint64_t b) { 
+void gf_mulw (gf_s *__restrict__ cs, const gf as, uint32_t b) { 
     uint32x2_t vmask = {(1<<28) - 1, (1<<28)-1};
+    assert(b<(1<<28));
     
     uint64x2_t accum;
     const uint32x2_t *va = (const uint32x2_t *) as->limb;
     uint32x2_t *vo = (uint32x2_t *) cs->limb;
     uint32x2_t vc, vn;
-    uint32x2_t vb = {b & ((1<<28)-1), b>>28};
-    
-    accum = vmull_lane_u32(va[7], vb, 1);
-    accum = xx_vaddup_u64(vrev128_u64(accum));
+    uint32x2_t vb = {b, 0};
     
     vc = va[0];
-    accum = vmlal_lane_u32(accum, vc, vb, 0);
+    accum = vmull_lane_u32(accum, vc, vb, 0);
     vo[0] = vmovn_u64(accum) & vmask;
     accum = vshrq_n_u64(accum,28);
     
@@ -579,7 +577,6 @@ void gf_mulw (gf_s *__restrict__ cs, const gf as, uint64_t b) {
     int i;
     for (i=1; i<8; i++) {
         vn = va[i];
-        accum = vmlal_lane_u32(accum, vc, vb, 1);
         accum = vmlal_lane_u32(accum, vn, vb, 0);
         vo[i] = vmovn_u64(accum) & vmask;
         accum = vshrq_n_u64(accum,28);

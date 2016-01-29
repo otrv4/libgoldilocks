@@ -109,13 +109,6 @@ cond_neg(gf x, mask_t neg) {
 static INLINE void
 cond_swap(gf x, gf_s *__restrict__ y, mask_t swap) {
     constant_time_cond_swap(x,y,sizeof(gf_s),swap);
-    /*
-    UNROLL for (unsigned int i=0; i<sizeof(x->limb)/sizeof(x->limb[0]); i++) {
-        decaf_word_t s = (x->limb[i] ^ y->limb[i]) & swap;
-        x->limb[i] ^= s;
-        y->limb[i] ^= s;
-    }
-    */
 }
 
 /** Inverse square root using addition chain. */
@@ -133,7 +126,7 @@ static void
 gf_invert(gf y, const gf x) {
     gf t1, t2;
     gf_sqr(t1, x); // o^2
-    decaf_bool_t ret = gf_isqrt_chk(t2, t1, 0); // +-1/sqrt(o^2) = +-1/o
+    mask_t ret = gf_isqrt_chk(t2, t1, 0); // +-1/sqrt(o^2) = +-1/o
     (void)ret; assert(ret);
     gf_sqr(t1, t2);
     gf_mul(t2, t1, x); // not direct to y in case of alias.
@@ -142,7 +135,7 @@ gf_invert(gf y, const gf x) {
 
 /** Mul by signed int.  Not constant-time WRT the sign of that int. */
 static INLINE void
-gf_mulw_sgn(gf c, const gf a, int w) {
+gf_mulw_sgn(gf c, const gf a, int32_t w) {
     if (w>0) {
         gf_mulw(c, a, w);
     } else {
@@ -152,7 +145,7 @@ gf_mulw_sgn(gf c, const gf a, int w) {
 }
 
 /** Return high bit of x = low bit of 2x mod p */
-static decaf_word_t hibit(const gf x) {
+static mask_t hibit(const gf x) {
     gf y;
     gf_add(y,x,x);
     gf_strong_reduce(y);
@@ -161,7 +154,7 @@ static decaf_word_t hibit(const gf x) {
 
 #if COFACTOR==8
 /** Return high bit of x = low bit of 2x mod p */
-static decaf_word_t lobit(const gf x) {
+static mask_t lobit(const gf x) {
     gf y;
     gf_copy(y,x);
     gf_strong_reduce(y);
@@ -873,9 +866,9 @@ static INLINE void
 constant_time_lookup_xx (
     void *__restrict__ out_,
     const void *table_,
-    decaf_word_t elem_bytes,
-    decaf_word_t n_table,
-    decaf_word_t idx
+    word_t elem_bytes,
+    word_t n_table,
+    word_t idx
 ) {
     constant_time_lookup(out_,table_,elem_bytes,n_table,idx);
 }
@@ -928,12 +921,12 @@ void API_NS(point_scalarmul) (
 
     for (; i>=0; i-=WINDOW) {
         /* Fetch another block of bits */
-        decaf_word_t bits = scalar1x->limb[i/WBITS] >> (i%WBITS);
+        word_t bits = scalar1x->limb[i/WBITS] >> (i%WBITS);
         if (i%WBITS >= WBITS-WINDOW && i/WBITS<SCALAR_LIMBS-1) {
             bits ^= scalar1x->limb[i/WBITS+1] << (WBITS - (i%WBITS));
         }
         bits &= WINDOW_MASK;
-        decaf_word_t inv = (bits>>(WINDOW-1))-1;
+        mask_t inv = (bits>>(WINDOW-1))-1;
         bits ^= inv;
     
         /* Add in from table.  Compute t only on last iteration. */
@@ -993,7 +986,7 @@ void API_NS(point_double_scalarmul) (
 
     for (; i>=0; i-=WINDOW) {
         /* Fetch another block of bits */
-        decaf_word_t bits1 = scalar1x->limb[i/WBITS] >> (i%WBITS),
+        word_t bits1 = scalar1x->limb[i/WBITS] >> (i%WBITS),
                      bits2 = scalar2x->limb[i/WBITS] >> (i%WBITS);
         if (i%WBITS >= WBITS-WINDOW && i/WBITS<SCALAR_LIMBS-1) {
             bits1 ^= scalar1x->limb[i/WBITS+1] << (WBITS - (i%WBITS));
@@ -1001,8 +994,8 @@ void API_NS(point_double_scalarmul) (
         }
         bits1 &= WINDOW_MASK;
         bits2 &= WINDOW_MASK;
-        decaf_word_t inv1 = (bits1>>(WINDOW-1))-1;
-        decaf_word_t inv2 = (bits2>>(WINDOW-1))-1;
+        mask_t inv1 = (bits1>>(WINDOW-1))-1;
+        mask_t inv2 = (bits2>>(WINDOW-1))-1;
         bits1 ^= inv1;
         bits2 ^= inv2;
     
@@ -1079,16 +1072,16 @@ void API_NS(point_dual_scalarmul) (
         }
         
         /* Fetch another block of bits */
-        decaf_word_t bits1 = scalar1x->limb[i/WBITS] >> (i%WBITS),
-                     bits2 = scalar2x->limb[i/WBITS] >> (i%WBITS);
+        word_t bits1 = scalar1x->limb[i/WBITS] >> (i%WBITS),
+               bits2 = scalar2x->limb[i/WBITS] >> (i%WBITS);
         if (i%WBITS >= WBITS-WINDOW && i/WBITS<SCALAR_LIMBS-1) {
             bits1 ^= scalar1x->limb[i/WBITS+1] << (WBITS - (i%WBITS));
             bits2 ^= scalar2x->limb[i/WBITS+1] << (WBITS - (i%WBITS));
         }
         bits1 &= WINDOW_MASK;
         bits2 &= WINDOW_MASK;
-        decaf_word_t inv1 = (bits1>>(WINDOW-1))-1;
-        decaf_word_t inv2 = (bits2>>(WINDOW-1))-1;
+        mask_t inv1 = (bits1>>(WINDOW-1))-1;
+        mask_t inv2 = (bits2>>(WINDOW-1))-1;
         bits1 ^= inv1;
         bits2 ^= inv2;
         

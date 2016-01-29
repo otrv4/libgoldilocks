@@ -724,10 +724,10 @@ void gf_sqr (gf_s *__restrict__ cs, const gf as) {
 void gf_mulw (
     gf_s *__restrict__ cs,
     const gf as,
-    uint64_t b
+    uint32_t b
 ) {
     uint32_t mask = (1ull<<28)-1;  
-    const uint32_t bhi = b>>28, blo = b & mask;
+    assert(b <= mask);
     
     const uint32_t *a = as->limb;
     uint32_t *c = cs->limb;
@@ -737,11 +737,9 @@ void gf_mulw (
     int i;
 
     uint32_t c0, c8, n0, n8;
-    accum0 = widemul(bhi, a[15]);
-    accum8 = widemul(bhi, a[15] + a[7]);
     c0 = a[0]; c8 = a[8];
-    smlal(&accum0, blo, c0);
-    smlal(&accum8, blo, c8);
+    accum0 = widemul(b, c0);
+    accum8 = widemul(b, c8);
 
     c[0] = accum0 & mask; accum0 >>= 28;
     c[8] = accum8 & mask; accum8 >>= 28;
@@ -749,10 +747,8 @@ void gf_mulw (
     i=1;
     {
         n0 = a[i]; n8 = a[i+8];
-        smlal(&accum0, bhi, c0);
-        smlal(&accum8, bhi, c8);
-        smlal(&accum0, blo, n0);
-        smlal(&accum8, blo, n8);
+        smlal(&accum0, b, n0);
+        smlal(&accum8, b, n8);
         
         c[i] = accum0 & mask; accum0 >>= 28;
         c[i+8] = accum8 & mask; accum8 >>= 28;
@@ -760,10 +756,8 @@ void gf_mulw (
     }
     {
         c0 = a[i]; c8 = a[i+8];
-        smlal(&accum0, bhi, n0);
-        smlal(&accum8, bhi, n8);
-        smlal(&accum0, blo, c0);
-        smlal(&accum8, blo, c8);
+        smlal(&accum0, b, c0);
+        smlal(&accum8, b, c8);
 
         c[i] = accum0 & mask; accum0 >>= 28;
         c[i+8] = accum8 & mask; accum8 >>= 28;
@@ -771,10 +765,8 @@ void gf_mulw (
     }
     {
         n0 = a[i]; n8 = a[i+8];
-        smlal(&accum0, bhi, c0);
-        smlal(&accum8, bhi, c8);
-        smlal(&accum0, blo, n0);
-        smlal(&accum8, blo, n8);
+        smlal(&accum0, b, n0);
+        smlal(&accum8, b, n8);
 
         c[i] = accum0 & mask; accum0 >>= 28;
         c[i+8] = accum8 & mask; accum8 >>= 28;
@@ -782,10 +774,8 @@ void gf_mulw (
     }
     {
         c0 = a[i]; c8 = a[i+8];
-        smlal(&accum0, bhi, n0);
-        smlal(&accum8, bhi, n8);
-        smlal(&accum0, blo, c0);
-        smlal(&accum8, blo, c8);
+        smlal(&accum0, b, c0);
+        smlal(&accum8, b, c8);
 
         c[i] = accum0 & mask; accum0 >>= 28;
         c[i+8] = accum8 & mask; accum8 >>= 28;
@@ -793,10 +783,8 @@ void gf_mulw (
     }
     {
         n0 = a[i]; n8 = a[i+8];
-        smlal(&accum0, bhi, c0);
-        smlal(&accum8, bhi, c8);
-        smlal(&accum0, blo, n0);
-        smlal(&accum8, blo, n8);
+        smlal(&accum0, b, n0);
+        smlal(&accum8, b, n8);
 
         c[i] = accum0 & mask; accum0 >>= 28;
         c[i+8] = accum8 & mask; accum8 >>= 28;
@@ -804,10 +792,8 @@ void gf_mulw (
     }
     {
         c0 = a[i]; c8 = a[i+8];
-        smlal(&accum0, bhi, n0);
-        smlal(&accum8, bhi, n8);
-        smlal(&accum0, blo, c0);
-        smlal(&accum8, blo, c8);
+        smlal(&accum0, b, c0);
+        smlal(&accum8, b, c8);
         
         c[i] = accum0 & mask; accum0 >>= 28;
         c[i+8] = accum8 & mask; accum8 >>= 28;
@@ -815,10 +801,8 @@ void gf_mulw (
     }
     {
         n0 = a[i]; n8 = a[i+8];
-        smlal(&accum0, bhi, c0);
-        smlal(&accum8, bhi, c8);
-        smlal(&accum0, blo, n0);
-        smlal(&accum8, blo, n8);
+        smlal(&accum0, b, n0);
+        smlal(&accum8, b, n8);
 
         c[i] = accum0 & mask; accum0 >>= 28;
         c[i+8] = accum8 & mask; accum8 >>= 28;

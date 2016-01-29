@@ -66,7 +66,7 @@ void gf_strong_reduce (gf inout);
 void gf_add (gf out, const gf a, const gf b);
 void gf_sub (gf out, const gf a, const gf b);
 void gf_mul (gf_s *__restrict__ out, const gf a, const gf b);
-void gf_mulw (gf_s *__restrict__ out, const gf a, uint64_t b);
+void gf_mulw (gf_s *__restrict__ out, const gf a, uint32_t b);
 void gf_sqr (gf_s *__restrict__ out, const gf a);
 void gf_serialize (uint8_t *serial, const gf x);
 void gf_isr(gf a, const gf x); /** a^2 x = 1, QNR, or 0 if x=0 */
