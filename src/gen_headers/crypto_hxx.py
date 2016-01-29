@@ -13,6 +13,7 @@ crypto_hxx = gen_file(
     """, code = """
 #include <decaf.hxx>
 #include <decaf/shake.hxx>
+#include <decaf/strobe.hxx>
 
 /** @cond internal */
 #if __cplusplus >= 201103L
@@ -68,14 +69,22 @@ public:
     /** Serialization size. */
     inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
     
-    /* FUTURE: verify_strobe */
-    
     /** Verify a message */
     inline void verify(
         const Block &message,
         const FixedBlock<SIG_BYTES> &sig
     ) const throw(CryptoException) {
         if (DECAF_SUCCESS != %(c_ns)s_verify(sig.data(),wrapped,message.data(),message.size())) {
+            throw(CryptoException());
+        }
+    }
+    
+    /** Verify a message */
+    inline void verify(
+        Strobe &context,
+        const FixedBlock<SIG_BYTES> &sig
+    ) const throw(CryptoException) {
+        if (DECAF_SUCCESS != %(c_ns)s_verify_strobe(context.wrapped,sig.data(),wrapped)) {
             throw(CryptoException());
         }
     }
@@ -174,6 +183,13 @@ public:
     inline SecureBuffer sign(const Block &message) const {
         SecureBuffer sig(SIG_BYTES);
         %(c_ns)s_sign(sig.data(), wrapped, message.data(), message.size());
+        return sig;
+    }
+
+    /** Sign a message. */ 
+    inline SecureBuffer verify(Strobe &context) const {
+        SecureBuffer sig(SIG_BYTES);
+        %(c_ns)s_sign_strobe(context.wrapped, sig.data(), wrapped);
         return sig;
     }
 };
