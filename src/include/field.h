@@ -43,7 +43,7 @@ gf_sqrn (
 static inline void gf_sub_nr ( gf c, const gf a, const gf b ) {
     gf_sub_RAW(c,a,b);
     gf_bias(c, 2);
-    if (DECAF_WORD_BITS==32) gf_weak_reduce(c); // HACK PERF MAGIC
+    if (sizeof(word_t)==4) gf_weak_reduce(c); // HACK PERF MAGIC
     // Depending on headroom, this is needed in some of the Ed routines, but
     // not in the Montgomery ladder.  Need to find a better way to prevent
     // overflow.  In particular, the headroom depends on the field+arch combo,
@@ -55,7 +55,7 @@ static inline void gf_sub_nr ( gf c, const gf a, const gf b ) {
 static inline void gf_subx_nr ( gf c, const gf a, const gf b, int amt ) {
     gf_sub_RAW(c,a,b);
     gf_bias(c, amt);
-    if (DECAF_WORD_BITS==32) gf_weak_reduce(c); // HACK PERF MAGIC
+    if (sizeof(word_t)==4) gf_weak_reduce(c); // HACK PERF MAGIC
 }
 
 

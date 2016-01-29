@@ -45,21 +45,28 @@ extern "C" {
  * platform to support dynamic linking, since even if you header was built
  * with eg arch_neon, you might end up linking a library built with arch_arm32.
  */
-#if (defined(__ILP64__) || defined(__amd64__) || defined(__x86_64__) || (((__UINT_FAST32_MAX__)>>30)>>30)) \
-	 && !defined(DECAF_FORCE_32_BIT)
-#define DECAF_WORD_BITS 64         /**< The number of bits in a word */
-typedef uint64_t decaf_word_t;     /**< Word size for internal computations */
+#ifndef DECAF_WORD_BITS
+    #if (defined(__ILP64__) || defined(__amd64__) || defined(__x86_64__) || (((__UINT_FAST32_MAX__)>>30)>>30))
+        #define DECAF_WORD_BITS 64 /**< The number of bits in a word */
+    #else
+        #define DECAF_WORD_BITS 32 /**< The number of bits in a word */
+    #endif
+#endif
+    
+#if DECAF_WORD_BITS == 64
+typedef uint64_t decaf_word_t;      /**< Word size for internal computations */
 typedef int64_t decaf_sword_t;      /**< Signed word size for internal computations */
-typedef uint64_t decaf_bool_t;     /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
-typedef __uint128_t decaf_dword_t; /**< Double-word size for internal computations */
-typedef __int128_t decaf_dsword_t; /**< Signed double-word size for internal computations */
-#else
-#define DECAF_WORD_BITS 32          /**< The number of bits in a word */
+typedef uint64_t decaf_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
+typedef __uint128_t decaf_dword_t;  /**< Double-word size for internal computations */
+typedef __int128_t decaf_dsword_t;  /**< Signed double-word size for internal computations */
+#elif DECAF_WORD_BITS == 32         /**< The number of bits in a word */
 typedef uint32_t decaf_word_t;      /**< Word size for internal computations */
 typedef int32_t decaf_sword_t;      /**< Signed word size for internal computations */
 typedef uint32_t decaf_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
 typedef uint64_t decaf_dword_t;     /**< Double-word size for internal computations */
 typedef int64_t decaf_dsword_t;     /**< Signed double-word size for internal computations */
+#else
+#error "Only supporting DECAF_WORD_BITS = 32 or 64 for now"
 #endif
     
 /** DECAF_TRUE = -1 so that DECAF_TRUE & x = x */

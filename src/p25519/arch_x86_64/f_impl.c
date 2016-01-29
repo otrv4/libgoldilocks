@@ -72,11 +72,6 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     accum1 += shrld(accum0, 51);
     c[4] = accum1 & mask;
     
-    /* 2^102 * 16 * 5 * 19 * (1+ep) >> 64
-     * = 2^(-13 + <13)
-     * PERF: good enough to fit into uint64_t.
-     */
-    
     uint64_t a1 = shrld(accum1,51);
     /* Here a1 < (5*(9*2^51)^2 + small) >> 51 = 405 * 2^51 + small
      * a1 * 19 + c0 < (405*19+1)*2^51 + small < 2^13 * 2^51.
