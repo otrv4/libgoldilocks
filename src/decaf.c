@@ -1710,54 +1710,51 @@ static int recode_wnaf (
     const scalar_t scalar,
     unsigned int tableBits
 ) {
-    int current = 0, i, j;
-    unsigned int position = 0;
-
-    /* PERF: negate scalar if it's large
-     * PERF: this is a pretty simplistic algorithm.  I'm sure there's a faster one...
-     * PERF MINOR: not technically WNAF, since last digits can be adjacent.  Could be rtl.
-     */
-    for (i=SCALAR_BITS-1; i >= 0; i--) {
-        int bit = (scalar->limb[i/WBITS] >> (i%WBITS)) & 1;
-        current = 2*current + bit;
-
-        /*
-         * Sizing: |current| >= 2^(tableBits+1) -> |current| = 2^0
-         * So current loses (tableBits+1) bits every time.  It otherwise gains
-         * 1 bit per iteration.  The number of iterations is
-         * (nbits + 2 + tableBits), and an additional control word is added at
-         * the end.  So the total number of control words is at most
-         * ceil((nbits+1) / (tableBits+1)) + 2 = floor((nbits)/(tableBits+1)) + 2.
-         * There's also the stopper with power -1, for a total of +3.
-         */
-        if (current >= (2<<tableBits) || current <= -1 - (2<<tableBits)) {
-            int delta = (current + 1) >> 1; /* |delta| < 2^tablebits */
-            current = -(current & 1);
-
-            for (j=i; (delta & 1) == 0; j++) {
-                delta >>= 1;
-            }
-            control[position].power = j+1;
-            control[position].addend = delta;
-            position++;
-            assert(position <= SCALAR_BITS/(tableBits+1) + 2);
-        }
-    }
+    unsigned int table_size = SCALAR_BITS/(tableBits+1) + 3;
+    unsigned int position = table_size - 1; /* at the end */
     
-    if (current) {
-        for (j=0; (current & 1) == 0; j++) {
-            current >>= 1;
-        }
-        control[position].power = j;
-        control[position].addend = current;
-        position++;
-        assert(position <= SCALAR_BITS/(tableBits+1) + 2);
-    }
-    
-  
+    /* place the end marker */
     control[position].power = -1;
     control[position].addend = 0;
-    return position;
+    position--;
+
+    /* PERF: Could negate scalar if it's large.  But then would need more cases
+     * in the actual code that uses it, all for an expected reduction of like 1/5 op.
+     * Probably not worth it.
+     */
+    
+    uint64_t current = scalar->limb[0] & 0xFFFF;
+    uint32_t mask = (1<<(tableBits+1))-1;
+
+    unsigned int w;
+    const unsigned int B_OVER_16 = sizeof(scalar->limb[0]) / 2;
+    for (w = 1; w<(SCALAR_BITS-1)/16+3; w++) {
+        if (w < (SCALAR_BITS-1)/16+1) {
+            /* Refill the 16 high bits of current */
+            current += (uint32_t)((scalar->limb[w/B_OVER_16]>>(16*(w%B_OVER_16)))<<16);
+        }
+        
+        while (current & 0xFFFF) {
+            assert(position >= 0);
+            uint32_t pos = __builtin_ctz((uint32_t)current), odd = (uint32_t)current >> pos;
+            int32_t delta = odd & mask;
+            if (odd & 1<<(tableBits+1)) delta -= (1<<(tableBits+1));
+            current -= delta << pos;
+            control[position].power = pos + 16*(w-1);
+            control[position].addend = delta;
+            position--;
+        }
+        current >>= 16;
+    }
+    assert(current==0);
+    
+    position++;
+    unsigned int n = table_size - position;
+    unsigned int i;
+    for (i=0; i<n; i++) {
+        control[i] = control[i+position];
+    }
+    return n-1;
 }
 
 static void
