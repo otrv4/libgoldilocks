@@ -10,8 +10,8 @@ MACHINE := $(shell uname -m)
 # The non-build/obj directories are the public interface.
 BUILD_ASM = build/obj
 BUILD_OBJ = build/obj
-BUILD_C   = build/obj
-BUILD_H   = build/obj/include
+BUILD_C   = build/c
+BUILD_H   = build/c
 BUILD_PY  = build/obj
 BUILD_LIB = build/lib
 BUILD_INC = build/include
@@ -67,7 +67,7 @@ SAGES= $(shell ls test/*.sage)
 BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 
 .PHONY: clean all test test_ct bench todo doc lib bat sage sagetest gen_headers
-.PRECIOUS: $(BUILD_ASM)/%.s $(BUILD_C)/%.c $(BUILD_IBIN)/%
+.PRECIOUS: $(BUILD_ASM)/%.s $(BUILD_C)/*/%.c $(BUILD_H)/*/%.h $(BUILD_IBIN)/%
 
 GEN_HEADERS=\
 	$(BUILD_INC)/decaf/decaf_255.h \
@@ -78,7 +78,7 @@ GEN_HEADERS=\
 HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_HEADERS)
 
 # components needed by the lib
-LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/decaf_crypto_curve25519.o $(BUILD_OBJ)/decaf_crypto_ed448goldilocks.o # and per-field components
+LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o # and per-field components
 
 BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o
 
@@ -117,7 +117,8 @@ endif
 # Create all the build subdirectories
 $(BUILD_OBJ)/timestamp:
 	mkdir -p $(BUILD_ASM) $(BUILD_OBJ) $(BUILD_C) $(BUILD_PY) \
-		$(BUILD_LIB) $(BUILD_INC) $(BUILD_BIN) $(BUILD_IBIN) $(BUILD_H) $(BUILD_INC)/decaf
+		$(BUILD_LIB) $(BUILD_INC) $(BUILD_BIN) $(BUILD_IBIN) $(BUILD_H) $(BUILD_INC)/decaf \
+		$(PER_OBJ_DIRS)
 	touch $@
 
 $(BUILD_OBJ)/%.o: $(BUILD_ASM)/%.s
@@ -134,20 +135,28 @@ $(GEN_HEADERS): src/gen_headers/*.py src/public_include/decaf/*
 ################################################################
 define define_field
 ARCH_FOR_$(1) ?= $(2)
-COMPONENTS_OF_$(1) = $$(BUILD_OBJ)/$(1)_impl.o $$(BUILD_OBJ)/$(1)_arithmetic.o $$(BUILD_OBJ)/$(1)_per_field.o
+COMPONENTS_OF_$(1) = $$(BUILD_OBJ)/$(1)/f_impl.o $$(BUILD_OBJ)/$(1)/f_arithmetic.o $$(BUILD_OBJ)/$(1)/f_generic.o
+HEADERS_OF_$(1) = $(HEADERS) $$(BUILD_H)/$(1)/f_field.h
 LIBCOMPONENTS += $$(COMPONENTS_OF_$(1))
+PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
 
-$$(BUILD_ASM)/$(1)_arithmetic.s: src/$(1)/f_arithmetic.c $$(HEADERS)
+$$(BUILD_C)/$(1)/%.c: src/per_field/%.tmpl.c src/gen_headers/* $(HEADERS)
+	python -B src/gen_headers/template.py --per=field --guard=$(1)/`basename $$@` --item=$(1) -o $$@ $$<
+	
+$$(BUILD_H)/$(1)/%.h: src/per_field/%.tmpl.h src/gen_headers/* $(HEADERS)
+	python -B src/gen_headers/template.py --per=field --guard=$(1)/`basename $$@` --item=$(1) -o $$@ $$<
+
+$$(BUILD_ASM)/$(1)/%.s: $$(BUILD_C)/$(1)/%.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
 	-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
 	-S -c -o $$@ $$<
 
-$$(BUILD_ASM)/$(1)_impl.s: src/$(1)/$$(ARCH_FOR_$(1))/f_impl.c $$(HEADERS)
+$$(BUILD_ASM)/$(1)/%.s: src/$(1)/%.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
 	-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
 	-S -c -o $$@ $$<
 
-$$(BUILD_ASM)/$(1)_per_field.s: src/per_field.c $$(HEADERS)
+$$(BUILD_ASM)/$(1)/%.s: src/$(1)/$$(ARCH_FOR_$(1))/%.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
 	-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
 	-S -c -o $$@ $$<
@@ -157,38 +166,35 @@ endef
 # Per-field, per-curve code: call with curve, field
 ################################################################
 define define_curve
-$$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/decaf_gen_tables_$(1).o \
-		$$(BUILD_OBJ)/decaf_$(1).o $$(BUILD_OBJ)/utils.o \
+
+LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/crypto.o $$(BUILD_OBJ)/$(1)/decaf_tables.o
+PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
+HEADERS_OF_$(1) = $$(HEADERS_OF_$(2)) $$(BUILD_H)/$(1)/curve_data.h
+
+$$(BUILD_C)/$(1)/%.c: src/per_curve/%.tmpl.c src/gen_headers/* $$(HEADERS_OF_$(2))
+	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
+	
+$$(BUILD_H)/$(1)/%.h: src/per_curve/%.tmpl.h src/gen_headers/* $$(HEADERS_OF_$(2))
+	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
+
+$$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/$(1)/decaf_gen_tables.o \
+		$$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/utils.o \
 		$$(COMPONENTS_OF_$(2))
 	$$(LD) $$(LDFLAGS) -o $$@ $$^
 
-$$(BUILD_C)/decaf_tables_$(1).c: $$(BUILD_IBIN)/decaf_gen_tables_$(1)
+$$(BUILD_C)/$(1)/decaf_tables.c: $$(BUILD_IBIN)/decaf_gen_tables_$(1)
 	./$$< > $$@ || (rm $$@; exit 1)
 
-$$(BUILD_ASM)/decaf_tables_$(1).s: $$(BUILD_C)/decaf_tables_$(1).c $$(HEADERS)
+$$(BUILD_ASM)/$(1)/%.s: $$(BUILD_C)/$(1)/%.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) -S -c -o $$@ $$< \
 		-I build/obj/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
-		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2))
+		-I $(BUILD_H)/$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2))
 
-$$(BUILD_ASM)/decaf_gen_tables_$(1).s: src/decaf_gen_tables.c $$(HEADERS)
+$$(BUILD_ASM)/decaf_gen_tables_$(1).s: src/decaf_gen_tables.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) \
 		-I build/obj/curve_$(1) -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
-		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
+		-I $(BUILD_H)/$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
 		-S -c -o $$@ $$<
-
-$$(BUILD_ASM)/decaf_$(1).s: src/decaf.c $$(HEADERS)
-	$$(CC) $$(CFLAGS) \
-		-I build/obj/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
-		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
-		-S -c -o $$@ $$<
-
-$$(BUILD_ASM)/decaf_crypto_$(1).s: src/decaf_crypto.c $$(HEADERS)
-	$$(CC) $$(CFLAGS) \
-		-I build/obj/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
-		-I $(BUILD_H)/curve_$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
-		-S -c -o $$@ $$<
-
-LIBCOMPONENTS += $$(BUILD_OBJ)/decaf_$(1).o $$(BUILD_OBJ)/decaf_tables_$(1).o
 endef
 
 ################################################################
@@ -303,4 +309,4 @@ microbench: $(BUILD_IBIN)/bench
 	./$< --micro
 
 clean:
-	rm -fr build $(BATNAME)
+	rm -fr build

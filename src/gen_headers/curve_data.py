@@ -14,7 +14,7 @@ field_data = {
 }
 
 curve_data = {
-    "Curve25519" : {
+    "curve25519" : {
         "iso_to" : "Curve25519",
         "name" : "Iso-Ed25519",
         "cofactor" : 8,
@@ -24,7 +24,7 @@ curve_data = {
         "trace": -0xa6f7cef517bce6b2c09318d2e7ae9f7a,
         "mont_base": 9
     },
-    "Ed448" : {
+    "ed448goldilocks" : {
         "name" : "Ed448-Goldilocks",
         "cofactor" : 4,
         "field" : "p448",

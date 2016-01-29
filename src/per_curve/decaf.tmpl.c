@@ -1,12 +1,4 @@
-/* Copyright (c) 2015 Cryptography Research, Inc.
- * Released under the MIT License.  See LICENSE.txt for license information.
- */
-
-/**
- * @file decaf.c
- * @author Mike Hamburg
- * @brief Decaf high-level functions.
- */
+/** @brief Decaf high-level functions. */
 
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #define __STDC_WANT_LIB_EXT1__ 1 /* for memset_s */
@@ -19,7 +11,7 @@
 #include <decaf.h>
 
 /* Include the curve data here */
-#include "curve_data.inc.c"
+#include "curve_data.h"
 
 #if (COFACTOR == 8) && !IMAGINE_TWIST
 /* FUTURE: Curve41417 doesn't have these properties. */

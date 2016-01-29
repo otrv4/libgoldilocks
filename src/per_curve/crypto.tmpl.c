@@ -1,10 +1,5 @@
 /**
  * @cond internal
- * @file decaf_crypto.c
- * @copyright
- *   Copyright (c) 2015 Cryptography Research, Inc.  \n
- *   Released under the MIT License.  See LICENSE.txt for license information.
- * @author Mike Hamburg
  * @brief Example Decaf crypto routines
  */
 
@@ -13,7 +8,7 @@
 #include <string.h>
 
 #define DECAF_JUST_API
-#include "curve_data.inc.c"
+#include "curve_data.h"
 #define SCALAR_BYTES ((SCALAR_BITS + 7)/8)
 
  /* TODO: canonicalize and freeze the STROBE constants in this file

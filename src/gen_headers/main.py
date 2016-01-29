@@ -16,9 +16,7 @@ from decaf_hxx import decaf_hxx
 from decaf_h import decaf_h
 from crypto_h import crypto_h
 from crypto_hxx import crypto_hxx
-from f_field_h import f_field_h
 from curve_data import curve_data
-from curve_data_inc_c import curve_data_inc_c
 
 root_hxx_code = "\n".join((
     "#include <%s>" % name

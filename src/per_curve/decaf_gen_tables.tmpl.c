@@ -1,12 +1,4 @@
-/* Copyright (c) 2015 Cryptography Research, Inc.
- * Released under the MIT License.  See LICENSE.txt for license information.
- */
-
-/**
- * @file decaf_precompute.c
- * @author Mike Hamburg
- * @brief Decaf global constant table precomputation.
- */
+/** @brief Decaf global constant table precomputation. */
 
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #include <stdio.h>
@@ -18,7 +10,7 @@
 #include "decaf_config.h"
 
 #define GEN_TABLES
-#include "curve_data.inc.c"
+#include "curve_data.h"
 
  /* To satisfy linker. */
 const gf API_NS(precomputed_base_as_fe)[1];
