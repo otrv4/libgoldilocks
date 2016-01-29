@@ -10,8 +10,24 @@
 
 #include <decaf.h>
 
-/* Include the curve data here */
-#include "curve_data.h"
+#define API_NS(_id) $(c_ns)_##_id
+#define SCALAR_BITS $(C_NS)_SCALAR_BITS
+#define SCALAR_LIMBS $(C_NS)_SCALAR_LIMBS
+#define scalar_t API_NS(scalar_t)
+#define point_t API_NS(point_t)
+#define precomputed_s API_NS(precomputed_s)
+#define IMAGINE_TWIST $(imagine_twist)
+#define COFACTOR $(cofactor)
+
+static const int EDWARDS_D = $(d);
+static const scalar_t sc_p = {{{ $(scalar_p) }}};
+
+#if COFACTOR==8
+    static const gf SQRT_ONE_MINUS_D = {FIELD_LITERAL(
+        $(sqrt_one_minus_d)
+    )};
+#endif
+
 
 #if (COFACTOR == 8) && !IMAGINE_TWIST
 /* FUTURE: Curve41417 doesn't have these properties. */

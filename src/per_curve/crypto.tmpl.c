@@ -7,8 +7,9 @@
 #include <decaf/crypto.h>
 #include <string.h>
 
-#define DECAF_JUST_API
-#include "curve_data.h"
+#define API_NAME "$(c_ns)"
+#define API_NS(_id) $(c_ns)_##_id
+#define SCALAR_BITS $(C_NS)_SCALAR_BITS
 #define SCALAR_BYTES ((SCALAR_BITS + 7)/8)
 
  /* TODO: canonicalize and freeze the STROBE constants in this file

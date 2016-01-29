@@ -169,7 +169,7 @@ define define_curve
 
 LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/crypto.o $$(BUILD_OBJ)/$(1)/decaf_tables.o
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
-HEADERS_OF_$(1) = $$(HEADERS_OF_$(2)) $$(BUILD_H)/$(1)/curve_data.h
+HEADERS_OF_$(1) = $$(HEADERS_OF_$(2))
 
 $$(BUILD_C)/$(1)/%.c: src/per_curve/%.tmpl.c src/gen_headers/* $$(HEADERS_OF_$(2))
 	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
