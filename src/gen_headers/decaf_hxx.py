@@ -571,8 +571,8 @@ public:
 public:
     /** @cond internal */
     friend class OwnedOrUnowned<Precomputed,Precomputed_U>;
-    static inline size_t size() NOEXCEPT { return sizeof_%(c_ns)s_precomputed_s; }
-    static inline size_t alignment() NOEXCEPT { return alignof_%(c_ns)s_precomputed_s; }
+    static inline size_t size() NOEXCEPT { return %(c_ns)s_sizeof_precomputed_s; }
+    static inline size_t alignment() NOEXCEPT { return %(c_ns)s_alignof_precomputed_s; }
     static inline const Precomputed_U * defaultValue() NOEXCEPT { return %(c_ns)s_precomputed_base; }
     /** @endcond */
 };

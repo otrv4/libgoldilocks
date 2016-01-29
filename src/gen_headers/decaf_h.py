@@ -55,7 +55,7 @@ struct %(c_ns)s_precomputed_s;
 typedef struct %(c_ns)s_precomputed_s %(c_ns)s_precomputed_s; 
 
 /** Size and alignment of precomputed point tables. */
-extern const size_t sizeof_%(c_ns)s_precomputed_s API_VIS, alignof_%(c_ns)s_precomputed_s API_VIS;
+extern const size_t %(c_ns)s_sizeof_precomputed_s API_VIS, %(c_ns)s_alignof_precomputed_s API_VIS;
 
 /** Scalar is stored packed, because we don't need the speed. */
 typedef struct %(c_ns)s_scalar_s {

@@ -1,6 +1,5 @@
 #define API_NAME "$(c_ns)"
 #define API_NS(_id) $(c_ns)_##_id
-#define API_NS2(_pref,_id) _pref##_$(c_ns)_##_id
 
 #define SCALAR_BITS $(C_NS)_SCALAR_BITS
 

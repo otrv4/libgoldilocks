@@ -49,8 +49,8 @@ extern const gf API_NS(precomputed_base_as_fe)[];
 const precomputed_s *API_NS(precomputed_base) =
     (const precomputed_s *) &API_NS(precomputed_base_as_fe);
 
-const size_t API_NS2(sizeof,precomputed_s) = sizeof(precomputed_s);
-const size_t API_NS2(alignof,precomputed_s) = sizeof(big_register_t);
+const size_t API_NS(sizeof_precomputed_s) = sizeof(precomputed_s);
+const size_t API_NS(alignof_precomputed_s) = sizeof(big_register_t);
 
 #define FOR_LIMB(i,op) { unsigned int i=0; for (i=0; i<NLIMBS; i++)  { op; }}
 #define FOR_LIMB_U(i,op) { unsigned int i=0; UNROLL for (i=0; i<NLIMBS; i++)  { op; }}
@@ -1771,7 +1771,7 @@ prepare_wnaf_table(
 
 extern const gf API_NS(precomputed_wnaf_as_fe)[];
 static const niels_t *API_NS(wnaf_base) = (const niels_t *)API_NS(precomputed_wnaf_as_fe);
-const size_t API_NS2(sizeof,precomputed_wnafs) __attribute((visibility("hidden")))
+const size_t API_NS(sizeof_precomputed_wnafs) __attribute((visibility("hidden")))
     = sizeof(niels_t)<<DECAF_WNAF_FIXED_TABLE_BITS;
 
 void API_NS(precompute_wnafs) (
@@ -1878,5 +1878,5 @@ void API_NS(point_destroy) (
 void API_NS(precomputed_destroy) (
     precomputed_s *pre
 ) {
-    decaf_bzero(pre, API_NS2(sizeof,precomputed_s));
+    decaf_bzero(pre, API_NS(sizeof_precomputed_s));
 }
