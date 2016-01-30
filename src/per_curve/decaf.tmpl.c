@@ -142,8 +142,9 @@ void API_NS(deisogenize) (
     gf_mul(a,b,p->z); /* uZ */
     gf_add(a,a,a); /* 2uZ */
     
-    gf_cond_neg(c, toggle_hibit_t_over_s ^ ~gf_hibit(a)); /* u <- -u if negative. */
-    gf_cond_neg(a, toggle_hibit_t_over_s ^ ~gf_hibit(a)); /* t/s <-? -t/s */
+    mask_t tg = toggle_hibit_t_over_s ^ ~gf_hibit(minus_t_over_s);
+    gf_cond_neg(minus_t_over_s, tg); /* t/s <-? -t/s */
+    gf_cond_neg(c, tg); /* u <- -u if negative. */
     
     gf_add(d,c,p->y);
     gf_mul(s,b,d);
@@ -158,18 +159,14 @@ void API_NS(deisogenize) (
 
     #if IMAGINE_TWIST
         gf x, t;
-        gf_mul ( x, p->x, SQRT_MINUS_ONE);
-        gf_mul ( t, p->t, SQRT_MINUS_ONE);
-        gf_sub ( x, ZERO, x );
-        gf_sub ( t, ZERO, t );
-    
+        gf_div_qnr(x,p->x);
+        gf_div_qnr(t,p->t);
         gf_add ( a, p->z, x );
         gf_sub ( b, p->z, x );
         gf_mul ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 - X^2 */
     #else
         const gf_s *x = p->x, *t = p->t;
         /* Won't hit the gf_cond_sel below because COFACTOR==8 requires IMAGINE_TWIST for now. */
-    
         gf_sqr ( a, p->z );
         gf_sqr ( b, p->x );
         gf_add ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 + X^2 */
@@ -201,15 +198,15 @@ void API_NS(deisogenize) (
     
     gf_mul ( c, a, d ); // new "osx"
     gf_mul ( a, c, p->z );
-    gf_add ( a, a, a ); // 2 * "osx" * Z
-    mask_t tg1 = rotate ^ toggle_hibit_t_over_s ^~ gf_hibit(a);
-    gf_cond_neg ( c, tg1 );
-    gf_cond_neg ( a, rotate ^ tg1 );
+    gf_add ( minus_t_over_s, a, a ); // 2 * "osx" * Z
     gf_mul ( d, b, p->z );
-    gf_add ( d, d, c );
-    gf_mul ( b, d, x ); /* here "x" = y unless rotate */
-    gf_cond_neg ( b, toggle_hibit_s ^ gf_hibit(b) );
     
+    mask_t tg = toggle_hibit_t_over_s ^~ gf_hibit(minus_t_over_s);
+    gf_cond_neg ( minus_t_over_s, tg );
+    gf_cond_neg ( c, rotate ^ tg );
+    gf_add ( d, d, c );
+    gf_mul ( s, d, x ); /* here "x" = y unless rotate */
+    gf_cond_neg ( s, toggle_hibit_s ^ gf_hibit(s) );
 #endif
 }
 
