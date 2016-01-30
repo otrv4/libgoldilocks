@@ -8,7 +8,8 @@
 
 #define __DECAF_$(gf_shortname)_GF_DEFINED__ 1
 #define NLIMBS ($(gf_impl_bits/8)/sizeof(word_t))
-#define SER_BYTES $(((gf_bits-1)//8 + 1)) /* MAGIC: depends on if high bit known to be clear (eg p521) */
+#define X_SER_BYTES $(((gf_bits-1)/8 + 1))
+#define SER_BYTES $(((gf_bits-2)/8 + 1))
 typedef struct gf_$(gf_shortname)_s {
     word_t limb[NLIMBS];
 } __attribute__((aligned(32))) gf_$(gf_shortname)_s, gf_$(gf_shortname)_t[1];
@@ -21,6 +22,7 @@ typedef struct gf_$(gf_shortname)_s {
 #define gf                gf_$(gf_shortname)_t
 #define gf_s              gf_$(gf_shortname)_s
 #define gf_eq             gf_$(gf_shortname)_eq
+#define gf_hibit          gf_$(gf_shortname)_hibit
 #define gf_copy           gf_$(gf_shortname)_copy
 #define gf_add            gf_$(gf_shortname)_add
 #define gf_sub            gf_$(gf_shortname)_sub
@@ -37,7 +39,7 @@ typedef struct gf_$(gf_shortname)_s {
 #define gf_deserialize    gf_$(gf_shortname)_deserialize
 
 /* RFC 7748 support */
-#define X_PUBLIC_BYTES  $((gf_bits-1)/8 + 1)
+#define X_PUBLIC_BYTES  X_SER_BYTES
 #define X_PRIVATE_BYTES X_PUBLIC_BYTES
 #define X_PRIVATE_BITS  $(gf_bits)
 
@@ -62,10 +64,12 @@ void gf_sub (gf out, const gf a, const gf b);
 void gf_mul (gf_s *__restrict__ out, const gf a, const gf b);
 void gf_mulw (gf_s *__restrict__ out, const gf a, uint32_t b);
 void gf_sqr (gf_s *__restrict__ out, const gf a);
-void gf_serialize (uint8_t *serial, const gf x);
-void gf_isr(gf a, const gf x); /** a^2 x = 1, QNR, or 0 if x=0 */
+mask_t gf_isr(gf a, const gf x); /** a^2 x = 1, QNR, or 0 if x=0.  Return true if successful */
 mask_t gf_eq (const gf x, const gf y);
-mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES]);
+mask_t gf_hibit (const gf x);
+
+void gf_serialize (uint8_t *serial, const gf x,int with_highbit);
+mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES],int with_highbit);
 
 
 #ifdef __cplusplus

@@ -12,21 +12,40 @@
 #include "constant_time.h"
 
 /* Guarantee: a^2 x = 0 if x = 0; else a^2 x = 1 or SQRT_MINUS_ONE; */
-void gf_isr (gf a, const gf x) {
-    gf st[3], tmp1, tmp2;
-    const struct { unsigned char sh, idx; } ops[] = {
-        {1,2},{1,2},{3,1},{6,0},{1,2},{12,1},{25,1},{25,1},{50,0},{125,0},{2,2},{1,2}
-    };
-    st[0][0] = st[1][0] = st[2][0] = x[0];
-    unsigned int i;
-    for (i=0; i<sizeof(ops)/sizeof(ops[0]); i++) {
-        gf_sqrn(tmp1, st[1^(i&1)], ops[i].sh);
-        gf_mul(tmp2, tmp1, st[ops[i].idx]);
-        st[i&1][0] = tmp2[0];
-    }
+mask_t gf_isr (gf a, const gf x) {
+    gf L0, L1, L2, L3;
     
-    mask_t mask = gf_eq(st[1],ONE) | gf_eq(st[1],SQRT_MINUS_ONE);
+    gf_sqr (L0, x);
+    gf_mul (L1, L0, x);
+    gf_sqr (L0, L1);
+    gf_mul (L1, L0, x);
+    gf_sqrn(L0, L1, 3);
+    gf_mul (L2, L0, L1);
+    gf_sqrn(L0, L2, 6);
+    gf_mul (L1, L2, L0);
+    gf_sqr (L2, L1);
+    gf_mul (L0, L2, x);
+    gf_sqrn(L2, L0, 12);
+    gf_mul (L0, L2, L1);
+    gf_sqrn(L2, L0, 25);
+    gf_mul (L3, L2, L0);
+    gf_sqrn(L2, L3, 25);
+    gf_mul (L1, L2, L0);    
+    gf_sqrn(L2, L1, 50);
+    gf_mul (L0, L2, L3);
+    gf_sqrn(L2, L0, 125);
+    gf_mul (L3, L2, L0);
+    gf_sqrn(L2, L3, 2);
+    gf_mul (L0, L2, x);
+
+    gf_sqr (L2, L0);
+    gf_mul (L3, L2, x);
+    gf_add(L1,L3,ONE);
+    mask_t one = gf_eq(L3,ONE);
+    mask_t succ = one | gf_eq(L1,ZERO);
+    mask_t qr   = one | gf_eq(L3,SQRT_MINUS_ONE);
     
-    constant_time_select(tmp1, SQRT_MINUS_ONE, ONE, sizeof(tmp1), mask, 0);
-    gf_mul(a,tmp1,st[0]);
+    constant_time_select(L2, SQRT_MINUS_ONE, ONE, sizeof(L2), qr, 0);
+    gf_mul (a,L2,L0);
+    return succ;
 }

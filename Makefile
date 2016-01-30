@@ -156,8 +156,8 @@ $$(BUILD_OBJ)/$(1)/%.o: src/$(1)/%.c $$(HEADERS_OF_$(1))
 
 $$(BUILD_OBJ)/$(1)/%.o: src/$(1)/$$(ARCH_FOR_$(1))/%.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
-	-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
-	-c -o $$@ $$<
+		-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
+		-c -o $$@ $$<
 endef
 
 ################################################################

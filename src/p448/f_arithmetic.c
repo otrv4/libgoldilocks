@@ -10,8 +10,7 @@
 
 #include "field.h"
 
-void 
-gf_isr (
+mask_t gf_isr (
     gf a,
     const gf x
 ) {
@@ -39,5 +38,9 @@ gf_isr (
     gf_sqr  (L0,   L2 );
     gf_mul  (L1,     x,   L0 );
     gf_sqrn (L0,   L1,   223 );
-    gf_mul  (  a,   L2,   L0 );
+    gf_mul  (L1,   L2,   L0 );
+    gf_sqr  (L2, L1);
+    gf_mul  (L0, L2, x);
+    gf_copy(a,L1);
+    return gf_eq(L0,ONE);
 }

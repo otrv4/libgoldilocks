@@ -26,12 +26,12 @@ void API_NS(precompute_wnafs) (
     const API_NS(point_t) base
 );
 static void field_print(const gf f) { /* UNIFY */
-    unsigned char ser[SER_BYTES];
-    gf_serialize(ser,f);
+    unsigned char ser[X_SER_BYTES];
+    gf_serialize(ser,f,1);
     int b=0, i, comma=0;
     unsigned long long limb = 0;
     printf("{FIELD_LITERAL(");
-    for (i=0; i<SER_BYTES; i++) {
+    for (i=0; i<X_SER_BYTES; i++) {
         limb |= ((uint64_t)ser[i])<<b;
         b += 8;
         if (b >= GF_LIT_LIMB_BITS || i == SER_BYTES-1) {

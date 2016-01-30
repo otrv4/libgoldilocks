@@ -12,6 +12,7 @@
 /* Template stuff */
 #define API_NS(_id) $(c_ns)_##_id
 #define SCALAR_BITS $(C_NS)_SCALAR_BITS
+#define SCALAR_SER_BYTES $(C_NS)_SCALAR_BYTES
 #define SCALAR_LIMBS $(C_NS)_SCALAR_LIMBS
 #define scalar_t API_NS(scalar_t)
 #define point_t API_NS(point_t)
@@ -39,7 +40,7 @@ static const scalar_t sc_p = {{{
 }}};
 static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x$("%x" % pow(-q,2**64-1,2**64))ull;
 
-const uint8_t API_NS(x_base_point)[SER_BYTES] = { $(ser(mont_base,8)) };
+const uint8_t API_NS(x_base_point)[X_SER_BYTES] = { $(ser(mont_base,8)) };
 
 #if COFACTOR==8
     static const gf SQRT_ONE_MINUS_D = {FIELD_LITERAL(
@@ -138,22 +139,12 @@ cond_swap(gf x, gf_s *__restrict__ y, mask_t swap) {
     constant_time_cond_swap(x,y,sizeof(gf_s),swap);
 }
 
-/** Inverse square root using addition chain. */
-static mask_t
-gf_isqrt_chk(gf y, const gf x, mask_t allow_zero) {
-    gf tmp0, tmp1;
-    gf_isr((gf_s *)y, (const gf_s *)x);
-    gf_sqr(tmp0,y);
-    gf_mul(tmp1,tmp0,x);
-    return gf_eq(tmp1,ONE) | (allow_zero & gf_eq(tmp1,ZERO));
-}
-
 /** Inverse. */
 static void
 gf_invert(gf y, const gf x) {
     gf t1, t2;
     gf_sqr(t1, x); // o^2
-    mask_t ret = gf_isqrt_chk(t2, t1, 0); // +-1/sqrt(o^2) = +-1/o
+    mask_t ret = gf_isr(t2, t1); // +-1/sqrt(o^2) = +-1/o
     (void)ret; assert(ret);
     gf_sqr(t1, t2);
     gf_mul(t2, t1, x); // not direct to y in case of alias.
@@ -171,17 +162,9 @@ gf_mulw_sgn(gf c, const gf a, int32_t w) {
     }
 }
 
-/** Return high bit of x = low bit of 2x mod p */
-static mask_t hibit(const gf x) {
-    gf y;
-    gf_add(y,x,x);
-    gf_strong_reduce(y);
-    return -(y->limb[0]&1);
-}
-
 #if COFACTOR==8
 /** Return high bit of x = low bit of 2x mod p */
-static mask_t lobit(const gf x) {
+static mask_t gf_lobit(const gf x) {
     gf y;
     gf_copy(y,x);
     gf_strong_reduce(y);
@@ -424,20 +407,20 @@ deisogenize (
     gf_sub(b, p->z, p->y); 
     gf_mul(c, b, a);
     gf_mulw_sgn(b, c, -EDWARDS_D); /* (a-d)(Z+Y)(Z-Y) */
-    mask_t ok = gf_isqrt_chk ( a, b, DECAF_TRUE); /* r in the paper */
-    (void)ok; assert(ok);
+    mask_t ok = gf_isr (a,b); /* r in the paper */
+    (void)ok; assert(ok | gf_eq(b,ZERO));
     gf_mulw_sgn (b, a, -EDWARDS_D); /* u in the paper */
 
     gf_mul(c,a,d); /* r(aZX-dYT) */
     gf_mul(a,b,p->z); /* uZ */
     gf_add(a,a,a); /* 2uZ */
     
-    cond_neg(c, toggle_hibit_t_over_s ^ ~hibit(a)); /* u <- -u if negative. */
-    cond_neg(a, toggle_hibit_t_over_s ^ ~hibit(a)); /* t/s <-? -t/s */
+    cond_neg(c, toggle_hibit_t_over_s ^ ~gf_hibit(a)); /* u <- -u if negative. */
+    cond_neg(a, toggle_hibit_t_over_s ^ ~gf_hibit(a)); /* t/s <-? -t/s */
     
     gf_add(d,c,p->y);
     gf_mul(s,b,d);
-    cond_neg(s, toggle_hibit_s ^ hibit(s));
+    cond_neg(s, toggle_hibit_s ^ gf_hibit(s));
 #else
     /* More complicated because of rotation */
     /* MAGIC This code is wrong for certain non-Curve25519 curves;
@@ -468,8 +451,8 @@ deisogenize (
     gf_mul ( a, p->z, t ); /* "tz" = T*Z */
     gf_sqr ( b, a );
     gf_mul ( d, b, c ); /* (TZ)^2 * (Z^2-aX^2) */
-    mask_t ok = gf_isqrt_chk ( b, d, DECAF_TRUE );
-    (void)ok; assert(ok);
+    mask_t ok = gf_isr(b, d);
+    (void)ok; assert(ok | gf_eq(d,ZERO));
     gf_mul ( d, b, a ); /* "osx" = 1 / sqrt(z^2-ax^2) */
     gf_mul ( a, b, c ); 
     gf_mul ( b, a, d ); /* 1/tz */
@@ -479,7 +462,7 @@ deisogenize (
         gf e;
         gf_sqr(e, p->z);
         gf_mul(a, e, b); /* z^2 / tz = z/t = 1/xy */
-        rotate = hibit(a) ^ toggle_rotation;
+        rotate = gf_hibit(a) ^ toggle_rotation;
         /* Curve25519: cond select between zx * 1/tz or sqrt(1-d); y=-x */
         gf_mul ( a, b, c ); 
         cond_sel ( a, a, SQRT_ONE_MINUS_D, rotate );
@@ -492,13 +475,13 @@ deisogenize (
     gf_mul ( c, a, d ); // new "osx"
     gf_mul ( a, c, p->z );
     gf_add ( a, a, a ); // 2 * "osx" * Z
-    mask_t tg1 = rotate ^ toggle_hibit_t_over_s ^~ hibit(a);
+    mask_t tg1 = rotate ^ toggle_hibit_t_over_s ^~ gf_hibit(a);
     cond_neg ( c, tg1 );
     cond_neg ( a, rotate ^ tg1 );
     gf_mul ( d, b, p->z );
     gf_add ( d, d, c );
     gf_mul ( b, d, x ); /* here "x" = y unless rotate */
-    cond_neg ( b, toggle_hibit_s ^ hibit(b) );
+    cond_neg ( b, toggle_hibit_s ^ gf_hibit(b) );
     
 #endif
 }
@@ -506,7 +489,7 @@ deisogenize (
 void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
     gf s, mtos;
     deisogenize(s,mtos,p,0,0,0);
-    gf_serialize ( ser, s );
+    gf_serialize(ser,s,0);
 }
 
 decaf_error_t API_NS(point_decode) (
@@ -515,10 +498,9 @@ decaf_error_t API_NS(point_decode) (
     decaf_bool_t allow_identity
 ) {
     gf s, a, b, c, d, e, f;
-    mask_t succ = gf_deserialize(s, ser);
+    mask_t succ = gf_deserialize(s, ser, 0);
     mask_t zero = gf_eq(s, ZERO);
     succ &= bool_to_mask(allow_identity) | ~zero;
-    succ &= ~hibit(s);
     gf_sqr ( a, s );
 #if IMAGINE_TWIST
     gf_sub ( f, ONE, a ); /* f = 1-as^2 = 1-s^2*/
@@ -533,11 +515,11 @@ decaf_error_t API_NS(point_decode) (
     gf_sqr ( e, d );
     gf_mul ( b, c, e );
     
-    succ &= gf_isqrt_chk ( e, b, DECAF_TRUE ); /* e = 1/(t s (1-as^2)) */
+    succ &= gf_isr(e,b) | gf_eq(b,ZERO); /* e = 1/(t s (1-as^2)) */
     gf_mul ( b, e, d ); /* 1/t */
     gf_mul ( d, e, c ); /* d = t / (s(1-as^2)) */
     gf_mul ( e, d, f ); /* t/s */
-    mask_t negtos = hibit(e);
+    mask_t negtos = gf_hibit(e);
     cond_neg(b, negtos);
     cond_neg(d, negtos);
 
@@ -549,7 +531,7 @@ decaf_error_t API_NS(point_decode) (
 
 #if COFACTOR == 8
     gf_mul ( a, p->z, d); /* t(1+s^2) / s(1-s^2) = 2/xy */
-    succ &= ~lobit(a); /* = ~hibit(a/2), since hibit(x) = lobit(2x) */
+    succ &= ~gf_lobit(a); /* = ~gf_hibit(a/2), since gf_hibit(x) = gf_lobit(2x) */
 #endif
     
     gf_mul ( a, f, b ); /* y = (1-s^2) / t */
@@ -685,7 +667,7 @@ void API_NS(point_negate) (
 static INLINE void
 scalar_decode_short (
     scalar_t s,
-    const unsigned char ser[SER_BYTES],
+    const unsigned char *ser,
     unsigned int nbytes
 ) {
     unsigned int i,j,k=0;
@@ -700,10 +682,10 @@ scalar_decode_short (
 
 decaf_error_t API_NS(scalar_decode)(
     scalar_t s,
-    const unsigned char ser[SER_BYTES]
+    const unsigned char ser[SCALAR_SER_BYTES]
 ) {
     unsigned int i;
-    scalar_decode_short(s, ser, SER_BYTES);
+    scalar_decode_short(s, ser, SCALAR_SER_BYTES);
     decaf_dsword_t accum = 0;
     for (i=0; i<SCALAR_LIMBS; i++) {
         accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
@@ -738,8 +720,8 @@ void API_NS(scalar_decode_long)(
     size_t i;
     scalar_t t1, t2;
 
-    i = ser_len - (ser_len%SER_BYTES);
-    if (i==ser_len) i -= SER_BYTES;
+    i = ser_len - (ser_len%SCALAR_SER_BYTES);
+    if (i==ser_len) i -= SCALAR_SER_BYTES;
     
     scalar_decode_short(t1, &ser[i], ser_len-i);
 
@@ -752,7 +734,7 @@ void API_NS(scalar_decode_long)(
     }
 
     while (i) {
-        i -= SER_BYTES;
+        i -= SCALAR_SER_BYTES;
         sc_montmul(t1,t1,sc_r2);
         ignore_result( API_NS(scalar_decode)(t2, ser+i) );
         API_NS(scalar_add)(t1, t1, t2);
@@ -764,7 +746,7 @@ void API_NS(scalar_decode_long)(
 }
 
 void API_NS(scalar_encode)(
-    unsigned char ser[SER_BYTES],
+    unsigned char ser[SCALAR_SER_BYTES],
     const scalar_t s
 ) {
     unsigned int i,j,k=0;
@@ -1188,7 +1170,7 @@ void API_NS(point_from_hash_nonuniform) (
     const unsigned char ser[SER_BYTES]
 ) {
     gf r0,r,a,b,c,N,e;
-    gf_deserialize(r0,ser);
+    ignore_result(gf_deserialize(r0,ser,0));
     gf_strong_reduce(r0);
     gf_sqr(a,r0);
 #if P_MOD_8 == 5
@@ -1213,13 +1195,13 @@ void API_NS(point_from_hash_nonuniform) (
     
     /* e = +-sqrt(1/ND) or +-r0 * sqrt(qnr/ND) */
     gf_mul(a,c,N);
-    mask_t square = gf_isqrt_chk(b,a,DECAF_FALSE);
+    mask_t square = gf_isr(b,a);
     cond_sel(c,r0,ONE,square); /* r? = square ? 1 : r0 */
     gf_mul(e,b,c);
     
     /* s@a = +-|N.e| */
     gf_mul(a,N,e);
-    cond_neg(a,hibit(a)^square); /* NB this is - what is listen in the paper */
+    cond_neg(a,gf_hibit(a)^square); /* NB this is - what is listen in the paper */
     
     /* t@b = -+ cN(r-1)((a-2d)e)^2 - 1 */
     gf_mulw_sgn(c,e,1-2*EDWARDS_D); /* (a-2d)e */
@@ -1257,7 +1239,7 @@ API_NS(invert_elligator_nonuniform) (
     mask_t hint = hint_;
     mask_t sgn_s = -(hint & 1),
         sgn_t_over_s = -(hint>>1 & 1),
-        sgn_r0 = -(hint>>2 & 1),
+        sgn_r0 = -(hint>>2 & 1), /* FIXME: but it's SER_BYTES ... */
         sgn_ed_T = -(hint>>3 & 1);
     gf a, b, c, d;
     deisogenize(a,c,p,sgn_s,sgn_t_over_s,sgn_ed_T);
@@ -1285,16 +1267,16 @@ API_NS(invert_elligator_nonuniform) (
 #else
     gf_sub(d,ZERO,b);
 #endif
-    mask_t succ = gf_isqrt_chk(c,d,DECAF_TRUE);
+    mask_t succ = gf_isr(c,d)|gf_eq(d,ZERO);
     gf_mul(b,a,c);
-    cond_neg(b, sgn_r0^hibit(b));
+    cond_neg(b, sgn_r0^gf_hibit(b));
     
     succ &= ~(gf_eq(b,ZERO) & sgn_r0);
 #if COFACTOR == 8
     succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
 #endif
     
-    gf_serialize(recovered_hash, b); 
+    gf_serialize(recovered_hash,b,1); /* FIXME: ,0 */
     /* TODO: deal with overflow flag */
     return decaf_succeed_if(mask_to_bool(succ));
 }
@@ -1365,7 +1347,8 @@ void API_NS(point_debugging_pscale) (
     const uint8_t factor[SER_BYTES]
 ) {
     gf gfac,tmp;
-    ignore_result(gf_deserialize(gfac,factor));
+    /* NB this means you'll never pscale by negative numbers for p521 */
+    ignore_result(gf_deserialize(gfac,factor,0));
     cond_sel(gfac,gfac,ONE,gf_eq(gfac,ZERO));
     gf_mul(tmp,p->x,gfac);
     gf_copy(q->x,tmp);
@@ -1593,7 +1576,7 @@ decaf_error_t API_NS(x_direct_scalarmul) (
     const uint8_t scalar[X_PRIVATE_BYTES]
 ) {
     gf x1, x2, z2, x3, z3, t1, t2;
-    ignore_result(gf_deserialize(x1,base));
+    ignore_result(gf_deserialize(x1,base,1));
     gf_copy(x2,ONE);
     gf_copy(z2,ZERO);
     gf_copy(x3,x1);
@@ -1644,7 +1627,7 @@ decaf_error_t API_NS(x_direct_scalarmul) (
     cond_swap(z2,z3,swap);
     gf_invert(z2,z2);
     gf_mul(x1,x2,z2);
-    gf_serialize(out,x1);
+    gf_serialize(out,x1,1);
     mask_t nz = ~gf_eq(x1,ZERO);
     
     decaf_bzero(x1,sizeof(x1));
@@ -1706,7 +1689,7 @@ void API_NS(x_base_scalarmul) (
 #if IMAGINE_TWIST
     gf_sub(p->y,ZERO,p->y);
 #endif
-    gf_serialize(out,p->y);
+    gf_serialize(out,p->y,1);
         
     decaf_bzero(scalar2,sizeof(scalar2));
     API_NS(scalar_destroy)(the_scalar);

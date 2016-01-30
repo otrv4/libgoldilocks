@@ -15,14 +15,15 @@ static const gf MODULUS = {FIELD_LITERAL(
 )};
 
 /** Serialize to wire format. */
-void gf_serialize (uint8_t serial[SER_BYTES], const gf x) {
+void gf_serialize (uint8_t serial[SER_BYTES], const gf x, int with_hibit) {
     gf red;
     gf_copy(red, x);
     gf_strong_reduce(red);
+    if (!with_hibit) { assert(gf_hibit(red) == 0); }
     
     unsigned int j=0, fill=0;
     dword_t buffer = 0;
-    UNROLL for (unsigned int i=0; i<SER_BYTES; i++) {
+    UNROLL for (unsigned int i=0; i<(with_hibit ? X_SER_BYTES : SER_BYTES); i++) {
         if (fill < 8 && j < NLIMBS) {
             buffer |= ((dword_t)red->limb[LIMBPERM(j)]) << fill;
             fill += LIMB_PLACE_VALUE(LIMBPERM(j));
@@ -34,13 +35,21 @@ void gf_serialize (uint8_t serial[SER_BYTES], const gf x) {
     }
 }
 
+/** Return high bit of x = low bit of 2x mod p */
+mask_t gf_hibit(const gf x) {
+    gf y;
+    gf_add(y,x,x);
+    gf_strong_reduce(y);
+    return -(y->limb[0]&1);
+}
+
 /** Deserialize from wire format; return -1 on success and 0 on failure. */
-mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES]) {
+mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES], int with_hibit) {
     unsigned int j=0, fill=0;
     dword_t buffer = 0;
     dsword_t scarry = 0;
     UNROLL for (unsigned int i=0; i<NLIMBS; i++) {
-        UNROLL while (fill < LIMB_PLACE_VALUE(LIMBPERM(i)) && j < SER_BYTES) {
+        UNROLL while (fill < LIMB_PLACE_VALUE(LIMBPERM(i)) && j < (with_hibit ? X_SER_BYTES : SER_BYTES)) {
             buffer |= ((dword_t)serial[j]) << fill;
             fill += 8;
             j++;
@@ -50,7 +59,8 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES]) {
         buffer >>= LIMB_PLACE_VALUE(LIMBPERM(i));
         scarry = (scarry + x->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)]) >> (8*sizeof(word_t));
     }
-    return word_is_zero(buffer) & ~word_is_zero(scarry);
+    mask_t succ = with_hibit ? -1 : ~gf_hibit(x);
+    return succ & word_is_zero(buffer) & ~word_is_zero(scarry);
 }
 
 /** Reduce to canonical form. */
