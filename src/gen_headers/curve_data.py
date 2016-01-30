@@ -1,3 +1,8 @@
+from collections import namedtuple
+
+comb_config = namedtuple("comb_config",["n","t","s"])
+wnaf_config = namedtuple("wnaf_config",["fixed","var"])
+
 field_data = {
     "p25519" : {
         "gf_desc" : "2^255 - 19",
@@ -22,7 +27,11 @@ curve_data = {
         "scalar_bits" : 253,
         "d": -121665,
         "trace": -0xa6f7cef517bce6b2c09318d2e7ae9f7a,
-        "mont_base": 9
+        "mont_base": 9,
+        
+        "combs":comb_config(3,5,17),
+        "wnaf":wnaf_config(5,3),
+        "window_bits":4
     },
     "ed448goldilocks" : {
         "name" : "Ed448-Goldilocks",
@@ -31,7 +40,11 @@ curve_data = {
         "scalar_bits" : 446,
         "d": -39081,
         "trace": 0x10cd77058eec492d944a725bf7a4cf635c8e9c2ab721cf5b5529eec34,
-        "mont_base": 5
+        "mont_base": 5,
+        
+        "combs":comb_config(5,5,18),
+        "wnaf":wnaf_config(5,3),
+        "window_bits":5
     }
 }
 

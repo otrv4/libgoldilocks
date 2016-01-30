@@ -6,7 +6,6 @@
 
 #include "word.h"
 #include "field.h"
-#include "decaf_config.h"
 
 #include <decaf.h>
 
@@ -20,18 +19,37 @@
 #define IMAGINE_TWIST $(imagine_twist)
 #define COFACTOR $(cofactor)
 
+/** Comb config: number of combs, n, t, s. */
+#define COMBS_N $(combs.n)
+#define COMBS_T $(combs.t)
+#define COMBS_S $(combs.s)
+#define DECAF_WINDOW_BITS $(window_bits)
+#define DECAF_WNAF_FIXED_TABLE_BITS $(wnaf.fixed)
+#define DECAF_WNAF_VAR_TABLE_BITS $(wnaf.var)
+
 static const int EDWARDS_D = $(d);
-static const scalar_t sc_p = {{{ $(ser(q,64,"SC_LIMB")) }}};
-static const scalar_t sc_r2 = {{{ $(ser(((2**128)**((scalar_bits+63)/64))%q,64,"SC_LIMB")) }}};
-extern const scalar_t API_NS(point_scalarmul_adjustment); /* TODO: auto template these too. */
-extern const scalar_t API_NS(precomputed_scalarmul_adjustment);
+static const scalar_t sc_p = {{{
+    $(ser(q,64,"SC_LIMB"))
+}}}, sc_r2 = {{{
+    $(ser(((2**128)**((scalar_bits+63)/64))%q,64,"SC_LIMB"))
+}}}, point_scalarmul_adjustment = {{{
+    $(ser((2**(scalar_bits-1+window_bits - ((scalar_bits-1)%window_bits)) - 1) % q,64,"SC_LIMB"))
+}}}, precomputed_scalarmul_adjustment = {{{
+    $(ser((2**(combs.n*combs.t*combs.s) - 1) % q,64,"SC_LIMB"))
+}}};
 static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x$("%x" % pow(-q,2**64-1,2**64))ull;
+
+const uint8_t API_NS(x_base_point)[SER_BYTES] /* TODO */ = {
+    $(ser(mont_base,8))
+};
 
 #if COFACTOR==8
     static const gf SQRT_ONE_MINUS_D = {FIELD_LITERAL(
         $(sqrt_one_minus_d)
     )};
 #endif
+
+/* End of template stuff */
 
 
 #if (COFACTOR == 8) && !IMAGINE_TWIST
@@ -62,7 +80,7 @@ typedef struct { niels_t n; gf z; } __attribute__((aligned(sizeof(big_register_t
     pniels_s, pniels_t[1];
 
 /* Precomputed base */
-struct precomputed_s { niels_t table [DECAF_COMBS_N<<(DECAF_COMBS_T-1)]; };
+struct precomputed_s { niels_t table [COMBS_N<<(COMBS_T-1)]; };
 
 extern const gf API_NS(precomputed_base_as_fe)[];
 const precomputed_s *API_NS(precomputed_base) =
@@ -916,7 +934,7 @@ void API_NS(point_scalarmul) (
         NTABLE = 1<<(WINDOW-1);
         
     scalar_t scalar1x;
-    API_NS(scalar_add)(scalar1x, scalar, API_NS(point_scalarmul_adjustment));
+    API_NS(scalar_add)(scalar1x, scalar, point_scalarmul_adjustment);
     sc_halve(scalar1x,scalar1x,sc_p);
     
     /* Set up a precomputed table with odd multiples of b. */
@@ -978,9 +996,9 @@ void API_NS(point_double_scalarmul) (
         NTABLE = 1<<(WINDOW-1);
         
     scalar_t scalar1x, scalar2x;
-    API_NS(scalar_add)(scalar1x, scalarb, API_NS(point_scalarmul_adjustment));
+    API_NS(scalar_add)(scalar1x, scalarb, point_scalarmul_adjustment);
     sc_halve(scalar1x,scalar1x,sc_p);
-    API_NS(scalar_add)(scalar2x, scalarc, API_NS(point_scalarmul_adjustment));
+    API_NS(scalar_add)(scalar2x, scalarc, point_scalarmul_adjustment);
     sc_halve(scalar2x,scalar2x,sc_p);
     
     /* Set up a precomputed table with odd multiples of b. */
@@ -1054,9 +1072,9 @@ void API_NS(point_dual_scalarmul) (
         NTABLE = 1<<(WINDOW-1);
         
     scalar_t scalar1x, scalar2x;
-    API_NS(scalar_add)(scalar1x, scalar1, API_NS(point_scalarmul_adjustment));
+    API_NS(scalar_add)(scalar1x, scalar1, point_scalarmul_adjustment);
     sc_halve(scalar1x,scalar1x,sc_p);
-    API_NS(scalar_add)(scalar2x, scalar2, API_NS(point_scalarmul_adjustment));
+    API_NS(scalar_add)(scalar2x, scalar2, point_scalarmul_adjustment);
     sc_halve(scalar2x,scalar2x,sc_p);
     
     /* Set up a precomputed table with odd multiples of b. */
@@ -1417,7 +1435,7 @@ void API_NS(precompute) (
     precomputed_s *table,
     const point_t base
 ) { 
-    const unsigned int n = DECAF_COMBS_N, t = DECAF_COMBS_T, s = DECAF_COMBS_S;
+    const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
     assert(n*t*s >= SCALAR_BITS);
   
     point_t working, start, doubles[t-1];
@@ -1495,10 +1513,10 @@ void API_NS(precomputed_scalarmul) (
 ) {
     int i;
     unsigned j,k;
-    const unsigned int n = DECAF_COMBS_N, t = DECAF_COMBS_T, s = DECAF_COMBS_S;
+    const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
     
     scalar_t scalar1x;
-    API_NS(scalar_add)(scalar1x, scalar, API_NS(precomputed_scalarmul_adjustment));
+    API_NS(scalar_add)(scalar1x, scalar, precomputed_scalarmul_adjustment);
     sc_halve(scalar1x,scalar1x,sc_p);
     
     niels_t ni;
