@@ -91,15 +91,6 @@ for field,data in field_data.iteritems():
     
     if "gf_bits" not in data:
         data["gf_bits"] = ceil_log2(data["modulus"])
-        
-    if "x_pub_bytes" not in data:
-        data["x_pub_bytes"] = (data["gf_bits"]-1)//8 + 1
-        
-    if "x_priv_bytes" not in data:
-        data["x_priv_bytes"] = (data["gf_bits"]-1)//8 + 1
-        
-    if "x_priv_bits" not in data:
-        data["x_priv_bits"] = ceil_log2(data["modulus"]*0.99) # not per curve at least in 7748
 
 for curve,data in curve_data.iteritems():
     for key in field_data[data["field"]]:
@@ -112,34 +103,16 @@ for curve,data in curve_data.iteritems():
     
     if "cxx_ns" not in data:
         data["cxx_ns"] = data["name"].replace("-","")
-    
-    if "c_filename" not in data:
-        data["c_filename"] = data["iso_to"].replace("-","").lower()
-    
-    mod = data["modulus"]
-    ptwo = 2
-    while mod % ptwo == 1:
-        ptwo *= 2
-    data["modulus_type"] = mod % ptwo
 
     if "imagine_twist" not in data:
-        if data["modulus_type"] == 3: data["imagine_twist"] = 0
+        if data["modulus"]%4 == 3: data["imagine_twist"] = 0
         else: data["imagine_twist"] = 1
 
     data["q"] = (data["modulus"]+1-data["trace"]) // data["cofactor"]
     data["bits"] = ceil_log2(data["modulus"])
-    data["decaf_base"] = ser(msqrt(data["mont_base"],data["modulus"]),8)
-    
-    if data["cofactor"] > 4: data["sqrt_one_minus_d"] = ser(msqrt(1-data["d"],data["modulus"]),data["gf_lit_limb_bits"])
-    else: data["sqrt_one_minus_d"] = "/* NONE */"
-    
-    if "shortname" not in data:
-        data["shortname"] = str(data["bits"])
     
     if "c_ns" not in data:
-        data["c_ns"] = "decaf_" + data["shortname"]
+        data["c_ns"] = "decaf_" + str(data["bits"])
         data["C_NS"] = data["c_ns"].upper()
-        
-    data["ser_bytes"] = (data["bits"]-2)//8 + 1 # TODO: split for decaf vs non-decaf
-    data["scalar_ser_bytes"] = (data["scalar_bits"]-1)//8 + 1
+
     

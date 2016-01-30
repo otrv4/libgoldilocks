@@ -10,7 +10,7 @@
 
 #define API_NS(_id) $(c_ns)_##_id
 static const unsigned char base_point_ser_for_pregen[SER_BYTES] = {
-    $(decaf_base)
+    $(ser(msqrt(mont_base,modulus),8))
 };
 
  /* To satisfy linker. */

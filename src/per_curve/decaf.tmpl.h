@@ -24,16 +24,16 @@ typedef struct gf_$(gf_shortname)_s {
 /** @endcond */
 
 /** Number of bytes in a serialized point. */
-#define $(C_NS)_SER_BYTES $(ser_bytes)
+#define $(C_NS)_SER_BYTES $((gf_bits-2)/8 + 1)
 
 /** Number of bytes in a serialized scalar. */
-#define $(C_NS)_SCALAR_BYTES $(scalar_ser_bytes)
+#define $(C_NS)_SCALAR_BYTES $((scalar_bits-1)/8 + 1)
 
 /** Number of bytes in an x$(gf_shortname) public key */
-#define X$(gf_shortname)_PUBLIC_BYTES $(x_pub_bytes)
+#define X$(gf_shortname)_PUBLIC_BYTES $((gf_bits-1)/8 + 1)
 
 /** Number of bytes in an x$(gf_shortname) private key */
-#define X$(gf_shortname)_PRIVATE_BYTES $(x_priv_bytes)
+#define X$(gf_shortname)_PRIVATE_BYTES $((gf_bits-1)/8 + 1)
 
 /** Twisted Edwards extended homogeneous coordinates */
 typedef struct $(c_ns)_point_s {

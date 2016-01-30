@@ -8,7 +8,6 @@ MACHINE := $(shell uname -m)
 # Subdirectories for objects etc.
 # Many of them are mapped to build/obj right now, but could be split later.
 # The non-build/obj directories are the public interface.
-BUILD_ASM = build/obj
 BUILD_OBJ = build/obj
 BUILD_C   = build/c
 BUILD_H   = build/c
@@ -67,7 +66,7 @@ SAGES= $(shell ls test/*.sage)
 BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 
 .PHONY: clean all test test_ct bench todo doc lib bat sage sagetest gen_headers
-.PRECIOUS: $(BUILD_ASM)/%.s $(BUILD_C)/*/%.c $(BUILD_H)/*/%.h $(BUILD_IBIN)/%
+.PRECIOUS: $(BUILD_C)/*/%.c $(BUILD_H)/*/%.h $(BUILD_IBIN)/%
 
 HEADER_SRCS= $(shell find src/public_include -name "*.h*")
 GEN_HEADERS_0= $(HEADER_SRCS:src/public_include/%=$(BUILD_INC)/%)
@@ -113,13 +112,10 @@ endif
 
 # Create all the build subdirectories
 $(BUILD_OBJ)/timestamp:
-	mkdir -p $(BUILD_ASM) $(BUILD_OBJ) $(BUILD_C) $(BUILD_PY) \
+	mkdir -p $(BUILD_OBJ) $(BUILD_C) $(BUILD_PY) \
 		$(BUILD_LIB) $(BUILD_INC) $(BUILD_BIN) $(BUILD_IBIN) $(BUILD_H) $(BUILD_INC)/decaf \
 		$(PER_OBJ_DIRS)
 	touch $@
-
-$(BUILD_OBJ)/%.o: $(BUILD_ASM)/%.s
-	$(ASM) $(ASFLAGS) -c -o $@ $<
 
 gen_headers: $(GEN_HEADERS)
 
@@ -148,20 +144,20 @@ $$(BUILD_C)/$(1)/%.c: src/per_field/%.tmpl.c src/gen_headers/* $(HEADERS)
 $$(BUILD_H)/$(1)/%.h: src/per_field/%.tmpl.h src/gen_headers/* $(HEADERS)
 	python -B src/gen_headers/template.py --per=field --guard=$(1)/`basename $$@` --item=$(1) -o $$@ $$<
 
-$$(BUILD_ASM)/$(1)/%.s: $$(BUILD_C)/$(1)/%.c $$(HEADERS_OF_$(1))
+$$(BUILD_OBJ)/$(1)/%.o: $$(BUILD_C)/$(1)/%.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
 	-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
-	-S -c -o $$@ $$<
+	-c -o $$@ $$<
 
-$$(BUILD_ASM)/$(1)/%.s: src/$(1)/%.c $$(HEADERS_OF_$(1))
+$$(BUILD_OBJ)/$(1)/%.o: src/$(1)/%.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
 	-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
-	-S -c -o $$@ $$<
+	-c -o $$@ $$<
 
-$$(BUILD_ASM)/$(1)/%.s: src/$(1)/$$(ARCH_FOR_$(1))/%.c $$(HEADERS_OF_$(1))
+$$(BUILD_OBJ)/$(1)/%.o: src/$(1)/$$(ARCH_FOR_$(1))/%.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
 	-I $(BUILD_H)/$(1)/$$(ARCH_FOR_$(1)) -I src/include/$$(ARCH_FOR_$(1)) \
-	-S -c -o $$@ $$<
+	-c -o $$@ $$<
 endef
 
 ################################################################
@@ -196,16 +192,16 @@ $$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/$(1)/decaf_gen_tables.o \
 $$(BUILD_C)/$(1)/decaf_tables.c: $$(BUILD_IBIN)/decaf_gen_tables_$(1)
 	./$$< > $$@ || (rm $$@; exit 1)
 
-$$(BUILD_ASM)/$(1)/%.s: $$(BUILD_C)/$(1)/%.c $$(HEADERS_OF_$(1))
-	$$(CC) $$(CFLAGS) -S -c -o $$@ $$< \
+$$(BUILD_OBJ)/$(1)/%.o: $$(BUILD_C)/$(1)/%.c $$(HEADERS_OF_$(1))
+	$$(CC) $$(CFLAGS) -c -o $$@ $$< \
 		-I build/obj/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
 		-I $(BUILD_H)/$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2))
 
-$$(BUILD_ASM)/decaf_gen_tables_$(1).s: src/decaf_gen_tables.c $$(HEADERS_OF_$(1))
+$$(BUILD_OBJ)/decaf_gen_tables_$(1).o: src/decaf_gen_tables.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) \
 		-I build/obj/curve_$(1) -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
 		-I $(BUILD_H)/$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
-		-S -c -o $$@ $$<
+		-c -o $$@ $$<
 endef
 
 ################################################################
@@ -237,14 +233,14 @@ endif
 
 
 
-$(BUILD_ASM)/%.s: src/%.c $(HEADERS)
-	$(CC) $(CFLAGS) -S -c -o $@ $<
+$(BUILD_OBJ)/%.o: src/%.c $(HEADERS)
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
-$(BUILD_ASM)/%.s: test/%.c $(HEADERS)
-	$(CC) $(PUB_CFLAGS) -S -c -o $@ $<
+$(BUILD_OBJ)/%.o: test/%.c $(HEADERS)
+	$(CC) $(PUB_CFLAGS) -c -o $@ $<
 
-$(BUILD_ASM)/%.s: test/%.cxx $(HEADERS)
-	$(CXX) $(CXXFLAGS) -S -c -o $@ $<
+$(BUILD_OBJ)/%.o: test/%.cxx $(HEADERS)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 # The sage test scripts
 sage: $(BUILDPYS)

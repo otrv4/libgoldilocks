@@ -43,7 +43,7 @@ const uint8_t API_NS(x_base_point)[SER_BYTES] = { $(ser(mont_base,8)) };
 
 #if COFACTOR==8
     static const gf SQRT_ONE_MINUS_D = {FIELD_LITERAL(
-        $(sqrt_one_minus_d)
+        $(ser(msqrt(1-d,modulus),gf_lit_limb_bits) if cofactor == 8 else "/* NONE */")
     )};
 #endif
 

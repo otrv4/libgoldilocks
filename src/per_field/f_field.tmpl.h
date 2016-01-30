@@ -37,9 +37,9 @@ typedef struct gf_$(gf_shortname)_s {
 #define gf_deserialize    gf_$(gf_shortname)_deserialize
 
 /* RFC 7748 support */
-#define X_PUBLIC_BYTES  $(x_pub_bytes)
-#define X_PRIVATE_BYTES $(x_priv_bytes)
-#define X_PRIVATE_BITS  $(x_priv_bits)
+#define X_PUBLIC_BYTES  $((gf_bits-1)/8 + 1)
+#define X_PRIVATE_BYTES X_PUBLIC_BYTES
+#define X_PRIVATE_BITS  $(gf_bits)
 
 #define SQRT_MINUS_ONE    P$(gf_shortname)_SQRT_MINUS_ONE /* might not be defined */
 
