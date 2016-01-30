@@ -1,11 +1,5 @@
-from gen_file import gen_file
+/** @brief A group of prime order p, based on $(iso_to). */
 
-decaf_h = gen_file(
-    public = True,
-    per = "curve",
-    name = "decaf/%(c_ns)s.h",
-    doc = """@brief A group of prime order p, based on %(iso_to)s.""",
-    code = """
 #include <decaf/common.h>
 
 #ifdef __cplusplus
@@ -13,78 +7,78 @@ extern "C" {
 #endif
 
 /** @cond internal */
-#define %(C_NS)s_SCALAR_LIMBS ((%(scalar_bits)d-1)/DECAF_WORD_BITS+1)
+#define $(C_NS)_SCALAR_LIMBS (($(scalar_bits)-1)/DECAF_WORD_BITS+1)
 /** @endcond */
 
 /** The number of bits in a scalar */
-#define %(C_NS)s_SCALAR_BITS %(scalar_bits)d
+#define $(C_NS)_SCALAR_BITS $(scalar_bits)
 
 /** @cond internal */
-#ifndef __DECAF_%(gf_shortname)s_GF_DEFINED__
-#define __DECAF_%(gf_shortname)s_GF_DEFINED__ 1
+#ifndef __DECAF_$(gf_shortname)_GF_DEFINED__
+#define __DECAF_$(gf_shortname)_GF_DEFINED__ 1
 /** @brief Galois field element internal structure */
-typedef struct gf_%(gf_shortname)s_s {
-    decaf_word_t limb[%(gf_impl_bits)d/DECAF_WORD_BITS];
-} __attribute__((aligned(32))) gf_%(gf_shortname)s_s, gf_%(gf_shortname)s_t[1];
-#endif /* __DECAF_%(gf_shortname)s_GF_DEFINED__ */
+typedef struct gf_$(gf_shortname)_s {
+    decaf_word_t limb[$(gf_impl_bits)/DECAF_WORD_BITS];
+} __attribute__((aligned(32))) gf_$(gf_shortname)_s, gf_$(gf_shortname)_t[1];
+#endif /* __DECAF_$(gf_shortname)_GF_DEFINED__ */
 /** @endcond */
 
 /** Number of bytes in a serialized point. */
-#define %(C_NS)s_SER_BYTES %(ser_bytes)d
+#define $(C_NS)_SER_BYTES $(ser_bytes)
 
 /** Number of bytes in a serialized scalar. */
-#define %(C_NS)s_SCALAR_BYTES %(scalar_ser_bytes)d
+#define $(C_NS)_SCALAR_BYTES $(scalar_ser_bytes)
 
-/** Number of bytes in an x%(gf_shortname)s public key */
-#define X%(gf_shortname)s_PUBLIC_BYTES %(x_pub_bytes)d
+/** Number of bytes in an x$(gf_shortname) public key */
+#define X$(gf_shortname)_PUBLIC_BYTES $(x_pub_bytes)
 
-/** Number of bytes in an x%(gf_shortname)s private key */
-#define X%(gf_shortname)s_PRIVATE_BYTES %(x_priv_bytes)d
+/** Number of bytes in an x$(gf_shortname) private key */
+#define X$(gf_shortname)_PRIVATE_BYTES $(x_priv_bytes)
 
 /** Twisted Edwards extended homogeneous coordinates */
-typedef struct %(c_ns)s_point_s {
+typedef struct $(c_ns)_point_s {
     /** @cond internal */
-    gf_%(gf_shortname)s_t x,y,z,t;
+    gf_$(gf_shortname)_t x,y,z,t;
     /** @endcond */
-} %(c_ns)s_point_t[1];
+} $(c_ns)_point_t[1];
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
-struct %(c_ns)s_precomputed_s;
+struct $(c_ns)_precomputed_s;
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
-typedef struct %(c_ns)s_precomputed_s %(c_ns)s_precomputed_s; 
+typedef struct $(c_ns)_precomputed_s $(c_ns)_precomputed_s; 
 
 /** Size and alignment of precomputed point tables. */
-extern const size_t %(c_ns)s_sizeof_precomputed_s API_VIS, %(c_ns)s_alignof_precomputed_s API_VIS;
+extern const size_t $(c_ns)_sizeof_precomputed_s API_VIS, $(c_ns)_alignof_precomputed_s API_VIS;
 
 /** Scalar is stored packed, because we don't need the speed. */
-typedef struct %(c_ns)s_scalar_s {
+typedef struct $(c_ns)_scalar_s {
     /** @cond internal */
-    decaf_word_t limb[%(C_NS)s_SCALAR_LIMBS];
+    decaf_word_t limb[$(C_NS)_SCALAR_LIMBS];
     /** @endcond */
-} %(c_ns)s_scalar_t[1];
+} $(c_ns)_scalar_t[1];
 
 /** A scalar equal to 1. */
-extern const %(c_ns)s_scalar_t %(c_ns)s_scalar_one API_VIS;
+extern const $(c_ns)_scalar_t $(c_ns)_scalar_one API_VIS;
 
 /** A scalar equal to 0. */
-extern const %(c_ns)s_scalar_t %(c_ns)s_scalar_zero API_VIS;
+extern const $(c_ns)_scalar_t $(c_ns)_scalar_zero API_VIS;
 
 /** The identity point on the curve. */
-extern const %(c_ns)s_point_t %(c_ns)s_point_identity API_VIS;
+extern const $(c_ns)_point_t $(c_ns)_point_identity API_VIS;
 
 /** An arbitrarily chosen base point on the curve.
  * @warning TODO: this is subject to change.  It is currently
- * the preimage of the X%(gf_shortname)s base point.  Sometime
- * soon, we will merge and finalize support for X%(gf_shortname)s
- * and Ed%(gf_shortname)s integration.  This might make some
+ * the preimage of the X$(gf_shortname) base point.  Sometime
+ * soon, we will merge and finalize support for X$(gf_shortname)
+ * and Ed$(gf_shortname) integration.  This might make some
  * multiple of the current basepoint (eg twice it, or the cofactor
  * times it) more convenient API-wise, and trigger a changeover.
  */
-extern const %(c_ns)s_point_t %(c_ns)s_point_base API_VIS;
+extern const $(c_ns)_point_t $(c_ns)_point_base API_VIS;
 
 /** Precomputed table for the base point on the curve. */
-extern const struct %(c_ns)s_precomputed_s *%(c_ns)s_precomputed_base API_VIS;
+extern const struct $(c_ns)_precomputed_s *$(c_ns)_precomputed_base API_VIS;
 
 /**
  * @brief Read a scalar from wire format or from bytes.
@@ -96,9 +90,9 @@ extern const struct %(c_ns)s_precomputed_s *%(c_ns)s_precomputed_base API_VIS;
  * @retval DECAF_FAILURE The scalar was greater than the modulus,
  * and has been reduced modulo that modulus.
  */
-decaf_error_t %(c_ns)s_scalar_decode (
-    %(c_ns)s_scalar_t out,
-    const unsigned char ser[%(C_NS)s_SCALAR_BYTES]
+decaf_error_t $(c_ns)_scalar_decode (
+    $(c_ns)_scalar_t out,
+    const unsigned char ser[$(C_NS)_SCALAR_BYTES]
 ) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
 
 /**
@@ -109,8 +103,8 @@ decaf_error_t %(c_ns)s_scalar_decode (
  * @param [in] ser_len Length of serialized form.
  * @param [out] out Deserialized form.
  */
-void %(c_ns)s_scalar_decode_long (
-    %(c_ns)s_scalar_t out,
+void $(c_ns)_scalar_decode_long (
+    $(c_ns)_scalar_t out,
     const unsigned char *ser,
     size_t ser_len
 ) API_VIS NONNULL2 NOINLINE;
@@ -121,9 +115,9 @@ void %(c_ns)s_scalar_decode_long (
  * @param [out] ser Serialized form of a scalar.
  * @param [in] s Deserialized scalar.
  */
-void %(c_ns)s_scalar_encode (
-    unsigned char ser[%(C_NS)s_SCALAR_BYTES],
-    const %(c_ns)s_scalar_t s
+void $(c_ns)_scalar_encode (
+    unsigned char ser[$(C_NS)_SCALAR_BYTES],
+    const $(c_ns)_scalar_t s
 ) API_VIS NONNULL2 NOINLINE NOINLINE;
         
 /**
@@ -132,10 +126,10 @@ void %(c_ns)s_scalar_encode (
  * @param [in] b Another scalar.
  * @param [out] out a+b.
  */
-void %(c_ns)s_scalar_add (
-    %(c_ns)s_scalar_t out,
-    const %(c_ns)s_scalar_t a,
-    const %(c_ns)s_scalar_t b
+void $(c_ns)_scalar_add (
+    $(c_ns)_scalar_t out,
+    const $(c_ns)_scalar_t a,
+    const $(c_ns)_scalar_t b
 ) API_VIS NONNULL3 NOINLINE;
 
 /**
@@ -145,9 +139,9 @@ void %(c_ns)s_scalar_add (
  * @retval DECAF_TRUE The scalars are equal.
  * @retval DECAF_FALSE The scalars are not equal.
  */    
-decaf_bool_t %(c_ns)s_scalar_eq (
-    const %(c_ns)s_scalar_t a,
-    const %(c_ns)s_scalar_t b
+decaf_bool_t $(c_ns)_scalar_eq (
+    const $(c_ns)_scalar_t a,
+    const $(c_ns)_scalar_t b
 ) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
 
 /**
@@ -156,10 +150,10 @@ decaf_bool_t %(c_ns)s_scalar_eq (
  * @param [in] b Another scalar.
  * @param [out] out a-b.
  */  
-void %(c_ns)s_scalar_sub (
-    %(c_ns)s_scalar_t out,
-    const %(c_ns)s_scalar_t a,
-    const %(c_ns)s_scalar_t b
+void $(c_ns)_scalar_sub (
+    $(c_ns)_scalar_t out,
+    const $(c_ns)_scalar_t a,
+    const $(c_ns)_scalar_t b
 ) API_VIS NONNULL3 NOINLINE;
 
 /**
@@ -168,10 +162,10 @@ void %(c_ns)s_scalar_sub (
  * @param [in] b Another scalar.
  * @param [out] out a*b.
  */  
-void %(c_ns)s_scalar_mul (
-    %(c_ns)s_scalar_t out,
-    const %(c_ns)s_scalar_t a,
-    const %(c_ns)s_scalar_t b
+void $(c_ns)_scalar_mul (
+    $(c_ns)_scalar_t out,
+    const $(c_ns)_scalar_t a,
+    const $(c_ns)_scalar_t b
 ) API_VIS NONNULL3 NOINLINE;
 
 /**
@@ -180,9 +174,9 @@ void %(c_ns)s_scalar_mul (
  * @param [out] out 1/a.
  * @return DECAF_SUCCESS The input is nonzero.
  */  
-decaf_error_t %(c_ns)s_scalar_invert (
-    %(c_ns)s_scalar_t out,
-    const %(c_ns)s_scalar_t a
+decaf_error_t $(c_ns)_scalar_invert (
+    $(c_ns)_scalar_t out,
+    const $(c_ns)_scalar_t a
 ) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
 
 /**
@@ -191,9 +185,9 @@ decaf_error_t %(c_ns)s_scalar_invert (
  * @param [in] a A scalar.
  * @param [out] out Will become a copy of a.
  */
-static inline void NONNULL2 %(c_ns)s_scalar_copy (
-    %(c_ns)s_scalar_t out,
-    const %(c_ns)s_scalar_t a
+static inline void NONNULL2 $(c_ns)_scalar_copy (
+    $(c_ns)_scalar_t out,
+    const $(c_ns)_scalar_t a
 ) {
     *out = *a;
 }
@@ -203,8 +197,8 @@ static inline void NONNULL2 %(c_ns)s_scalar_copy (
  * @param [in] a An integer.
  * @param [out] out Will become equal to a.
  */  
-void %(c_ns)s_scalar_set_unsigned (
-    %(c_ns)s_scalar_t out,
+void $(c_ns)_scalar_set_unsigned (
+    $(c_ns)_scalar_t out,
     uint64_t a
 ) API_VIS NONNULL1;
 
@@ -214,9 +208,9 @@ void %(c_ns)s_scalar_set_unsigned (
  * @param [out] ser The byte representation of the point.
  * @param [in] pt The point to encode.
  */
-void %(c_ns)s_point_encode (
-    uint8_t ser[%(C_NS)s_SER_BYTES],
-    const %(c_ns)s_point_t pt
+void $(c_ns)_point_encode (
+    uint8_t ser[$(C_NS)_SER_BYTES],
+    const $(c_ns)_point_t pt
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
@@ -233,9 +227,9 @@ void %(c_ns)s_point_encode (
  * @retval DECAF_FAILURE The decoding didn't succeed, because
  * ser does not represent a point.
  */
-decaf_error_t %(c_ns)s_point_decode (
-    %(c_ns)s_point_t pt,
-    const uint8_t ser[%(C_NS)s_SER_BYTES],
+decaf_error_t $(c_ns)_point_decode (
+    $(c_ns)_point_t pt,
+    const uint8_t ser[$(C_NS)_SER_BYTES],
     decaf_bool_t allow_identity
 ) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
 
@@ -246,9 +240,9 @@ decaf_error_t %(c_ns)s_point_decode (
  * @param [out] a A copy of the point.
  * @param [in] b Any point.
  */
-static inline void NONNULL2 %(c_ns)s_point_copy (
-    %(c_ns)s_point_t a,
-    const %(c_ns)s_point_t b
+static inline void NONNULL2 $(c_ns)_point_copy (
+    $(c_ns)_point_t a,
+    const $(c_ns)_point_t b
 ) {
     *a=*b;
 }
@@ -262,9 +256,9 @@ static inline void NONNULL2 %(c_ns)s_point_copy (
  * @retval DECAF_TRUE The points are equal.
  * @retval DECAF_FALSE The points are not equal.
  */
-decaf_bool_t %(c_ns)s_point_eq (
-    const %(c_ns)s_point_t a,
-    const %(c_ns)s_point_t b
+decaf_bool_t $(c_ns)_point_eq (
+    const $(c_ns)_point_t a,
+    const $(c_ns)_point_t b
 ) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
 
 /**
@@ -276,22 +270,22 @@ decaf_bool_t %(c_ns)s_point_eq (
  * @param [in] a An addend.
  * @param [in] b An addend.
  */
-void %(c_ns)s_point_add (
-    %(c_ns)s_point_t sum,
-    const %(c_ns)s_point_t a,
-    const %(c_ns)s_point_t b
+void $(c_ns)_point_add (
+    $(c_ns)_point_t sum,
+    const $(c_ns)_point_t a,
+    const $(c_ns)_point_t b
 ) API_VIS NONNULL3;
 
 /**
  * @brief Double a point.  Equivalent to
- * %(c_ns)s_point_add(two_a,a,a), but potentially faster.
+ * $(c_ns)_point_add(two_a,a,a), but potentially faster.
  *
  * @param [out] two_a The sum a+a.
  * @param [in] a A point.
  */
-void %(c_ns)s_point_double (
-    %(c_ns)s_point_t two_a,
-    const %(c_ns)s_point_t a
+void $(c_ns)_point_double (
+    $(c_ns)_point_t two_a,
+    const $(c_ns)_point_t a
 ) API_VIS NONNULL2;
 
 /**
@@ -303,10 +297,10 @@ void %(c_ns)s_point_double (
  * @param [in] a The minuend.
  * @param [in] b The subtrahend.
  */
-void %(c_ns)s_point_sub (
-    %(c_ns)s_point_t diff,
-    const %(c_ns)s_point_t a,
-    const %(c_ns)s_point_t b
+void $(c_ns)_point_sub (
+    $(c_ns)_point_t diff,
+    const $(c_ns)_point_t a,
+    const $(c_ns)_point_t b
 ) API_VIS NONNULL3;
     
 /**
@@ -316,9 +310,9 @@ void %(c_ns)s_point_sub (
  * @param [out] nega The negated input point
  * @param [in] a The input point.
  */
-void %(c_ns)s_point_negate (
-   %(c_ns)s_point_t nega,
-   const %(c_ns)s_point_t a
+void $(c_ns)_point_negate (
+   $(c_ns)_point_t nega,
+   const $(c_ns)_point_t a
 ) API_VIS NONNULL2;
 
 /**
@@ -328,10 +322,10 @@ void %(c_ns)s_point_negate (
  * @param [in] base The point to be scaled.
  * @param [in] scalar The scalar to multiply by.
  */
-void %(c_ns)s_point_scalarmul (
-    %(c_ns)s_point_t scaled,
-    const %(c_ns)s_point_t base,
-    const %(c_ns)s_scalar_t scalar
+void $(c_ns)_point_scalarmul (
+    $(c_ns)_point_t scaled,
+    const $(c_ns)_point_t base,
+    const $(c_ns)_scalar_t scalar
 ) API_VIS NONNULL3 NOINLINE;
 
 /**
@@ -351,10 +345,10 @@ void %(c_ns)s_point_scalarmul (
  * @retval DECAF_FAILURE The scalarmul didn't succeed, because
  * base does not represent a point.
  */
-decaf_error_t %(c_ns)s_direct_scalarmul (
-    uint8_t scaled[%(C_NS)s_SER_BYTES],
-    const uint8_t base[%(C_NS)s_SER_BYTES],
-    const %(c_ns)s_scalar_t scalar,
+decaf_error_t $(c_ns)_direct_scalarmul (
+    uint8_t scaled[$(C_NS)_SER_BYTES],
+    const uint8_t base[$(C_NS)_SER_BYTES],
+    const $(c_ns)_scalar_t scalar,
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
 ) API_VIS NONNULL3 WARN_UNUSED NOINLINE;
@@ -371,14 +365,14 @@ decaf_error_t %(c_ns)s_direct_scalarmul (
  * @retval DECAF_FAILURE The scalarmul didn't succeed, because the base
  * point is in a small subgroup.
  */
-decaf_error_t %(c_ns)s_x_direct_scalarmul ( /* TODO: rename? */
-    uint8_t out[X%(gf_shortname)s_PUBLIC_BYTES],
-    const uint8_t base[X%(gf_shortname)s_PUBLIC_BYTES],
-    const uint8_t scalar[X%(gf_shortname)s_PRIVATE_BYTES]
+decaf_error_t $(c_ns)_x_direct_scalarmul ( /* TODO: rename? */
+    uint8_t out[X$(gf_shortname)_PUBLIC_BYTES],
+    const uint8_t base[X$(gf_shortname)_PUBLIC_BYTES],
+    const uint8_t scalar[X$(gf_shortname)_PRIVATE_BYTES]
 ) API_VIS NONNULL3 WARN_UNUSED NOINLINE;
 
-/** The base point for X%(gf_shortname)s Diffie-Hellman */
-extern const uint8_t %(c_ns)s_x_base_point[X%(gf_shortname)s_PUBLIC_BYTES] API_VIS;
+/** The base point for X$(gf_shortname) Diffie-Hellman */
+extern const uint8_t $(c_ns)_x_base_point[X$(gf_shortname)_PUBLIC_BYTES] API_VIS;
 
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
@@ -387,9 +381,9 @@ extern const uint8_t %(c_ns)s_x_base_point[X%(gf_shortname)s_PUBLIC_BYTES] API_V
  * @param [out] scaled The scaled point base*scalar
  * @param [in] scalar The scalar to multiply by.
  */
-void %(c_ns)s_x_base_scalarmul (
-    uint8_t out[X%(gf_shortname)s_PUBLIC_BYTES],
-    const uint8_t scalar[X%(gf_shortname)s_PRIVATE_BYTES]
+void $(c_ns)_x_base_scalarmul (
+    uint8_t out[X$(gf_shortname)_PUBLIC_BYTES],
+    const uint8_t scalar[X$(gf_shortname)_PRIVATE_BYTES]
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
@@ -401,9 +395,9 @@ void %(c_ns)s_x_base_scalarmul (
  * @param [out] a A precomputed table of multiples of the point.
  * @param [in] b Any point.
  */
-void %(c_ns)s_precompute (
-    %(c_ns)s_precomputed_s *a,
-    const %(c_ns)s_point_t b
+void $(c_ns)_precompute (
+    $(c_ns)_precomputed_s *a,
+    const $(c_ns)_point_t b
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
@@ -411,23 +405,23 @@ void %(c_ns)s_precompute (
  * scaled = scalar*base.
  * Some implementations do not include precomputed points; for
  * those implementations, this function is the same as
- * %(c_ns)s_point_scalarmul
+ * $(c_ns)_point_scalarmul
  *
  * @param [out] scaled The scaled point base*scalar
  * @param [in] base The point to be scaled.
  * @param [in] scalar The scalar to multiply by.
  */
-void %(c_ns)s_precomputed_scalarmul (
-    %(c_ns)s_point_t scaled,
-    const %(c_ns)s_precomputed_s *base,
-    const %(c_ns)s_scalar_t scalar
+void $(c_ns)_precomputed_scalarmul (
+    $(c_ns)_point_t scaled,
+    const $(c_ns)_precomputed_s *base,
+    const $(c_ns)_scalar_t scalar
 ) API_VIS NONNULL3 NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:
  * scaled = scalar1*base1 + scalar2*base2.
  *
- * Equivalent to two calls to %(c_ns)s_point_scalarmul, but may be
+ * Equivalent to two calls to $(c_ns)_point_scalarmul, but may be
  * faster.
  *
  * @param [out] combo The linear combination scalar1*base1 + scalar2*base2.
@@ -436,12 +430,12 @@ void %(c_ns)s_precomputed_scalarmul (
  * @param [in] base2 A second point to be scaled.
  * @param [in] scalar2 A second scalar to multiply by.
  */
-void %(c_ns)s_point_double_scalarmul (
-    %(c_ns)s_point_t combo,
-    const %(c_ns)s_point_t base1,
-    const %(c_ns)s_scalar_t scalar1,
-    const %(c_ns)s_point_t base2,
-    const %(c_ns)s_scalar_t scalar2
+void $(c_ns)_point_double_scalarmul (
+    $(c_ns)_point_t combo,
+    const $(c_ns)_point_t base1,
+    const $(c_ns)_scalar_t scalar1,
+    const $(c_ns)_point_t base2,
+    const $(c_ns)_scalar_t scalar2
 ) API_VIS NONNULL5 NOINLINE;
     
 /**
@@ -450,7 +444,7 @@ void %(c_ns)s_point_double_scalarmul (
  * a1 = scalar1 * base
  * a2 = scalar2 * base
  *
- * Equivalent to two calls to %(c_ns)s_point_scalarmul, but may be
+ * Equivalent to two calls to $(c_ns)_point_scalarmul, but may be
  * faster.
  *
  * @param [out] a1 The first multiple.  It may be the same as the input point.
@@ -459,19 +453,19 @@ void %(c_ns)s_point_double_scalarmul (
  * @param [in] scalar1 A first scalar to multiply by.
  * @param [in] scalar2 A second scalar to multiply by.
  */
-void %(c_ns)s_point_dual_scalarmul (
-    %(c_ns)s_point_t a1,
-    %(c_ns)s_point_t a2,
-    const %(c_ns)s_point_t base1,
-    const %(c_ns)s_scalar_t scalar1,
-    const %(c_ns)s_scalar_t scalar2
+void $(c_ns)_point_dual_scalarmul (
+    $(c_ns)_point_t a1,
+    $(c_ns)_point_t a2,
+    const $(c_ns)_point_t base1,
+    const $(c_ns)_scalar_t scalar1,
+    const $(c_ns)_scalar_t scalar2
 ) API_VIS NONNULL5 NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:
- * scaled = scalar1*%(c_ns)s_point_base + scalar2*base2.
+ * scaled = scalar1*$(c_ns)_point_base + scalar2*base2.
  *
- * Otherwise equivalent to %(c_ns)s_point_double_scalarmul, but may be
+ * Otherwise equivalent to $(c_ns)_point_double_scalarmul, but may be
  * faster at the expense of being variable time.
  *
  * @param [out] combo The linear combination scalar1*base + scalar2*base2.
@@ -482,11 +476,11 @@ void %(c_ns)s_point_dual_scalarmul (
  * @warning: This function takes variable time, and may leak the scalars
  * used.  It is designed for signature verification.
  */
-void %(c_ns)s_base_double_scalarmul_non_secret (
-    %(c_ns)s_point_t combo,
-    const %(c_ns)s_scalar_t scalar1,
-    const %(c_ns)s_point_t base2,
-    const %(c_ns)s_scalar_t scalar2
+void $(c_ns)_base_double_scalarmul_non_secret (
+    $(c_ns)_point_t combo,
+    const $(c_ns)_scalar_t scalar1,
+    const $(c_ns)_point_t base2,
+    const $(c_ns)_scalar_t scalar2
 ) API_VIS NONNULL4 NOINLINE;
 
 /**
@@ -498,10 +492,10 @@ void %(c_ns)s_base_double_scalarmul_non_secret (
  * @param [in] b Any point.
  * @param [in] pick_b If nonzero, choose point b.
  */
-void %(c_ns)s_point_cond_sel (
-    %(c_ns)s_point_t out,
-    const %(c_ns)s_point_t a,
-    const %(c_ns)s_point_t b,
+void $(c_ns)_point_cond_sel (
+    $(c_ns)_point_t out,
+    const $(c_ns)_point_t a,
+    const $(c_ns)_point_t b,
     decaf_word_t pick_b
 ) API_VIS NONNULL3 NOINLINE;
 
@@ -514,10 +508,10 @@ void %(c_ns)s_point_cond_sel (
  * @param [in] b Any scalar.
  * @param [in] pick_b If nonzero, choose scalar b.
  */
-void %(c_ns)s_scalar_cond_sel (
-    %(c_ns)s_scalar_t out,
-    const %(c_ns)s_scalar_t a,
-    const %(c_ns)s_scalar_t b,
+void $(c_ns)_scalar_cond_sel (
+    $(c_ns)_scalar_t out,
+    const $(c_ns)_scalar_t a,
+    const $(c_ns)_scalar_t b,
     decaf_word_t pick_b
 ) API_VIS NONNULL3 NOINLINE;
 
@@ -528,8 +522,8 @@ void %(c_ns)s_scalar_cond_sel (
  * @retval DECAF_TRUE The point is valid.
  * @retval DECAF_FALSE The point is invalid.
  */
-decaf_bool_t %(c_ns)s_point_valid (
-    const %(c_ns)s_point_t toTest
+decaf_bool_t $(c_ns)_point_valid (
+    const $(c_ns)_point_t toTest
 ) API_VIS WARN_UNUSED NONNULL1 NOINLINE;
 
 /**
@@ -539,9 +533,9 @@ decaf_bool_t %(c_ns)s_point_valid (
  * @param [out] q The point to torque.
  * @param [in] p The point to torque.
  */
-void %(c_ns)s_point_debugging_torque (
-    %(c_ns)s_point_t q,
-    const %(c_ns)s_point_t p
+void $(c_ns)_point_debugging_torque (
+    $(c_ns)_point_t q,
+    const $(c_ns)_point_t p
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
@@ -553,10 +547,10 @@ void %(c_ns)s_point_debugging_torque (
  * @param [in] p The point to scale.
  * @param [in] factor Serialized GF factor to scale.
  */
-void %(c_ns)s_point_debugging_pscale (
-    %(c_ns)s_point_t q,
-    const %(c_ns)s_point_t p,
-    const unsigned char factor[%(C_NS)s_SER_BYTES]
+void $(c_ns)_point_debugging_pscale (
+    $(c_ns)_point_t q,
+    const $(c_ns)_point_t p,
+    const unsigned char factor[$(C_NS)_SER_BYTES]
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
@@ -564,7 +558,7 @@ void %(c_ns)s_point_debugging_pscale (
  *
  * Call this function with the output of a hash to make a hash to the curve.
  *
- * This function runs Elligator2 on the %(c_ns)s Jacobi quartic model.  It then
+ * This function runs Elligator2 on the $(c_ns) Jacobi quartic model.  It then
  * uses the isogeny to put the result in twisted Edwards form.  As a result,
  * it is safe (cannot produce points of order 4), and would be compatible with
  * hypothetical other implementations of Decaf using a Montgomery or untwisted
@@ -588,29 +582,29 @@ void %(c_ns)s_point_debugging_pscale (
  * @param [out] pt The data hashed to the curve.
  */
 void
-%(c_ns)s_point_from_hash_nonuniform (
-    %(c_ns)s_point_t pt,
-    const unsigned char hashed_data[%(C_NS)s_SER_BYTES]
+$(c_ns)_point_from_hash_nonuniform (
+    $(c_ns)_point_t pt,
+    const unsigned char hashed_data[$(C_NS)_SER_BYTES]
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
  * @brief Indifferentiable hash function encoding to curve.
  *
- * Equivalent to calling %(c_ns)s_point_from_hash_nonuniform twice and adding.
+ * Equivalent to calling $(c_ns)_point_from_hash_nonuniform twice and adding.
  *
  * @param [in] hashed_data Output of some hash function.
  * @param [out] pt The data hashed to the curve.
  */ 
-void %(c_ns)s_point_from_hash_uniform (
-    %(c_ns)s_point_t pt,
-    const unsigned char hashed_data[2*%(C_NS)s_SER_BYTES]
+void $(c_ns)_point_from_hash_uniform (
+    $(c_ns)_point_t pt,
+    const unsigned char hashed_data[2*$(C_NS)_SER_BYTES]
 ) API_VIS NONNULL2 NOINLINE;
 
 /**
  * @brief Inverse of elligator-like hash to curve.
  *
  * This function writes to the buffer, to make it so that
- * %(c_ns)s_point_from_hash_nonuniform(buffer) = pt if
+ * $(c_ns)_point_from_hash_nonuniform(buffer) = pt if
  * possible.  Since there may be multiple preimages, the
  * "which" parameter chooses between them.  To ensure uniform
  * inverse sampling, this function succeeds or fails
@@ -625,9 +619,9 @@ void %(c_ns)s_point_from_hash_uniform (
  * @retval DECAF_FAILURE The inverse failed.
  */
 decaf_error_t
-%(c_ns)s_invert_elligator_nonuniform (
-    unsigned char recovered_hash[%(C_NS)s_SER_BYTES],
-    const %(c_ns)s_point_t pt,
+$(c_ns)_invert_elligator_nonuniform (
+    unsigned char recovered_hash[$(C_NS)_SER_BYTES],
+    const $(c_ns)_point_t pt,
     uint16_t which
 ) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
 
@@ -635,7 +629,7 @@ decaf_error_t
  * @brief Inverse of elligator-like hash to curve.
  *
  * This function writes to the buffer, to make it so that
- * %(c_ns)s_point_from_hash_uniform(buffer) = pt if
+ * $(c_ns)_point_from_hash_uniform(buffer) = pt if
  * possible.  Since there may be multiple preimages, the
  * "which" parameter chooses between them.  To ensure uniform
  * inverse sampling, this function succeeds or fails
@@ -650,36 +644,34 @@ decaf_error_t
  * @retval DECAF_FAILURE The inverse failed.
  */
 decaf_error_t
-%(c_ns)s_invert_elligator_uniform (
-    unsigned char recovered_hash[2*%(C_NS)s_SER_BYTES],
-    const %(c_ns)s_point_t pt,
+$(c_ns)_invert_elligator_uniform (
+    unsigned char recovered_hash[2*$(C_NS)_SER_BYTES],
+    const $(c_ns)_point_t pt,
     uint16_t which
 ) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
 
 /**
  * @brief Overwrite scalar with zeros.
  */
-void %(c_ns)s_scalar_destroy (
-    %(c_ns)s_scalar_t scalar
+void $(c_ns)_scalar_destroy (
+    $(c_ns)_scalar_t scalar
 ) NONNULL1 API_VIS;
 
 /**
  * @brief Overwrite point with zeros.
  * @todo Use this internally.
  */
-void %(c_ns)s_point_destroy (
-    %(c_ns)s_point_t point
+void $(c_ns)_point_destroy (
+    $(c_ns)_point_t point
 ) NONNULL1 API_VIS;
 
 /**
  * @brief Overwrite precomputed table with zeros.
  */
-void %(c_ns)s_precomputed_destroy (
-    %(c_ns)s_precomputed_s *pre
+void $(c_ns)_precomputed_destroy (
+    $(c_ns)_precomputed_s *pre
 ) NONNULL1 API_VIS;
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-"""
-)

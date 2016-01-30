@@ -84,6 +84,7 @@ def ceil_log2(x):
         out += 1
     return out
 
+# TODO: reduce this because we can now have expressions.
 for field,data in field_data.iteritems():
     if "modulus" not in data:
         data["modulus"] = eval(data["gf_desc"].replace("^","**"))

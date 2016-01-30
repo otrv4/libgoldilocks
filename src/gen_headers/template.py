@@ -13,7 +13,7 @@ parser.add_argument('--guard', required = False, default = None, help = "header 
 parser.add_argument('files', metavar='file', type=str, nargs='+', help='a list of files to fill')
 args = parser.parse_args()
 
-per_map = {"field":field_data, "curve":curve_data, "global":{"global":{}} }
+per_map = {"field":field_data, "curve":curve_data, "global":{"global":{"field":field_data,"curve":curve_data} }}
 
 def redoc(filename,doc,author):
     doc = doc.replace("\n","\n * ")

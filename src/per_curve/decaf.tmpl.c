@@ -19,7 +19,7 @@
 #define IMAGINE_TWIST $(imagine_twist)
 #define COFACTOR $(cofactor)
 
-/** Comb config: number of combs, n, t, s. */
+/* Comb config: number of combs, n, t, s. */
 #define COMBS_N $(combs.n)
 #define COMBS_T $(combs.t)
 #define COMBS_S $(combs.s)
@@ -39,9 +39,7 @@ static const scalar_t sc_p = {{{
 }}};
 static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x$("%x" % pow(-q,2**64-1,2**64))ull;
 
-const uint8_t API_NS(x_base_point)[SER_BYTES] /* TODO */ = {
-    $(ser(mont_base,8))
-};
+const uint8_t API_NS(x_base_point)[SER_BYTES] = { $(ser(mont_base,8)) };
 
 #if COFACTOR==8
     static const gf SQRT_ONE_MINUS_D = {FIELD_LITERAL(

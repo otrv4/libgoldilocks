@@ -69,12 +69,10 @@ BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 .PHONY: clean all test test_ct bench todo doc lib bat sage sagetest gen_headers
 .PRECIOUS: $(BUILD_ASM)/%.s $(BUILD_C)/*/%.c $(BUILD_H)/*/%.h $(BUILD_IBIN)/%
 
-GEN_HEADERS=\
-	$(BUILD_INC)/decaf/decaf_255.h \
-	$(BUILD_INC)/decaf/decaf_448.h \
-	$(BUILD_INC)/decaf/decaf_255.hxx \
-	$(BUILD_INC)/decaf/decaf_448.hxx \
-	$( src/public_include/decaf/* : src/public_include = $(BUILD_INC) )
+HEADER_SRCS= $(shell find src/public_include -name "*.h*")
+GEN_HEADERS_0= $(HEADER_SRCS:src/public_include/%=$(BUILD_INC)/%)
+GEN_HEADERS_1= $(GEN_HEADERS_0:%.tmpl.h=%.h)
+GEN_HEADERS= $(GEN_HEADERS_1:%.tmpl.hxx=%.hxx)
 HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_HEADERS)
 
 # components needed by the lib
@@ -89,7 +87,6 @@ scan: clean
 		 -enable-checker deadcode -enable-checker llvm \
 		 -enable-checker osx -enable-checker security -enable-checker unix \
 		make all
-
 
 # Internal test programs, which are not part of the final build/bin directory.
 $(BUILD_IBIN)/test: $(BUILD_OBJ)/test_decaf.o lib
@@ -125,10 +122,15 @@ $(BUILD_OBJ)/%.o: $(BUILD_ASM)/%.s
 	$(ASM) $(ASFLAGS) -c -o $@ $<
 
 gen_headers: $(GEN_HEADERS)
+
+$(BUILD_INC)/%: src/public_include/% $(BUILD_OBJ)/timestamp
+	cp -f $< $@
 	
-$(GEN_HEADERS): src/gen_headers/*.py src/public_include/decaf/*
-	python -B src/gen_headers/main.py --hpre=$(BUILD_INC) --ihpre=$(BUILD_H) --cpre=$(BUILD_C)
-	cp src/public_include/decaf/* $(BUILD_INC)/decaf/
+$(BUILD_INC)/%.h: src/public_include/%.tmpl.h src/gen_headers/*
+	python -B src/gen_headers/template.py --per=global --guard=$(@:$(BUILD_INC)/%=%) -o $@ $<
+	
+$(BUILD_INC)/%.hxx: src/public_include/%.tmpl.hxx src/gen_headers/*
+	python -B src/gen_headers/template.py --per=global --guard=$(@:$(BUILD_INC)/%=%) -o $@ $<
 
 ################################################################
 # Per-field code: call with field, arch
@@ -169,13 +171,22 @@ define define_curve
 
 LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/crypto.o $$(BUILD_OBJ)/$(1)/decaf_tables.o
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
-HEADERS_OF_$(1) = $$(HEADERS_OF_$(2))
+GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/decaf/decaf_$(3).h $(BUILD_INC)/decaf/decaf_$(3).hxx \
+		$(BUILD_INC)/decaf/crypto_$(3).h $(BUILD_INC)/decaf/crypto_$(3).hxx
+HEADERS_OF_$(1) = $$(HEADERS_OF_$(2)) $$(GLOBAL_HEADERS_OF_$(1))
+HEADERS += $$(GLOBAL_HEADERS_OF_$(1))
 
 $$(BUILD_C)/$(1)/%.c: src/per_curve/%.tmpl.c src/gen_headers/* $$(HEADERS_OF_$(2))
 	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
 	
 $$(BUILD_H)/$(1)/%.h: src/per_curve/%.tmpl.h src/gen_headers/* $$(HEADERS_OF_$(2))
 	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
+	
+$$(BUILD_INC)/decaf/decaf_$(3).%: src/per_curve/decaf.tmpl.% src/gen_headers/* $$(HEADERS_OF_$(2))
+	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
+	
+$$(BUILD_INC)/decaf/crypto_$(3).%: src/per_curve/crypto.tmpl.% src/gen_headers/* $$(HEADERS_OF_$(2))
+	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
 $$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/$(1)/decaf_gen_tables.o \
 		$$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/utils.o \
@@ -200,9 +211,9 @@ endef
 ################################################################
 # call code above to generate curves and fields
 $(eval $(call define_field,p25519,arch_x86_64))
-$(eval $(call define_curve,curve25519,p25519))
+$(eval $(call define_curve,curve25519,p25519,255))
 $(eval $(call define_field,p448,arch_x86_64))
-$(eval $(call define_curve,ed448goldilocks,p448))
+$(eval $(call define_curve,ed448goldilocks,p448,448))
 
 # The shakesum utility is in the public bin directory.
 $(BUILD_BIN)/shakesum: $(BUILD_OBJ)/shakesum.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/utils.o
