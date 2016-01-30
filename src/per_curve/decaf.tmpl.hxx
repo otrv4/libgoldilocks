@@ -193,6 +193,9 @@ public:
     /** Divide by inverting q. If q == 0, return 0. */
     inline Scalar &operator/=(const Scalar &q) throw(CryptoException) { return *this *= q.inverse(); }
 
+    /** Return half this scalar.  Much faster than /2. */
+    inline Scalar half() const { Scalar out; $(c_ns)_scalar_halve(out.s,s); return out; }
+
     /** Compare in constant time */
     inline bool operator!=(const Scalar &q) const NOEXCEPT { return !(*this == q); }
 

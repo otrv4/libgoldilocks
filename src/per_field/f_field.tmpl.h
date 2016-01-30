@@ -33,7 +33,7 @@ typedef struct gf_$(gf_shortname)_s {
 #define gf_strong_reduce  gf_$(gf_shortname)_strong_reduce
 #define gf_mul            gf_$(gf_shortname)_mul
 #define gf_sqr            gf_$(gf_shortname)_sqr
-#define gf_mulw           gf_$(gf_shortname)_mulw
+#define gf_mulw_unsigned  gf_$(gf_shortname)_mulw_unsigned
 #define gf_isr            gf_$(gf_shortname)_isr
 #define gf_serialize      gf_$(gf_shortname)_serialize
 #define gf_deserialize    gf_$(gf_shortname)_deserialize
@@ -62,7 +62,7 @@ void gf_strong_reduce (gf inout);
 void gf_add (gf out, const gf a, const gf b);
 void gf_sub (gf out, const gf a, const gf b);
 void gf_mul (gf_s *__restrict__ out, const gf a, const gf b);
-void gf_mulw (gf_s *__restrict__ out, const gf a, uint32_t b);
+void gf_mulw_unsigned (gf_s *__restrict__ out, const gf a, uint32_t b);
 void gf_sqr (gf_s *__restrict__ out, const gf a);
 mask_t gf_isr(gf a, const gf x); /** a^2 x = 1, QNR, or 0 if x=0.  Return true if successful */
 mask_t gf_eq (const gf x, const gf y);

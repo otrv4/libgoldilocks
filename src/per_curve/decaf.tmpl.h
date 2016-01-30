@@ -167,6 +167,16 @@ void $(c_ns)_scalar_mul (
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b
 ) API_VIS NONNULL3 NOINLINE;
+        
+/**
+* @brief Halve a scalar.  The scalars may use the same memory.
+* @param [in] a A scalar.
+* @param [out] out a/2.
+*/
+void $(c_ns)_scalar_halve (
+   $(c_ns)_scalar_t out,
+   const $(c_ns)_scalar_t a
+) API_VIS NONNULL2 NOINLINE;
 
 /**
  * @brief Invert a scalar.  When passed zero, return 0.  The input and output may alias.

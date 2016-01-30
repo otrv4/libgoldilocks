@@ -51,7 +51,7 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     c[1] += accum;
 }
 
-void gf_mulw (gf_s *__restrict__ cs, const gf as, uint32_t b) {
+void gf_mulw_unsigned (gf_s *__restrict__ cs, const gf as, uint32_t b) {
     const uint32_t *a = as->limb, maske = ((1<<26)-1), masko = ((1<<25)-1);
     uint32_t blo = b & maske, bhi = b>>26, bhi2 = 2*bhi;
     uint32_t *c = cs->limb;

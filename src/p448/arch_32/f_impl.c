@@ -60,7 +60,7 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     c[1] += ((uint32_t)(accum1));
 }
 
-void gf_mulw (gf_s *__restrict__ cs, const gf as, uint32_t b) {
+void gf_mulw_unsigned (gf_s *__restrict__ cs, const gf as, uint32_t b) {
     assert(b<1<<28);
     
     const uint32_t *a = as->limb;

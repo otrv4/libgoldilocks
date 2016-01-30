@@ -140,7 +140,7 @@ void gf_sqr (gf_s *__restrict__ cs, const gf as) {
     c[1] = c1 + (accum1>>51);
 }
 
-void gf_mulw (gf_s *__restrict__ cs, const gf as, uint32_t b) {
+void gf_mulw_unsigned (gf_s *__restrict__ cs, const gf as, uint32_t b) {
     const uint64_t *a = as->limb, mask = ((1ull<<51)-1);
     uint64_t *c = cs->limb;
 

@@ -165,7 +165,7 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     c[1] += ((uint64_t)(accum1));
 }
 
-void gf_mulw (gf_s *__restrict__ cs, const gf as, uint32_t b) {
+void gf_mulw_unsigned (gf_s *__restrict__ cs, const gf as, uint32_t b) {
     const uint64_t *a = as->limb;
     uint64_t *c = cs->limb;
 

@@ -15,8 +15,7 @@
 #include <string.h>
     
 /** Square x, n times. */
-static INLINE UNUSED void
-gf_sqrn (
+static INLINE UNUSED void gf_sqrn (
     gf_s *__restrict__ y,
     const gf x,
     int n
@@ -56,6 +55,45 @@ static inline void gf_subx_nr ( gf c, const gf a, const gf b, int amt ) {
     gf_sub_RAW(c,a,b);
     gf_bias(c, amt);
     if (sizeof(word_t)==4) gf_weak_reduce(c); // HACK PERF MAGIC
+}
+
+/** Mul by signed int.  Not constant-time WRT the sign of that int. */
+static inline void gf_mulw(gf c, const gf a, int32_t w) {
+    if (w>0) {
+        gf_mulw_unsigned(c, a, w);
+    } else {
+        gf_mulw_unsigned(c, a, -w);
+        gf_sub(c,ZERO,c);
+    }
+}
+
+/** Constant time, x = is_z ? z : y */
+static inline void gf_cond_sel(gf x, const gf y, const gf z, mask_t is_z) {
+    constant_time_select(x,y,z,sizeof(gf),is_z,0);
+}
+
+/** Constant time, if (neg) x=-x; */
+static inline void gf_cond_neg(gf x, mask_t neg) {
+    gf y;
+    gf_sub(y,ZERO,x);
+    gf_cond_sel(x,x,y,neg);
+}
+
+/** Constant time, if (swap) (x,y) = (y,x); */
+static inline void
+gf_cond_swap(gf x, gf_s *__restrict__ y, mask_t swap) {
+    constant_time_cond_swap(x,y,sizeof(gf_s),swap);
+}
+
+static INLINE void gf_mul_qnr(gf_s *__restrict__ out, gf x) {
+#if P_MOD_8 == 5
+    /* r = QNR * r0^2 */
+    gf_mul(out,x,SQRT_MINUS_ONE);
+#elif P_MOD_8 == 3 || P_MOD_8 == 7
+    gf_sub(out,ZERO,x);
+#else
+    #error "Only supporting p=3,5,7 mod 8"
+#endif
 }
 
 

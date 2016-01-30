@@ -1,9 +1,6 @@
 /** @brief Decaf high-level functions. */
 
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
-#define __STDC_WANT_LIB_EXT1__ 1 /* for memset_s */
-#include <string.h>
-
 #include "word.h"
 #include "field.h"
 
@@ -29,16 +26,11 @@
 #define DECAF_WNAF_VAR_TABLE_BITS $(wnaf.var)
 
 static const int EDWARDS_D = $(d);
-static const scalar_t sc_p = {{{
-    $(ser(q,64,"SC_LIMB"))
-}}}, sc_r2 = {{{
-    $(ser(((2**128)**((scalar_bits+63)/64))%q,64,"SC_LIMB"))
-}}}, point_scalarmul_adjustment = {{{
+static const scalar_t point_scalarmul_adjustment = {{{
     $(ser((2**(scalar_bits-1+window_bits - ((scalar_bits-1)%window_bits)) - 1) % q,64,"SC_LIMB"))
 }}}, precomputed_scalarmul_adjustment = {{{
     $(ser((2**(combs.n*combs.t*combs.s) - 1) % q,64,"SC_LIMB"))
 }}};
-static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x$("%x" % pow(-q,2**64-1,2**64))ull;
 
 const uint8_t API_NS(x_base_point)[X_SER_BYTES] = { $(ser(mont_base,8)) };
 
@@ -50,27 +42,26 @@ const uint8_t API_NS(x_base_point)[X_SER_BYTES] = { $(ser(mont_base,8)) };
 
 /* End of template stuff */
 
-
+/* Sanity */
 #if (COFACTOR == 8) && !IMAGINE_TWIST
 /* FUTURE: Curve41417 doesn't have these properties. */
-#error "Currently require IMAGINE_TWIST (and thus p=5 mod 8) for cofactor 8"
+    #error "Currently require IMAGINE_TWIST (and thus p=5 mod 8) for cofactor 8"
 #endif
 
 #if IMAGINE_TWIST && (P_MOD_8 != 5)
-#error "Cannot use IMAGINE_TWIST except for p == 5 mod 8"
+    #error "Cannot use IMAGINE_TWIST except for p == 5 mod 8"
 #endif
 
 #if (COFACTOR != 8) && (COFACTOR != 4)
-#error "COFACTOR must be 4 or 8"
+    #error "COFACTOR must be 4 or 8"
 #endif
  
 #if IMAGINE_TWIST
-extern const gf SQRT_MINUS_ONE;
+    extern const gf SQRT_MINUS_ONE;
 #endif
 
 #define WBITS DECAF_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
-const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
 extern const point_t API_NS(point_base);
 
 /* Projective Niels coordinates */
@@ -88,57 +79,6 @@ const precomputed_s *API_NS(precomputed_base) =
 const size_t API_NS(sizeof_precomputed_s) = sizeof(precomputed_s);
 const size_t API_NS(alignof_precomputed_s) = sizeof(big_register_t);
 
-#define FOR_LIMB(i,op) { unsigned int i=0; for (i=0; i<NLIMBS; i++)  { op; }}
-#define FOR_LIMB_U(i,op) { unsigned int i=0; UNROLL for (i=0; i<NLIMBS; i++)  { op; }}
-
-/* The plan on booleans:
- *
- * The external interface uses decaf_bool_t, but this might be a different
- * size than our particular arch's word_t (and thus mask_t).  Also, the caller
- * isn't guaranteed to pass it as nonzero.  So bool_to_mask converts word sizes
- * and checks nonzero.
- *
- * On the flip side, mask_t is always -1 or 0, but it might be a different size
- * than decaf_bool_t.
- *
- * On the third hand, we have success vs boolean types, but that's handled in
- * common.h: it converts between decaf_bool_t and decaf_error_t.
- */
-static INLINE decaf_bool_t mask_to_bool (mask_t m) {
-    return (decaf_sword_t)(sword_t)m;
-}
-
-static INLINE mask_t bool_to_mask (decaf_bool_t m) {
-    /* On most arches this will be optimized to a simple cast. */
-    mask_t ret = 0;
-    unsigned int limit = sizeof(decaf_bool_t)/sizeof(mask_t);
-    if (limit < 1) limit = 1;
-    for (unsigned int i=0; i<limit; i++) {
-        ret |= ~ word_is_zero(m >> (i*8*sizeof(word_t)));
-    }
-    return ret;
-}
-
-/** Constant time, x = is_z ? z : y */
-static INLINE void
-cond_sel(gf x, const gf y, const gf z, mask_t is_z) {
-    constant_time_select(x,y,z,sizeof(gf),is_z,0);
-}
-
-/** Constant time, if (neg) x=-x; */
-static void
-cond_neg(gf x, mask_t neg) {
-    gf y;
-    gf_sub(y,ZERO,x);
-    cond_sel(x,x,y,neg);
-}
-
-/** Constant time, if (swap) (x,y) = (y,x); */
-static INLINE void
-cond_swap(gf x, gf_s *__restrict__ y, mask_t swap) {
-    constant_time_cond_swap(x,y,sizeof(gf_s),swap);
-}
-
 /** Inverse. */
 static void
 gf_invert(gf y, const gf x) {
@@ -151,17 +91,6 @@ gf_invert(gf y, const gf x) {
     gf_copy(y, t2);
 }
 
-/** Mul by signed int.  Not constant-time WRT the sign of that int. */
-static INLINE void
-gf_mulw_sgn(gf c, const gf a, int32_t w) {
-    if (w>0) {
-        gf_mulw(c, a, w);
-    } else {
-        gf_mulw(c, a, -w);
-        gf_sub(c,ZERO,c);
-    }
-}
-
 #if COFACTOR==8
 /** Return high bit of x = low bit of 2x mod p */
 static mask_t gf_lobit(const gf x) {
@@ -172,221 +101,10 @@ static mask_t gf_lobit(const gf x) {
 }
 #endif
 
-/** {extra,accum} - sub +? p
- * Must have extra <= 1
- */
-static NOINLINE void
-sc_subx(
-    scalar_t out,
-    const decaf_word_t accum[SCALAR_LIMBS],
-    const scalar_t sub,
-    const scalar_t p,
-    decaf_word_t extra
-) {
-    decaf_dsword_t chain = 0;
-    unsigned int i;
-    for (i=0; i<SCALAR_LIMBS; i++) {
-        chain = (chain + accum[i]) - sub->limb[i];
-        out->limb[i] = chain;
-        chain >>= WBITS;
-    }
-    decaf_word_t borrow = chain+extra; /* = 0 or -1 */
-    
-    chain = 0;
-    for (i=0; i<SCALAR_LIMBS; i++) {
-        chain = (chain + out->limb[i]) + (p->limb[i] & borrow);
-        out->limb[i] = chain;
-        chain >>= WBITS;
-    }
-}
-
-static NOINLINE void
-sc_montmul (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t b
-) {
-    unsigned int i,j;
-    decaf_word_t accum[SCALAR_LIMBS+1] = {0};
-    decaf_word_t hi_carry = 0;
-    
-    for (i=0; i<SCALAR_LIMBS; i++) {
-        decaf_word_t mand = a->limb[i];
-        const decaf_word_t *mier = b->limb;
-        
-        decaf_dword_t chain = 0;
-        for (j=0; j<SCALAR_LIMBS; j++) {
-            chain += ((decaf_dword_t)mand)*mier[j] + accum[j];
-            accum[j] = chain;
-            chain >>= WBITS;
-        }
-        accum[j] = chain;
-        
-        mand = accum[0] * MONTGOMERY_FACTOR;
-        chain = 0;
-        mier = sc_p->limb;
-        for (j=0; j<SCALAR_LIMBS; j++) {
-            chain += (decaf_dword_t)mand*mier[j] + accum[j];
-            if (j) accum[j-1] = chain;
-            chain >>= WBITS;
-        }
-        chain += accum[j];
-        chain += hi_carry;
-        accum[j-1] = chain;
-        hi_carry = chain >> WBITS;
-    }
-    
-    sc_subx(out, accum, sc_p, sc_p, hi_carry);
-}
-
-void API_NS(scalar_mul) (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t b
-) {
-    sc_montmul(out,a,b);
-    sc_montmul(out,out,sc_r2);
-}
-
-/* PERF: could implement this */
-static INLINE void sc_montsqr (scalar_t out, const scalar_t a) {
-    sc_montmul(out,a,a);
-}
-
-decaf_error_t API_NS(scalar_invert) (
-    scalar_t out,
-    const scalar_t a
-) {
-    /* Fermat's little theorem, sliding window.
-     * Sliding window is fine here because the modulus isn't secret.
-     */
-    const int SCALAR_WINDOW_BITS = 3;
-    scalar_t precmp[1<<SCALAR_WINDOW_BITS];
-    const int LAST = (1<<SCALAR_WINDOW_BITS)-1;
-
-    /* Precompute precmp = [a^1,a^3,...] */
-    sc_montmul(precmp[0],a,sc_r2);
-    if (LAST > 0) sc_montmul(precmp[LAST],precmp[0],precmp[0]);
-
-    int i;
-    for (i=1; i<=LAST; i++) {
-        sc_montmul(precmp[i],precmp[i-1],precmp[LAST]);
-    }
-    
-    /* Sliding window */
-    unsigned residue = 0, trailing = 0, started = 0;
-    for (i=SCALAR_BITS-1; i>=-SCALAR_WINDOW_BITS; i--) {
-        
-        if (started) sc_montsqr(out,out);
-        
-        decaf_word_t w = (i>=0) ? sc_p->limb[i/WBITS] : 0;
-        if (i >= 0 && i<WBITS) {
-            assert(w >= 2);
-            w-=2;
-        }
-        
-        residue = (residue<<1) | ((w>>(i%WBITS))&1);
-        if (residue>>SCALAR_WINDOW_BITS != 0) {
-            assert(trailing == 0);
-            trailing = residue;
-            residue = 0;
-        }
-        
-        if (trailing > 0 && (trailing & ((1<<SCALAR_WINDOW_BITS)-1)) == 0) {
-            if (started) {
-                sc_montmul(out,out,precmp[trailing>>(SCALAR_WINDOW_BITS+1)]);
-            } else {
-                API_NS(scalar_copy)(out,precmp[trailing>>(SCALAR_WINDOW_BITS+1)]);
-                started = 1;
-            }
-            trailing = 0;
-        }
-        trailing <<= 1;
-        
-    }
-    assert(residue==0);
-    assert(trailing==0);
-    
-    /* Demontgomerize */
-    sc_montmul(out,out,API_NS(scalar_one));
-    decaf_bzero(precmp, sizeof(precmp));
-    return decaf_succeed_if(~API_NS(scalar_eq)(out,API_NS(scalar_zero)));
-}
-
-void API_NS(scalar_sub) (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t b
-) {
-    sc_subx(out, a->limb, b, sc_p, 0);
-}
-
-void API_NS(scalar_add) (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t b
-) {
-    decaf_dword_t chain = 0;
-    unsigned int i;
-    for (i=0; i<SCALAR_LIMBS; i++) {
-        chain = (chain + a->limb[i]) + b->limb[i];
-        out->limb[i] = chain;
-        chain >>= WBITS;
-    }
-    sc_subx(out, out->limb, sc_p, sc_p, chain);
-}
-
-static NOINLINE void
-sc_halve (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t p
-) {
-    decaf_word_t mask = -(a->limb[0] & 1);
-    decaf_dword_t chain = 0;
-    unsigned int i;
-    for (i=0; i<SCALAR_LIMBS; i++) {
-        chain = (chain + a->limb[i]) + (p->limb[i] & mask);
-        out->limb[i] = chain;
-        chain >>= WBITS;
-    }
-    for (i=0; i<SCALAR_LIMBS-1; i++) {
-        out->limb[i] = out->limb[i]>>1 | out->limb[i+1]<<(WBITS-1);
-    }
-    out->limb[i] = out->limb[i]>>1 | chain<<(WBITS-1);
-}
-
-void
-API_NS(scalar_set_unsigned) (
-    scalar_t out,
-    uint64_t w
-) {
-    memset(out,0,sizeof(scalar_t));
-    unsigned int i = 0;
-    for (; i<sizeof(uint64_t)/sizeof(decaf_word_t); i++) {
-        out->limb[i] = w;
-        w >>= (sizeof(uint64_t) > sizeof(decaf_word_t)) ? 8*sizeof(decaf_word_t) : 0;
-    }
-}
-
-decaf_bool_t
-API_NS(scalar_eq) (
-    const scalar_t a,
-    const scalar_t b
-) {
-    decaf_word_t diff = 0;
-    unsigned int i;
-    for (i=0; i<SCALAR_LIMBS; i++) {
-        diff |= a->limb[i] ^ b->limb[i];
-    }
-    return mask_to_bool(word_is_zero(diff));
-}
-
 /** identity = (0,1) */
 const point_t API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 
-static void
-deisogenize (
+void API_NS(deisogenize) (
     gf_s *__restrict__ s,
     gf_s *__restrict__ minus_t_over_s,
     const point_t p,
@@ -399,28 +117,28 @@ deisogenize (
     
     gf b, d;
     gf_s *c = s, *a = minus_t_over_s;
-    gf_mulw_sgn(a, p->y, 1-EDWARDS_D);
+    gf_mulw(a, p->y, 1-EDWARDS_D);
     gf_mul(c, a, p->t);     /* -dYT, with EDWARDS_D = d-1 */
     gf_mul(a, p->x, p->z); 
     gf_sub(d, c, a);  /* aXZ-dYT with a=-1 */
     gf_add(a, p->z, p->y); 
     gf_sub(b, p->z, p->y); 
     gf_mul(c, b, a);
-    gf_mulw_sgn(b, c, -EDWARDS_D); /* (a-d)(Z+Y)(Z-Y) */
+    gf_mulw(b, c, -EDWARDS_D); /* (a-d)(Z+Y)(Z-Y) */
     mask_t ok = gf_isr (a,b); /* r in the paper */
     (void)ok; assert(ok | gf_eq(b,ZERO));
-    gf_mulw_sgn (b, a, -EDWARDS_D); /* u in the paper */
+    gf_mulw (b, a, -EDWARDS_D); /* u in the paper */
 
     gf_mul(c,a,d); /* r(aZX-dYT) */
     gf_mul(a,b,p->z); /* uZ */
     gf_add(a,a,a); /* 2uZ */
     
-    cond_neg(c, toggle_hibit_t_over_s ^ ~gf_hibit(a)); /* u <- -u if negative. */
-    cond_neg(a, toggle_hibit_t_over_s ^ ~gf_hibit(a)); /* t/s <-? -t/s */
+    gf_cond_neg(c, toggle_hibit_t_over_s ^ ~gf_hibit(a)); /* u <- -u if negative. */
+    gf_cond_neg(a, toggle_hibit_t_over_s ^ ~gf_hibit(a)); /* t/s <-? -t/s */
     
     gf_add(d,c,p->y);
     gf_mul(s,b,d);
-    cond_neg(s, toggle_hibit_s ^ gf_hibit(s));
+    gf_cond_neg(s, toggle_hibit_s ^ gf_hibit(s));
 #else
     /* More complicated because of rotation */
     /* MAGIC This code is wrong for certain non-Curve25519 curves;
@@ -441,7 +159,7 @@ deisogenize (
         gf_mul ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 - X^2 */
     #else
         const gf_s *x = p->x, *t = p->t;
-        /* Won't hit the cond_sel below because COFACTOR==8 requires IMAGINE_TWIST for now. */
+        /* Won't hit the gf_cond_sel below because COFACTOR==8 requires IMAGINE_TWIST for now. */
     
         gf_sqr ( a, p->z );
         gf_sqr ( b, p->x );
@@ -465,8 +183,8 @@ deisogenize (
         rotate = gf_hibit(a) ^ toggle_rotation;
         /* Curve25519: cond select between zx * 1/tz or sqrt(1-d); y=-x */
         gf_mul ( a, b, c ); 
-        cond_sel ( a, a, SQRT_ONE_MINUS_D, rotate );
-        cond_sel ( x, p->y, x, rotate );
+        gf_cond_sel ( a, a, SQRT_ONE_MINUS_D, rotate );
+        gf_cond_sel ( x, p->y, x, rotate );
     #else
         (void)toggle_rotation;
         rotate = 0;
@@ -476,19 +194,19 @@ deisogenize (
     gf_mul ( a, c, p->z );
     gf_add ( a, a, a ); // 2 * "osx" * Z
     mask_t tg1 = rotate ^ toggle_hibit_t_over_s ^~ gf_hibit(a);
-    cond_neg ( c, tg1 );
-    cond_neg ( a, rotate ^ tg1 );
+    gf_cond_neg ( c, tg1 );
+    gf_cond_neg ( a, rotate ^ tg1 );
     gf_mul ( d, b, p->z );
     gf_add ( d, d, c );
     gf_mul ( b, d, x ); /* here "x" = y unless rotate */
-    cond_neg ( b, toggle_hibit_s ^ gf_hibit(b) );
+    gf_cond_neg ( b, toggle_hibit_s ^ gf_hibit(b) );
     
 #endif
 }
 
 void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
     gf s, mtos;
-    deisogenize(s,mtos,p,0,0,0);
+    API_NS(deisogenize)(s,mtos,p,0,0,0);
     gf_serialize(ser,s,0);
 }
 
@@ -509,7 +227,7 @@ decaf_error_t API_NS(point_decode) (
 #endif
     succ &= ~ gf_eq( f, ZERO );
     gf_sqr ( b, f ); 
-    gf_mulw_sgn ( c, a, 4*IMAGINE_TWIST-4*EDWARDS_D ); 
+    gf_mulw ( c, a, 4*IMAGINE_TWIST-4*EDWARDS_D ); 
     gf_add ( c, c, b ); /* t^2 */
     gf_mul ( d, f, s ); /* s(1-as^2) for denoms */
     gf_sqr ( e, d );
@@ -520,8 +238,8 @@ decaf_error_t API_NS(point_decode) (
     gf_mul ( d, e, c ); /* d = t / (s(1-as^2)) */
     gf_mul ( e, d, f ); /* t/s */
     mask_t negtos = gf_hibit(e);
-    cond_neg(b, negtos);
-    cond_neg(d, negtos);
+    gf_cond_neg(b, negtos);
+    gf_cond_neg(d, negtos);
 
 #if IMAGINE_TWIST
     gf_add ( p->z, ONE, a); /* Z = 1+as^2 = 1-s^2 */
@@ -578,7 +296,7 @@ void API_NS(point_sub) (
     gf_add_nr ( b, q->y, q->x );
     gf_mul ( p->y, d, b );
     gf_mul ( b, r->t, q->t );
-    gf_mulw_sgn ( p->x, b, 2*EFF_D );
+    gf_mulw ( p->x, b, 2*EFF_D );
     gf_add_nr ( b, a, p->y );
     gf_sub_nr ( c, p->y, a );
     gf_mul ( a, q->z, r->z );
@@ -609,7 +327,7 @@ void API_NS(point_add) (
     gf_add_nr ( b, q->y, q->x );
     gf_mul ( p->y, d, b );
     gf_mul ( b, r->t, q->t );
-    gf_mulw_sgn ( p->x, b, 2*EFF_D );
+    gf_mulw ( p->x, b, 2*EFF_D );
     gf_add_nr ( b, a, p->y );
     gf_sub_nr ( c, p->y, a );
     gf_mul ( a, q->z, r->z );
@@ -664,107 +382,14 @@ void API_NS(point_negate) (
     gf_sub(nega->t, ZERO, a->t);
 }
 
-static INLINE void
-scalar_decode_short (
-    scalar_t s,
-    const unsigned char *ser,
-    unsigned int nbytes
-) {
-    unsigned int i,j,k=0;
-    for (i=0; i<SCALAR_LIMBS; i++) {
-        decaf_word_t out = 0;
-        for (j=0; j<sizeof(decaf_word_t) && k<nbytes; j++,k++) {
-            out |= ((decaf_word_t)ser[k])<<(8*j);
-        }
-        s->limb[i] = out;
-    }
-}
-
-decaf_error_t API_NS(scalar_decode)(
-    scalar_t s,
-    const unsigned char ser[SCALAR_SER_BYTES]
-) {
-    unsigned int i;
-    scalar_decode_short(s, ser, SCALAR_SER_BYTES);
-    decaf_dsword_t accum = 0;
-    for (i=0; i<SCALAR_LIMBS; i++) {
-        accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
-    }
-    /* Here accum == 0 or -1 */
-    
-    API_NS(scalar_mul)(s,s,API_NS(scalar_one)); /* ham-handed reduce */
-    
-    return decaf_succeed_if(~word_is_zero(accum));
-}
-
-void API_NS(scalar_destroy) (
-    scalar_t scalar
-) {
-    decaf_bzero(scalar, sizeof(scalar_t));
-}
-
-static INLINE void ignore_result ( decaf_bool_t boo ) {
-    (void)boo;
-}
-
-void API_NS(scalar_decode_long)(
-    scalar_t s,
-    const unsigned char *ser,
-    size_t ser_len
-) {
-    if (ser_len == 0) {
-        API_NS(scalar_copy)(s, API_NS(scalar_zero));
-        return;
-    }
-    
-    size_t i;
-    scalar_t t1, t2;
-
-    i = ser_len - (ser_len%SCALAR_SER_BYTES);
-    if (i==ser_len) i -= SCALAR_SER_BYTES;
-    
-    scalar_decode_short(t1, &ser[i], ser_len-i);
-
-    if (ser_len == sizeof(scalar_t)) {
-        assert(i==0);
-        /* ham-handed reduce */
-        API_NS(scalar_mul)(s,t1,API_NS(scalar_one));
-        API_NS(scalar_destroy)(t1);
-        return;
-    }
-
-    while (i) {
-        i -= SCALAR_SER_BYTES;
-        sc_montmul(t1,t1,sc_r2);
-        ignore_result( API_NS(scalar_decode)(t2, ser+i) );
-        API_NS(scalar_add)(t1, t1, t2);
-    }
-
-    API_NS(scalar_copy)(s, t1);
-    API_NS(scalar_destroy)(t1);
-    API_NS(scalar_destroy)(t2);
-}
-
-void API_NS(scalar_encode)(
-    unsigned char ser[SCALAR_SER_BYTES],
-    const scalar_t s
-) {
-    unsigned int i,j,k=0;
-    for (i=0; i<SCALAR_LIMBS; i++) {
-        for (j=0; j<sizeof(decaf_word_t); j++,k++) {
-            ser[k] = s->limb[i] >> (8*j);
-        }
-    }
-}
-
 /* Operations on [p]niels */
 static INLINE void
 cond_neg_niels (
     niels_t n,
     mask_t neg
 ) {
-    cond_swap(n->a, n->b, neg);
-    cond_neg(n->c, neg);
+    gf_cond_swap(n->a, n->b, neg);
+    gf_cond_neg(n->c, neg);
 }
 
 static NOINLINE void pt_to_pniels (
@@ -773,7 +398,7 @@ static NOINLINE void pt_to_pniels (
 ) {
     gf_sub ( b->n->a, a->y, a->x );
     gf_add ( b->n->b, a->x, a->y );
-    gf_mulw_sgn ( b->n->c, a->t, 2*TWISTED_D );
+    gf_mulw ( b->n->c, a->t, 2*TWISTED_D );
     gf_add ( b->z, a->z, a->z );
 }
 
@@ -915,7 +540,7 @@ void API_NS(point_scalarmul) (
         
     scalar_t scalar1x;
     API_NS(scalar_add)(scalar1x, scalar, point_scalarmul_adjustment);
-    sc_halve(scalar1x,scalar1x,sc_p);
+    API_NS(scalar_halve)(scalar1x,scalar1x);
     
     /* Set up a precomputed table with odd multiples of b. */
     pniels_t pn, multiples[NTABLE];
@@ -977,9 +602,9 @@ void API_NS(point_double_scalarmul) (
         
     scalar_t scalar1x, scalar2x;
     API_NS(scalar_add)(scalar1x, scalarb, point_scalarmul_adjustment);
-    sc_halve(scalar1x,scalar1x,sc_p);
+    API_NS(scalar_halve)(scalar1x,scalar1x);
     API_NS(scalar_add)(scalar2x, scalarc, point_scalarmul_adjustment);
-    sc_halve(scalar2x,scalar2x,sc_p);
+    API_NS(scalar_halve)(scalar2x,scalar2x);
     
     /* Set up a precomputed table with odd multiples of b. */
     pniels_t pn, multiples1[NTABLE], multiples2[NTABLE];
@@ -1053,9 +678,9 @@ void API_NS(point_dual_scalarmul) (
         
     scalar_t scalar1x, scalar2x;
     API_NS(scalar_add)(scalar1x, scalar1, point_scalarmul_adjustment);
-    sc_halve(scalar1x,scalar1x,sc_p);
+    API_NS(scalar_halve)(scalar1x,scalar1x);
     API_NS(scalar_add)(scalar2x, scalar2, point_scalarmul_adjustment);
-    sc_halve(scalar2x,scalar2x,sc_p);
+    API_NS(scalar_halve)(scalar2x,scalar2x);
     
     /* Set up a precomputed table with odd multiples of b. */
     point_t multiples1[NTABLE], multiples2[NTABLE], working, tmp;
@@ -1165,144 +790,6 @@ decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     return mask_to_bool(succ);
 }
 
-void API_NS(point_from_hash_nonuniform) (
-    point_t p,
-    const unsigned char ser[SER_BYTES]
-) {
-    gf r0,r,a,b,c,N,e;
-    ignore_result(gf_deserialize(r0,ser,0));
-    gf_strong_reduce(r0);
-    gf_sqr(a,r0);
-#if P_MOD_8 == 5
-    /* r = QNR * r0^2 */
-    gf_mul(r,a,SQRT_MINUS_ONE);
-#elif P_MOD_8 == 3 || P_MOD_8 == 7
-    gf_sub(r,ZERO,a);
-#else
-#error "Only supporting p=3,5,7 mod 8"
-#endif
-
-    /* Compute D@c := (dr+a-d)(dr-ar-d) with a=1 */
-    gf_sub(a,r,ONE);
-    gf_mulw_sgn(b,a,EDWARDS_D); /* dr-d */
-    gf_add(a,b,ONE);
-    gf_sub(b,b,r);
-    gf_mul(c,a,b);
-    
-    /* compute N := (r+1)(a-2d) */
-    gf_add(a,r,ONE);
-    gf_mulw_sgn(N,a,1-2*EDWARDS_D);
-    
-    /* e = +-sqrt(1/ND) or +-r0 * sqrt(qnr/ND) */
-    gf_mul(a,c,N);
-    mask_t square = gf_isr(b,a);
-    cond_sel(c,r0,ONE,square); /* r? = square ? 1 : r0 */
-    gf_mul(e,b,c);
-    
-    /* s@a = +-|N.e| */
-    gf_mul(a,N,e);
-    cond_neg(a,gf_hibit(a)^square); /* NB this is - what is listen in the paper */
-    
-    /* t@b = -+ cN(r-1)((a-2d)e)^2 - 1 */
-    gf_mulw_sgn(c,e,1-2*EDWARDS_D); /* (a-2d)e */
-    gf_sqr(b,c);
-    gf_sub(e,r,ONE);
-    gf_mul(c,b,e);
-    gf_mul(b,c,N);
-    cond_neg(b,square);
-    gf_sub(b,b,ONE);
-
-    /* isogenize */
-#if IMAGINE_TWIST
-    gf_mul(c,a,SQRT_MINUS_ONE);
-    gf_copy(a,c);
-#endif
-    
-    gf_sqr(c,a); /* s^2 */
-    gf_add(a,a,a); /* 2s */
-    gf_add(e,c,ONE);
-    gf_mul(p->t,a,e); /* 2s(1+s^2) */
-    gf_mul(p->x,a,b); /* 2st */
-    gf_sub(a,ONE,c);
-    gf_mul(p->y,e,a); /* (1+s^2)(1-s^2) */
-    gf_mul(p->z,a,b); /* (1-s^2)t */
-    
-    assert(API_NS(point_valid)(p));
-}
-
-decaf_error_t
-API_NS(invert_elligator_nonuniform) (
-    unsigned char recovered_hash[SER_BYTES],
-    const point_t p,
-    uint16_t hint_
-) {
-    mask_t hint = hint_;
-    mask_t sgn_s = -(hint & 1),
-        sgn_t_over_s = -(hint>>1 & 1),
-        sgn_r0 = -(hint>>2 & 1), /* FIXME: but it's SER_BYTES ... */
-        sgn_ed_T = -(hint>>3 & 1);
-    gf a, b, c, d;
-    deisogenize(a,c,p,sgn_s,sgn_t_over_s,sgn_ed_T);
-    
-    /* ok, a = s; c = -t/s */
-    gf_mul(b,c,a);
-    gf_sub(b,ONE,b); /* t+1 */
-    gf_sqr(c,a); /* s^2 */
-    mask_t is_identity = gf_eq(p->t,ZERO);
-    {
-        /* identity adjustments */
-        /* in case of identity, currently c=0, t=0, b=1, will encode to 1 */
-        /* if hint is 0, -> 0 */
-        /* if hint is to neg t/s, then go to infinity, effectively set s to 1 */
-        cond_sel(c,c,ONE,is_identity & sgn_t_over_s);
-        cond_sel(b,b,ZERO,is_identity & ~sgn_t_over_s & ~sgn_s); /* identity adjust */        
-    }
-    gf_mulw_sgn(d,c,2*EDWARDS_D-1); /* $d = (2d-a)s^2 */
-    gf_add(a,b,d); /* num? */
-    gf_sub(d,d,b); /* den? */
-    gf_mul(b,a,d); /* n*d */
-    cond_sel(a,d,a,sgn_s);
-#if P_MOD_8 == 5
-    gf_mul(d,b,SQRT_MINUS_ONE);
-#else
-    gf_sub(d,ZERO,b);
-#endif
-    mask_t succ = gf_isr(c,d)|gf_eq(d,ZERO);
-    gf_mul(b,a,c);
-    cond_neg(b, sgn_r0^gf_hibit(b));
-    
-    succ &= ~(gf_eq(b,ZERO) & sgn_r0);
-#if COFACTOR == 8
-    succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
-#endif
-    
-    gf_serialize(recovered_hash,b,1); /* FIXME: ,0 */
-    /* TODO: deal with overflow flag */
-    return decaf_succeed_if(mask_to_bool(succ));
-}
-
-void API_NS(point_from_hash_uniform) (
-    point_t pt,
-    const unsigned char hashed_data[2*SER_BYTES]
-) {
-    point_t pt2;
-    API_NS(point_from_hash_nonuniform)(pt,hashed_data);
-    API_NS(point_from_hash_nonuniform)(pt2,&hashed_data[SER_BYTES]);
-    API_NS(point_add)(pt,pt,pt2);
-}
-
-decaf_error_t
-API_NS(invert_elligator_uniform) (
-    unsigned char partial_hash[2*SER_BYTES],
-    const point_t p,
-    uint16_t hint
-) {
-    point_t pt2;
-    API_NS(point_from_hash_nonuniform)(pt2,&partial_hash[SER_BYTES]);
-    API_NS(point_sub)(pt2,p,pt2);
-    return API_NS(invert_elligator_nonuniform)(partial_hash,pt2,hint);
-}
-
 decaf_bool_t API_NS(point_valid) (
     const point_t p
 ) {
@@ -1314,7 +801,7 @@ decaf_bool_t API_NS(point_valid) (
     gf_sqr(b,p->y);
     gf_sub(a,b,a);
     gf_sqr(b,p->t);
-    gf_mulw_sgn(c,b,TWISTED_D);
+    gf_mulw(c,b,TWISTED_D);
     gf_sqr(b,p->z);
     gf_add(b,b,c);
     out &= gf_eq(a,b);
@@ -1349,7 +836,7 @@ void API_NS(point_debugging_pscale) (
     gf gfac,tmp;
     /* NB this means you'll never pscale by negative numbers for p521 */
     ignore_result(gf_deserialize(gfac,factor,0));
-    cond_sel(gfac,gfac,ONE,gf_eq(gfac,ZERO));
+    gf_cond_sel(gfac,gfac,ONE,gf_eq(gfac,ZERO));
     gf_mul(tmp,p->x,gfac);
     gf_copy(q->x,tmp);
     gf_mul(tmp,p->y,gfac);
@@ -1498,7 +985,7 @@ void API_NS(precomputed_scalarmul) (
     
     scalar_t scalar1x;
     API_NS(scalar_add)(scalar1x, scalar, precomputed_scalarmul_adjustment);
-    sc_halve(scalar1x,scalar1x,sc_p);
+    API_NS(scalar_halve)(scalar1x,scalar1x);
     
     niels_t ni;
     
@@ -1541,15 +1028,6 @@ void API_NS(point_cond_sel) (
     decaf_bool_t pick_b
 ) {
     constant_time_select(out,a,b,sizeof(point_t),bool_to_mask(pick_b),0);
-}
-
-void API_NS(scalar_cond_sel) (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t b,
-    decaf_bool_t pick_b
-) {
-    constant_time_select(out,a,b,sizeof(scalar_t),bool_to_mask(pick_b),sizeof(out->limb[0]));
 }
 
 /* FUTURE: restore Curve25519 Montgomery ladder? */
@@ -1596,8 +1074,8 @@ decaf_error_t API_NS(x_direct_scalarmul) (
         k_t = -k_t; /* set to all 0s or all 1s */
         
         swap ^= k_t;
-        cond_swap(x2,x3,swap);
-        cond_swap(z2,z3,swap);
+        gf_cond_swap(x2,x3,swap);
+        gf_cond_swap(z2,z3,swap);
         swap = k_t;
         
         gf_add_nr(t1,x2,z2); /* A = x2 + z2 */
@@ -1617,14 +1095,14 @@ decaf_error_t API_NS(x_direct_scalarmul) (
         gf_mul(x2,z2,t1);    /* x2 = AA*BB */
         gf_sub_nr(t2,z2,t1); /* E = AA-BB */
         
-        gf_mulw_sgn(t1,t2,-EDWARDS_D); /* E*-d = a24*E */
+        gf_mulw(t1,t2,-EDWARDS_D); /* E*-d = a24*E */
         gf_add_nr(t1,t1,z2); /* AA + a24*E */
         gf_mul(z2,t2,t1); /* z2 = E(AA+a24*E) */
     }
     
     /* Finish */
-    cond_swap(x2,x3,swap);
-    cond_swap(z2,z3,swap);
+    gf_cond_swap(x2,x3,swap);
+    gf_cond_swap(z2,z3,swap);
     gf_invert(z2,z2);
     gf_mul(x1,x2,z2);
     gf_serialize(out,x1,1);
@@ -1668,13 +1146,13 @@ void API_NS(x_base_scalarmul) (
      * Jacobi -> Edwards -> Jacobi -> Montgomery,
      * we pick up only a factor of 2 over Jacobi -> Montgomery. 
      */
-    sc_halve(the_scalar,the_scalar,sc_p);
+    API_NS(scalar_halve)(the_scalar,the_scalar);
 #if COFACTOR==8
     /* If the base point isn't in the prime-order subgroup (PERF:
      * guarantee that it is?) then a 4-isogeny isn't necessarily
      * enough to clear the cofactor.  So add another doubling.
      */
-    sc_halve(the_scalar,the_scalar,sc_p);
+    API_NS(scalar_halve)(the_scalar,the_scalar);
 #endif
     point_t p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),the_scalar);
@@ -1781,6 +1259,7 @@ prepare_wnaf_table(
     }
     
     API_NS(point_destroy)(tmp);
+    decaf_bzero(twop,sizeof(twop));
 }
 
 extern const gf API_NS(precomputed_wnaf_as_fe)[];

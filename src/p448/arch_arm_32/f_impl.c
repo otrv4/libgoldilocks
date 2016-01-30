@@ -721,7 +721,7 @@ void gf_sqr (gf_s *__restrict__ cs, const gf as) {
     c[1] += ((uint32_t)(accum1));
 }
 
-void gf_mulw (
+void gf_mulw_unsigned (
     gf_s *__restrict__ cs,
     const gf as,
     uint32_t b

@@ -7,7 +7,10 @@
 
 /* for posix_memalign */
 #define _XOPEN_SOURCE 600
+#define __STDC_WANT_LIB_EXT1__ 1 /* for memset_s */
+#include <string.h>
 
+#include <assert.h>
 #include <stdint.h>
 #include "arch_intrinsics.h"
 
@@ -239,5 +242,37 @@ malloc_vector(size_t size) {
 #ifndef UNROLL
 #define UNROLL
 #endif
+
+/* The plan on booleans:
+ *
+ * The external interface uses decaf_bool_t, but this might be a different
+ * size than our particular arch's word_t (and thus mask_t).  Also, the caller
+ * isn't guaranteed to pass it as nonzero.  So bool_to_mask converts word sizes
+ * and checks nonzero.
+ *
+ * On the flip side, mask_t is always -1 or 0, but it might be a different size
+ * than decaf_bool_t.
+ *
+ * On the third hand, we have success vs boolean types, but that's handled in
+ * common.h: it converts between decaf_bool_t and decaf_error_t.
+ */
+static INLINE decaf_bool_t mask_to_bool (mask_t m) {
+    return (decaf_sword_t)(sword_t)m;
+}
+
+static INLINE mask_t bool_to_mask (decaf_bool_t m) {
+    /* On most arches this will be optimized to a simple cast. */
+    mask_t ret = 0;
+    unsigned int limit = sizeof(decaf_bool_t)/sizeof(mask_t);
+    if (limit < 1) limit = 1;
+    for (unsigned int i=0; i<limit; i++) {
+        ret |= ~ word_is_zero(m >> (i*8*sizeof(word_t)));
+    }
+    return ret;
+}
+
+static INLINE void ignore_result ( decaf_bool_t boo ) {
+    (void)boo;
+}
 
 #endif /* __WORD_H__ */

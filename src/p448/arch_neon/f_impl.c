@@ -549,7 +549,7 @@ void gf_sqr (gf_s *__restrict__ cs, const gf bs) {
     );
 }
 
-void gf_mulw (gf_s *__restrict__ cs, const gf as, uint32_t b) { 
+void gf_mulw_unsigned (gf_s *__restrict__ cs, const gf as, uint32_t b) { 
     uint32x2_t vmask = {(1<<28) - 1, (1<<28)-1};
     assert(b<(1<<28));
     
