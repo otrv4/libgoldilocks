@@ -500,17 +500,6 @@ sub_pniels_from_pt (
     sub_niels_from_pt( p, pn->n, before_double );
 }
 
-static INLINE void
-constant_time_lookup_xx (
-    void *__restrict__ out_,
-    const void *table_,
-    word_t elem_bytes,
-    word_t n_table,
-    word_t idx
-) {
-    constant_time_lookup(out_,table_,elem_bytes,n_table,idx);
-}
-
 static NOINLINE void
 prepare_fixed_window(
     pniels_t *multiples,
@@ -568,7 +557,7 @@ void API_NS(point_scalarmul) (
         bits ^= inv;
     
         /* Add in from table.  Compute t only on last iteration. */
-        constant_time_lookup_xx(pn, multiples, sizeof(pn), NTABLE, bits & WINDOW_T_MASK);
+        constant_time_lookup(pn, multiples, sizeof(pn), NTABLE, bits & WINDOW_T_MASK);
         cond_neg_niels(pn->n, inv);
         if (first) {
             pniels_to_pt(tmp, pn);
@@ -638,7 +627,7 @@ void API_NS(point_double_scalarmul) (
         bits2 ^= inv2;
     
         /* Add in from table.  Compute t only on last iteration. */
-        constant_time_lookup_xx(pn, multiples1, sizeof(pn), NTABLE, bits1 & WINDOW_T_MASK);
+        constant_time_lookup(pn, multiples1, sizeof(pn), NTABLE, bits1 & WINDOW_T_MASK);
         cond_neg_niels(pn->n, inv1);
         if (first) {
             pniels_to_pt(tmp, pn);
@@ -653,7 +642,7 @@ void API_NS(point_double_scalarmul) (
             point_double_internal(tmp, tmp, 0);
             add_pniels_to_pt(tmp, pn, 0);
         }
-        constant_time_lookup_xx(pn, multiples2, sizeof(pn), NTABLE, bits2 & WINDOW_T_MASK);
+        constant_time_lookup(pn, multiples2, sizeof(pn), NTABLE, bits2 & WINDOW_T_MASK);
         cond_neg_niels(pn->n, inv2);
         add_pniels_to_pt(tmp, pn, i?-1:0);
     }
@@ -725,14 +714,14 @@ void API_NS(point_dual_scalarmul) (
         
         pt_to_pniels(pn, working);
 
-        constant_time_lookup_xx(tmp, multiples1, sizeof(tmp), NTABLE, bits1 & WINDOW_T_MASK);
+        constant_time_lookup(tmp, multiples1, sizeof(tmp), NTABLE, bits1 & WINDOW_T_MASK);
         cond_neg_niels(pn->n, inv1);
         /* add_pniels_to_pt(multiples1[bits1 & WINDOW_T_MASK], pn, 0); */
         add_pniels_to_pt(tmp, pn, 0);
         constant_time_insert(multiples1, tmp, sizeof(tmp), NTABLE, bits1 & WINDOW_T_MASK);
         
         
-        constant_time_lookup_xx(tmp, multiples2, sizeof(tmp), NTABLE, bits2 & WINDOW_T_MASK);
+        constant_time_lookup(tmp, multiples2, sizeof(tmp), NTABLE, bits2 & WINDOW_T_MASK);
         cond_neg_niels(pn->n, inv1^inv2);
         /* add_pniels_to_pt(multiples2[bits2 & WINDOW_T_MASK], pn, 0); */
         add_pniels_to_pt(tmp, pn, 0);
@@ -971,13 +960,13 @@ void API_NS(precompute) (
 }
 
 static INLINE void
-constant_time_lookup_xx_niels (
+constant_time_lookup_niels (
     niels_s *__restrict__ ni,
     const niels_t *table,
     int nelts,
     int idx
 ) {
-    constant_time_lookup_xx(ni, table, sizeof(niels_s), nelts, idx);
+    constant_time_lookup(ni, table, sizeof(niels_s), nelts, idx);
 }
 
 void API_NS(precomputed_scalarmul) (
@@ -1012,7 +1001,7 @@ void API_NS(precomputed_scalarmul) (
             tab ^= invert;
             tab &= (1<<(t-1)) - 1;
 
-            constant_time_lookup_xx_niels(ni, &table->table[j<<(t-1)], 1<<(t-1), tab);
+            constant_time_lookup_niels(ni, &table->table[j<<(t-1)], 1<<(t-1), tab);
 
             cond_neg_niels(ni, invert);
             if ((i!=(int)s-1)||j) {
