@@ -93,7 +93,7 @@ extern const struct $(c_ns)_precomputed_s *$(c_ns)_precomputed_base API_VIS;
 decaf_error_t $(c_ns)_scalar_decode (
     $(c_ns)_scalar_t out,
     const unsigned char ser[$(C_NS)_SCALAR_BYTES]
-) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
+) API_VIS WARN_UNUSED NONNULL NOINLINE;
 
 /**
  * @brief Read a scalar from wire format or from bytes.  Reduces mod
@@ -107,7 +107,7 @@ void $(c_ns)_scalar_decode_long (
     $(c_ns)_scalar_t out,
     const unsigned char *ser,
     size_t ser_len
-) API_VIS NONNULL2 NOINLINE;
+) API_VIS NONNULL NOINLINE;
     
 /**
  * @brief Serialize a scalar to wire format.
@@ -118,7 +118,7 @@ void $(c_ns)_scalar_decode_long (
 void $(c_ns)_scalar_encode (
     unsigned char ser[$(C_NS)_SCALAR_BYTES],
     const $(c_ns)_scalar_t s
-) API_VIS NONNULL2 NOINLINE NOINLINE;
+) API_VIS NONNULL NOINLINE NOINLINE;
         
 /**
  * @brief Add two scalars.  The scalars may use the same memory.
@@ -130,7 +130,7 @@ void $(c_ns)_scalar_add (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b
-) API_VIS NONNULL3 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Compare two scalars.
@@ -142,7 +142,7 @@ void $(c_ns)_scalar_add (
 decaf_bool_t $(c_ns)_scalar_eq (
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b
-) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
+) API_VIS WARN_UNUSED NONNULL NOINLINE;
 
 /**
  * @brief Subtract two scalars.  The scalars may use the same memory.
@@ -154,7 +154,7 @@ void $(c_ns)_scalar_sub (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b
-) API_VIS NONNULL3 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Multiply two scalars.  The scalars may use the same memory.
@@ -166,7 +166,7 @@ void $(c_ns)_scalar_mul (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b
-) API_VIS NONNULL3 NOINLINE;
+) API_VIS NONNULL NOINLINE;
         
 /**
 * @brief Halve a scalar.  The scalars may use the same memory.
@@ -176,7 +176,7 @@ void $(c_ns)_scalar_mul (
 void $(c_ns)_scalar_halve (
    $(c_ns)_scalar_t out,
    const $(c_ns)_scalar_t a
-) API_VIS NONNULL2 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Invert a scalar.  When passed zero, return 0.  The input and output may alias.
@@ -187,7 +187,7 @@ void $(c_ns)_scalar_halve (
 decaf_error_t $(c_ns)_scalar_invert (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a
-) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
+) API_VIS WARN_UNUSED NONNULL NOINLINE;
 
 /**
  * @brief Copy a scalar.  The scalars may use the same memory, in which
@@ -195,7 +195,7 @@ decaf_error_t $(c_ns)_scalar_invert (
  * @param [in] a A scalar.
  * @param [out] out Will become a copy of a.
  */
-static inline void NONNULL2 $(c_ns)_scalar_copy (
+static inline void NONNULL $(c_ns)_scalar_copy (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a
 ) {
@@ -210,7 +210,7 @@ static inline void NONNULL2 $(c_ns)_scalar_copy (
 void $(c_ns)_scalar_set_unsigned (
     $(c_ns)_scalar_t out,
     uint64_t a
-) API_VIS NONNULL1;
+) API_VIS NONNULL;
 
 /**
  * @brief Encode a point as a sequence of bytes.
@@ -221,7 +221,7 @@ void $(c_ns)_scalar_set_unsigned (
 void $(c_ns)_point_encode (
     uint8_t ser[$(C_NS)_SER_BYTES],
     const $(c_ns)_point_t pt
-) API_VIS NONNULL2 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Decode a point from a sequence of bytes.
@@ -241,7 +241,7 @@ decaf_error_t $(c_ns)_point_decode (
     $(c_ns)_point_t pt,
     const uint8_t ser[$(C_NS)_SER_BYTES],
     decaf_bool_t allow_identity
-) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
+) API_VIS WARN_UNUSED NONNULL NOINLINE;
 
 /**
  * @brief Copy a point.  The input and output may alias,
@@ -250,7 +250,7 @@ decaf_error_t $(c_ns)_point_decode (
  * @param [out] a A copy of the point.
  * @param [in] b Any point.
  */
-static inline void NONNULL2 $(c_ns)_point_copy (
+static inline void NONNULL $(c_ns)_point_copy (
     $(c_ns)_point_t a,
     const $(c_ns)_point_t b
 ) {
@@ -269,7 +269,7 @@ static inline void NONNULL2 $(c_ns)_point_copy (
 decaf_bool_t $(c_ns)_point_eq (
     const $(c_ns)_point_t a,
     const $(c_ns)_point_t b
-) API_VIS WARN_UNUSED NONNULL2 NOINLINE;
+) API_VIS WARN_UNUSED NONNULL NOINLINE;
 
 /**
  * @brief Add two points to produce a third point.  The
@@ -284,7 +284,7 @@ void $(c_ns)_point_add (
     $(c_ns)_point_t sum,
     const $(c_ns)_point_t a,
     const $(c_ns)_point_t b
-) API_VIS NONNULL3;
+) API_VIS NONNULL;
 
 /**
  * @brief Double a point.  Equivalent to
@@ -296,7 +296,7 @@ void $(c_ns)_point_add (
 void $(c_ns)_point_double (
     $(c_ns)_point_t two_a,
     const $(c_ns)_point_t a
-) API_VIS NONNULL2;
+) API_VIS NONNULL;
 
 /**
  * @brief Subtract two points to produce a third point.  The
@@ -311,7 +311,7 @@ void $(c_ns)_point_sub (
     $(c_ns)_point_t diff,
     const $(c_ns)_point_t a,
     const $(c_ns)_point_t b
-) API_VIS NONNULL3;
+) API_VIS NONNULL;
     
 /**
  * @brief Negate a point to produce another point.  The input
@@ -323,7 +323,7 @@ void $(c_ns)_point_sub (
 void $(c_ns)_point_negate (
    $(c_ns)_point_t nega,
    const $(c_ns)_point_t a
-) API_VIS NONNULL2;
+) API_VIS NONNULL;
 
 /**
  * @brief Multiply a base point by a scalar: scaled = scalar*base.
@@ -336,7 +336,7 @@ void $(c_ns)_point_scalarmul (
     $(c_ns)_point_t scaled,
     const $(c_ns)_point_t base,
     const $(c_ns)_scalar_t scalar
-) API_VIS NONNULL3 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Multiply a base point by a scalar: scaled = scalar*base.
@@ -361,7 +361,7 @@ decaf_error_t $(c_ns)_direct_scalarmul (
     const $(c_ns)_scalar_t scalar,
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
-) API_VIS NONNULL3 WARN_UNUSED NOINLINE;
+) API_VIS NONNULL WARN_UNUSED NOINLINE;
 
 /**
  * @brief RFC 7748 Diffie-Hellman scalarmul.  This function uses a different
@@ -379,7 +379,7 @@ decaf_error_t $(c_ns)_x_direct_scalarmul ( /* TODO: rename? */
     uint8_t out[X$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t base[X$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t scalar[X$(gf_shortname)_PRIVATE_BYTES]
-) API_VIS NONNULL3 WARN_UNUSED NOINLINE;
+) API_VIS NONNULL WARN_UNUSED NOINLINE;
 
 /** The base point for X$(gf_shortname) Diffie-Hellman */
 extern const uint8_t $(c_ns)_x_base_point[X$(gf_shortname)_PUBLIC_BYTES] API_VIS;
@@ -394,7 +394,7 @@ extern const uint8_t $(c_ns)_x_base_point[X$(gf_shortname)_PUBLIC_BYTES] API_VIS
 void $(c_ns)_x_base_scalarmul (
     uint8_t out[X$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t scalar[X$(gf_shortname)_PRIVATE_BYTES]
-) API_VIS NONNULL2 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Precompute a table for fast scalar multiplication.
@@ -408,7 +408,7 @@ void $(c_ns)_x_base_scalarmul (
 void $(c_ns)_precompute (
     $(c_ns)_precomputed_s *a,
     const $(c_ns)_point_t b
-) API_VIS NONNULL2 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Multiply a precomputed base point by a scalar:
@@ -425,7 +425,7 @@ void $(c_ns)_precomputed_scalarmul (
     $(c_ns)_point_t scaled,
     const $(c_ns)_precomputed_s *base,
     const $(c_ns)_scalar_t scalar
-) API_VIS NONNULL3 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:
@@ -446,7 +446,7 @@ void $(c_ns)_point_double_scalarmul (
     const $(c_ns)_scalar_t scalar1,
     const $(c_ns)_point_t base2,
     const $(c_ns)_scalar_t scalar2
-) API_VIS NONNULL5 NOINLINE;
+) API_VIS NONNULL NOINLINE;
     
 /**
  * Multiply one base point by two scalars:
@@ -469,7 +469,7 @@ void $(c_ns)_point_dual_scalarmul (
     const $(c_ns)_point_t base1,
     const $(c_ns)_scalar_t scalar1,
     const $(c_ns)_scalar_t scalar2
-) API_VIS NONNULL5 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:
@@ -491,7 +491,7 @@ void $(c_ns)_base_double_scalarmul_non_secret (
     const $(c_ns)_scalar_t scalar1,
     const $(c_ns)_point_t base2,
     const $(c_ns)_scalar_t scalar2
-) API_VIS NONNULL4 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Constant-time decision between two points.  If pick_b
@@ -507,7 +507,7 @@ void $(c_ns)_point_cond_sel (
     const $(c_ns)_point_t a,
     const $(c_ns)_point_t b,
     decaf_word_t pick_b
-) API_VIS NONNULL3 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Constant-time decision between two scalars.  If pick_b
@@ -523,7 +523,7 @@ void $(c_ns)_scalar_cond_sel (
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b,
     decaf_word_t pick_b
-) API_VIS NONNULL3 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Test that a point is valid, for debugging purposes.
@@ -534,7 +534,7 @@ void $(c_ns)_scalar_cond_sel (
  */
 decaf_bool_t $(c_ns)_point_valid (
     const $(c_ns)_point_t toTest
-) API_VIS WARN_UNUSED NONNULL1 NOINLINE;
+) API_VIS WARN_UNUSED NONNULL NOINLINE;
 
 /**
  * @brief Torque a point, for debugging purposes.  The output
@@ -546,7 +546,7 @@ decaf_bool_t $(c_ns)_point_valid (
 void $(c_ns)_point_debugging_torque (
     $(c_ns)_point_t q,
     const $(c_ns)_point_t p
-) API_VIS NONNULL2 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Projectively scale a point, for debugging purposes.
@@ -561,7 +561,7 @@ void $(c_ns)_point_debugging_pscale (
     $(c_ns)_point_t q,
     const $(c_ns)_point_t p,
     const unsigned char factor[$(C_NS)_SER_BYTES]
-) API_VIS NONNULL2 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Almost-Elligator-like hash to curve.
@@ -595,7 +595,7 @@ void
 $(c_ns)_point_from_hash_nonuniform (
     $(c_ns)_point_t pt,
     const unsigned char hashed_data[$(C_NS)_SER_BYTES]
-) API_VIS NONNULL2 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Indifferentiable hash function encoding to curve.
@@ -608,7 +608,7 @@ $(c_ns)_point_from_hash_nonuniform (
 void $(c_ns)_point_from_hash_uniform (
     $(c_ns)_point_t pt,
     const unsigned char hashed_data[2*$(C_NS)_SER_BYTES]
-) API_VIS NONNULL2 NOINLINE;
+) API_VIS NONNULL NOINLINE;
 
 /**
  * @brief Inverse of elligator-like hash to curve.
@@ -633,7 +633,7 @@ $(c_ns)_invert_elligator_nonuniform (
     unsigned char recovered_hash[$(C_NS)_SER_BYTES],
     const $(c_ns)_point_t pt,
     uint16_t which
-) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
+) API_VIS NONNULL NOINLINE WARN_UNUSED;
 
 /**
  * @brief Inverse of elligator-like hash to curve.
@@ -658,14 +658,14 @@ $(c_ns)_invert_elligator_uniform (
     unsigned char recovered_hash[2*$(C_NS)_SER_BYTES],
     const $(c_ns)_point_t pt,
     uint16_t which
-) API_VIS NONNULL2 NOINLINE WARN_UNUSED;
+) API_VIS NONNULL NOINLINE WARN_UNUSED;
 
 /**
  * @brief Overwrite scalar with zeros.
  */
 void $(c_ns)_scalar_destroy (
     $(c_ns)_scalar_t scalar
-) NONNULL1 API_VIS;
+) NONNULL API_VIS;
 
 /**
  * @brief Overwrite point with zeros.
@@ -673,14 +673,14 @@ void $(c_ns)_scalar_destroy (
  */
 void $(c_ns)_point_destroy (
     $(c_ns)_point_t point
-) NONNULL1 API_VIS;
+) NONNULL API_VIS;
 
 /**
  * @brief Overwrite precomputed table with zeros.
  */
 void $(c_ns)_precomputed_destroy (
     $(c_ns)_precomputed_s *pre
-) NONNULL1 API_VIS;
+) NONNULL API_VIS;
 
 #ifdef __cplusplus
 } /* extern "C" */

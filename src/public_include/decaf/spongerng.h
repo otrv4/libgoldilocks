@@ -32,7 +32,7 @@ void spongerng_init_from_buffer (
     const uint8_t *__restrict__ in, /**< [in]  The initialization data. */
     size_t len,                     /**< [in]  The length of the initialization data. */
     int deterministic               /**< [in]  If zero, allow RNG to stir in nondeterministic data from RDRAND or RDTSC.*/
-) NONNULL2 API_VIS;
+) NONNULL API_VIS;
     
 /**
  * @brief Initialize a sponge-based CSPRNG from a file.
@@ -45,7 +45,7 @@ decaf_error_t spongerng_init_from_file (
     const char *file,   /**< [in]  A name of a file containing initial data. */
     size_t len,         /**< [in]  The length of the initial data.  Must be positive. */
     int deterministic   /**< [in]  If zero, allow RNG to stir in nondeterministic data from RDRAND or RDTSC. */
-) NONNULL2 API_VIS WARN_UNUSED;
+) NONNULL API_VIS WARN_UNUSED;
 
 /**
  * @brief Initialize a nondeterministic sponge-based CSPRNG from /dev/urandom.
@@ -69,7 +69,7 @@ void spongerng_stir (
     keccak_prng_t prng,              /**< [out] The PRNG object. */
     const uint8_t * __restrict__ in, /**< [in]  The entropy data. */
     size_t len                       /**< [in]  The length of the initial data. */
-) NONNULL2 API_VIS;
+) NONNULL API_VIS;
     
 /** Securely destroy a sponge RNG object by overwriting it. */
 static INLINE UNUSED void

@@ -49,14 +49,14 @@ typedef struct {
 void $(c_ns)_derive_private_key (
     $(c_ns)_private_key_t priv,
     const $(c_ns)_symmetric_key_t proto
-) NONNULL2 API_VIS;
+) NONNULL API_VIS;
 
 /**
  * Destroy a private key.
  */
 void $(c_ns)_destroy_private_key (
     $(c_ns)_private_key_t priv
-) NONNULL1 API_VIS;
+) NONNULL API_VIS;
 
 /**
  * Convert a private key to a public one.
@@ -66,7 +66,7 @@ void $(c_ns)_destroy_private_key (
 void $(c_ns)_private_to_public (
     $(c_ns)_public_key_t pub,
     const $(c_ns)_private_key_t priv
-) NONNULL2 API_VIS;
+) NONNULL API_VIS;
     
 /**
  * Compute a Diffie-Hellman shared secret.
@@ -90,7 +90,7 @@ $(c_ns)_shared_secret (
     const $(c_ns)_private_key_t my_privkey,
     const $(c_ns)_public_key_t your_pubkey,
     int me_first
-) NONNULL134 WARN_UNUSED API_VIS;
+) NONNULL WARN_UNUSED API_VIS;
    
 /**
  * Sign a message from a STROBE context.
@@ -104,7 +104,7 @@ $(c_ns)_sign_strobe (
     keccak_strobe_t strobe,
     $(c_ns)_signature_t sig,
     const $(c_ns)_private_key_t priv
-) NONNULL3 API_VIS;
+) NONNULL API_VIS;
 
 /**
  * Sign a message.
@@ -120,7 +120,7 @@ $(c_ns)_sign (
     const $(c_ns)_private_key_t priv,
     const unsigned char *message,
     size_t message_len
-) NONNULL3 API_VIS;
+) NONNULL API_VIS;
 
 /**
  * Verify a signed message from its STROBE context.
@@ -137,7 +137,7 @@ $(c_ns)_verify_strobe (
     keccak_strobe_t strobe,
     const $(c_ns)_signature_t sig,
     const $(c_ns)_public_key_t pub
-) NONNULL3 API_VIS WARN_UNUSED;
+) NONNULL API_VIS WARN_UNUSED;
 
 /**
  * Verify a signed message.
@@ -156,7 +156,7 @@ $(c_ns)_verify (
     const $(c_ns)_public_key_t pub,
     const unsigned char *message,
     size_t message_len
-) NONNULL3 API_VIS WARN_UNUSED;
+) NONNULL API_VIS WARN_UNUSED;
 
 #ifdef __cplusplus
 } /* extern "C" */

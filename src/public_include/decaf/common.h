@@ -27,13 +27,7 @@ extern "C" {
 #define API_VIS __attribute__((visibility("default")))
 #define NOINLINE  __attribute__((noinline))
 #define WARN_UNUSED __attribute__((warn_unused_result))
-#define NONNULL1 __attribute__((nonnull(1)))
-#define NONNULL2 __attribute__((nonnull(1,2)))
-#define NONNULL3 __attribute__((nonnull(1,2,3)))
-#define NONNULL13 __attribute__((nonnull(1,3)))
-#define NONNULL134 __attribute__((nonnull(1,3,4)))
-#define NONNULL4 __attribute__((nonnull(1,2,3,4)))
-#define NONNULL5 __attribute__((nonnull(1,2,3,4,5)))
+#define NONNULL __attribute__((nonnull))
 #define INLINE inline __attribute__((always_inline))
 #define UNUSED __attribute__((unused))
 /** @endcond */
@@ -101,14 +95,14 @@ decaf_successful(decaf_error_t e) {
 void decaf_bzero (
     void *data,
     size_t size
-) NONNULL1 API_VIS;
+) NONNULL API_VIS;
 
 /** Compare two buffers, returning DECAF_TRUE if they are equal. */
 decaf_bool_t decaf_memeq (
     const void *data1,
     const void *data2,
     size_t size
-) NONNULL2 WARN_UNUSED API_VIS;
+) NONNULL WARN_UNUSED API_VIS;
     
 #ifdef __cplusplus
 } /* extern "C" */

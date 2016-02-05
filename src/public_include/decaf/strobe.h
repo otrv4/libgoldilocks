@@ -44,7 +44,7 @@ void strobe_init (
     const struct kparams_s *params, /**< [in] Parameter set descriptor. */
     const char *proto,              /**< [in] Unique identifier for the protocol.  TODO: define namespaces for this */
     uint8_t am_client               /**< [in] Nonzero if this party. */
-) NONNULL2 API_VIS;
+) NONNULL API_VIS;
 
 /** Run a transaction against a STROBE state. */
 void strobe_transact (
@@ -53,10 +53,10 @@ void strobe_transact (
     const unsigned char *in, /**< [in] The input. */
     size_t len,              /**< [in] The length of the input/output. */
     uint32_t cw_flags        /**< [in] The control word with flags. */
-) NONNULL1 API_VIS;
+) __attribute__((nonnull(1))) API_VIS;
 
 /** Record a message sent in plaintext */
-static INLINE UNUSED void strobe_plaintext (
+static INLINE UNUSED NONNULL void strobe_plaintext (
     keccak_strobe_t strobe,  /**< [inout] The STROBE object */
     const unsigned char *in, /**< [in] The message. */
     uint16_t len,            /**< [in] The length of the message. */
@@ -64,7 +64,7 @@ static INLINE UNUSED void strobe_plaintext (
 );
 
 /** Report authenticated data in strobe context. */
-static INLINE UNUSED void
+static INLINE UNUSED NONNULL void
 strobe_ad (
     keccak_strobe_t strobe,  /**< [inout] The strobe object. */
     const unsigned char *in, /**< [in] The plaintext. */
@@ -72,7 +72,7 @@ strobe_ad (
 );
 
 /** Set nonce in strobe context. */
-static INLINE UNUSED void
+static INLINE UNUSED NONNULL void
 strobe_nonce (
    keccak_strobe_t strobe,  /**< [inout] The initialized strobe object. */
    const unsigned char *in, /**< [in] The nonce. */
@@ -80,7 +80,7 @@ strobe_nonce (
 );
 
 /** Set fixed key in strobe context. */
-static INLINE UNUSED void
+static INLINE UNUSED NONNULL void
 strobe_fixed_key (
    keccak_strobe_t strobe,  /**< [inout] The initialized strobe object. */
    const unsigned char *in, /**< [in] The key. */
@@ -88,7 +88,7 @@ strobe_fixed_key (
 );
 
 /** Set Diffie-Hellman key in strobe context. */
-static INLINE UNUSED void
+static INLINE UNUSED NONNULL void
 strobe_dh_key (
    keccak_strobe_t strobe,  /**< [inout] The initialized strobe object. */
    const unsigned char *in, /**< [in] The key. */
@@ -99,7 +99,7 @@ strobe_dh_key (
 #define STROBE_MAX_AUTH_BYTES 32
  
 /** Produce an authenticator. */
-static INLINE UNUSED void
+static INLINE UNUSED NONNULL void
 strobe_produce_auth (
    keccak_strobe_t strobe, /**< [inout] The Strobe protocol context. */
    unsigned char *out,     /**< [out] The authenticator. */
@@ -116,13 +116,13 @@ decaf_error_t strobe_verify_auth (
    keccak_strobe_t strobe,  /**< [inout] The Strobe protocol context */
    const unsigned char *in, /**< [in] The authenticator */
    uint16_t len             /**< [in] The length, at most STROBE_MAX_AUTH_BYTES. */
-) WARN_UNUSED NONNULL2 API_VIS;
+) WARN_UNUSED NONNULL API_VIS;
 
 /**
  * @brief Encrypt bytes from in to out.
  * @warning Doesn't produce an auth tag.
  */
-static INLINE UNUSED void
+static INLINE UNUSED NONNULL void
 strobe_encrypt (
   keccak_strobe_t strobe,  /**< [inout] strobe The Strobe protocol context. */
   unsigned char *out,      /**< [out] The ciphertext. */
@@ -134,7 +134,7 @@ strobe_encrypt (
  * Decrypt bytes from in to out.
  * @warning Doesn't check an auth tag.
  */
-static INLINE UNUSED void
+static INLINE UNUSED NONNULL void
 strobe_decrypt (
   keccak_strobe_t strobe,  /**< [inout] The Strobe protocol context. */
   unsigned char *out,      /**< [out] The plaintext. */
@@ -149,7 +149,7 @@ strobe_decrypt (
  * refreshing forward secrecy!  It's to replace things
  * like TCP session hash.
  */
-static inline void strobe_prng (
+static inline void NONNULL strobe_prng (
    keccak_strobe_t strobe, /**< [inout] The Strobe protocol context */
    unsigned char *out,     /**< [out] The output random data. */
    uint16_t len            /**< The length. */
@@ -159,10 +159,10 @@ static inline void strobe_prng (
 void strobe_respec (
    keccak_strobe_t strobe,        /**< [inout] The initialized strobe context. */
    const struct kparams_s *params /**< [in] Strobe parameter descriptor. */
-) NONNULL2 API_VIS;
+) NONNULL API_VIS;
 
 /** Securely destroy a STROBE object by overwriting it. */
-static INLINE UNUSED void
+static INLINE UNUSED NONNULL void
 strobe_destroy (
     keccak_strobe_t doomed /**< [in] The object to destroy. */
 );
