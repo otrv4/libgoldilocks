@@ -295,24 +295,25 @@ void API_NS(point_sub) (
     const point_t r
 ) {
     gf a, b, c, d;
-    gf_sub_nr ( b, q->y, q->x );
-    gf_sub_nr ( d, r->y, r->x );
-    gf_add_nr ( c, r->y, r->x );
+    gf_sub_nr ( b, q->y, q->x ); /* 3+e */
+    gf_sub_nr ( d, r->y, r->x ); /* 3+e */
+    gf_add_nr ( c, r->y, r->x ); /* 2+e */
     gf_mul ( a, c, b );
-    gf_add_nr ( b, q->y, q->x );
+    gf_add_nr ( b, q->y, q->x ); /* 2+e */
     gf_mul ( p->y, d, b );
     gf_mul ( b, r->t, q->t );
     gf_mulw ( p->x, b, 2*EFF_D );
-    gf_add_nr ( b, a, p->y );
-    gf_sub_nr ( c, p->y, a );
+    gf_add_nr ( b, a, p->y );    /* 2+e */
+    gf_sub_nr ( c, p->y, a );    /* 3+e */
     gf_mul ( a, q->z, r->z );
-    gf_add_nr ( a, a, a );
+    gf_add_nr ( a, a, a );       /* 2+e */
+    if (GF_HEADROOM <= 3) gf_weak_reduce(a); /* or 1+e */
 #if NEG_D
-    gf_sub_nr ( p->y, a, p->x );
-    gf_add_nr ( a, a, p->x );
+    gf_sub_nr ( p->y, a, p->x ); /* 4+e or 3+e */
+    gf_add_nr ( a, a, p->x );    /* 3+e or 2+e */
 #else
-    gf_add_nr ( p->y, a, p->x );
-    gf_sub_nr ( a, a, p->x );
+    gf_add_nr ( p->y, a, p->x ); /* 3+e or 2+e */
+    gf_sub_nr ( a, a, p->x );    /* 4+e or 3+e */
 #endif
     gf_mul ( p->z, a, p->y );
     gf_mul ( p->x, p->y, c );
@@ -326,24 +327,25 @@ void API_NS(point_add) (
     const point_t r
 ) {
     gf a, b, c, d;
-    gf_sub_nr ( b, q->y, q->x );
-    gf_sub_nr ( c, r->y, r->x );
-    gf_add_nr ( d, r->y, r->x );
+    gf_sub_nr ( b, q->y, q->x ); /* 3+e */
+    gf_sub_nr ( c, r->y, r->x ); /* 3+e */
+    gf_add_nr ( d, r->y, r->x ); /* 2+e */
     gf_mul ( a, c, b );
-    gf_add_nr ( b, q->y, q->x );
+    gf_add_nr ( b, q->y, q->x ); /* 2+e */
     gf_mul ( p->y, d, b );
     gf_mul ( b, r->t, q->t );
     gf_mulw ( p->x, b, 2*EFF_D );
-    gf_add_nr ( b, a, p->y );
-    gf_sub_nr ( c, p->y, a );
+    gf_add_nr ( b, a, p->y );    /* 2+e */
+    gf_sub_nr ( c, p->y, a );    /* 3+e */
     gf_mul ( a, q->z, r->z );
-    gf_add_nr ( a, a, a );
+    gf_add_nr ( a, a, a );       /* 2+e */
+    if (GF_HEADROOM <= 3) gf_weak_reduce(a); /* or 1+e */
 #if NEG_D
-    gf_add_nr ( p->y, a, p->x );
-    gf_sub_nr ( a, a, p->x );
+    gf_add_nr ( p->y, a, p->x ); /* 3+e or 2+e */
+    gf_sub_nr ( a, a, p->x );    /* 4+e or 3+e */
 #else
-    gf_sub_nr ( p->y, a, p->x );
-    gf_add_nr ( a, a, p->x );
+    gf_sub_nr ( p->y, a, p->x ); /* 4+e or 3+e */
+    gf_add_nr ( a, a, p->x );    /* 3+e or 2+e */
 #endif
     gf_mul ( p->z, a, p->y );
     gf_mul ( p->x, p->y, c );
@@ -360,14 +362,15 @@ point_double_internal (
     gf a, b, c, d;
     gf_sqr ( c, q->x );
     gf_sqr ( a, q->y );
-    gf_add_nr ( d, c, a );
-    gf_add_nr ( p->t, q->y, q->x );
+    gf_add_nr ( d, c, a );             /* 2+e */
+    gf_add_nr ( p->t, q->y, q->x );    /* 2+e */
     gf_sqr ( b, p->t );
-    gf_subx_nr ( b, b, d, 3 );
-    gf_sub_nr ( p->t, a, c );
+    gf_subx_nr ( b, b, d, 3 );         /* 4+e */
+    gf_sub_nr ( p->t, a, c );          /* 3+e */
     gf_sqr ( p->x, q->z );
-    gf_add_nr ( p->z, p->x, p->x );
-    gf_subx_nr ( a, p->z, p->t, 4 );
+    gf_add_nr ( p->z, p->x, p->x );    /* 2+e */
+    gf_subx_nr ( a, p->z, p->t, 4 );   /* 6+e */
+    if (GF_HEADROOM == 5) gf_weak_reduce(a); /* or 1+e */
     gf_mul ( p->x, a, b );
     gf_mul ( p->z, p->t, a );
     gf_mul ( p->y, p->t, d );
@@ -439,15 +442,15 @@ add_niels_to_pt (
     int before_double
 ) {
     gf a, b, c;
-    gf_sub_nr ( b, d->y, d->x );
+    gf_sub_nr ( b, d->y, d->x ); /* 3+e */
     gf_mul ( a, e->a, b );
-    gf_add_nr ( b, d->x, d->y );
+    gf_add_nr ( b, d->x, d->y ); /* 2+e */
     gf_mul ( d->y, e->b, b );
     gf_mul ( d->x, e->c, d->t );
-    gf_add_nr ( c, a, d->y );
-    gf_sub_nr ( b, d->y, a );
-    gf_sub_nr ( d->y, d->z, d->x );
-    gf_add_nr ( a, d->x, d->z );
+    gf_add_nr ( c, a, d->y );    /* 2+e */
+    gf_sub_nr ( b, d->y, a );    /* 3+e */
+    gf_sub_nr ( d->y, d->z, d->x ); /* 3+e */
+    gf_add_nr ( a, d->x, d->z ); /* 2+e */
     gf_mul ( d->z, a, d->y );
     gf_mul ( d->x, d->y, b );
     gf_mul ( d->y, a, c );
@@ -461,15 +464,15 @@ sub_niels_from_pt (
     int before_double
 ) {
     gf a, b, c;
-    gf_sub_nr ( b, d->y, d->x );
+    gf_sub_nr ( b, d->y, d->x ); /* 3+e */
     gf_mul ( a, e->b, b );
-    gf_add_nr ( b, d->x, d->y );
+    gf_add_nr ( b, d->x, d->y ); /* 2+e */
     gf_mul ( d->y, e->a, b );
     gf_mul ( d->x, e->c, d->t );
-    gf_add_nr ( c, a, d->y );
-    gf_sub_nr ( b, d->y, a );
-    gf_add_nr ( d->y, d->z, d->x );
-    gf_sub_nr ( a, d->z, d->x );
+    gf_add_nr ( c, a, d->y );    /* 2+e */
+    gf_sub_nr ( b, d->y, a );    /* 3+e */
+    gf_add_nr ( d->y, d->z, d->x ); /* 2+e */
+    gf_sub_nr ( a, d->z, d->x ); /* 3+e */
     gf_mul ( d->z, a, d->y );
     gf_mul ( d->x, d->y, b );
     gf_mul ( d->y, a, c );
@@ -1073,25 +1076,25 @@ decaf_error_t API_NS(x_direct_scalarmul) (
         gf_cond_swap(z2,z3,swap);
         swap = k_t;
         
-        gf_add_nr(t1,x2,z2); /* A = x2 + z2 */
-        gf_sub_nr(t2,x2,z2); /* B = x2 - z2 */
-        gf_sub_nr(z2,x3,z3); /* D = x3 - z3 */
+        gf_add_nr(t1,x2,z2); /* A = x2 + z2 */        /* 2+e */
+        gf_sub_nr(t2,x2,z2); /* B = x2 - z2 */        /* 3+e */
+        gf_sub_nr(z2,x3,z3); /* D = x3 - z3 */        /* 3+e */
         gf_mul(x2,t1,z2);    /* DA */
-        gf_add_nr(z2,z3,x3); /* C = x3 + z3 */
+        gf_add_nr(z2,z3,x3); /* C = x3 + z3 */        /* 2+e */
         gf_mul(x3,t2,z2);    /* CB */
-        gf_sub_nr(z3,x2,x3); /* DA-CB */
+        gf_sub_nr(z3,x2,x3); /* DA-CB */              /* 3+e */
         gf_sqr(z2,z3);       /* (DA-CB)^2 */
         gf_mul(z3,x1,z2);    /* z3 = x1(DA-CB)^2 */
-        gf_add_nr(z2,x2,x3); /* (DA+CB) */
+        gf_add_nr(z2,x2,x3); /* (DA+CB) */            /* 2+e */
         gf_sqr(x3,z2);       /* x3 = (DA+CB)^2 */
         
         gf_sqr(z2,t1);       /* AA = A^2 */
         gf_sqr(t1,t2);       /* BB = B^2 */
         gf_mul(x2,z2,t1);    /* x2 = AA*BB */
-        gf_sub_nr(t2,z2,t1); /* E = AA-BB */
+        gf_sub_nr(t2,z2,t1); /* E = AA-BB */          /* 3+e */
         
         gf_mulw(t1,t2,-EDWARDS_D); /* E*-d = a24*E */
-        gf_add_nr(t1,t1,z2); /* AA + a24*E */
+        gf_add_nr(t1,t1,z2); /* AA + a24*E */         /* 2+e */
         gf_mul(z2,t2,t1); /* z2 = E(AA+a24*E) */
     }
     

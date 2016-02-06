@@ -2,6 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
+#define GF_HEADROOM 2
 #define LIMB(x) (x##ull)&((1ull<<28)-1), (x##ull)>>28
 #define FIELD_LITERAL(a,b,c,d,e,f,g,h) \
     {{LIMB(a),LIMB(b),LIMB(c),LIMB(d),LIMB(e),LIMB(f),LIMB(g),LIMB(h)}}

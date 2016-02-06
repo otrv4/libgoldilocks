@@ -2,6 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
+#define GF_HEADROOM 2
 #define LIMBPERM(x) (((x)<<1 | (x)>>3) & 15)
 #define USE_NEON_PERM 1
 #define LIMBHI(x) ((x##ull)>>28)

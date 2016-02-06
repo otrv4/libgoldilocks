@@ -42,19 +42,14 @@ static INLINE UNUSED void gf_sqrn (
 static inline void gf_sub_nr ( gf c, const gf a, const gf b ) {
     gf_sub_RAW(c,a,b);
     gf_bias(c, 2);
-    if (sizeof(word_t)==4) gf_weak_reduce(c); // HACK PERF MAGIC
-    // Depending on headroom, this is needed in some of the Ed routines, but
-    // not in the Montgomery ladder.  Need to find a better way to prevent
-    // overflow.  In particular, the headroom depends on the field+arch combo,
-    // not just one or the other, and whether the reduction is needed depends
-    // also on the algorithm.
+    if (GF_HEADROOM < 3) gf_weak_reduce(c);
 }
 
 /** Subtract mod p. Bias by amt but don't reduce.  */
 static inline void gf_subx_nr ( gf c, const gf a, const gf b, int amt ) {
     gf_sub_RAW(c,a,b);
     gf_bias(c, amt);
-    if (sizeof(word_t)==4) gf_weak_reduce(c); // HACK PERF MAGIC
+    if (GF_HEADROOM < amt+1) gf_weak_reduce(c);
 }
 
 /** Mul by signed int.  Not constant-time WRT the sign of that int. */

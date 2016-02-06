@@ -2,6 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
+#define GF_HEADROOM 9999 /* Everything is reduced anyway */
 #define FIELD_LITERAL(a,b,c,d,e,f,g,h) {{a,b,c,d,e,f,g,h}}
     
 #define LIMB_PLACE_VALUE(i) 56
