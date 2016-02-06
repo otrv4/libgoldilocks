@@ -560,7 +560,7 @@ void gf_mulw_unsigned (gf_s *__restrict__ cs, const gf as, uint32_t b) {
     uint32x2_t vb = {b, 0};
     
     vc = va[0];
-    accum = vmull_lane_u32(accum, vc, vb, 0);
+    accum = vmull_lane_u32(vc, vb, 0);
     vo[0] = vmovn_u64(accum) & vmask;
     accum = vshrq_n_u64(accum,28);
     
