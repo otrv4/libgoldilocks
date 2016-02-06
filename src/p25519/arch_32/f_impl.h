@@ -2,7 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
-#define GF_HEADROOM 5
+#define GF_HEADROOM 3 /* Would be 5, but 3*19 * 2^26+small is all that fits in a uint32_t */
 #define LIMB(x) (x##ull)&((1ull<<26)-1), (x##ull)>>26
 #define FIELD_LITERAL(a,b,c,d,e) {{LIMB(a),LIMB(b),LIMB(c),LIMB(d),LIMB(e)}}
 
@@ -12,21 +12,20 @@ void gf_add_RAW (gf out, const gf a, const gf b) {
     for (unsigned int i=0; i<10; i++) {
         out->limb[i] = a->limb[i] + b->limb[i];
     }
-    gf_weak_reduce(out);
 }
 
 void gf_sub_RAW (gf out, const gf a, const gf b) {
-    uint32_t coe = ((1ull<<26)-1)*2, coo = ((1ull<<25)-1)*2, co0 = coe-36;
-    for (unsigned int i=0; i<10; i+=2) {
-        out->limb[i] = a->limb[i] - b->limb[i] + ((i==0) ? co0 : coe);
-        out->limb[i+1] = a->limb[i+1] - b->limb[i+1] + coo;
+    for (unsigned int i=0; i<10; i++) {
+        out->limb[i] = a->limb[i] - b->limb[i];
     }
-    gf_weak_reduce(out);
 }
 
 void gf_bias (gf a, int amt) {
-    (void) a;
-    (void) amt;
+    uint32_t coe = ((1ull<<26)-1)*amt, coo = ((1ull<<25)-1)*amt, co0 = coe-18*amt;
+    for (unsigned int i=0; i<10; i+=2) {
+        a->limb[i] += ((i==0) ? co0 : coe);
+        a->limb[i+1] += coo;
+    }
 }
 
 void gf_weak_reduce (gf a) {

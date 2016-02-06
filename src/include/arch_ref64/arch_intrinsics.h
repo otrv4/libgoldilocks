@@ -14,7 +14,7 @@ uint64_t word_is_zero(uint64_t a) {
 }
 
 static __inline__ __attribute((always_inline,unused))
-uint64_t widemul(uint64_t a, uint64_t b) {
+__uint128_t widemul(uint64_t a, uint64_t b) {
     return ((__uint128_t)a) * b; 
 }
 

@@ -7,7 +7,7 @@
 void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     const uint32_t *a = as->limb, *b = bs->limb, maske = ((1<<26)-1), masko = ((1<<25)-1);
     
-    uint64_t bh[9];
+    uint32_t bh[9];
     int i,j;
     for (i=0; i<9; i++) bh[i] = b[i+1] * 19;
     
@@ -18,13 +18,13 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
         /* Even case. */
         for (j=0; j<i; /*j+=2*/) {
             accum += widemul(b[i-j], a[j]); j++;
-            accum += widemul(2*b[i-j], a[j]); j++;
+            accum += widemul(b[i-j], 2*a[j]); j++;
         }
         accum += widemul(b[0], a[j]); j++;
-        accum += widemul(2*bh[8], a[j]); j++;
+        accum += widemul(bh[8], 2*a[j]); j++;
         for (; j<10; /* j+=2*/) {
             accum += widemul(bh[i-j+9], a[j]); j++;
-            accum += widemul(2*bh[i-j+9], a[j]); j++;
+            accum += widemul(bh[i-j+9], 2*a[j]); j++;
         }
         c[i] = accum & maske;
         accum >>= 26;
@@ -53,25 +53,22 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
 
 void gf_mulw_unsigned (gf_s *__restrict__ cs, const gf as, uint32_t b) {
     const uint32_t *a = as->limb, maske = ((1<<26)-1), masko = ((1<<25)-1);
-    uint32_t blo = b & maske, bhi = b>>26, bhi2 = 2*bhi;
     uint32_t *c = cs->limb;
-    uint64_t accum = 0;
-
-    accum = widemul(blo, a[0]) + widemul(bhi*38,a[9]);
+    uint64_t accum = widemul(b, a[0]);
     c[0] = accum & maske;
     accum >>= 26;
 
-    accum += widemul(blo, a[1]) + widemul(bhi,a[0]);
+    accum += widemul(b, a[1]);
     c[1] = accum & masko;
     accum >>= 25;
 
     for (int i=2; i<10; /*i+=2*/) {
-        accum += widemul(blo, a[i]) + widemul(bhi2, a[i-1]);
+        accum += widemul(b, a[i]);
         c[i] = accum & maske;
         accum >>= 26;
         i++;
 
-        accum += widemul(blo, a[i]) + widemul(bhi, a[i-1]);
+        accum += widemul(b, a[i]);
         c[i] = accum & masko;
         accum >>= 25;
         i++;

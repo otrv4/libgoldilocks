@@ -2,7 +2,7 @@
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 
-#define GF_HEADROOM 933
+#define GF_HEADROOM 9999 /* Always reduced */
 #define FIELD_LITERAL(a,b,c,d,e) {{ a,b,c,d,e }}
 
 #define LIMB_PLACE_VALUE(i) 51
