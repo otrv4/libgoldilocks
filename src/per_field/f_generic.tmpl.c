@@ -59,7 +59,7 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES], int with_hibit) {
         buffer >>= LIMB_PLACE_VALUE(LIMBPERM(i));
         scarry = (scarry + x->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)]) >> (8*sizeof(word_t));
     }
-    mask_t succ = with_hibit ? -1 : ~gf_hibit(x);
+    mask_t succ = with_hibit ? -(mask_t)1 : ~gf_hibit(x);
     return succ & word_is_zero(buffer) & ~word_is_zero(scarry);
 }
 
