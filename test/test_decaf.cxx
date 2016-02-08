@@ -201,17 +201,16 @@ static void test_elligator() {
     SpongeRng rng(Block("test_elligator"),SpongeRng::DETERMINISTIC);
     Test test("Elligator");
     
-    const int NHINTS = Group::REMOVED_COFACTOR * 2;
+    const int NHINTS = 1<<Point::INVERT_ELLIGATOR_WHICH_BITS;
     SecureBuffer *alts[NHINTS];
     bool successes[NHINTS];
     SecureBuffer *alts2[NHINTS];
     bool successes2[NHINTS];
 
-    for (int i=0; i<NTESTS/10 && test.passing_now; i++) {
+    for (int i=0; i<NTESTS/10 && (i<10 || test.passing_now); i++) {
         size_t len =  (i % (2*Point::HASH_BYTES + 3));
         SecureBuffer b1(len);
         if (i!=Point::HASH_BYTES) rng.read(b1); /* special test case */
-        if (len >= Point::HASH_BYTES) b1[Point::HASH_BYTES-1] &= 0x7F; // FIXME MAGIC
         
         /* Pathological cases */
         if (i==1) b1[0] = 1;
@@ -293,10 +292,6 @@ static void test_elligator() {
         
         Point t(rng);
         point_check(test,t,t,t,0,0,t,Point::from_hash(t.steg_encode(rng)),"steg round-trip");
-        
-        
-        
-        
     }
 }
 

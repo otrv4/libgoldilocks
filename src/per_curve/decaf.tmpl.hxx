@@ -228,10 +228,24 @@ public:
     static const size_t SER_BYTES = $(C_NS)_SER_BYTES;
 
     /** Bytes required for hash */
-    static const size_t HASH_BYTES = SER_BYTES;
+    static const size_t HASH_BYTES = $(C_NS)_HASH_BYTES;
 
-    /** Size of a stegged element */
+    /**
+     * Size of a stegged element.
+     * 
+     * FUTURE: You can use HASH_BYTES * 3/2 (or more likely much less, eg HASH_BYTES + 8)
+     * with a random oracle hash function, by hash-expanding everything past the first
+     * HASH_BYTES of the element.  However, since the internal C invert_elligator is not
+     * tied to a hash function, I didn't want to tie the C++ wrapper to a hash function
+     * either.  But it might be a good idea to do this in the future, either with STROBE
+     * or something else.
+     *
+     * Then again, calling invert_elligator at all is super niche, so maybe who cares?
+     */
     static const size_t STEG_BYTES = HASH_BYTES * 2;
+    
+    /** Number of bits in invert_elligator which are actually used. */
+    static const unsigned int INVERT_ELLIGATOR_WHICH_BITS = $(C_NS)_INVERT_ELLIGATOR_WHICH_BITS;
 
     /** The c-level object. */
     Wrapped p;
@@ -441,7 +455,7 @@ public:
      * or leave buf unmodified and return DECAF_FAILURE.
      */
     inline decaf_error_t invert_elligator (
-        Buffer buf, uint16_t hint
+        Buffer buf, uint32_t hint
     ) const NOEXCEPT {
         unsigned char buf2[2*HASH_BYTES];
         memset(buf2,0,sizeof(buf2));
@@ -468,8 +482,10 @@ public:
         SecureBuffer out(STEG_BYTES);
         decaf_error_t done;
         do {
-            rng.read(Buffer(out).slice(HASH_BYTES-1,STEG_BYTES-HASH_BYTES+1));
-            done = invert_elligator(out, out[HASH_BYTES-1]);
+            rng.read(Buffer(out).slice(HASH_BYTES-4,STEG_BYTES-HASH_BYTES+1));
+            uint32_t hint = 0;
+            for (int i=0; i<4; i++) { hint |= uint32_t(out[HASH_BYTES-4+i])<<(8*i); }
+            done = invert_elligator(out, hint);
         } while (!decaf_successful(done));
         return out;
     }

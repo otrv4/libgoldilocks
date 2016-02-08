@@ -25,7 +25,7 @@ void API_NS(precompute_wnafs) (
     struct niels_s *out,
     const API_NS(point_t) base
 );
-static void field_print(const gf f) { /* UNIFY */
+static void field_print(const gf f) {
     unsigned char ser[X_SER_BYTES];
     gf_serialize(ser,f,1);
     int b=0, i, comma=0;

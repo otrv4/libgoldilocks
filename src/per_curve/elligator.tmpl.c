@@ -89,19 +89,48 @@ void API_NS(point_from_hash_uniform) (
     API_NS(point_add)(pt,pt,pt2);
 }
 
+/* Elligator_onto:
+ * Make elligator-inverse onto at the cost of roughly halving the success probability.
+ * Currently no effect for curves with field size 1 bit mod 8 (where the top bit
+ * is chopped off).  FUTURE MAGIC: automatic at least for brainpool-style curves; support
+ * log p == 1 mod 8 brainpool curves maybe?
+ */
+#define MAX(A,B) (((A)>(B)) ? (A) : (B))
+#define PKP_MASK ((1<<(MAX(8*SER_BYTES + $(elligator_onto) - $(gf_bits),0)))-1)
+#if PKP_MASK != 0
+static UNUSED mask_t plus_k_p (
+    uint8_t x[SER_BYTES],
+    uint32_t factor_
+) {
+    uint32_t carry = 0;
+    uint64_t factor = factor_;
+    const uint8_t p[SER_BYTES] = { $(ser(modulus,8)) };
+    for (unsigned int i=0; i<SER_BYTES; i++) {
+        uint64_t tmp = carry + p[i] * factor + x[i];
+        /* tmp <= 2^32-1 + (2^32-1)*(2^8-1) + (2^8-1) = 2^40-1 */
+        x[i] = tmp; carry = tmp>>8;
+    }
+    return word_is_zero(carry);
+}
+#endif
+
 decaf_error_t
 API_NS(invert_elligator_nonuniform) (
     unsigned char recovered_hash[SER_BYTES],
     const point_t p,
-    uint16_t hint_
+    uint32_t hint_
 ) {
     mask_t hint = hint_;
     mask_t sgn_s = -(hint & 1),
         sgn_t_over_s = -(hint>>1 & 1),
-        sgn_r0 = -(hint>>2 & 1), /* FIXME: but it's SER_BYTES ... */
+        sgn_r0 = -(hint>>2 & 1),
         sgn_ed_T = -(hint>>3 & 1);
     gf a, b, c, d;
     API_NS(deisogenize)(a,c,p,sgn_s,sgn_t_over_s,sgn_ed_T);
+    
+#if $(gf_bits) == 8*SER_BYTES + 1 /* p521. */
+    sgn_r0 = 0;
+#endif
     
     /* ok, a = s; c = -t/s */
     gf_mul(b,c,a);
@@ -127,12 +156,19 @@ API_NS(invert_elligator_nonuniform) (
     gf_cond_neg(b, sgn_r0^gf_hibit(b));
     
     succ &= ~(gf_eq(b,ZERO) & sgn_r0);
-#if COFACTOR == 8
-    succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
-#endif
+    #if COFACTOR == 8
+        succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
+    #endif
     
-    gf_serialize(recovered_hash,b,1); /* FIXME: ,0 */
-    /* TODO: deal with overflow flag */
+    #if $(gf_bits) == 8*SER_BYTES + 1 /* p521 */
+        gf_serialize(recovered_hash,b,0);
+    #else
+        gf_serialize(recovered_hash,b,1);
+        #if PKP_MASK != 0
+            /* Add a multiple of p to make the result either almost-onto or completely onto. */
+            succ &= plus_k_p(recovered_hash, (hint >> ((COFACTOR==8)?4:3)) & PKP_MASK);
+        #endif
+    #endif
     return decaf_succeed_if(mask_to_bool(succ));
 }
 
@@ -140,7 +176,7 @@ decaf_error_t
 API_NS(invert_elligator_uniform) (
     unsigned char partial_hash[2*SER_BYTES],
     const point_t p,
-    uint16_t hint
+    uint32_t hint
 ) {
     point_t pt2;
     API_NS(point_from_hash_nonuniform)(pt2,&partial_hash[SER_BYTES]);

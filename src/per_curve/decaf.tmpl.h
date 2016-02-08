@@ -26,8 +26,16 @@ typedef struct gf_$(gf_shortname)_s {
 /** Number of bytes in a serialized point. */
 #define $(C_NS)_SER_BYTES $((gf_bits-2)/8 + 1)
 
+/** Number of bytes in an elligated point.  For now set the same as SER_BYTES
+ * but could be different for other curves.
+ */
+#define $(C_NS)_HASH_BYTES $((gf_bits-2)/8 + 1)
+
 /** Number of bytes in a serialized scalar. */
 #define $(C_NS)_SCALAR_BYTES $((scalar_bits-1)/8 + 1)
+
+/** Number of bits in the "which" field of an elligator inverse */
+#define $(C_NS)_INVERT_ELLIGATOR_WHICH_BITS $(ceil_log2(cofactor) + 7 + elligator_onto - ((gf_bits-2) % 8))
 
 /** Number of bytes in an x$(gf_shortname) public key */
 #define X$(gf_shortname)_PUBLIC_BYTES $((gf_bits-1)/8 + 1)
@@ -594,7 +602,7 @@ void $(c_ns)_point_debugging_pscale (
 void
 $(c_ns)_point_from_hash_nonuniform (
     $(c_ns)_point_t pt,
-    const unsigned char hashed_data[$(C_NS)_SER_BYTES]
+    const unsigned char hashed_data[$(C_NS)_HASH_BYTES]
 ) API_VIS NONNULL NOINLINE;
 
 /**
@@ -607,7 +615,7 @@ $(c_ns)_point_from_hash_nonuniform (
  */ 
 void $(c_ns)_point_from_hash_uniform (
     $(c_ns)_point_t pt,
-    const unsigned char hashed_data[2*$(C_NS)_SER_BYTES]
+    const unsigned char hashed_data[2*$(C_NS)_HASH_BYTES]
 ) API_VIS NONNULL NOINLINE;
 
 /**
@@ -630,9 +638,9 @@ void $(c_ns)_point_from_hash_uniform (
  */
 decaf_error_t
 $(c_ns)_invert_elligator_nonuniform (
-    unsigned char recovered_hash[$(C_NS)_SER_BYTES],
+    unsigned char recovered_hash[$(C_NS)_HASH_BYTES],
     const $(c_ns)_point_t pt,
-    uint16_t which
+    uint32_t which
 ) API_VIS NONNULL NOINLINE WARN_UNUSED;
 
 /**
@@ -655,9 +663,9 @@ $(c_ns)_invert_elligator_nonuniform (
  */
 decaf_error_t
 $(c_ns)_invert_elligator_uniform (
-    unsigned char recovered_hash[2*$(C_NS)_SER_BYTES],
+    unsigned char recovered_hash[2*$(C_NS)_HASH_BYTES],
     const $(c_ns)_point_t pt,
-    uint16_t which
+    uint32_t which
 ) API_VIS NONNULL NOINLINE WARN_UNUSED;
 
 /**

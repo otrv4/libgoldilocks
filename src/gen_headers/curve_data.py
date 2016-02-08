@@ -8,13 +8,15 @@ field_data = {
         "gf_desc" : "2^255 - 19",
         "gf_shortname" : "25519",
         "gf_impl_bits" : 320,
-        "gf_lit_limb_bits" : 51
+        "gf_lit_limb_bits" : 51,
+        "elligator_onto" : 0
     },
     "p448" : {
         "gf_desc" : "2^448 - 2^224 - 1",
         "gf_shortname" : "448",
         "gf_impl_bits" : 512,
-        "gf_lit_limb_bits" : 56
+        "gf_lit_limb_bits" : 56,
+        "elligator_onto" : 0
     }
 }
 
