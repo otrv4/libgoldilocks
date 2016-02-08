@@ -80,9 +80,7 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES],int with_highbit);
 
 #define P_MOD_8 $(modulus % 8)
 #if P_MOD_8 == 5
-    static const gf SQRT_MINUS_ONE = {FIELD_LITERAL( /* TODO make not static */
-        $(ser(msqrt(-1,modulus),gf_lit_limb_bits) if modulus % 4 == 1 else "/* NOPE */")
-    )};
+    extern const gf SQRT_MINUS_ONE;
 #endif
 
 #ifndef LIMBPERM
