@@ -124,6 +124,9 @@ API_NS(invert_elligator_nonuniform) (
     mask_t sgn_s = -(hint & 1),
         sgn_t_over_s = -(hint>>1 & 1),
         sgn_r0 = -(hint>>2 & 1),
+        /* FUTURE MAGIC: eventually if there's a curve which needs sgn_ed_T but not sgn_r0,
+         * change this mask extraction.
+         */
         sgn_ed_T = -(hint>>3 & 1);
     gf a, b, c, d;
     API_NS(deisogenize)(a,c,p,sgn_s,sgn_t_over_s,sgn_ed_T);
