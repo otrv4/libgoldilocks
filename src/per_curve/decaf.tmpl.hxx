@@ -649,6 +649,25 @@ public:
     }
 };
 
+
+struct EdDSA {
+public:
+    /** The size of a public key */
+    static const size_t PUBLIC_BYTES = $(C_NS)_EDDSA_PUBLIC_BYTES;
+    
+    /** The size of a private key */
+    static const size_t PRIVATE_BYTES = $(C_NS)_EDDSA_PRIVATE_BYTES;
+    
+    /* TODO: make into a nice class.  Change name.  Possibly move to another include file. */
+    static inline SecureBuffer generate_key (
+        const FixedBlock<PRIVATE_BYTES> &secret
+    ) {
+        SecureBuffer out(PUBLIC_BYTES);
+        $(c_ns)_eddsa_derive_public_key(out.data(), secret.data());
+        return out;
+    }
+};
+
 }; /* struct $(cxx_ns) */
 
 /** @cond internal */

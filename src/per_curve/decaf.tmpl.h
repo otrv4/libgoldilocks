@@ -37,6 +37,16 @@ typedef struct gf_$(gf_shortname)_s {
 /** Number of bits in the "which" field of an elligator inverse */
 #define $(C_NS)_INVERT_ELLIGATOR_WHICH_BITS $(ceil_log2(cofactor) + 7 + elligator_onto - ((gf_bits-2) % 8))
 
+/* TODO: move to a different file? */
+/** Number of bytes in an EdDSA public key. */
+#define $(C_NS)_EDDSA_PUBLIC_BYTES $((gf_bits)/8 + 1) /* TODO: change name? */
+
+/** Number of bytes in an EdDSA private key. */
+#define $(C_NS)_EDDSA_PRIVATE_BYTES $(C_NS)_EDDSA_PUBLIC_BYTES /* TODO: change name? */
+
+/** Number of bytes in an EdDSA private key. */
+#define $(C_NS)_EDDSA_SIGNATURE_BYTES ($(C_NS)_PUBLIC_BYTES + $(C_NS)_PRIVATE_BYTES) /* TODO: change name? */
+
 /** Number of bytes in an x$(gf_shortname) public key */
 #define X$(gf_shortname)_PUBLIC_BYTES $((gf_bits-1)/8 + 1)
 
@@ -402,6 +412,29 @@ extern const uint8_t $(c_ns)_x_base_point[X$(gf_shortname)_PUBLIC_BYTES] API_VIS
 void $(c_ns)_x_base_scalarmul (
     uint8_t out[X$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t scalar[X$(gf_shortname)_PRIVATE_BYTES]
+) API_VIS NONNULL NOINLINE;
+
+/**
+ * @brief EdDSA key generation.  This function uses a different (non-Decaf)
+ * encoding.
+ *
+ * @param [out] pubkey The public key.
+ * @param [in] privkey The private key.
+ */    
+void $(c_ns)_eddsa_derive_public_key (
+    uint8_t pubkey[$(C_NS)_EDDSA_PUBLIC_BYTES],
+    const uint8_t privkey[$(C_NS)_EDDSA_PRIVATE_BYTES]
+) API_VIS NONNULL NOINLINE;
+
+/**
+ * @brief EdDSA  point encoding.
+ *
+ * @param [out] enc The encoded point.
+ * @param [in] p The point.
+ */       
+void $(c_ns)_point_encode_like_eddsa (
+    uint8_t enc[$(C_NS)_EDDSA_PUBLIC_BYTES],
+    const $(c_ns)_point_t p
 ) API_VIS NONNULL NOINLINE;
 
 /**

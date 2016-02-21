@@ -56,6 +56,7 @@ template<typename Group> struct Tests {
 typedef typename Group::Scalar Scalar;
 typedef typename Group::Point Point;
 typedef typename Group::DhLadder DhLadder;
+typedef typename Group::EdDSA EdDSA;
 typedef typename Group::Precomputed Precomputed;
 
 static void print(const char *name, const Scalar &x) {
@@ -455,6 +456,8 @@ static void test_cfrg_crypto() {
     }
 }
 
+static const Block eddsa_sk, eddsa_pk;
+
 static void test_cfrg_vectors() {
     Test test("CFRG test vectors");
     SecureBuffer k = DhLadder::base_point();
@@ -462,6 +465,24 @@ static void test_cfrg_vectors() {
     
     int the_ntests = (NTESTS < 1000000) ? 1000 : 1000000;
     
+
+    
+    /* EdDSA */
+    if (eddsa_sk.size()) {
+        SecureBuffer eddsa_pk2 = EdDSA::generate_key(eddsa_sk);
+        if (!memeq(SecureBuffer(eddsa_pk), eddsa_pk2)) {
+            test.fail();
+            printf("    EdDSA vectors disagree.");
+            printf("\n    Correct:   ");
+            for (unsigned i=0; i<eddsa_pk.size(); i++) printf("%02x", eddsa_pk[i]);
+            printf("\n    Incorrect: ");
+
+            for (unsigned i=0; i<eddsa_pk.size(); i++) printf("%02x", eddsa_pk2[i]);
+            printf("\n");
+        }
+    }
+    
+    /* X25519/X448 */
     for (int i=0; i<the_ntests && test.passing_now; i++) {
         SecureBuffer n = DhLadder::shared_secret(u,k);
         u = k; k = n;
@@ -500,6 +521,7 @@ static void run() {
 
 }; /* template<GroupId GROUP> struct Tests */
 
+/* X25519, X448 test vectors */
 template<> const uint8_t Tests<IsoEd25519>::rfc7748_1[32] = {
     0x42,0x2c,0x8e,0x7a,0x62,0x27,0xd7,0xbc,
     0xa1,0x35,0x0b,0x3e,0x2b,0xb7,0x27,0x9f,
@@ -576,8 +598,36 @@ const uint8_t elli_patho_448[56] = {
 template<> const Block Tests<Ed448Goldilocks>::elli_patho(elli_patho_448,56);
 template<> const Block Tests<IsoEd25519>::elli_patho(NULL,0);
 
+/* EdDSA test vectors */
+const uint8_t ed448_eddsa_sk[57] = {
+    0x6c,0x82,0xa5,0x62,0xcb,0x80,0x8d,0x10,
+    0xd6,0x32,0xbe,0x89,0xc8,0x51,0x3e,0xbf,
+    0x6c,0x92,0x9f,0x34,0xdd,0xfa,0x8c,0x9f,
+    0x63,0xc9,0x96,0x0e,0xf6,0xe3,0x48,0xa3,
+    0x52,0x8c,0x8a,0x3f,0xcc,0x2f,0x04,0x4e,
+    0x39,0xa3,0xfc,0x5b,0x94,0x49,0x2f,0x8f,
+    0x03,0x2e,0x75,0x49,0xa2,0x00,0x98,0xf9,
+    0x5b
+};
+const uint8_t ed448_eddsa_pk[57] = {
+    0x5f,0xd7,0x44,0x9b,0x59,0xb4,0x61,0xfd,
+    0x2c,0xe7,0x87,0xec,0x61,0x6a,0xd4,0x6a,
+    0x1d,0xa1,0x34,0x24,0x85,0xa7,0x0e,0x1f,
+    0x8a,0x0e,0xa7,0x5d,0x80,0xe9,0x67,0x78,
+    0xed,0xf1,0x24,0x76,0x9b,0x46,0xc7,0x06,
+    0x1b,0xd6,0x78,0x3d,0xf1,0xe5,0x0f,0x6c,
+    0xd1,0xfa,0x1a,0xbe,0xaf,0xe8,0x25,0x61,
+    0x80
+};
+template<> const Block Tests<Ed448Goldilocks>::eddsa_sk(ed448_eddsa_sk,57);
+template<> const Block Tests<Ed448Goldilocks>::eddsa_pk(ed448_eddsa_pk,57);
+
+template<> const Block Tests<IsoEd25519>::eddsa_sk(NULL,0); /* TODO */
+template<> const Block Tests<IsoEd25519>::eddsa_pk(NULL,0); /* TODO */
+
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
+    
     run_for_all_curves<Tests>();
     if (passing) printf("Passed all tests.\n");
     return passing ? 0 : 1;

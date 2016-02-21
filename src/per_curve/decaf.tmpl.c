@@ -91,7 +91,6 @@ gf_invert(gf y, const gf x) {
     gf_copy(y, t2);
 }
 
-#if COFACTOR==8
 /** Return high bit of x = low bit of 2x mod p */
 static mask_t gf_lobit(const gf x) {
     gf y;
@@ -99,7 +98,6 @@ static mask_t gf_lobit(const gf x) {
     gf_strong_reduce(y);
     return -(y->limb[0]&1);
 }
-#endif
 
 /** identity = (0,1) */
 const point_t API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
@@ -1044,6 +1042,60 @@ decaf_error_t API_NS(direct_scalarmul) (
     API_NS(point_encode)(scaled, basep);
     API_NS(point_destroy)(basep);
     return succ;
+}
+
+void API_NS(point_encode_like_eddsa) (
+    uint8_t enc[$(C_NS)_EDDSA_PUBLIC_BYTES],
+    const point_t p
+) {
+    
+    /* The point is now on the twisted curve.  Move it to untwisted. */
+    gf x, y, z, t;
+#if IMAGINE_TWIST
+    {
+        /* TODO: make sure cofactor is clear */
+        point_t q;
+        API_NS(point_double)(q,p);
+        gf_div_qnr(x, q->x);
+        gf_copy(y, q->y);
+        gf_copy(z, q->z);
+        API_NS(point_destroy(q));
+    }
+#else
+    {
+        /* 4-isogeny: 2xy/(y^+x^2), (y^2-x^2)/(2z^2-y^2+x^2) */
+        gf u;
+        gf_sqr ( x, p->x );
+        gf_sqr ( t, p->y );
+        gf_add( u, x, t ); // x^2 + y^2
+        gf_add( z, p->y, p->x );
+        gf_sqr ( y, z); // (x+y)^2
+        gf_sub ( y, y, u ); // 2xy
+        gf_sub ( z, t, x ); // y^2 - x^2
+        
+        gf_sqr ( x, p->z ); // z^2
+        gf_add ( t, x, x); // 2z^2
+        gf_sub ( t, t, z); // 2z^2 - y^2 + x^2
+        gf_mul ( x, t, y ); // (2z^2 - y^2 + x^2)(2xy)
+        gf_mul ( y, z, u ); // (y^2 - x^2)(x^2 + y^2)
+        gf_mul ( z, u, t ); // (x^2 + y^2)(2z^2 - y^2 + x^2)
+        decaf_bzero(t,sizeof(u));
+    }
+#endif
+    /* Affinize */
+    gf_invert(z,z);
+    gf_mul(t,x,z);
+    gf_mul(x,y,z);
+    
+    /* Encode */
+    enc[$(C_NS)_EDDSA_PRIVATE_BYTES-1] = 0;
+    gf_serialize(enc, x, 1);
+    enc[$(C_NS)_EDDSA_PRIVATE_BYTES-1] |= 0x80 &~ gf_lobit(t);
+
+    decaf_bzero(x,sizeof(x));
+    decaf_bzero(y,sizeof(y));
+    decaf_bzero(z,sizeof(z));
+    decaf_bzero(t,sizeof(t));
 }
 
 decaf_error_t API_NS(x_direct_scalarmul) (

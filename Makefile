@@ -166,7 +166,7 @@ endef
 define define_curve
 
 LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/elligator.o $$(BUILD_OBJ)/$(1)/scalar.o \
-	 $$(BUILD_OBJ)/$(1)/crypto.o $$(BUILD_OBJ)/$(1)/decaf_tables.o
+	 $$(BUILD_OBJ)/$(1)/crypto.o $$(BUILD_OBJ)/$(1)/eddsa.o $$(BUILD_OBJ)/$(1)/decaf_tables.o
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
 GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/decaf/decaf_$(3).h $(BUILD_INC)/decaf/decaf_$(3).hxx \
 		$(BUILD_INC)/decaf/crypto_$(3).h $(BUILD_INC)/decaf/crypto_$(3).hxx
