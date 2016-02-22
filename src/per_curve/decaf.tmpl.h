@@ -45,7 +45,7 @@ typedef struct gf_$(gf_shortname)_s {
 #define $(C_NS)_EDDSA_PRIVATE_BYTES $(C_NS)_EDDSA_PUBLIC_BYTES /* TODO: change name? */
 
 /** Number of bytes in an EdDSA private key. */
-#define $(C_NS)_EDDSA_SIGNATURE_BYTES ($(C_NS)_PUBLIC_BYTES + $(C_NS)_PRIVATE_BYTES) /* TODO: change name? */
+#define $(C_NS)_EDDSA_SIGNATURE_BYTES ($(C_NS)_EDDSA_PUBLIC_BYTES + $(C_NS)_EDDSA_PRIVATE_BYTES) /* TODO: change name? */
 
 /** Number of bytes in an x$(gf_shortname) public key */
 #define X$(gf_shortname)_PUBLIC_BYTES $((gf_bits-1)/8 + 1)
@@ -424,6 +424,29 @@ void $(c_ns)_x_base_scalarmul (
 void $(c_ns)_eddsa_derive_public_key (
     uint8_t pubkey[$(C_NS)_EDDSA_PUBLIC_BYTES],
     const uint8_t privkey[$(C_NS)_EDDSA_PRIVATE_BYTES]
+) API_VIS NONNULL NOINLINE;
+    
+/**
+ * @brief EdDSA signing.
+ *
+ * @param [out] The signature.
+ * @param [in] privkey The private key.
+ * @param [in] pubkey The public key.
+ * @param [in] context A "context" for this signature of up to 255 bytes.
+ * @param [in] context_len Length of the context.
+ * @param [in] message The message to sign.
+ * @param [in] message_len The length of the message.
+ * @param [in] prehashed Nonzero if the message is actually the hash of something you want to sign.
+ */  
+void $(c_ns)_eddsa_sign (
+    uint8_t signature[$(C_NS)_EDDSA_SIGNATURE_BYTES],
+    const uint8_t privkey[$(C_NS)_EDDSA_PRIVATE_BYTES],
+    const uint8_t pubkey[$(C_NS)_EDDSA_PUBLIC_BYTES],
+    const uint8_t *context,
+    uint8_t context_len,
+    const uint8_t *message,
+    size_t message_len,
+    uint8_t prehashed
 ) API_VIS NONNULL NOINLINE;
 
 /**

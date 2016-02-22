@@ -456,7 +456,7 @@ static void test_cfrg_crypto() {
     }
 }
 
-static const Block eddsa_sk, eddsa_pk;
+static const Block eddsa_sk, eddsa_pk, eddsa_sig0;
 
 static void test_cfrg_vectors() {
     Test test("CFRG test vectors");
@@ -464,8 +464,6 @@ static void test_cfrg_vectors() {
     SecureBuffer u = DhLadder::base_point();
     
     int the_ntests = (NTESTS < 1000000) ? 1000 : 1000000;
-    
-
     
     /* EdDSA */
     if (eddsa_sk.size()) {
@@ -477,7 +475,19 @@ static void test_cfrg_vectors() {
             for (unsigned i=0; i<eddsa_pk.size(); i++) printf("%02x", eddsa_pk[i]);
             printf("\n    Incorrect: ");
 
-            for (unsigned i=0; i<eddsa_pk.size(); i++) printf("%02x", eddsa_pk2[i]);
+            for (unsigned i=0; i<eddsa_pk2.size(); i++) printf("%02x", eddsa_pk2[i]);
+            printf("\n");
+        }
+        SecureBuffer sig = EdDSA::sign(eddsa_sk,eddsa_pk,Block(NULL,0),Block(NULL,0));
+
+        if (!memeq(SecureBuffer(eddsa_sig0),sig)) {
+            test.fail();
+            printf("    EdDSA vectors disagree.");
+            printf("\n    Correct:   ");
+            for (unsigned i=0; i<eddsa_sig0.size(); i++) printf("%02x", eddsa_sig0[i]);
+            printf("\n    Incorrect: ");
+
+            for (unsigned i=0; i<sig.size(); i++) printf("%02x", sig[i]);
             printf("\n");
         }
     }
@@ -619,15 +629,33 @@ const uint8_t ed448_eddsa_pk[57] = {
     0xd1,0xfa,0x1a,0xbe,0xaf,0xe8,0x25,0x61,
     0x80
 };
+const uint8_t ed448_eddsa_sig0[114] = {
+    0x53,0x3a,0x37,0xf6,0xbb,0xe4,0x57,0x25,
+    0x1f,0x02,0x3c,0x0d,0x88,0xf9,0x76,0xae,
+    0x2d,0xfb,0x50,0x4a,0x84,0x3e,0x34,0xd2,
+    0x07,0x4f,0xd8,0x23,0xd4,0x1a,0x59,0x1f,
+    0x2b,0x23,0x3f,0x03,0x4f,0x62,0x82,0x81,
+    0xf2,0xfd,0x7a,0x22,0xdd,0xd4,0x7d,0x78,
+    0x28,0xc5,0x9b,0xd0,0xa2,0x1b,0xfd,0x39, 
+    0x80,0xff,0x0d,0x20,0x28,0xd4,0xb1,0x8a,
+    0x9d,0xf6,0x3e,0x00,0x6c,0x5d,0x1c,0x2d,
+    0x34,0x5b,0x92,0x5d,0x8d,0xc0,0x0b,0x41,
+    0x04,0x85,0x2d,0xb9,0x9a,0xc5,0xc7,0xcd,
+    0xda,0x85,0x30,0xa1,0x13,0xa0,0xf4,0xdb,
+    0xb6,0x11,0x49,0xf0,0x5a,0x73,0x63,0x26,
+    0x8c,0x71,0xd9,0x58,0x08,0xff,0x2e,0x65,
+    0x26,0x00
+};
 template<> const Block Tests<Ed448Goldilocks>::eddsa_sk(ed448_eddsa_sk,57);
 template<> const Block Tests<Ed448Goldilocks>::eddsa_pk(ed448_eddsa_pk,57);
+template<> const Block Tests<Ed448Goldilocks>::eddsa_sig0(ed448_eddsa_sig0,114);
 
 template<> const Block Tests<IsoEd25519>::eddsa_sk(NULL,0); /* TODO */
 template<> const Block Tests<IsoEd25519>::eddsa_pk(NULL,0); /* TODO */
+template<> const Block Tests<IsoEd25519>::eddsa_sig0(NULL,0); /* TODO */
 
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
-    
     run_for_all_curves<Tests>();
     if (passing) printf("Passed all tests.\n");
     return passing ? 0 : 1;

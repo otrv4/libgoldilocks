@@ -658,12 +658,37 @@ public:
     /** The size of a private key */
     static const size_t PRIVATE_BYTES = $(C_NS)_EDDSA_PRIVATE_BYTES;
     
+    /** The size of a private key */
+    static const size_t SIGNATURE_BYTES = $(C_NS)_EDDSA_SIGNATURE_BYTES;
+    
     /* TODO: make into a nice class.  Change name.  Possibly move to another include file. */
     static inline SecureBuffer generate_key (
-        const FixedBlock<PRIVATE_BYTES> &secret
+        const FixedBlock<PRIVATE_BYTES> &priv
     ) {
         SecureBuffer out(PUBLIC_BYTES);
-        $(c_ns)_eddsa_derive_public_key(out.data(), secret.data());
+        $(c_ns)_eddsa_derive_public_key(out.data(), priv.data());
+        return out;
+    }
+    
+    static inline SecureBuffer sign (
+        const FixedBlock<PRIVATE_BYTES> &priv,
+        const FixedBlock<PUBLIC_BYTES> &pub,
+        const Block &context,
+        const Block &message,
+        bool prehashed = false
+    ) throw(LengthException) {
+        if (context.size() > 255) { throw LengthException(); }
+        SecureBuffer out(SIGNATURE_BYTES);
+        $(c_ns)_eddsa_sign (
+            out.data(),
+            priv.data(),
+            pub.data(),
+            context.data(),
+            context.size(),
+            message.data(),
+            message.size(),
+            prehashed
+        );
         return out;
     }
 };
