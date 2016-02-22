@@ -287,7 +287,7 @@ public:
     */
     inline explicit Point(const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE)
         throw(CryptoException) {
-        if (DECAF_SUCCESS != decode(*this,buffer,allow_identity)) {
+        if (DECAF_SUCCESS != decode(buffer,allow_identity)) {
             throw CryptoException();
         }
     }
@@ -300,10 +300,34 @@ public:
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point,
      * or was the identity and allow_identity was DECAF_FALSE. Contents of the buffer are undefined.
      */
-    static inline decaf_error_t WARN_UNUSED decode (
-        Point &p, const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE
+    inline decaf_error_t WARN_UNUSED decode (
+        const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE
     ) NOEXCEPT {
-        return $(c_ns)_point_decode(p.p,buffer.data(),allow_identity);
+        return $(c_ns)_point_decode(p,buffer.data(),allow_identity);
+    }
+
+    /**
+     * Initialize from C++ fixed-length byte string, like EdDSA.
+     * The all-zero string maps to the identity.
+     *
+     * @retval DECAF_SUCCESS the string was successfully decoded.
+     * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point.
+     * Contents of the point are undefined.
+     * TODO: rename to noexcept?
+     */
+    inline decaf_error_t WARN_UNUSED decode_like_eddsa (
+        const FixedBlock<$(C_NS)_EDDSA_PUBLIC_BYTES> &buffer
+    ) NOEXCEPT {
+        return $(c_ns)_point_decode_like_eddsa(p,buffer.data());
+    }
+
+    /**
+     * Encode like EdDSA.  FIXME: and multiply by the cofactor...
+     */
+    inline SecureBuffer encode_like_eddsa() const {
+        SecureBuffer ret($(C_NS)_EDDSA_PUBLIC_BYTES);
+        $(c_ns)_point_encode_like_eddsa(ret.data(),p);
+        return ret;
     }
 
     /**
@@ -649,8 +673,8 @@ public:
     }
 };
 
-
-struct EdDSA {
+    
+struct EdDSA { /* TODO: make into a utility class.  Possibly move to another include file. */
 public:
     /** The size of a public key */
     static const size_t PUBLIC_BYTES = $(C_NS)_EDDSA_PUBLIC_BYTES;
@@ -661,7 +685,6 @@ public:
     /** The size of a private key */
     static const size_t SIGNATURE_BYTES = $(C_NS)_EDDSA_SIGNATURE_BYTES;
     
-    /* TODO: make into a nice class.  Change name.  Possibly move to another include file. */
     static inline SecureBuffer generate_key (
         const FixedBlock<PRIVATE_BYTES> &priv
     ) {
@@ -690,6 +713,38 @@ public:
             prehashed
         );
         return out;
+    }
+    
+    static inline decaf_error_t WARN_UNUSED verify_noexcept (
+        const FixedBlock<SIGNATURE_BYTES> &sig,
+        const FixedBlock<PUBLIC_BYTES> &pub,
+        const Block &context,
+        const Block &message,
+        bool prehashed = false
+    ) {
+        if (context.size() > 255) return DECAF_FAILURE;
+        return $(c_ns)_eddsa_verify (
+            sig.data(),
+            pub.data(),
+            context.data(),
+            context.size(),
+            message.data(),
+            message.size(),
+            prehashed
+        );
+    }
+    
+    static inline void verify (
+        const FixedBlock<SIGNATURE_BYTES> &sig,
+        const FixedBlock<PUBLIC_BYTES> &pub,
+        const Block &context,
+        const Block &message,
+        bool prehashed = false
+    ) throw(LengthException,CryptoException) {
+        if (context.size() > 255) { throw LengthException(); }
+        if (DECAF_SUCCESS != verify_noexcept( sig, pub, context, message, prehashed )) {
+            throw CryptoException();
+        }
     }
 };
 

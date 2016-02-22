@@ -394,6 +394,16 @@ static void test_ec() {
         );
             
         point_check(test,p,q,r,x,0,Point(x.direct_scalarmul(p.serialize())),x*p,"direct mul");
+        
+        q=p;
+        for (int j=1; j<Group::REMOVED_COFACTOR; j<<=1) q = q.times_two();
+        decaf_error_t error = r.decode_like_eddsa(p.encode_like_eddsa());
+        if (error != DECAF_SUCCESS) {
+            test.fail();
+            printf("    Decode like EdDSA failed.");
+        }
+        point_check(test,-q,q,r,0,0,q,r,"Encode like EdDSA round-trip");
+        
     }
 }
 
@@ -515,12 +525,39 @@ static void test_cfrg_vectors() {
     }
 }
 
+static void test_eddsa() {
+    Test test("EdDSA");
+    SpongeRng rng(Block("test_cfrg_crypto"),SpongeRng::DETERMINISTIC);
+    
+    for (int i=0; i<NTESTS && test.passing_now; i++) {
+        
+        FixedArrayBuffer<EdDSA::PRIVATE_BYTES> priv(rng);
+        SecureBuffer pub = EdDSA::generate_key(priv);
+        
+        SecureBuffer message(i);
+        rng.read(message);
+        
+        SecureBuffer context(i%256);
+        rng.read(message);
+        
+        SecureBuffer sig = EdDSA::sign(priv,pub,context,message,i%2); 
+        
+        try {
+            EdDSA::verify(sig,pub,context,message,i%2); 
+        } catch(CryptoException) {
+            test.fail();
+            printf("    Signature validation failed on sig %d\n", i);
+        }    
+    }
+    
+}
 
 static void run() {
     printf("Testing %s:\n",Group::name());
     test_arithmetic();
     test_elligator();
     test_ec();
+    test_eddsa();
     test_cfrg_crypto();
     test_cfrg_vectors();
     test_crypto();

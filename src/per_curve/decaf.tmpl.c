@@ -1067,18 +1067,17 @@ void API_NS(point_encode_like_eddsa) (
         gf u;
         gf_sqr ( x, p->x );
         gf_sqr ( t, p->y );
-        gf_add( u, x, t ); // x^2 + y^2
+        gf_add( u, x, t );
         gf_add( z, p->y, p->x );
-        gf_sqr ( y, z); // (x+y)^2
-        gf_sub ( y, y, u ); // 2xy
-        gf_sub ( z, t, x ); // y^2 - x^2
-        
-        gf_sqr ( x, p->z ); // z^2
-        gf_add ( t, x, x); // 2z^2
-        gf_sub ( t, t, z); // 2z^2 - y^2 + x^2
-        gf_mul ( x, t, y ); // (2z^2 - y^2 + x^2)(2xy)
-        gf_mul ( y, z, u ); // (y^2 - x^2)(x^2 + y^2)
-        gf_mul ( z, u, t ); // (x^2 + y^2)(2z^2 - y^2 + x^2)
+        gf_sqr ( y, z);
+        gf_sub ( y, y, u );
+        gf_sub ( z, t, x );
+        gf_sqr ( x, p->z );
+        gf_add ( t, x, x); 
+        gf_sub ( t, t, z);
+        gf_mul ( x, t, y );
+        gf_mul ( y, z, u );
+        gf_mul ( z, u, t );
         decaf_bzero(t,sizeof(u));
     }
 #endif
@@ -1090,12 +1089,74 @@ void API_NS(point_encode_like_eddsa) (
     /* Encode */
     enc[$(C_NS)_EDDSA_PRIVATE_BYTES-1] = 0;
     gf_serialize(enc, x, 1);
-    enc[$(C_NS)_EDDSA_PRIVATE_BYTES-1] |= 0x80 &~ gf_lobit(t);
+    enc[$(C_NS)_EDDSA_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
 
     decaf_bzero(x,sizeof(x));
     decaf_bzero(y,sizeof(y));
     decaf_bzero(z,sizeof(z));
     decaf_bzero(t,sizeof(t));
+}
+
+
+decaf_error_t API_NS(point_decode_like_eddsa) (
+    point_t p,
+    const uint8_t enc[$(C_NS)_EDDSA_PUBLIC_BYTES]
+) {
+    uint8_t enc2[$(C_NS)_EDDSA_PUBLIC_BYTES];
+    memcpy(enc2,enc,sizeof(enc2));
+
+    mask_t low = ~word_is_zero(enc2[$(C_NS)_EDDSA_PRIVATE_BYTES-1] & 0x80);
+    enc2[$(C_NS)_EDDSA_PRIVATE_BYTES-1] &= ~0x80;
+    
+    mask_t succ = DECAF_TRUE;
+#if $(gf_bits % 8) == 0
+    succ = word_is_zero(enc2[$(C_NS)_EDDSA_PRIVATE_BYTES-1]);
+#endif
+    
+    succ &= gf_deserialize(p->y, enc2, 1);
+    gf_sqr(p->z,p->y);
+    gf_mulw(p->t,p->z,EDWARDS_D);
+    gf_sub(p->z,ONE,p->z); /* 1-y^2 */
+    gf_sub(p->t,ONE,p->t); /* 1-dy^2 */
+    gf_mul(p->x,p->z,p->t);
+    succ &= gf_isr(p->t,p->x); /* 1/sqrt((1-y^2)(1-dy^2)) */
+    gf_mul(p->x,p->t,p->z); /* sqrt((1-y^2) / (1-dy^2)) */
+    gf_cond_neg(p->x,gf_lobit(p->x)^low);
+    gf_copy(p->z,ONE);
+#if IMAGINE_TWIST
+    {
+        gf_mul(p->t,p->x,SQRT_MINUS_ONE);
+        gf_copy(p->x,p->t);
+        point_double_internal(p,p,0);
+    }
+#else
+    {
+        /* 4-isogeny */
+        gf a, b, c, d;
+        gf_sqr ( c, p->x );
+        gf_sqr ( a, p->y );
+        gf_add ( d, c, a );
+        gf_add ( p->t, p->y, p->x );
+        gf_sqr ( b, p->t );
+        gf_sub ( b, b, d );
+        gf_sub ( p->t, a, c );
+        gf_sqr ( p->x, p->z );
+        gf_add ( p->z, p->x, p->x );
+        gf_sub ( a, p->z, d );
+        gf_mul ( p->x, a, b );
+        gf_mul ( p->z, p->t, a );
+        gf_mul ( p->y, p->t, d );
+        gf_mul ( p->t, b, d );
+        decaf_bzero(a,sizeof(a));
+        decaf_bzero(b,sizeof(b));
+        decaf_bzero(c,sizeof(c));
+        decaf_bzero(d,sizeof(d));
+    }
+#endif
+    
+    decaf_bzero(enc2,sizeof(enc2));
+    assert(API_NS(point_valid)(p) || ~succ);
+    return decaf_succeed_if(succ);
 }
 
 decaf_error_t API_NS(x_direct_scalarmul) (
