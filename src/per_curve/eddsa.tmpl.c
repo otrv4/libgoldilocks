@@ -11,12 +11,12 @@
 #define API_NAME "$(c_ns)"
 #define API_NS(_id) $(c_ns)_##_id
 
-#define hash_ctx_t shake256_ctx_t
-#define hash_init shake256_init
-#define hash_update shake256_update
-#define hash_final shake256_final
-#define hash_destroy shake256_destroy
-#define hash_hash shake256_hash
+#define hash_ctx_t   $(eddsa_hash)_ctx_t
+#define hash_init    $(eddsa_hash)_init
+#define hash_update  $(eddsa_hash)_update
+#define hash_final   $(eddsa_hash)_final
+#define hash_destroy $(eddsa_hash)_destroy
+#define hash_hash    $(eddsa_hash)_hash
 
 #define SUPPORTS_CONTEXTS $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
 
@@ -37,13 +37,21 @@ static void hash_init_with_dom(
     const uint8_t *context,
     uint8_t context_len
 ) {
-    const char *domS = "SigEd448";
-    const uint8_t dom[2] = {1+word_is_zero(prehashed), context_len};
-    
     hash_init(hash);
+    
+#if SUPPORTS_CONTEXTS
+    const char *domS = "$(eddsa_dom)";
+    const uint8_t dom[2] = {1+word_is_zero(prehashed), context_len};
     hash_update(hash,(const unsigned char *)domS, strlen(domS));
     hash_update(hash,dom,2);
     hash_update(hash,context,context_len);
+#else
+    (void)prehashed;
+    (void)context;
+    assert(context==NULL);
+    (void)context_len;
+    assert(context_len == 0);
+#endif
 }
 
 void API_NS(eddsa_derive_public_key) (

@@ -35,8 +35,9 @@ curve_data = {
         "wnaf":wnaf_config(5,3),
         "window_bits":4,
         
-        "eddsa_hash": "sha512",
-        "eddsa_supports_contexts": 0
+        "eddsa_hash": "sha3_512", # TODO: no, actually it's SHA2-512
+        "eddsa_supports_contexts": 0,
+        "eddsa_dom": ""
     },
     "ed448goldilocks" : {
         "name" : "Ed448-Goldilocks",
@@ -49,7 +50,9 @@ curve_data = {
         
         "combs":comb_config(5,5,18),
         "wnaf":wnaf_config(5,3),
-        "window_bits":5
+        "window_bits":5,
+        
+        "eddsa_dom":"SigEd448"
     }
 }
 
@@ -106,7 +109,7 @@ for curve,data in curve_data.iteritems():
         data["iso_to"] = data["name"]
         
     if "eddsa_hash" not in data:
-        data["edddsa"] = "sha512"
+        data["eddsa_hash"] = "shake256"
         
     if "eddsa_supports_contexts" not in data:
         data["eddsa_supports_contexts"] = 1

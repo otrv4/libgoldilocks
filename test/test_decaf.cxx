@@ -564,8 +564,6 @@ static void run() {
     printf("\n");
 }
 
-
-
 }; /* template<GroupId GROUP> struct Tests */
 
 /* X25519, X448 test vectors */
