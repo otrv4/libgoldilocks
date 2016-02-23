@@ -33,7 +33,10 @@ curve_data = {
         
         "combs":comb_config(3,5,17),
         "wnaf":wnaf_config(5,3),
-        "window_bits":4
+        "window_bits":4,
+        
+        "eddsa_hash": "sha512",
+        "eddsa_supports_contexts": 0
     },
     "ed448goldilocks" : {
         "name" : "Ed448-Goldilocks",
@@ -101,6 +104,12 @@ for curve,data in curve_data.iteritems():
         
     if "iso_to" not in data:
         data["iso_to"] = data["name"]
+        
+    if "eddsa_hash" not in data:
+        data["edddsa"] = "sha512"
+        
+    if "eddsa_supports_contexts" not in data:
+        data["eddsa_supports_contexts"] = 1
     
     if "cxx_ns" not in data:
         data["cxx_ns"] = data["name"].replace("-","")

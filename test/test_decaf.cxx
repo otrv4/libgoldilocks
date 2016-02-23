@@ -488,7 +488,7 @@ static void test_cfrg_vectors() {
             for (unsigned i=0; i<eddsa_pk2.size(); i++) printf("%02x", eddsa_pk2[i]);
             printf("\n");
         }
-        SecureBuffer sig = EdDSA::sign(eddsa_sk,eddsa_pk,Block(NULL,0),Block(NULL,0));
+        SecureBuffer sig = EdDSA::sign(eddsa_sk,eddsa_pk,Block(NULL,0));
 
         if (!memeq(SecureBuffer(eddsa_sig0),sig)) {
             test.fail();
@@ -527,7 +527,7 @@ static void test_cfrg_vectors() {
 
 static void test_eddsa() {
     Test test("EdDSA");
-    SpongeRng rng(Block("test_cfrg_crypto"),SpongeRng::DETERMINISTIC);
+    SpongeRng rng(Block("test_eddsa"),SpongeRng::DETERMINISTIC);
     
     for (int i=0; i<NTESTS && test.passing_now; i++) {
         
@@ -537,13 +537,13 @@ static void test_eddsa() {
         SecureBuffer message(i);
         rng.read(message);
         
-        SecureBuffer context(i%256);
+        SecureBuffer context(EdDSA::SUPPORTS_CONTEXTS ? i%256 : 0);
         rng.read(message);
         
-        SecureBuffer sig = EdDSA::sign(priv,pub,context,message,i%2); 
+        SecureBuffer sig = EdDSA::sign(priv,pub,message,i%2,context); 
         
         try {
-            EdDSA::verify(sig,pub,context,message,i%2); 
+            EdDSA::verify(sig,pub,message,i%2,context); 
         } catch(CryptoException) {
             test.fail();
             printf("    Signature validation failed on sig %d\n", i);

@@ -21,6 +21,7 @@
 #include <string.h> /* for memcpy */
 
 #include <decaf/decaf_$(gf_bits).h>
+#include <decaf/eddsa_$(gf_bits).h> /* TODO: move eddsa to another file? */
 #include <decaf/secure_buffer.hxx>
 #include <string>
 #include <sys/types.h>
@@ -685,6 +686,9 @@ public:
     /** The size of a private key */
     static const size_t SIGNATURE_BYTES = $(C_NS)_EDDSA_SIGNATURE_BYTES;
     
+    /** Do we support contexts for signatures?  If not, they must always be NULL */
+    static const bool SUPPORTS_CONTEXTS = $(C_NS)_EDDSA_SUPPORTS_CONTEXTS;
+    
     static inline SecureBuffer generate_key (
         const FixedBlock<PRIVATE_BYTES> &priv
     ) {
@@ -696,21 +700,28 @@ public:
     static inline SecureBuffer sign (
         const FixedBlock<PRIVATE_BYTES> &priv,
         const FixedBlock<PUBLIC_BYTES> &pub,
-        const Block &context,
         const Block &message,
-        bool prehashed = false
+        bool prehashed = false,
+        const Block &context = Block(NULL,0)
     ) throw(LengthException) {
-        if (context.size() > 255) { throw LengthException(); }
+        if (context.size() > 255
+            || (context.size() != 0 && !SUPPORTS_CONTEXTS)
+        ) {
+            throw LengthException();
+        }
+        
         SecureBuffer out(SIGNATURE_BYTES);
         $(c_ns)_eddsa_sign (
             out.data(),
             priv.data(),
             pub.data(),
-            context.data(),
-            context.size(),
             message.data(),
             message.size(),
             prehashed
+#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+            , context.data(),
+            context.size()
+#endif
         );
         return out;
     }
@@ -718,31 +729,43 @@ public:
     static inline decaf_error_t WARN_UNUSED verify_noexcept (
         const FixedBlock<SIGNATURE_BYTES> &sig,
         const FixedBlock<PUBLIC_BYTES> &pub,
-        const Block &context,
         const Block &message,
-        bool prehashed = false
+        bool prehashed = false,
+        const Block &context = Block(NULL,0)
     ) {
-        if (context.size() > 255) return DECAF_FAILURE;
+        if (context.size() > 255
+            || (context.size() != 0 && !SUPPORTS_CONTEXTS)
+        ) {
+            return DECAF_FAILURE;
+        }
+        
         return $(c_ns)_eddsa_verify (
             sig.data(),
             pub.data(),
-            context.data(),
-            context.size(),
             message.data(),
             message.size(),
             prehashed
+#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+            , context.data(),
+            context.size()
+#endif
         );
     }
     
     static inline void verify (
         const FixedBlock<SIGNATURE_BYTES> &sig,
         const FixedBlock<PUBLIC_BYTES> &pub,
-        const Block &context,
         const Block &message,
-        bool prehashed = false
+        bool prehashed = false,
+        const Block &context = Block(NULL,0)
     ) throw(LengthException,CryptoException) {
-        if (context.size() > 255) { throw LengthException(); }
-        if (DECAF_SUCCESS != verify_noexcept( sig, pub, context, message, prehashed )) {
+        if (context.size() > 255
+            || (context.size() != 0 && !SUPPORTS_CONTEXTS)
+        ) {
+            throw LengthException();
+        }
+        
+        if (DECAF_SUCCESS != verify_noexcept( sig, pub, message, prehashed, context )) {
             throw CryptoException();
         }
     }

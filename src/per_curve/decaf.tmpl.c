@@ -5,6 +5,7 @@
 #include "field.h"
 
 #include <decaf.h>
+#include <decaf/eddsa_$(gf_bits).h>
 
 /* Template stuff */
 #define API_NS(_id) $(c_ns)_##_id
