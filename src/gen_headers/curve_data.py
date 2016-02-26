@@ -35,7 +35,7 @@ curve_data = {
         "wnaf":wnaf_config(5,3),
         "window_bits":4,
         
-        "eddsa_hash": "sha3_512", # TODO: no, actually it's SHA2-512
+        "eddsa_hash": "sha512",
         "eddsa_supports_contexts": 0,
         "eddsa_dom": ""
     },

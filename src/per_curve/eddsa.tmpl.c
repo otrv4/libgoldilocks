@@ -4,7 +4,8 @@
  */
 
 #include <decaf/eddsa_$(gf_bits).h>
-#include "decaf/shake.h"
+#include <decaf/shake.h>
+#include <decaf/sha512.h>
 #include "word.h"
 #include <string.h>
 
@@ -73,8 +74,10 @@ void API_NS(eddsa_derive_public_key) (
     API_NS(scalar_decode_long)(secret_scalar, secret_scalar_ser, sizeof(secret_scalar_ser));
     /* TODO: write documentation for why (due to isogenies) this needs to be quartered */
     API_NS(scalar_sub)(secret_scalar,API_NS(scalar_zero),secret_scalar);
-    API_NS(scalar_halve)(secret_scalar,secret_scalar);
-    API_NS(scalar_halve)(secret_scalar,secret_scalar);
+    
+    for (unsigned int c = 1; c < $(cofactor); c <<= 1) {
+        API_NS(scalar_halve)(secret_scalar,secret_scalar);
+    }
     
     API_NS(point_t) p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),secret_scalar);
@@ -142,9 +145,12 @@ void API_NS(eddsa_sign) (
     {
         /* Scalarmul to create the nonce-point */
         API_NS(scalar_t) nonce_scalar_2;
-        API_NS(scalar_halve)(nonce_scalar_2, nonce_scalar);
-        API_NS(scalar_halve)(nonce_scalar_2, nonce_scalar_2);
-        API_NS(scalar_sub)(nonce_scalar_2,API_NS(scalar_zero),nonce_scalar_2);
+        API_NS(scalar_sub)(nonce_scalar_2,API_NS(scalar_zero),nonce_scalar);
+        
+        for (unsigned int c = 1; c < $(cofactor); c <<= 1) {
+            API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar_2);
+        }
+        
         API_NS(point_t) p;
         API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),nonce_scalar_2);
         API_NS(point_encode_like_eddsa)(nonce_point, p);
