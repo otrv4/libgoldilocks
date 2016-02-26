@@ -37,7 +37,8 @@ curve_data = {
         
         "eddsa_hash": "sha512",
         "eddsa_supports_contexts": 0,
-        "eddsa_dom": ""
+        "eddsa_dom": "",
+        "eddsa_sigma_iso": 1
     },
     "ed448goldilocks" : {
         "name" : "Ed448-Goldilocks",
@@ -116,6 +117,9 @@ for curve,data in curve_data.iteritems():
     
     if "cxx_ns" not in data:
         data["cxx_ns"] = data["name"].replace("-","")
+    
+    if "eddsa_sigma_iso" not in data:
+        data["eddsa_sigma_iso"] = 0
 
     if "imagine_twist" not in data:
         if data["modulus"]%4 == 3: data["imagine_twist"] = 0

@@ -20,16 +20,22 @@
 #define hash_hash    $(eddsa_hash)_hash
 
 #define SUPPORTS_CONTEXTS $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+#define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
+#define COFACTOR $(cofactor)
 
 static void clamp(
     uint8_t secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES]
 ) {
     /* Blarg */
-    secret_scalar_ser[0] &= -$(cofactor);
+    secret_scalar_ser[0] &= -COFACTOR;
     uint8_t hibit = (1<<$(gf_bits % 8))>>1;
-    secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES - 1] &= -hibit;
-    secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES - 1] |= hibit;
-    if (hibit == 0) secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES - 2] |= 0x80;
+    if (hibit == 0) {
+        secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES - 1] = 0;
+        secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES - 2] |= 0x80;
+    } else {
+        secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES - 1] &= hibit-1;
+        secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES - 1] |= hibit;
+    }
 }
 
 static void hash_init_with_dom(
@@ -75,7 +81,7 @@ void API_NS(eddsa_derive_public_key) (
     /* TODO: write documentation for why (due to isogenies) this needs to be quartered */
     API_NS(scalar_sub)(secret_scalar,API_NS(scalar_zero),secret_scalar);
     
-    for (unsigned int c = 1; c < $(cofactor); c <<= 1) {
+    for (unsigned int c = 1; c < COFACTOR/(1+EDDSA_USE_SIGMA_ISOGENY); c <<= 1) {
         API_NS(scalar_halve)(secret_scalar,secret_scalar);
     }
     
@@ -146,8 +152,8 @@ void API_NS(eddsa_sign) (
         /* Scalarmul to create the nonce-point */
         API_NS(scalar_t) nonce_scalar_2;
         API_NS(scalar_sub)(nonce_scalar_2,API_NS(scalar_zero),nonce_scalar);
-        
-        for (unsigned int c = 1; c < $(cofactor); c <<= 1) {
+    
+        for (unsigned int c = 1; c < COFACTOR/(1+EDDSA_USE_SIGMA_ISOGENY); c <<= 1) {
             API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar_2);
         }
         
@@ -230,6 +236,10 @@ decaf_error_t API_NS(eddsa_verify) (
         $(C_NS)_EDDSA_PRIVATE_BYTES
     );
     API_NS(scalar_sub)(response_scalar, API_NS(scalar_zero), response_scalar); /* TODO because nega-base point */
+#if EDDSA_USE_SIGMA_ISOGENY
+    API_NS(scalar_add)(response_scalar,response_scalar,response_scalar);
+#endif
+    
     
     /* pk_point = -c(x(P)) + (cx + k)G = kG */
     API_NS(base_double_scalarmul_non_secret)(

@@ -26,6 +26,8 @@
 #define DECAF_WNAF_FIXED_TABLE_BITS $(wnaf.fixed)
 #define DECAF_WNAF_VAR_TABLE_BITS $(wnaf.var)
 
+#define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
+
 static const int EDWARDS_D = $(d);
 static const scalar_t point_scalarmul_adjustment = {{{
     $(ser((2**(scalar_bits-1+window_bits - ((scalar_bits-1)%window_bits)) - 1) % q,64,"SC_LIMB"))
@@ -35,7 +37,7 @@ static const scalar_t point_scalarmul_adjustment = {{{
 
 const uint8_t API_NS(x_base_point)[X_SER_BYTES] = { $(ser(mont_base,8)) };
 
-#if COFACTOR==8
+#if COFACTOR==8 || EDDSA_USE_SIGMA_ISOGENY
     static const gf SQRT_ONE_MINUS_D = {FIELD_LITERAL(
         $(ser(msqrt(1-d,modulus),gf_lit_limb_bits) if cofactor == 8 else "/* NONE */")
     )};
@@ -1058,7 +1060,36 @@ void API_NS(point_encode_like_eddsa) (
 #else
     API_NS(point_copy)(q,p);
 #endif
-#if IMAGINE_TWIST
+    
+#if EDDSA_USE_SIGMA_ISOGENY
+    {
+        /* Use 4-isogeny like ed25519:
+         *   2*x*y*sqrt(d/a-1)/(ax^2 + y^2 - 2)
+         *   (y^2 - ax^2)/(y^2 + ax^2)
+         * with a = -1, d = -EDWARDS_D:
+         *   -2xysqrt(EDWARDS_D-1)/(2z^2-y^2+x^2)
+         *   (y^2+x^2)/(y^2-x^2)
+         */
+        gf u;
+        gf_sqr ( x, q->x ); // x^2
+        gf_sqr ( t, q->y ); // y^2
+        gf_add( u, x, t ); // x^2 + y^2
+        gf_add( z, q->y, q->x );
+        gf_sqr ( y, z);
+        gf_sub ( y, y, u ); // 2xy
+        gf_sub ( z, t, x ); // y^2 - x^2
+        gf_sqr ( x, q->z );
+        gf_add ( t, x, x);
+        gf_sub ( t, t, z);  // 2z^2 - y^2 + x^2
+        gf_mul ( x, y, z ); // 2xy(y^2-x^2)
+        gf_mul ( y, u, t ); // (x^2+y^2)(2z^2-y^2+x^2)
+        gf_mul ( u, z, t );
+        gf_copy( z, u );
+        gf_mul ( u, x, SQRT_ONE_MINUS_D );
+        gf_copy( x, u );
+        decaf_bzero(u,sizeof(u));
+    }
+#elif IMAGINE_TWIST
     {
         /* TODO: make sure cofactor is clear */
         API_NS(point_double)(q,q);
@@ -1083,7 +1114,7 @@ void API_NS(point_encode_like_eddsa) (
         gf_mul ( x, t, y );
         gf_mul ( y, z, u );
         gf_mul ( z, u, t );
-        decaf_bzero(t,sizeof(u));
+        decaf_bzero(u,sizeof(u));
     }
 #endif
     /* Affinize */
@@ -1120,16 +1151,56 @@ decaf_error_t API_NS(point_decode_like_eddsa) (
 #endif
     
     succ &= gf_deserialize(p->y, enc2, 1);
-    gf_sqr(p->z,p->y);
-    gf_mulw(p->t,p->z,EDWARDS_D);
-    gf_sub(p->z,ONE,p->z); /* 1-y^2 */
-    gf_sub(p->t,ONE,p->t); /* 1-dy^2 */
+
+    gf_sqr(p->x,p->y);
+    gf_sub(p->z,ONE,p->x); /* num = 1-y^2 */
+#if EDDSA_USE_SIGMA_ISOGENY
+    gf_mulw(p->t,p->z,EDWARDS_D); /* d-dy^2 */
+    gf_mulw(p->x,p->z,EDWARDS_D-1); /* num = (1-y^2)(d-1) */
+    gf_copy(p->z,p->x);
+#else
+    gf_mulw(p->t,p->x,EDWARDS_D); /* dy^2 */
+#endif
+    gf_sub(p->t,ONE,p->t); /* denom = 1-dy^2 or 1-d + dy^2 */
+    
     gf_mul(p->x,p->z,p->t);
-    succ &= gf_isr(p->t,p->x); /* 1/sqrt((1-y^2)(1-dy^2)) */
-    gf_mul(p->x,p->t,p->z); /* sqrt((1-y^2) / (1-dy^2)) */
+    succ &= gf_isr(p->t,p->x); /* 1/sqrt(num * denom) */
+    
+    gf_mul(p->x,p->t,p->z); /* sqrt(num / denom) */
     gf_cond_neg(p->x,gf_lobit(p->x)^low);
     gf_copy(p->z,ONE);
-#if IMAGINE_TWIST
+  
+#if EDDSA_USE_SIGMA_ISOGENY
+    {
+       /* Use 4-isogeny like ed25519:
+        *   2*x*y/sqrt(d/a-1)/(ax^2 + y^2 - 2)
+        *   (y^2 - ax^2)/(y^2 + ax^2)
+        * with a = -1, d = -EDWARDS_D:
+        *   -2xy/sqrt(EDWARDS_D-1)/(2z^2-y^2+x^2)
+        *   (y^2+x^2)/(y^2-x^2)
+        */
+        gf a, b, c, d;
+        gf_sqr ( c, p->x );
+        gf_sqr ( a, p->y );
+        gf_add ( d, c, a ); // x^2 + y^2
+        gf_add ( p->t, p->y, p->x );
+        gf_sqr ( b, p->t );
+        gf_sub ( b, b, d ); // 2xy
+        gf_sub ( p->t, a, c ); // y^2 - x^2
+        gf_sqr ( p->x, p->z );
+        gf_add ( p->z, p->x, p->x );
+        gf_sub ( a, p->z, p->t ); // 2z^2 - y^2 + x^2
+        gf_mul ( c, a, SQRT_ONE_MINUS_D );
+        gf_mul ( p->x, b, p->t); // (2xy)(y^2-x^2)
+        gf_mul ( p->z, p->t, c ); // (y^2-x^2)sd(2z^2 - y^2 + x^2)
+        gf_mul ( p->y, d, c ); // (y^2+x^2)sd(2z^2 - y^2 + x^2)
+        gf_mul ( p->t, d, b );
+        decaf_bzero(a,sizeof(a));
+        decaf_bzero(b,sizeof(b));
+        decaf_bzero(c,sizeof(c));
+        decaf_bzero(d,sizeof(d));
+    } 
+#elif IMAGINE_TWIST
     {
         gf_mul(p->t,p->x,SQRT_MINUS_ONE);
         gf_copy(p->x,p->t);

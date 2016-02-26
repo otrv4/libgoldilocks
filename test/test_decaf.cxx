@@ -402,7 +402,7 @@ static void test_ec() {
             test.fail();
             printf("    Decode like EdDSA failed.");
         }
-        point_check(test,-q,q,r,0,0,q,r,"Encode like EdDSA round-trip");
+        point_check(test,-q,q,r,i,0,q,r,"Encode like EdDSA round-trip");
         
     }
 }
@@ -714,6 +714,7 @@ template<> const Block Tests<IsoEd25519>::eddsa_sig0(ed25518_eddsa_sig0,64);
 
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
+    Tests<IsoEd25519>::test_cfrg_vectors();
     run_for_all_curves<Tests>();
     if (passing) printf("Passed all tests.\n");
     return passing ? 0 : 1;
