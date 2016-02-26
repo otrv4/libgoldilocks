@@ -294,6 +294,12 @@ static void cfrg() {
     FixedArrayBuffer<Group::DhLadder::PRIVATE_BYTES> s1(rng);
     for (Benchmark b("RFC 7748 keygen"); b.iter(); ) { Group::DhLadder::generate_key(s1); }
     for (Benchmark b("RFC 7748 shared secret"); b.iter(); ) { Group::DhLadder::shared_secret(base,s1); }
+
+    FixedArrayBuffer<Group::EdDSA::PRIVATE_BYTES> e1(rng);
+    SecureBuffer pk, sig;
+    for (Benchmark b("EdDSA keygen"); b.iter(); ) { pk = Group::EdDSA::generate_key(e1); }
+    for (Benchmark b("EdDSA sign"); b.iter(); ) { sig = Group::EdDSA::sign(e1,pk,Block(NULL,0)); }
+    for (Benchmark b("EdDSA verify"); b.iter(); ) { Group::EdDSA::verify(sig,pk,Block(NULL,0)); }
 }
 
 static void macro() {
