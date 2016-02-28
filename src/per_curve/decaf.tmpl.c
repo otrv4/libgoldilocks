@@ -1091,7 +1091,7 @@ void API_NS(point_encode_like_eddsa) (
     }
 #elif IMAGINE_TWIST
     {
-        /* TODO: make sure cofactor is clear */
+        API_NS(point_double)(q,q);
         API_NS(point_double)(q,q);
         gf_div_qnr(x, q->x);
         gf_copy(y, q->y);
@@ -1154,13 +1154,13 @@ decaf_error_t API_NS(point_decode_like_eddsa) (
 
     gf_sqr(p->x,p->y);
     gf_sub(p->z,ONE,p->x); /* num = 1-y^2 */
-#if EDDSA_USE_SIGMA_ISOGENY
-    gf_mulw(p->t,p->z,EDWARDS_D); /* d-dy^2 */
-    gf_mulw(p->x,p->z,EDWARDS_D-1); /* num = (1-y^2)(d-1) */
-    gf_copy(p->z,p->x);
-#else
-    gf_mulw(p->t,p->x,EDWARDS_D); /* dy^2 */
-#endif
+    #if EDDSA_USE_SIGMA_ISOGENY
+        gf_mulw(p->t,p->z,EDWARDS_D); /* d-dy^2 */
+        gf_mulw(p->x,p->z,EDWARDS_D-1); /* num = (1-y^2)(d-1) */
+        gf_copy(p->z,p->x);
+    #else
+        gf_mulw(p->t,p->x,EDWARDS_D); /* dy^2 */
+    #endif
     gf_sub(p->t,ONE,p->t); /* denom = 1-dy^2 or 1-d + dy^2 */
     
     gf_mul(p->x,p->z,p->t);
@@ -1170,13 +1170,16 @@ decaf_error_t API_NS(point_decode_like_eddsa) (
     gf_cond_neg(p->x,gf_lobit(p->x)^low);
     gf_copy(p->z,ONE);
   
-#if EDDSA_USE_SIGMA_ISOGENY
+    #if EDDSA_USE_SIGMA_ISOGENY
     {
        /* Use 4-isogeny like ed25519:
-        *   2*x*y/sqrt(d/a-1)/(ax^2 + y^2 - 2)
+        *   2*x*y/sqrt(1-d/a)/(ax^2 + y^2 - 2)
         *   (y^2 - ax^2)/(y^2 + ax^2)
+        * (MAGIC: above formula may be off by a factor of -a
+        * or something somewhere; check it for other a)
+        *
         * with a = -1, d = -EDWARDS_D:
-        *   -2xy/sqrt(EDWARDS_D-1)/(2z^2-y^2+x^2)
+        *   -2xy/sqrt(1-EDWARDS_D)/(2z^2-y^2+x^2)
         *   (y^2+x^2)/(y^2-x^2)
         */
         gf a, b, c, d;
@@ -1200,15 +1203,15 @@ decaf_error_t API_NS(point_decode_like_eddsa) (
         decaf_bzero(c,sizeof(c));
         decaf_bzero(d,sizeof(d));
     } 
-#elif IMAGINE_TWIST
+    #elif IMAGINE_TWIST
     {
         gf_mul(p->t,p->x,SQRT_MINUS_ONE);
         gf_copy(p->x,p->t);
-        point_double_internal(p,p,0);
+        gf_mul(p->t,p->x,p->y);
     }
-#else
+    #else
     {
-        /* 4-isogeny */
+        /* 4-isogeny 2xy/(y^2-ax^2), (y^2+ax^2)/(2-y^2-ax^2) */
         gf a, b, c, d;
         gf_sqr ( c, p->x );
         gf_sqr ( a, p->y );
@@ -1229,14 +1232,14 @@ decaf_error_t API_NS(point_decode_like_eddsa) (
         decaf_bzero(c,sizeof(c));
         decaf_bzero(d,sizeof(d));
     }
-#endif
+    #endif
     
     decaf_bzero(enc2,sizeof(enc2));
     assert(API_NS(point_valid)(p) || ~succ);
     return decaf_succeed_if(succ);
 }
 
-decaf_error_t API_NS(x_direct_scalarmul) (
+decaf_error_t decaf_x$(gf_shortname)_direct_scalarmul (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t base[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
@@ -1307,7 +1310,7 @@ decaf_error_t API_NS(x_direct_scalarmul) (
     return decaf_succeed_if(mask_to_bool(nz));
 }
 
-void API_NS(x_base_scalarmul) (
+void decaf_x$(gf_shortname)_base_scalarmul (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
 ) {
@@ -1335,18 +1338,8 @@ void API_NS(x_base_scalarmul) (
      * we pick up only a factor of 2 over Jacobi -> Montgomery. 
      */
     API_NS(scalar_halve)(the_scalar,the_scalar);
-#if COFACTOR==8
-    /* If the base point isn't in the prime-order subgroup (PERF:
-     * guarantee that it is?) then a 4-isogeny isn't necessarily
-     * enough to clear the cofactor.  So add another doubling.
-     */
-    API_NS(scalar_halve)(the_scalar,the_scalar);
-#endif
     point_t p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),the_scalar);
-#if COFACTOR==8
-    API_NS(point_double)(p,p);
-#endif
     
     /* Isogenize to Montgomery curve */
     gf_invert(p->t,p->x); /* 1/x */

@@ -7,13 +7,13 @@ extern "C" {
 #endif
 
 /** Number of bytes in an EdDSA public key. */
-#define $(C_NS)_EDDSA_PUBLIC_BYTES $((gf_bits)/8 + 1) /* TODO: change name? */
+#define $(C_NS)_EDDSA_PUBLIC_BYTES $((gf_bits)/8 + 1)
 
 /** Number of bytes in an EdDSA private key. */
-#define $(C_NS)_EDDSA_PRIVATE_BYTES $(C_NS)_EDDSA_PUBLIC_BYTES /* TODO: change name? */
+#define $(C_NS)_EDDSA_PRIVATE_BYTES $(C_NS)_EDDSA_PUBLIC_BYTES
 
 /** Number of bytes in an EdDSA private key. */
-#define $(C_NS)_EDDSA_SIGNATURE_BYTES ($(C_NS)_EDDSA_PUBLIC_BYTES + $(C_NS)_EDDSA_PRIVATE_BYTES) /* TODO: change name? */
+#define $(C_NS)_EDDSA_SIGNATURE_BYTES ($(C_NS)_EDDSA_PUBLIC_BYTES + $(C_NS)_EDDSA_PRIVATE_BYTES)
 
 /** Does EdDSA support contexts? */
 #define $(C_NS)_EDDSA_SUPPORTS_CONTEXTS $(eddsa_supports_contexts)

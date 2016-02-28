@@ -112,8 +112,6 @@ void API_NS(eddsa_sign) (
     const uint8_t *const context = NULL;
     const uint8_t context_len = 0;
 #endif
-    /* FIXME: of course, need a different hash for Curve25519 */
-    
     API_NS(scalar_t) secret_scalar;
     hash_ctx_t hash;
     {

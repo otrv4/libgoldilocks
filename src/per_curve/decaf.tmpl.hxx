@@ -314,12 +314,17 @@ public:
      * @retval DECAF_SUCCESS the string was successfully decoded.
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point.
      * Contents of the point are undefined.
-     * TODO: rename to noexcept?
      */
-    inline decaf_error_t WARN_UNUSED decode_like_eddsa (
+    inline decaf_error_t WARN_UNUSED decode_like_eddsa_noexcept (
         const FixedBlock<$(C_NS)_EDDSA_PUBLIC_BYTES> &buffer
     ) NOEXCEPT {
         return $(c_ns)_point_decode_like_eddsa(p,buffer.data());
+    }
+
+    inline void decode_like_eddsa (
+        const FixedBlock<$(C_NS)_EDDSA_PUBLIC_BYTES> &buffer
+    ) throw(CryptoException) {
+        if (DECAF_SUCCESS != decode_like_eddsa_noexcept(buffer)) throw(CryptoException());
     }
 
     /**
@@ -635,7 +640,7 @@ public:
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) throw(std::bad_alloc,CryptoException) {
         SecureBuffer out(PUBLIC_BYTES);
-        if (DECAF_SUCCESS != $(c_ns)_x_direct_scalarmul(out.data(), pk.data(), scalar.data())) {
+        if (DECAF_SUCCESS != decaf_x$(gf_shortname)_direct_scalarmul(out.data(), pk.data(), scalar.data())) {
             throw CryptoException();
         }
         return out;
@@ -648,7 +653,7 @@ public:
         const FixedBlock<PUBLIC_BYTES> &pk,
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) NOEXCEPT {
-       return $(c_ns)_x_direct_scalarmul(out.data(), pk.data(), scalar.data());
+       return decaf_x$(gf_shortname)_direct_scalarmul(out.data(), pk.data(), scalar.data());
     }
 
     /** Generate and return a public key; equivalent to shared_secret(base_point(),scalar)
@@ -658,7 +663,7 @@ public:
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) throw(std::bad_alloc) {
         SecureBuffer out(PUBLIC_BYTES);
-        $(c_ns)_x_base_scalarmul(out.data(), scalar.data());
+        decaf_x$(gf_shortname)_base_scalarmul(out.data(), scalar.data());
         return out;
     }
 
@@ -670,7 +675,7 @@ public:
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) NOEXCEPT {
-        $(c_ns)_x_base_scalarmul(out.data(), scalar.data());
+        decaf_x$(gf_shortname)_base_scalarmul(out.data(), scalar.data());
     }
 };
 
