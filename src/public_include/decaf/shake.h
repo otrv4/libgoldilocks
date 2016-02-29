@@ -77,12 +77,45 @@ void sha3_output (
 ) API_VIS;
 
 /**
+ * @brief Squeeze output data from a SHA3 or SHAKE hash context.
+ * This re-initializes the context to its starting parameters.
+ *
+ * @param [inout] sponge The context.
+ * @param [out] out The output data.
+ * @param [in] len The requested output data length in bytes.
+ */  
+void sha3_final (
+    keccak_sponge_t sponge,
+    uint8_t * __restrict__ out,
+    size_t len
+) API_VIS;
+
+/**
+ * @brief Reset the sponge to the empty string.
+ *
+ * @param [inout] sponge The context.
+ */  
+void sha3_reset (
+    keccak_sponge_t sponge
+) API_VIS;
+
+/**
  * @brief Return the default output length of the sponge construction,
  * for the purpose of C++ default operators.
  *
  * Returns n/8 for SHA3-n and 2n/8 for SHAKE-n.
  */  
 size_t sponge_default_output_bytes (
+    const keccak_sponge_t sponge /**< [inout] The context. */
+) API_VIS;
+
+/**
+ * @brief Return the default output length of the sponge construction,
+ * for the purpose of C++ default operators.
+ *
+ * Returns n/8 for SHA3-n and SIZE_MAX for SHAKE-n.
+ */  
+size_t sponge_max_output_bytes (
     const keccak_sponge_t sponge /**< [inout] The context. */
 ) API_VIS;
 

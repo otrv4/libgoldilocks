@@ -13,6 +13,7 @@
 #include <decaf/spongerng.hxx>
 #include <decaf/crypto.h>
 #include <decaf/crypto.hxx>
+#include <decaf/eddsa.hxx>
 #include <stdio.h>
 
 using namespace decaf;
@@ -56,7 +57,6 @@ template<typename Group> struct Tests {
 typedef typename Group::Scalar Scalar;
 typedef typename Group::Point Point;
 typedef typename Group::DhLadder DhLadder;
-typedef typename Group::EdDSA EdDSA;
 typedef typename Group::Precomputed Precomputed;
 
 static void print(const char *name, const Scalar &x) {
@@ -477,7 +477,8 @@ static void test_cfrg_vectors() {
     
     /* EdDSA */
     for (unsigned int t=0; eddsa_sk[t].size(); t++) {
-        SecureBuffer eddsa_pk2 = EdDSA::generate_key(eddsa_sk[t]);
+        typename EdDSA<Group>::PrivateKey priv(eddsa_sk[t]);
+        SecureBuffer eddsa_pk2 = priv.pub().serialize();
         if (!memeq(SecureBuffer(eddsa_pk[t]), eddsa_pk2)) {
             test.fail();
             printf("    EdDSA PK vectors disagree.");
@@ -489,10 +490,10 @@ static void test_cfrg_vectors() {
             printf("\n");
         }
         SecureBuffer sig;
-        if (EdDSA::SUPPORTS_CONTEXTS) {
-            sig = EdDSA::sign(eddsa_sk[t],eddsa_pk[t],eddsa_message[t],false,eddsa_context[t]);
+        if (priv.SUPPORTS_CONTEXTS) {
+            sig = priv.sign(eddsa_message[t],false,eddsa_context[t]);
         } else {
-            sig = EdDSA::sign(eddsa_sk[t],eddsa_pk[t],eddsa_message[t]);
+            sig = priv.sign(eddsa_message[t]);
         }
 
         if (!memeq(SecureBuffer(eddsa_sig[t]),sig)) {
@@ -536,19 +537,19 @@ static void test_eddsa() {
     
     for (int i=0; i<NTESTS && test.passing_now; i++) {
         
-        FixedArrayBuffer<EdDSA::PRIVATE_BYTES> priv(rng);
-        SecureBuffer pub = EdDSA::generate_key(priv);
+        typename EdDSA<Group>::PrivateKey priv(rng);
+        typename EdDSA<Group>::PublicKey pub(priv);
         
         SecureBuffer message(i);
         rng.read(message);
         
-        SecureBuffer context(EdDSA::SUPPORTS_CONTEXTS ? i%256 : 0);
+        SecureBuffer context(priv.SUPPORTS_CONTEXTS ? i%256 : 0);
         rng.read(message);
         
-        SecureBuffer sig = EdDSA::sign(priv,pub,message,i%2,context); 
+        SecureBuffer sig = priv.sign(message,i%2,context); 
         
         try {
-            EdDSA::verify(sig,pub,message,i%2,context); 
+            pub.verify(sig,message,i%2,context); 
         } catch(CryptoException) {
             test.fail();
             printf("    Signature validation failed on sig %d\n", i);

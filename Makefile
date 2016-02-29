@@ -170,7 +170,7 @@ LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/elligator.o $$(BU
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
 GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/decaf/decaf_$(3).h $(BUILD_INC)/decaf/decaf_$(3).hxx \
 		$(BUILD_INC)/decaf/crypto_$(3).h $(BUILD_INC)/decaf/crypto_$(3).hxx \
-		$(BUILD_INC)/decaf/eddsa_$(3).h
+		$(BUILD_INC)/decaf/eddsa_$(3).h $(BUILD_INC)/decaf/eddsa_$(3).hxx
 HEADERS_OF_$(1) = $$(HEADERS_OF_$(2)) $$(GLOBAL_HEADERS_OF_$(1))
 HEADERS += $$(GLOBAL_HEADERS_OF_$(1))
 

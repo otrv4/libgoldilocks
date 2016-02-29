@@ -57,7 +57,7 @@ typedef union {
 } kdomain_t[1];
 
 typedef struct kparams_s {
-    uint8_t position, flags, rate, startRound, pad, ratePad, maxOut, client;
+    uint8_t position, flags, rate, startRound, pad, ratePad, maxOut, client; /* client = maxOutRemaining for sha3 */
 } kparams_t[1];
 
 typedef struct keccak_sponge_s {
@@ -174,8 +174,8 @@ void sha3_output (
     assert(sponge->params->rate < sizeof(sponge->state));
     
     if (sponge->params->maxOut != 0xFF) {
-        assert(sponge->params->maxOut >= len);
-        sponge->params->maxOut -= len;
+        assert(sponge->params->client >= len);
+        sponge->params->client -= len;
     }
     
     switch (sponge->params->flags) {
@@ -208,6 +208,22 @@ void sha3_output (
     }
 }
 
+void sha3_final (
+    keccak_sponge_t sponge,
+    uint8_t * __restrict__ out,
+    size_t len
+) {
+    sha3_output(sponge,out,len);
+    sha3_reset(sponge);
+}
+
+void sha3_reset (
+    keccak_sponge_t sponge
+) {
+    sponge_init(sponge, sponge->params);
+    sponge->params->client = sponge->params->maxOut;
+}
+
 void sponge_destroy (keccak_sponge_t sponge) { decaf_bzero(sponge, sizeof(keccak_sponge_t)); }
 
 void sponge_init (
@@ -216,6 +232,7 @@ void sponge_init (
 ) {
     memset(sponge->state, 0, sizeof(sponge->state));
     sponge->params[0] = params[0];
+    sponge->params->position = 0;
 }
 
 void sponge_hash (
@@ -234,17 +251,25 @@ void sponge_hash (
 
 #define DEFSHAKE(n) \
     const struct kparams_s SHAKE##n##_params_s = \
-        { 0, FLAG_ABSORBING, 200-n/4, 0, 0x1f, 0x80, 0xFF, 0 };
+        { 0, FLAG_ABSORBING, 200-n/4, 0, 0x1f, 0x80, 0xFF, 0xFF };
     
 #define DEFSHA3(n) \
     const struct kparams_s SHA3_##n##_params_s = \
-        { 0, FLAG_ABSORBING, 200-n/4, 0, 0x06, 0x80, n/8, 0 };
+        { 0, FLAG_ABSORBING, 200-n/4, 0, 0x06, 0x80, n/8, n/8 };
 
 size_t sponge_default_output_bytes (
     const keccak_sponge_t s
 ) {
     return (s->params->maxOut == 0xFF)
         ? (200-s->params->rate)
+        : ((200-s->params->rate)/2);
+}
+
+size_t sponge_max_output_bytes (
+    const keccak_sponge_t s
+) {
+    return (s->params->maxOut == 0xFF)
+        ? SIZE_MAX
         : ((200-s->params->rate)/2);
 }
 

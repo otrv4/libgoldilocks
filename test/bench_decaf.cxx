@@ -11,11 +11,13 @@
 
 #include <decaf.hxx>
 #include <decaf/shake.hxx>
+#include <decaf/sha512.hxx>
 #include <decaf/strobe.hxx>
 #include <decaf/spongerng.hxx>
 #include <decaf/crypto_255.h>
 #include <decaf/crypto_448.h>
 #include <decaf/crypto.hxx>
+#include <decaf/eddsa.hxx>
 #include <stdio.h>
 #include <sys/time.h>
 #include <assert.h>
@@ -295,11 +297,14 @@ static void cfrg() {
     for (Benchmark b("RFC 7748 keygen"); b.iter(); ) { Group::DhLadder::generate_key(s1); }
     for (Benchmark b("RFC 7748 shared secret"); b.iter(); ) { Group::DhLadder::shared_secret(base,s1); }
 
-    FixedArrayBuffer<Group::EdDSA::PRIVATE_BYTES> e1(rng);
-    SecureBuffer pk, sig;
-    for (Benchmark b("EdDSA keygen"); b.iter(); ) { pk = Group::EdDSA::generate_key(e1); }
-    for (Benchmark b("EdDSA sign"); b.iter(); ) { sig = Group::EdDSA::sign(e1,pk,Block(NULL,0)); }
-    for (Benchmark b("EdDSA verify"); b.iter(); ) { Group::EdDSA::verify(sig,pk,Block(NULL,0)); }
+    FixedArrayBuffer<EdDSA<Group>::PrivateKey::SER_BYTES> e1(rng);
+    typename EdDSA<Group>::PublicKey pub((NOINIT()));
+    typename EdDSA<Group>::PrivateKey priv((NOINIT()));
+    SecureBuffer sig;
+    for (Benchmark b("EdDSA keygen"); b.iter(); ) { priv = e1; }
+    for (Benchmark b("EdDSA sign"); b.iter(); ) { sig = priv.sign(Block(NULL,0)); }
+    pub = priv;
+    for (Benchmark b("EdDSA verify"); b.iter(); ) { pub.verify(sig,Block(NULL,0)); }
 }
 
 static void macro() {
@@ -408,11 +413,13 @@ int main(int argc, char **argv) {
         SHAKE<128> shake1;
         SHAKE<256> shake2;
         SHA3<512> sha5;
+        SHA512 sha2;
         Strobe strobe("example::bench",Strobe::CLIENT);
         unsigned char b1024[1024] = {1};
         for (Benchmark b("SHAKE128 1kiB", 30); b.iter(); ) { shake1 += Buffer(b1024,1024); }
         for (Benchmark b("SHAKE256 1kiB", 30); b.iter(); ) { shake2 += Buffer(b1024,1024); }
         for (Benchmark b("SHA3-512 1kiB", 30); b.iter(); ) { sha5 += Buffer(b1024,1024); }
+        for (Benchmark b("SHA512 1kiB", 30); b.iter(); ) { sha2 += Buffer(b1024,1024); }
         strobe.dh_key(Buffer(b1024,1024));
         strobe.respec(STROBE_128);
         for (Benchmark b("STROBE128 1kiB", 10); b.iter(); ) {

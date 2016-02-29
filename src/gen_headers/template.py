@@ -50,7 +50,7 @@ def fillin(template,data):
             if template[position] == '(': parens += 1
             elif template[position] == ')': parens -= 1
             position += 1
-        ret += str(eval(template[dollars+2:position-1],{'ser':ser,'msqrt':msqrt,'ceil_log2':ceil_log2},data))
+        ret += str(eval(template[dollars+2:position-1],{'re':re,'ser':ser,'msqrt':msqrt,'ceil_log2':ceil_log2},data))
 
 author = "Mike Hamburg" # FUTURE
 for name in args.files:

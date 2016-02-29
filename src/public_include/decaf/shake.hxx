@@ -12,7 +12,7 @@
 #define __DECAF_SHAKE_HXX__
 
 #include <decaf/shake.h>
-
+#include <decaf/secure_buffer.hxx>
 #include <sys/types.h>
 
 /** @cond internal */
@@ -43,28 +43,44 @@ protected:
     
 public:
     /** Add more data to running hash */
-    inline void update(const uint8_t *__restrict__ in, size_t len) { sha3_update(sp,in,len); }
+    inline void update(const uint8_t *__restrict__ in, size_t len) NOEXCEPT { sha3_update(sp,in,len); }
 
     /** Add more data to running hash, C++ version. */
-    inline void update(const Block &s) { sha3_update(sp,s.data(),s.size()); }
+    inline void update(const Block &s) NOEXCEPT { sha3_update(sp,s.data(),s.size()); }
     
     /** Add more data, stream version. */
-    inline KeccakHash &operator<<(const Block &s) { update(s); return *this; }
+    inline KeccakHash &operator<<(const Block &s) NOEXCEPT { update(s); return *this; }
     
     /** Same as <<. */
-    inline KeccakHash &operator+=(const Block &s) { return *this << s; }
+    inline KeccakHash &operator+=(const Block &s) NOEXCEPT { return *this << s; }
     
+    /** @brief Output bytes from the sponge. */
+    inline SecureBuffer output(size_t len) throw(std::bad_alloc, LengthException) {
+        if (len > max_output_size()) throw LengthException();
+        SecureBuffer buffer(len);
+        sha3_output(sp,buffer.data(),len);
+        return buffer;
+    }
+    
+    /** @brief Output bytes from the sponge. */
+    inline SecureBuffer final(size_t len) throw(std::bad_alloc, LengthException) {
+        if (len > max_output_size()) throw LengthException();
+        SecureBuffer buffer(len);
+        sha3_final(sp,buffer.data(),len);
+        return buffer;
+    }
+
     /**
      * @brief Output bytes from the sponge.
      * @todo make this throw exceptions.
      */
-    inline void output(Buffer b) { sha3_output(sp,b.data(),b.size()); }
+    inline void output(Buffer b) throw(LengthException) {
+        sha3_output(sp,b.data(),b.size());
+    }
     
-    /** @brief Output bytes from the sponge. */
-    inline SecureBuffer output(size_t len) {
-        SecureBuffer buffer(len);
-        sha3_output(sp,buffer.data(),len);
-        return buffer;
+    /**  @brief Output bytes from the sponge and reinitialize it. */
+    inline void final(Buffer b) throw(LengthException) {
+        sha3_final(sp,b.data(),b.size());
     }
     
     /** @brief Return the sponge's default output size. */
@@ -72,10 +88,23 @@ public:
         return sponge_default_output_bytes(sp);
     }
     
+    /** @brief Return the sponge's maximum output size. */
+    inline size_t max_output_size() const NOEXCEPT {
+        return sponge_max_output_bytes(sp);
+    }
+    
     /** Output the default number of bytes. */
-    inline SecureBuffer output() {
+    inline SecureBuffer output() throw(std::bad_alloc) {
         return output(default_output_size());
     }
+    
+    /** Output the default number of bytes, and reset hash. */
+    inline SecureBuffer final() throw(std::bad_alloc) {
+        return final(default_output_size());
+    }
+
+    /** Reset the hash to the empty string */
+    inline void reset() NOEXCEPT { sha3_reset(sp); }
     
     /** Destructor zeroizes state */
     inline ~KeccakHash() NOEXCEPT { sponge_destroy(sp); }
@@ -91,11 +120,11 @@ public:
     /** Number of bytes of output */
     static const size_t MAX_OUTPUT_BYTES = bits/8;
     
+    /** Number of bytes of output */
+    static const size_t DEFAULT_OUTPUT_BYTES = bits/8;
+    
     /** Initializer */
     inline SHA3() NOEXCEPT : KeccakHash(get_params()) {}
-
-    /** Reset the hash to the empty string */
-    inline void reset() NOEXCEPT { sponge_init(sp, get_params()); }
 
     /** Hash bytes with this SHA3 instance.
      * @throw LengthException if nbytes > MAX_OUTPUT_BYTES
@@ -114,12 +143,20 @@ class SHAKE : public KeccakHash {
 private:
     /** Get the parameter template block for this hash */
     static inline const struct kparams_s *get_params();
+    
 public:
+    /** Number of bytes of output */
+#if __cplusplus >= 201103L
+    static const size_t MAX_OUTPUT_BYTES = SIZE_MAX;
+#else
+    static const size_t MAX_OUTPUT_BYTES = (size_t)-1;
+#endif
+
+    /** Default number of bytes to output */
+    static const size_t DEFAULT_OUTPUT_BYTES = bits/4;
+    
     /** Initializer */
     inline SHAKE() NOEXCEPT : KeccakHash(get_params()) {}
-
-    /** Reset the hash to the empty string */
-    inline void reset() NOEXCEPT { sponge_init(sp, get_params()); }
     
     /** Hash bytes with this SHAKE instance */
     static inline SecureBuffer hash(const Block &b, size_t outlen) throw(std::bad_alloc) {
