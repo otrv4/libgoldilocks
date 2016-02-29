@@ -34,6 +34,7 @@ class PrivateKey;
 class PublicKey;
 /** @endcond */
 
+/** Prehash context for EdDSA.  TODO: test me! */
 class Prehash : public $(re.sub(r"SHAKE(\d+)",r"SHAKE<\1>", eddsa_hash.upper())) {
 public:
     /** Do we support contexts for signatures?  If not, they must always be NULL */
@@ -210,6 +211,8 @@ private:
 public:
     /** The pre-expansion form of the signature */
     FixedArrayBuffer<$(C_NS)_EDDSA_PUBLIC_BYTES> pub_;
+    
+    /* PERF FUTURE: Pre-cached decoding? Precomputed table?? */
     
 public:
     /** Underlying group */
