@@ -491,7 +491,7 @@ static void test_cfrg_vectors() {
         }
         SecureBuffer sig;
         if (priv.SUPPORTS_CONTEXTS) {
-            sig = priv.sign(eddsa_message[t],false,eddsa_context[t]);
+            sig = priv.sign(eddsa_message[t],eddsa_context[t]);
         } else {
             sig = priv.sign(eddsa_message[t]);
         }
@@ -546,10 +546,10 @@ static void test_eddsa() {
         SecureBuffer context(priv.SUPPORTS_CONTEXTS ? i%256 : 0);
         rng.read(message);
         
-        SecureBuffer sig = priv.sign(message,i%2,context); 
+        SecureBuffer sig = priv.sign(message,context); 
         
         try {
-            pub.verify(sig,message,i%2,context); 
+            pub.verify(sig,message,context); 
         } catch(CryptoException) {
             test.fail();
             printf("    Signature validation failed on sig %d\n", i);

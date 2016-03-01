@@ -28,10 +28,25 @@ template <typename Group> struct EdDSA;
 
 /** A public key for crypto over $(name) */
 template<> struct EdDSA<$(cxx_ns)> {
+    
+enum Prehashed { PURE, PREHASHED };
 
 /** @cond internal */
-class PrivateKey;
-class PublicKey;
+template<class CRTP, Prehashed> class Signing;
+template<class CRTP, Prehashed> class Verification;
+$("""
+class PublicKeyBase;
+class PrivateKeyBase;
+typedef class PrivateKeyBase PrivateKey, PrivateKeyPure, PrivateKeyPh;
+typedef class PublicKeyBase PublicKey, PublicKeyPure, PublicKeyPh;
+  """ if eddsa_supports_contexts else """
+template<Prehashed=PURE> class PublicKeyBase;
+template<Prehashed=PURE> class PrivateKeyBase;
+typedef class PublicKeyBase<PURE> PublicKey, PublicKeyPure;
+typedef class PublicKeyBase<PREHASHED> PublicKeyPh;
+typedef class PrivateKeyBase<PURE> PrivateKey, PrivateKeyPure;
+typedef class PrivateKeyBase<PREHASHED> PrivateKeyPh;
+""")
 /** @endcond */
 
 /** Prehash context for EdDSA.  TODO: test me! */
@@ -43,8 +58,8 @@ public:
 private:
     typedef $(re.sub(r"SHAKE(\d+)",r"SHAKE<\1>", eddsa_hash.upper())) Super;
     SecureBuffer context_;
-    friend class PrivateKey;
-    friend class PublicKey;
+    template<class T, Prehashed Ph> friend class Signing;
+    template<class T, Prehashed Ph> friend class Verification;
     
     void init() throw(LengthException) {
         Super::reset();
@@ -90,11 +105,94 @@ public:
     }
 };
 
-class PrivateKey : public Serializable<PrivateKey>  {
+template<class CRTP, Prehashed ph> class Signing;
+
+template<class CRTP> class Signing<CRTP,PREHASHED> {
+public:
+    /* Sign a prehash context, and reset the context */
+    inline SecureBuffer sign_prehashed ( Prehash &ph ) const throw(std::bad_alloc) {
+        SecureBuffer out(CRTP::SIG_BYTES);
+        FixedArrayBuffer<Prehash::OUTPUT_BYTES> tmp;
+        ph.final(tmp);
+        $(c_ns)_eddsa_sign (
+            out.data(),
+            ((const CRTP*)this)->priv_.data(),
+            ((const CRTP*)this)->pub_.data(),
+            tmp.data(),
+            tmp.size(),
+            1
+#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+            , ph.context_.data(),
+            ph.context_.size()
+#endif
+        );
+    }
+};
+
+template<class CRTP> class Signing<CRTP,PURE>  {
+public:
+    /**
+     * Sign a message.
+     * @param [in] message The message to be signed.
+     * @param [in] context A context for the signature; must be at most 255 bytes;
+     * must be absent if SUPPORTS_CONTEXTS == false.
+     *
+     * @warning It is generally unsafe to use Ed25519 with both prehashed and non-prehashed messages.
+     */
+    inline SecureBuffer sign (
+        const Block &message,
+        const Block &context = Block(NULL,0)
+    ) const /* TODO: this exn spec tickles a Clang bug?
+             * throw(LengthException, std::bad_alloc)
+             */ {
+        if (context.size() > 255
+            || (context.size() != 0 && !CRTP::SUPPORTS_CONTEXTS)
+        ) {
+            throw LengthException();
+        }
+        
+        SecureBuffer out(CRTP::SIG_BYTES);
+        $(c_ns)_eddsa_sign (
+            out.data(),
+            ((const CRTP*)this)->priv_.data(),
+            ((const CRTP*)this)->pub_.data(),
+            message.data(),
+            message.size(),
+            0
+#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+            , context.data(),
+            context.size()
+#endif
+        );
+        return out;
+    }
+};
+
+$("""
+class PrivateKeyBase
+    : public Serializable<PrivateKeyBase>
+    , public Signing<PrivateKeyBase,PURE>
+    , public Signing<PrivateKeyBase,PREHASHED> {
+public:
+    typedef class PublicKeyBase MyPublicKey;
 private:
 /** @cond internal */
-    friend class PublicKey;
+    friend class PublicKeyBase;
+    friend class Signing<PrivateKey,PURE>;
+    friend class Signing<PrivateKey,PREHASHED>;
 /** @endcond */
+""" if eddsa_supports_contexts else """
+template<Prehashed ph> class PrivateKeyBase
+    : public Serializable<PrivateKeyBase<ph> >
+    , public Signing<PrivateKeyBase<ph>,ph> {
+public:
+    typedef class PublicKeyBase<ph> MyPublicKey;
+private:
+/** @cond internal */
+    friend class PublicKeyBase<ph>;
+    friend class Signing<PrivateKeyBase<ph>, ph>;
+/** @endcond */
+""")
     
     /** The pre-expansion form of the signing key. */
     FixedArrayBuffer<$(C_NS)_EDDSA_PRIVATE_BYTES> priv_;
@@ -117,16 +215,16 @@ public:
     
     
     /** Create but don't initialize */
-    inline explicit PrivateKey(const NOINIT&) NOEXCEPT : priv_((NOINIT())), pub_((NOINIT())) { }
+    inline explicit PrivateKeyBase(const NOINIT&) NOEXCEPT : priv_((NOINIT())), pub_((NOINIT())) { }
     
     /** Read a private key from a string */
-    inline explicit PrivateKey(const FixedBlock<SER_BYTES> &b) NOEXCEPT { *this = b; }
+    inline explicit PrivateKeyBase(const FixedBlock<SER_BYTES> &b) NOEXCEPT { *this = b; }
     
     /** Copy constructor */
-    inline PrivateKey(const PrivateKey &k) NOEXCEPT { *this = k; }
+    inline PrivateKeyBase(const PrivateKey &k) NOEXCEPT { *this = k; }
     
     /** Create at random */
-    inline explicit PrivateKey(Rng &r) NOEXCEPT : priv_(r) {
+    inline explicit PrivateKeyBase(Rng &r) NOEXCEPT : priv_(r) {
         $(c_ns)_eddsa_derive_public_key(pub_.data(), priv_.data());
     }
     
@@ -153,68 +251,148 @@ public:
     }
     
     /** Return the corresponding public key */
-    inline PublicKey pub() const NOEXCEPT {
-        PublicKey pub(*this);
+    inline MyPublicKey pub() const NOEXCEPT {
+        MyPublicKey pub(*this);
         return pub;
     }
-    
-    /**
-     * Sign a message.
-     * @param [in] message The message to be signed.
-     * @param [in] prehashed If true, the message to be signed is already hashed.
-     * @param [in] context A context for the signature; must be at most 255 bytes;
-     * must be absent if SUPPORTS_CONTEXTS == false.
-     *
-     * @warning It is generally unsafe to use Ed25519 with both prehashed and non-prehashed messages.
-     */
-    inline SecureBuffer sign (
+}; /* class PrivateKey */
+
+
+
+template<class CRTP> class Verification<CRTP,PURE> {
+public:
+    /** Verify a signature, returning DECAF_FAILURE if verification fails */
+    inline decaf_error_t WARN_UNUSED verify_noexcept (
+        const FixedBlock<$(C_NS)_EDDSA_SIGNATURE_BYTES> &sig,
         const Block &message,
-        bool prehashed = false,
         const Block &context = Block(NULL,0)
-    ) const throw(LengthException, std::bad_alloc) {
+    ) const /*NOEXCEPT*/ {
         if (context.size() > 255
-            || (context.size() != 0 && !SUPPORTS_CONTEXTS)
+            || (context.size() != 0 && !CRTP::SUPPORTS_CONTEXTS)
         ) {
-            throw LengthException();
+            return DECAF_FAILURE;
         }
         
-        SecureBuffer out(SIG_BYTES);
-        $(c_ns)_eddsa_sign (
-            out.data(),
-            priv_.data(),
-            pub_.data(),
+        return $(c_ns)_eddsa_verify (
+            sig.data(),
+            ((const CRTP*)this)->pub_.data(),
             message.data(),
             message.size(),
-            prehashed
+            0
 #if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
             , context.data(),
             context.size()
 #endif
         );
-        return out;
     }
+    
+    /** Verify a signature, throwing an exception if verification fails
+     * @param [in] sig The signature.
+     * @param [in] message The signed message.
+     * @param [in] context A context for the signature; must be at most 255 bytes;
+     * must be absent if SUPPORTS_CONTEXTS == false.
+     *
+     * @warning It is generally unsafe to use Ed25519 with both prehashed and non-prehashed messages.
+     */
+    inline void verify (
+        const FixedBlock<$(C_NS)_EDDSA_SIGNATURE_BYTES> &sig,
+        const Block &message,
+        const Block &context = Block(NULL,0)
+    ) const /*throw(LengthException,CryptoException)*/ {
+        if (context.size() > 255
+            || (context.size() != 0 && !CRTP::SUPPORTS_CONTEXTS)
+        ) {
+            throw LengthException();
+        }
+        
+        if (DECAF_SUCCESS != verify_noexcept( sig, message, context )) {
+            throw CryptoException();
+        }
+    }
+};
 
-    /* Sign a prehash context, and reset the context */
-    inline SecureBuffer sign ( Prehash &ph ) const throw(std::bad_alloc) {
+
+template<class CRTP> class Verification<CRTP,PREHASHED> {
+public:
+    /* Verify a prehash context, and reset the context */
+    inline decaf_error_t WARN_UNUSED verify_prehashed_noexcept (
+        const FixedBlock<$(C_NS)_EDDSA_SIGNATURE_BYTES> &sig,
+        Prehash &ph
+    ) const /*NOEXCEPT*/ {
         FixedArrayBuffer<Prehash::OUTPUT_BYTES> m;
         ph.final(m);
-        return sign(m, true, ph.context_);
+        return $(c_ns)_eddsa_verify (
+            sig.data(),
+            ((const CRTP*)this)->pub_.data(),
+            m.data(),
+            m.size(),
+            1
+#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+            , ph.context_.data(),
+            ph.context_.size()
+#endif
+        );
     }
-}; /* class PrivateKey */
+    
+    /* Verify a prehash context, and reset the context */
+    inline void verify_prehashed (
+        const FixedBlock<$(C_NS)_EDDSA_SIGNATURE_BYTES> &sig,
+        Prehash &ph
+    ) const /*throw(CryptoException)*/ {
+        FixedArrayBuffer<Prehash::OUTPUT_BYTES> m;
+        ph.final(m);
+        if (DECAF_SUCCESS != $(c_ns)_eddsa_verify (
+            sig.data(),
+            ((const CRTP*)this)->pub_.data(),
+            m.data(),
+            m.size(),
+            1
+#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+            , ph.context_.data(),
+            ph.context_.size()
+#endif
+        )) {
+            throw CryptoException();
+        }
+    }
+};
 
-class PublicKey : public Serializable<PublicKey> {
+
+$("""
+class PublicKeyBase
+    : public Serializable<PublicKeyBase>
+    , public Verification<PublicKeyBase,PURE>
+    , public Verification<PublicKeyBase,PREHASHED> {
+public:
+    typedef class PrivateKeyBase MyPrivateKey;
+    
 private:
 /** @cond internal */
-    friend class PrivateKey;
+    friend class PrivateKeyBase;
+    friend class Verification<PublicKey,PURE>;
+    friend class Verification<PublicKey,PREHASHED>;
 /** @endcond */
-
+""" if eddsa_supports_contexts else """
+template<Prehashed ph> class PublicKeyBase
+    : public Serializable<PublicKeyBase<ph> >
+    , public Verification<PublicKeyBase<ph>,ph> {
 public:
+    typedef class PrivateKeyBase<ph> MyPrivateKey;
+    
+private:
+/** @cond internal */
+    friend class PrivateKeyBase<ph>;
+    friend class Verification<PublicKeyBase<ph>, ph>;
+/** @endcond */
+""")
+
+private:
     /** The pre-expansion form of the signature */
     FixedArrayBuffer<$(C_NS)_EDDSA_PUBLIC_BYTES> pub_;
     
-    /* PERF FUTURE: Pre-cached decoding? Precomputed table?? */
-    
 public:
+    /* PERF FUTURE: Pre-cached decoding? Precomputed table?? */
+  
     /** Underlying group */
     typedef $(cxx_ns) Group;
     
@@ -229,16 +407,16 @@ public:
     
     
     /** Create but don't initialize */
-    inline explicit PublicKey(const NOINIT&) NOEXCEPT : pub_((NOINIT())) { }
+    inline explicit PublicKeyBase(const NOINIT&) NOEXCEPT : pub_((NOINIT())) { }
     
     /** Read a private key from a string */
-    inline explicit PublicKey(const FixedBlock<SER_BYTES> &b) NOEXCEPT { *this = b; }
+    inline explicit PublicKeyBase(const FixedBlock<SER_BYTES> &b) NOEXCEPT { *this = b; }
     
     /** Copy constructor */
-    inline PublicKey(const PublicKey &k) NOEXCEPT { *this = k; }
+    inline PublicKeyBase(const PublicKeyBase &k) NOEXCEPT { *this = k; }
     
     /** Copy constructor */
-    inline explicit PublicKey(const PrivateKey &k) NOEXCEPT { *this = k; }
+    inline explicit PublicKeyBase(const MyPrivateKey &k) NOEXCEPT { *this = k; }
 
     /** Assignment from string */
     inline PublicKey &operator=(const FixedBlock<SER_BYTES> &b) NOEXCEPT {
@@ -252,89 +430,16 @@ public:
     }
 
     /** Assignment from private key */
-    inline PublicKey &operator=(const PrivateKey &p) NOEXCEPT {
+    inline PublicKey &operator=(const MyPrivateKey &p) NOEXCEPT {
         return *this = p.pub_;
     }
 
-    
     /** Serialization size. */
     inline size_t ser_size() const NOEXCEPT { return SER_BYTES; }
     
     /** Serialize into a buffer. */
     inline void serialize_into(unsigned char *x) const NOEXCEPT {
         memcpy(x,pub_.data(), pub_.size());
-    }
-    
-    /** Verify a signature, returning DECAF_FAILURE if verification fails */
-    inline decaf_error_t WARN_UNUSED verify_noexcept (
-        const FixedBlock<SIG_BYTES> &sig,
-        const Block &message,
-        bool prehashed = false,
-        const Block &context = Block(NULL,0)
-    ) const NOEXCEPT {
-        if (context.size() > 255
-            || (context.size() != 0 && !SUPPORTS_CONTEXTS)
-        ) {
-            return DECAF_FAILURE;
-        }
-        
-        return $(c_ns)_eddsa_verify (
-            sig.data(),
-            pub_.data(),
-            message.data(),
-            message.size(),
-            prehashed
-#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
-            , context.data(),
-            context.size()
-#endif
-        );
-    }
-    
-    /** Verify a signature, throwing an exception if verification fails
-     * @param [in] sig The signature.
-     * @param [in] message The signed message.
-     * @param [in] prehashed If true, the message is already hashed.
-     * @param [in] context A context for the signature; must be at most 255 bytes;
-     * must be absent if SUPPORTS_CONTEXTS == false.
-     *
-     * @warning It is generally unsafe to use Ed25519 with both prehashed and non-prehashed messages.
-     */
-    inline void verify (
-        const FixedBlock<SIG_BYTES> &sig,
-        const Block &message,
-        bool prehashed = false,
-        const Block &context = Block(NULL,0)
-    ) const throw(LengthException,CryptoException) {
-        if (context.size() > 255
-            || (context.size() != 0 && !SUPPORTS_CONTEXTS)
-        ) {
-            throw LengthException();
-        }
-        
-        if (DECAF_SUCCESS != verify_noexcept( sig, message, prehashed, context )) {
-            throw CryptoException();
-        }
-    }
-    
-    /* Verify a prehash context, and reset the context */
-    inline decaf_error_t WARN_UNUSED verify_noexcept (
-        const FixedBlock<SIG_BYTES> &sig,
-        Prehash &ph
-    ) const NOEXCEPT {
-        FixedArrayBuffer<Prehash::OUTPUT_BYTES> m;
-        ph.final(m);
-        return verify_noexcept(sig, m, true, ph.context_);
-    }
-    
-    /* Verify a prehash context, and reset the context */
-    inline void verify (
-        const FixedBlock<SIG_BYTES> &sig,
-        Prehash &ph
-    ) const throw(CryptoException) {
-        FixedArrayBuffer<Prehash::OUTPUT_BYTES> m;
-        ph.final(m);
-        verify(sig, m, true, ph.context_);
     }
 }; /* class PublicKey */
 
