@@ -3,7 +3,7 @@
  */
 
 /**
- * @file decaf_utils.c
+ * @file utils.c
  * @author Mike Hamburg
  * @brief Decaf utility functions.
  */

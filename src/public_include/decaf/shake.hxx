@@ -1,5 +1,5 @@
 /**
- * @file decaf/decaf_shake.hxx
+ * @file decaf/shake.hxx
  * @copyright
  *   Based on CC0 code by David Leon Gil, 2015 \n
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n

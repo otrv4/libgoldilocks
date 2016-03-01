@@ -1,5 +1,5 @@
 /**
- * @file decaf/decaf_sha512.hxx
+ * @file decaf/sha512.hxx
  * @copyright
  *   Based on public domain code by Dan Bernstein \n
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
