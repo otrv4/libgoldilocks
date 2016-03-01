@@ -64,7 +64,7 @@ static uint64_t load_bigendian(const uint8_t *x)
   b = a; \
   a = T1 + T2;
 
-static NOINLINE void hashblock(sha512_ctx_t ctx) {
+static NOINLINE void hashblock(decaf_sha512_ctx_t ctx) {
     const uint8_t *in = ctx->block;
     uint64_t a = ctx->state[0];
     uint64_t b = ctx->state[1];
@@ -197,7 +197,7 @@ static NOINLINE void hashblock(sha512_ctx_t ctx) {
     ctx->state[7] += h;
 }
 
-void sha512_init(sha512_ctx_t ctx) {
+void decaf_sha512_init(decaf_sha512_ctx_t ctx) {
     static const uint64_t iv[8] = {
         0x6a09e667f3bcc908,
         0xbb67ae8584caa73b,
@@ -210,16 +210,16 @@ void sha512_init(sha512_ctx_t ctx) {
     };
     memcpy(ctx->state,iv,sizeof(iv));
     memset(ctx->block,0,sizeof(ctx->block));
-    ctx->bytesProcessed = 0;
+    ctx->bytes_processed = 0;
 }
 
-void sha512_update(sha512_ctx_t ctx, const uint8_t *message, size_t length) {
+void decaf_sha512_update(decaf_sha512_ctx_t ctx, const uint8_t *message, size_t length) {
     while (length > 0) {
-        size_t grab = length, off = ctx->bytesProcessed % 128;
+        size_t grab = length, off = ctx->bytes_processed % 128;
         if (grab > 128-off) grab = 128-off;
         memcpy(&ctx->block[off], message, grab);
         
-        ctx->bytesProcessed += grab;
+        ctx->bytes_processed += grab;
         length -= grab;
         message += grab;
         
@@ -229,10 +229,10 @@ void sha512_update(sha512_ctx_t ctx, const uint8_t *message, size_t length) {
     }
 }
 
-void sha512_final(sha512_ctx_t ctx, uint8_t *out, size_t length) {
+void decaf_sha512_final(decaf_sha512_ctx_t ctx, uint8_t *out, size_t length) {
     assert(length <= 512/8);
     
-    size_t off = ctx->bytesProcessed % 128, bp = ctx->bytesProcessed * 8;
+    size_t off = ctx->bytes_processed % 128, bp = ctx->bytes_processed * 8;
     ctx->block[off] = 0x80;
     memset(&ctx->block[off+1], 0, 128-off-1);
     
@@ -249,5 +249,5 @@ void sha512_final(sha512_ctx_t ctx, uint8_t *out, size_t length) {
         out[i] = ctx->state[i/8] >> (56 - 8*(i%8));
     }
     
-    sha512_init(ctx);
+    decaf_sha512_init(ctx);
 }

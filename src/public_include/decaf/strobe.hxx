@@ -53,7 +53,7 @@ public:
     inline Strobe (
         const char *description, /**< Description of this protocol. */
         client_or_server whoami, /**< Am I client or server? */
-        const kparams_s &params = STROBE_256 /**< Strength parameters */
+        const decaf_kparams_s &params = STROBE_256 /**< Strength parameters */
     ) NOEXCEPT {
         strobe_init(wrapped, &params, description, whoami == CLIENT);
         keyed = false;
@@ -222,7 +222,7 @@ public:
     /** Change specs, perhaps to a faster spec that takes advantage of being keyed.
      * @warning Experimental.
      */
-    inline void respec(const kparams_s &params) throw(ProtocolException) {
+    inline void respec(const decaf_kparams_s &params) throw(ProtocolException) {
         if (!keyed) throw(ProtocolException());
         strobe_respec(wrapped, &params);
     }

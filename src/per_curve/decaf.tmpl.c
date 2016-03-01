@@ -1364,11 +1364,11 @@ struct smvt_control {
 };
 
 static int recode_wnaf (
-    struct smvt_control *control, /* [nbits/(tableBits+1) + 3] */
+    struct smvt_control *control, /* [nbits/(table_bits+1) + 3] */
     const scalar_t scalar,
-    unsigned int tableBits
+    unsigned int table_bits
 ) {
-    unsigned int table_size = SCALAR_BITS/(tableBits+1) + 3;
+    unsigned int table_size = SCALAR_BITS/(table_bits+1) + 3;
     int position = table_size - 1; /* at the end */
     
     /* place the end marker */
@@ -1382,7 +1382,7 @@ static int recode_wnaf (
      */
     
     uint64_t current = scalar->limb[0] & 0xFFFF;
-    uint32_t mask = (1<<(tableBits+1))-1;
+    uint32_t mask = (1<<(table_bits+1))-1;
 
     unsigned int w;
     const unsigned int B_OVER_16 = sizeof(scalar->limb[0]) / 2;
@@ -1396,7 +1396,7 @@ static int recode_wnaf (
             assert(position >= 0);
             uint32_t pos = __builtin_ctz((uint32_t)current), odd = (uint32_t)current >> pos;
             int32_t delta = odd & mask;
-            if (odd & 1<<(tableBits+1)) delta -= (1<<(tableBits+1));
+            if (odd & 1<<(table_bits+1)) delta -= (1<<(table_bits+1));
             current -= delta << pos;
             control[position].power = pos + 16*(w-1);
             control[position].addend = delta;

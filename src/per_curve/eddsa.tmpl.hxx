@@ -145,7 +145,7 @@ public:
     }
     
     /** Serialization size. */
-    inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const NOEXCEPT { return SER_BYTES; }
     
     /** Serialize into a buffer. */
     inline void serialize_into(unsigned char *x) const NOEXCEPT {
@@ -258,7 +258,7 @@ public:
 
     
     /** Serialization size. */
-    inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const NOEXCEPT { return SER_BYTES; }
     
     /** Serialize into a buffer. */
     inline void serialize_into(unsigned char *x) const NOEXCEPT {

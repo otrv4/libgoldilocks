@@ -1,5 +1,5 @@
 /**
- * @file decaf/shake.hxx
+ * @file decaf/decaf_shake.hxx
  * @copyright
  *   Based on CC0 code by David Leon Gil, 2015 \n
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
@@ -35,18 +35,18 @@ class KeccakHash {
 protected:
     /** @cond internal */
     /** The C-wrapper sponge state */
-    keccak_sponge_t sp;
+    decaf_keccak_sponge_t sp;
     
     /** Initialize from parameters */
-    inline KeccakHash(const kparams_s *params) NOEXCEPT { sponge_init(sp, params); }
+    inline KeccakHash(const decaf_kparams_s *params) NOEXCEPT { decaf_sponge_init(sp, params); }
     /** @endcond */
     
 public:
     /** Add more data to running hash */
-    inline void update(const uint8_t *__restrict__ in, size_t len) NOEXCEPT { sha3_update(sp,in,len); }
+    inline void update(const uint8_t *__restrict__ in, size_t len) NOEXCEPT { decaf_sha3_update(sp,in,len); }
 
     /** Add more data to running hash, C++ version. */
-    inline void update(const Block &s) NOEXCEPT { sha3_update(sp,s.data(),s.size()); }
+    inline void update(const Block &s) NOEXCEPT { decaf_sha3_update(sp,s.data(),s.size()); }
     
     /** Add more data, stream version. */
     inline KeccakHash &operator<<(const Block &s) NOEXCEPT { update(s); return *this; }
@@ -58,7 +58,7 @@ public:
     inline SecureBuffer output(size_t len) throw(std::bad_alloc, LengthException) {
         if (len > max_output_size()) throw LengthException();
         SecureBuffer buffer(len);
-        sha3_output(sp,buffer.data(),len);
+        decaf_sha3_output(sp,buffer.data(),len);
         return buffer;
     }
     
@@ -66,7 +66,7 @@ public:
     inline SecureBuffer final(size_t len) throw(std::bad_alloc, LengthException) {
         if (len > max_output_size()) throw LengthException();
         SecureBuffer buffer(len);
-        sha3_final(sp,buffer.data(),len);
+        decaf_sha3_final(sp,buffer.data(),len);
         return buffer;
     }
 
@@ -75,22 +75,22 @@ public:
      * @todo make this throw exceptions.
      */
     inline void output(Buffer b) throw(LengthException) {
-        sha3_output(sp,b.data(),b.size());
+        decaf_sha3_output(sp,b.data(),b.size());
     }
     
     /**  @brief Output bytes from the sponge and reinitialize it. */
     inline void final(Buffer b) throw(LengthException) {
-        sha3_final(sp,b.data(),b.size());
+        decaf_sha3_final(sp,b.data(),b.size());
     }
     
     /** @brief Return the sponge's default output size. */
     inline size_t default_output_size() const NOEXCEPT {
-        return sponge_default_output_bytes(sp);
+        return decaf_sponge_default_output_bytes(sp);
     }
     
     /** @brief Return the sponge's maximum output size. */
     inline size_t max_output_size() const NOEXCEPT {
-        return sponge_max_output_bytes(sp);
+        return decaf_sponge_max_output_bytes(sp);
     }
     
     /** Output the default number of bytes. */
@@ -104,17 +104,17 @@ public:
     }
 
     /** Reset the hash to the empty string */
-    inline void reset() NOEXCEPT { sha3_reset(sp); }
+    inline void reset() NOEXCEPT { decaf_sha3_reset(sp); }
     
     /** Destructor zeroizes state */
-    inline ~KeccakHash() NOEXCEPT { sponge_destroy(sp); }
+    inline ~KeccakHash() NOEXCEPT { decaf_sponge_destroy(sp); }
 };
 
 /** Fixed-output-length SHA3 */
 template<int bits> class SHA3 : public KeccakHash {
 private:
     /** Get the parameter template block for this hash */
-    static inline const struct kparams_s *get_params();
+    static inline const struct decaf_kparams_s *get_params();
     
 public:
     /** Number of bytes of output */
@@ -142,7 +142,7 @@ template<int bits>
 class SHAKE : public KeccakHash {
 private:
     /** Get the parameter template block for this hash */
-    static inline const struct kparams_s *get_params();
+    static inline const struct decaf_kparams_s *get_params();
     
 public:
     /** Number of bytes of output */
@@ -165,12 +165,12 @@ public:
 };
 
 /** @cond internal */
-template<> inline const struct kparams_s *SHAKE<128>::get_params() { return &SHAKE128_params_s; }
-template<> inline const struct kparams_s *SHAKE<256>::get_params() { return &SHAKE256_params_s; }
-template<> inline const struct kparams_s *SHA3<224>::get_params() { return &SHA3_224_params_s; }
-template<> inline const struct kparams_s *SHA3<256>::get_params() { return &SHA3_256_params_s; }
-template<> inline const struct kparams_s *SHA3<384>::get_params() { return &SHA3_384_params_s; }
-template<> inline const struct kparams_s *SHA3<512>::get_params() { return &SHA3_512_params_s; }
+template<> inline const struct decaf_kparams_s *SHAKE<128>::get_params() { return &DECAF_SHAKE128_params_s; }
+template<> inline const struct decaf_kparams_s *SHAKE<256>::get_params() { return &DECAF_SHAKE256_params_s; }
+template<> inline const struct decaf_kparams_s *SHA3<224>::get_params() { return  &DECAF_SHA3_224_params_s; }
+template<> inline const struct decaf_kparams_s *SHA3<256>::get_params() { return  &DECAF_SHA3_256_params_s; }
+template<> inline const struct decaf_kparams_s *SHA3<384>::get_params() { return  &DECAF_SHA3_384_params_s; }
+template<> inline const struct decaf_kparams_s *SHA3<512>::get_params() { return  &DECAF_SHA3_512_params_s; }
 /** @endcond */
   
 } /* namespace decaf */

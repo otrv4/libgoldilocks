@@ -59,10 +59,10 @@ int main(int argc, char **argv) {
     if (ret || !pre) return 1;
     API_NS(precompute)(pre, real_point_base);
     
-    struct niels_s *preWnaf;
-    ret = posix_memalign((void**)&preWnaf, API_NS(alignof_precomputed_s), API_NS(sizeof_precomputed_wnafs));
-    if (ret || !preWnaf) return 1;
-    API_NS(precompute_wnafs)(preWnaf, real_point_base);
+    struct niels_s *pre_wnaf;
+    ret = posix_memalign((void**)&pre_wnaf, API_NS(alignof_precomputed_s), API_NS(sizeof_precomputed_wnafs));
+    if (ret || !pre_wnaf) return 1;
+    API_NS(precompute_wnafs)(pre_wnaf, real_point_base);
 
     const gf_s *output;
     unsigned i;
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
     }
     printf("\n};\n");
     
-    output = (const gf_s *)preWnaf;
+    output = (const gf_s *)pre_wnaf;
     printf("const gf API_NS(precomputed_wnaf_as_fe)[%d]\n", 
         (int)(API_NS(sizeof_precomputed_wnafs) / sizeof(gf)));
     printf("__attribute__((aligned(%d),visibility(\"hidden\"))) = {\n  ", (int)API_NS(alignof_precomputed_s));

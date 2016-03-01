@@ -104,7 +104,7 @@ public:
     inline Scalar(const Block &buffer) NOEXCEPT { *this = buffer; }
 
     /** Serializable instance */
-    inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const NOEXCEPT { return SER_BYTES; }
 
     /** Serializable instance */
     inline void serialize_into(unsigned char *buffer) const NOEXCEPT {
@@ -378,7 +378,7 @@ public:
     }
 
     /** Serializable instance */
-    inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const NOEXCEPT { return SER_BYTES; }
 
     /** Serializable instance */
     inline void serialize_into(unsigned char *buffer) const NOEXCEPT {
@@ -559,7 +559,7 @@ public:
      * initializer for points which makes this equal to the identity.
      */
     inline Precomputed (
-        const Precomputed_U &yours = *defaultValue()
+        const Precomputed_U &yours = *default_value()
     ) NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>(yours) {}
 
 
@@ -617,7 +617,7 @@ public:
     friend class OwnedOrUnowned<Precomputed,Precomputed_U>;
     static inline size_t size() NOEXCEPT { return $(c_ns)_sizeof_precomputed_s; }
     static inline size_t alignment() NOEXCEPT { return $(c_ns)_alignof_precomputed_s; }
-    static inline const Precomputed_U * defaultValue() NOEXCEPT { return $(c_ns)_precomputed_base; }
+    static inline const Precomputed_U * default_value() NOEXCEPT { return $(c_ns)_precomputed_base; }
     /** @endcond */
 };
 

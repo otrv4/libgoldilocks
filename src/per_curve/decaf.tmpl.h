@@ -538,12 +538,12 @@ void $(c_ns)_scalar_cond_sel (
 /**
  * @brief Test that a point is valid, for debugging purposes.
  *
- * @param [in] toTest The point to test.
+ * @param [in] to_test The point to test.
  * @retval DECAF_TRUE The point is valid.
  * @retval DECAF_FALSE The point is invalid.
  */
 decaf_bool_t $(c_ns)_point_valid (
-    const $(c_ns)_point_t toTest
+    const $(c_ns)_point_t to_test
 ) API_VIS WARN_UNUSED NONNULL NOINLINE;
 
 /**

@@ -19,29 +19,29 @@ extern "C" {
     
 /** Keccak STROBE structure as struct. */
 typedef struct {
-    keccak_sponge_t sponge; /**< Internal sponge object. */
+    decaf_keccak_sponge_t sponge; /**< Internal sponge object. */
 } keccak_strobe_s;
     
 /** Keccak STROBE structure as one-element array */
 typedef keccak_strobe_s keccak_strobe_t[1];
 
 /** STROBE parameters, 128-bit estimated security for hashing and encryption */
-extern const struct kparams_s STROBE_128 API_VIS;
+extern const struct decaf_kparams_s STROBE_128 API_VIS;
 
 /** STROBE parameters, 256-bit estimated security for hashing and encryption */
-extern const struct kparams_s STROBE_256 API_VIS;
+extern const struct decaf_kparams_s STROBE_256 API_VIS;
 
 /** STROBE parameters, 128-bit estimated security for encryption only (not hashing) */
-extern const struct kparams_s STROBE_KEYED_128 API_VIS;
+extern const struct decaf_kparams_s STROBE_KEYED_128 API_VIS;
 
 /** STROBE parameters, 256-bit estimated security for encryption only (not hashing) */
-extern const struct kparams_s STROBE_KEYED_256 API_VIS;
+extern const struct decaf_kparams_s STROBE_KEYED_256 API_VIS;
 
 
 /** Initialize Strobe protocol context. */
 void strobe_init (
     keccak_strobe_t strobe,         /**< [out] The uninitialized strobe object. */
-    const struct kparams_s *params, /**< [in] Parameter set descriptor. */
+    const struct decaf_kparams_s *params, /**< [in] Parameter set descriptor. */
     const char *proto,              /**< [in] Unique identifier for the protocol.  TODO: define namespaces for this */
     uint8_t am_client               /**< [in] Nonzero if this party. */
 ) NONNULL API_VIS;
@@ -158,7 +158,7 @@ static inline void NONNULL strobe_prng (
 /** Respecify Strobe protocol object's crypto. */
 void strobe_respec (
    keccak_strobe_t strobe,        /**< [inout] The initialized strobe context. */
-   const struct kparams_s *params /**< [in] Strobe parameter descriptor. */
+   const struct decaf_kparams_s *params /**< [in] Strobe parameter descriptor. */
 ) NONNULL API_VIS;
 
 /** Securely destroy a STROBE object by overwriting it. */
@@ -329,7 +329,7 @@ void strobe_prng(keccak_strobe_t strobe, unsigned char *out, uint16_t len) {
 }
 
 void strobe_destroy (keccak_strobe_t doomed) {
-    sponge_destroy(doomed->sponge);
+    decaf_sponge_destroy(doomed->sponge);
 }
 
 /** @endcond */ /* internal */

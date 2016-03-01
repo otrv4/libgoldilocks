@@ -85,7 +85,7 @@ inline bool memeq(const std::vector<T,U> &a, const std::vector<V,W> &b) {
 template<class Base> class Serializable {
 public:
     /** @brief Return the number of bytes needed to serialize this object */
-    inline size_t serSize() const NOEXCEPT { return static_cast<const Base*>(this)->serSize(); }
+    inline size_t ser_size() const NOEXCEPT { return static_cast<const Base*>(this)->ser_size(); }
     
     /** @brief Serialize this object into a buffer */
     inline void serialize_into(unsigned char *buf) const NOEXCEPT {
@@ -94,7 +94,7 @@ public:
     
     /** @brief Serialize this object into a SecureBuffer and return it */
     inline SecureBuffer serialize() const throw(std::bad_alloc) {
-        SecureBuffer out(serSize());
+        SecureBuffer out(ser_size());
         serialize_into(out.data());
         return out;
     }
@@ -396,32 +396,32 @@ protected:
         Wrapped *mine;
         const Wrapped *yours;
     } ours;
-    bool isMine;
+    bool is_mine;
 
     inline void clear() NOEXCEPT {
-        if (isMine) {
+        if (is_mine) {
             really_bzero(ours.mine, T::size());
             free(ours.mine);
-            ours.yours = T::defaultValue();
-            isMine = false;
+            ours.yours = T::default_value();
+            is_mine = false;
         }
     }
     inline void alloc() throw(std::bad_alloc) {
-        if (isMine) return;
+        if (is_mine) return;
         int ret = posix_memalign((void**)&ours.mine, T::alignment(), T::size());
         if (ret || !ours.mine) {
-            isMine = false;
+            is_mine = false;
             throw std::bad_alloc();
         }
-        isMine = true;
+        is_mine = true;
     }
-    inline const Wrapped *get() const NOEXCEPT { return isMine ? ours.mine : ours.yours; }
+    inline const Wrapped *get() const NOEXCEPT { return is_mine ? ours.mine : ours.yours; }
 
     inline OwnedOrUnowned(
-        const Wrapped &yours = *T::defaultValue()
+        const Wrapped &yours = *T::default_value()
     ) NOEXCEPT {
         ours.yours = &yours;
-        isMine = false;
+        is_mine = false;
     }
 
    /**
@@ -429,14 +429,14 @@ protected:
     */ 
    inline T &operator=(const OwnedOrUnowned &it) throw(std::bad_alloc) {
        if (this == &it) return *(T*)this;
-       if (it.isMine) {
+       if (it.is_mine) {
            alloc();
            memcpy(ours.mine,it.ours.mine,T::size());
        } else {
            clear();
            ours.yours = it.ours.yours;
        }
-       isMine = it.isMine;
+       is_mine = it.is_mine;
        return *(T*)this;
    }
 
@@ -445,9 +445,9 @@ protected:
         if (this == &it) return *(T*)this;
         clear();
         ours = it.ours;
-        isMine = it.isMine;
-        it.isMine = false;
-        it.ours.yours = T::defaultValue;
+        is_mine = it.is_mine;
+        it.is_mine = false;
+        it.ours.yours = T::default_value;
         return *this;
     }
 #endif

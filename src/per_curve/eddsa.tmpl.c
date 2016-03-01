@@ -12,12 +12,12 @@
 #define API_NAME "$(c_ns)"
 #define API_NS(_id) $(c_ns)_##_id
 
-#define hash_ctx_t   $(eddsa_hash)_ctx_t
-#define hash_init    $(eddsa_hash)_init
-#define hash_update  $(eddsa_hash)_update
-#define hash_final   $(eddsa_hash)_final
-#define hash_destroy $(eddsa_hash)_destroy
-#define hash_hash    $(eddsa_hash)_hash
+#define hash_ctx_t   decaf_$(eddsa_hash)_ctx_t
+#define hash_init    decaf_$(eddsa_hash)_init
+#define hash_update  decaf_$(eddsa_hash)_update
+#define hash_final   decaf_$(eddsa_hash)_final
+#define hash_destroy decaf_$(eddsa_hash)_destroy
+#define hash_hash    decaf_$(eddsa_hash)_hash
 
 #define SUPPORTS_CONTEXTS $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
 #define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
@@ -47,9 +47,9 @@ static void hash_init_with_dom(
     hash_init(hash);
     
 #if SUPPORTS_CONTEXTS
-    const char *domS = "$(eddsa_dom)";
+    const char *dom_s = "$(eddsa_dom)";
     const uint8_t dom[2] = {1+word_is_zero(prehashed), context_len};
-    hash_update(hash,(const unsigned char *)domS, strlen(domS));
+    hash_update(hash,(const unsigned char *)dom_s, strlen(dom_s));
     hash_update(hash,dom,2);
     hash_update(hash,context,context_len);
 #else

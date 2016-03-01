@@ -126,10 +126,10 @@ static void test_crypto() {
 
 #if DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
         PrivateKey<Group> sk2(defrng);
-        (void)sk1.sharedSecretNoexcept(shared,sk2.pub(),i&1);
+        (void)sk1.shared_secretNoexcept(shared,sk2.pub(),i&1);
 #else
         PrivateKey<Group> sk3(rng);
-        (void)sk1.sharedSecretNoexcept(shared,sk3.pub(),i&1);
+        (void)sk1.shared_secretNoexcept(shared,sk3.pub(),i&1);
 #endif
     }
 }

@@ -335,7 +335,7 @@ static void macro() {
     }
     
     for (Benchmark b("SharedSecret",1); b.iter(); ) {
-        ss = s1.sharedSecret(p2,32,true);
+        ss = s1.shared_secret(p2,32,true);
     }
     
     printf("\nProtocol benchmarks:\n");

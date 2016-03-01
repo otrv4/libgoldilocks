@@ -51,19 +51,19 @@
 #	error platform not supported
 #endif
 
-/* The internal, non-opaque definition of the sponge struct. */
+/* The internal, non-opaque definition of the decaf_sponge struct. */
 typedef union {
     uint64_t w[25]; uint8_t b[25*8];
 } kdomain_t[1];
 
-typedef struct kparams_s {
-    uint8_t position, flags, rate, startRound, pad, ratePad, maxOut, client; /* client = maxOutRemaining for sha3 */
-} kparams_t[1];
+typedef struct decaf_kparams_s {
+    uint8_t position, flags, rate, start_round, pad, rate_pad, max_out, client; /* client = max_outRemaining for decaf_sha3 */
+} decaf_kparams_t[1];
 
-typedef struct keccak_sponge_s {
+typedef struct decaf_keccak_sponge_s {
     kdomain_t state;
-    kparams_t params;
-} keccak_sponge_s, keccak_sponge_t[1];
+    decaf_kparams_t params;
+} decaf_keccak_sponge_s, decaf_keccak_sponge_t[1];
 
 #define INTERNAL_SPONGE_STRUCT 1
 #include <decaf/shake.h>
@@ -106,14 +106,14 @@ static inline uint64_t rol(uint64_t x, int s) {
 /*** The Keccak-f[1600] permutation ***/
 static void
 __attribute__((noinline))
-keccakf(kdomain_t state, uint8_t startRound) {
+keccakf(kdomain_t state, uint8_t start_round) {
     uint64_t* a = state->w;
     uint64_t b[5] = {0}, t, u;
     uint8_t x, y, i;
     
     for (i=0; i<25; i++) a[i] = le64toh(a[i]);
 
-    for (i = startRound; i < 24; i++) {
+    for (i = start_round; i < 24; i++) {
         FOR51(x, b[x] = 0; )
         FOR55(y, FOR51(x, b[x] ^= a[x + y]; ))
         FOR55(y, FOR51(x,
@@ -135,57 +135,57 @@ keccakf(kdomain_t state, uint8_t startRound) {
     for (i=0; i<25; i++) a[i] = htole64(a[i]);
 }
 
-static inline void dokeccak (keccak_sponge_t sponge) {
-    keccakf(sponge->state, sponge->params->startRound);
-    sponge->params->position = 0;
+static inline void dokeccak (decaf_keccak_sponge_t decaf_sponge) {
+    keccakf(decaf_sponge->state, decaf_sponge->params->start_round);
+    decaf_sponge->params->position = 0;
 }
 
-void sha3_update (
-    struct keccak_sponge_s * __restrict__ sponge,
+void decaf_sha3_update (
+    struct decaf_keccak_sponge_s * __restrict__ decaf_sponge,
     const uint8_t *in,
     size_t len
 ) {
     if (!len) return;
-    assert(sponge->params->position < sponge->params->rate);
-    assert(sponge->params->rate < sizeof(sponge->state));
-    assert(sponge->params->flags == FLAG_ABSORBING);
+    assert(decaf_sponge->params->position < decaf_sponge->params->rate);
+    assert(decaf_sponge->params->rate < sizeof(decaf_sponge->state));
+    assert(decaf_sponge->params->flags == FLAG_ABSORBING);
     while (len) {
-        size_t cando = sponge->params->rate - sponge->params->position, i;
-        uint8_t* state = &sponge->state->b[sponge->params->position];
+        size_t cando = decaf_sponge->params->rate - decaf_sponge->params->position, i;
+        uint8_t* state = &decaf_sponge->state->b[decaf_sponge->params->position];
         if (cando > len) {
             for (i = 0; i < len; i += 1) state[i] ^= in[i];
-            sponge->params->position += len;
+            decaf_sponge->params->position += len;
             return;
         } else {
             for (i = 0; i < cando; i += 1) state[i] ^= in[i];
-            dokeccak(sponge);
+            dokeccak(decaf_sponge);
             len -= cando;
             in += cando;
         }
     }
 }
 
-void sha3_output (
-    keccak_sponge_t sponge,
+void decaf_sha3_output (
+    decaf_keccak_sponge_t decaf_sponge,
     uint8_t * __restrict__ out,
     size_t len
 ) {
-    assert(sponge->params->position < sponge->params->rate);
-    assert(sponge->params->rate < sizeof(sponge->state));
+    assert(decaf_sponge->params->position < decaf_sponge->params->rate);
+    assert(decaf_sponge->params->rate < sizeof(decaf_sponge->state));
     
-    if (sponge->params->maxOut != 0xFF) {
-        assert(sponge->params->client >= len);
-        sponge->params->client -= len;
+    if (decaf_sponge->params->max_out != 0xFF) {
+        assert(decaf_sponge->params->client >= len);
+        decaf_sponge->params->client -= len;
     }
     
-    switch (sponge->params->flags) {
+    switch (decaf_sponge->params->flags) {
     case FLAG_SQUEEZING: break;
     case FLAG_ABSORBING:
         {
-            uint8_t* state = sponge->state->b;
-            state[sponge->params->position] ^= sponge->params->pad;
-            state[sponge->params->rate - 1] ^= sponge->params->ratePad;
-            dokeccak(sponge);
+            uint8_t* state = decaf_sponge->state->b;
+            state[decaf_sponge->params->position] ^= decaf_sponge->params->pad;
+            state[decaf_sponge->params->rate - 1] ^= decaf_sponge->params->rate_pad;
+            dokeccak(decaf_sponge);
             break;
         }
     default:
@@ -193,82 +193,82 @@ void sha3_output (
     }
     
     while (len) {
-        size_t cando = sponge->params->rate - sponge->params->position;
-        uint8_t* state = &sponge->state->b[sponge->params->position];
+        size_t cando = decaf_sponge->params->rate - decaf_sponge->params->position;
+        uint8_t* state = &decaf_sponge->state->b[decaf_sponge->params->position];
         if (cando > len) {
             memcpy(out, state, len);
-            sponge->params->position += len;
+            decaf_sponge->params->position += len;
             return;
         } else {
             memcpy(out, state, cando);
-            dokeccak(sponge);
+            dokeccak(decaf_sponge);
             len -= cando;
             out += cando;
         }
     }
 }
 
-void sha3_final (
-    keccak_sponge_t sponge,
+void decaf_sha3_final (
+    decaf_keccak_sponge_t decaf_sponge,
     uint8_t * __restrict__ out,
     size_t len
 ) {
-    sha3_output(sponge,out,len);
-    sha3_reset(sponge);
+    decaf_sha3_output(decaf_sponge,out,len);
+    decaf_sha3_reset(decaf_sponge);
 }
 
-void sha3_reset (
-    keccak_sponge_t sponge
+void decaf_sha3_reset (
+    decaf_keccak_sponge_t decaf_sponge
 ) {
-    sponge_init(sponge, sponge->params);
-    sponge->params->client = sponge->params->maxOut;
+    decaf_sponge_init(decaf_sponge, decaf_sponge->params);
+    decaf_sponge->params->client = decaf_sponge->params->max_out;
 }
 
-void sponge_destroy (keccak_sponge_t sponge) { decaf_bzero(sponge, sizeof(keccak_sponge_t)); }
+void decaf_sponge_destroy (decaf_keccak_sponge_t decaf_sponge) { decaf_bzero(decaf_sponge, sizeof(decaf_keccak_sponge_t)); }
 
-void sponge_init (
-    keccak_sponge_t sponge,
-    const struct kparams_s *params
+void decaf_sponge_init (
+    decaf_keccak_sponge_t decaf_sponge,
+    const struct decaf_kparams_s *params
 ) {
-    memset(sponge->state, 0, sizeof(sponge->state));
-    sponge->params[0] = params[0];
-    sponge->params->position = 0;
+    memset(decaf_sponge->state, 0, sizeof(decaf_sponge->state));
+    decaf_sponge->params[0] = params[0];
+    decaf_sponge->params->position = 0;
 }
 
-void sponge_hash (
+void decaf_sponge_hash (
     const uint8_t *in,
     size_t inlen,
     uint8_t *out,
     size_t outlen,
-    const struct kparams_s *params
+    const struct decaf_kparams_s *params
 ) {
-    keccak_sponge_t sponge;
-    sponge_init(sponge, params);
-    sha3_update(sponge, in, inlen);
-    sha3_output(sponge, out, outlen);
-    sponge_destroy(sponge);
+    decaf_keccak_sponge_t decaf_sponge;
+    decaf_sponge_init(decaf_sponge, params);
+    decaf_sha3_update(decaf_sponge, in, inlen);
+    decaf_sha3_output(decaf_sponge, out, outlen);
+    decaf_sponge_destroy(decaf_sponge);
 }
 
 #define DEFSHAKE(n) \
-    const struct kparams_s SHAKE##n##_params_s = \
+    const struct decaf_kparams_s DECAF_SHAKE##n##_params_s = \
         { 0, FLAG_ABSORBING, 200-n/4, 0, 0x1f, 0x80, 0xFF, 0xFF };
     
 #define DEFSHA3(n) \
-    const struct kparams_s SHA3_##n##_params_s = \
+    const struct decaf_kparams_s DECAF_SHA3_##n##_params_s = \
         { 0, FLAG_ABSORBING, 200-n/4, 0, 0x06, 0x80, n/8, n/8 };
 
-size_t sponge_default_output_bytes (
-    const keccak_sponge_t s
+size_t decaf_sponge_default_output_bytes (
+    const decaf_keccak_sponge_t s
 ) {
-    return (s->params->maxOut == 0xFF)
+    return (s->params->max_out == 0xFF)
         ? (200-s->params->rate)
         : ((200-s->params->rate)/2);
 }
 
-size_t sponge_max_output_bytes (
-    const keccak_sponge_t s
+size_t decaf_sponge_max_output_bytes (
+    const decaf_keccak_sponge_t s
 ) {
-    return (s->params->maxOut == 0xFF)
+    return (s->params->max_out == 0xFF)
         ? SIZE_MAX
         : ((200-s->params->rate)/2);
 }
@@ -318,55 +318,55 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
 #endif
 }
 
-static const char *SPONGERNG_NAME = "strobe::spongerng";  /* TODO: canonicalize name */
+static const char *SPONGERNG_NAME = "strobe::decaf_spongerng";  /* TODO: canonicalize name */
 
-void spongerng_next (
-    keccak_prng_t prng,
+void decaf_spongerng_next (
+    decaf_keccak_prng_t prng,
     uint8_t * __restrict__ out,
     size_t len
 ) {
-    keccak_sponge_s *sponge = prng->sponge;
-    if (sponge->params->client) {
+    decaf_keccak_sponge_s *decaf_sponge = prng->sponge;
+    if (decaf_sponge->params->client) {
         /* nondet */
         uint8_t cpu_entropy[32];
         get_cpu_entropy(cpu_entropy, sizeof(cpu_entropy));
-        strobe_transact((keccak_strobe_s*)sponge,NULL,cpu_entropy,sizeof(cpu_entropy),STROBE_CW_PRNG_CPU_SEED);
+        strobe_transact((keccak_strobe_s*)decaf_sponge,NULL,cpu_entropy,sizeof(cpu_entropy),STROBE_CW_PRNG_CPU_SEED);
     }
     
-    strobe_transact((keccak_strobe_s*)sponge,out,NULL,len,STROBE_CW_PRNG);
+    strobe_transact((keccak_strobe_s*)decaf_sponge,out,NULL,len,STROBE_CW_PRNG);
 }
 
-void spongerng_stir (
-    keccak_prng_t sponge,
+void decaf_spongerng_stir (
+    decaf_keccak_prng_t decaf_sponge,
     const uint8_t * __restrict__ in,
     size_t len
 ) {
-    strobe_transact((keccak_strobe_s*)sponge,NULL,in,len,STROBE_CW_PRNG_USER_SEED);
+    strobe_transact((keccak_strobe_s*)decaf_sponge,NULL,in,len,STROBE_CW_PRNG_USER_SEED);
 }
 
-static const struct kparams_s spongerng_params = {
+static const struct decaf_kparams_s decaf_spongerng_params = {
     0, 0, 200-256/4, 0, 0x06, 0x80, 0xFF, 0
 };
 
-void spongerng_init_from_buffer (
-    keccak_prng_t prng,
+void decaf_spongerng_init_from_buffer (
+    decaf_keccak_prng_t prng,
     const uint8_t * __restrict__ in,
     size_t len,
     int deterministic
 ) {
-    keccak_sponge_s *sponge = prng->sponge;
-    strobe_init((keccak_strobe_s*)sponge, &spongerng_params, SPONGERNG_NAME, !deterministic);
-    spongerng_stir(prng, in, len);
+    decaf_keccak_sponge_s *decaf_sponge = prng->sponge;
+    strobe_init((keccak_strobe_s*)decaf_sponge, &decaf_spongerng_params, SPONGERNG_NAME, !deterministic);
+    decaf_spongerng_stir(prng, in, len);
 }
 
-decaf_error_t spongerng_init_from_file (
-    keccak_prng_t prng,
+decaf_error_t decaf_spongerng_init_from_file (
+    decaf_keccak_prng_t prng,
     const char *file,
     size_t len,
     int deterministic
 ) {
-    keccak_sponge_s *sponge = prng->sponge;
-    strobe_init((keccak_strobe_s*)sponge, &spongerng_params, SPONGERNG_NAME, !deterministic);
+    decaf_keccak_sponge_s *decaf_sponge = prng->sponge;
+    strobe_init((keccak_strobe_s*)decaf_sponge, &decaf_spongerng_params, SPONGERNG_NAME, !deterministic);
     if (!len) return DECAF_FAILURE;
 
     int fd = open(file, O_RDONLY);
@@ -380,7 +380,7 @@ decaf_error_t spongerng_init_from_file (
             close(fd);
             return DECAF_FAILURE;
         }
-        strobe_transact((keccak_strobe_s*)sponge,NULL,buffer,red,
+        strobe_transact((keccak_strobe_s*)decaf_sponge,NULL,buffer,red,
             first ? STROBE_CW_PRNG_USER_SEED : (STROBE_CW_PRNG_USER_SEED | STROBE_FLAG_MORE));
         len -= red;
         first = 0;
@@ -390,39 +390,39 @@ decaf_error_t spongerng_init_from_file (
     return DECAF_SUCCESS;
 }
 
-decaf_error_t spongerng_init_from_dev_urandom (
-    keccak_prng_t sponge
+decaf_error_t decaf_spongerng_init_from_dev_urandom (
+    decaf_keccak_prng_t decaf_sponge
 ) {
-    return spongerng_init_from_file(sponge, "/dev/urandom", 64, 0);
+    return decaf_spongerng_init_from_file(decaf_sponge, "/dev/urandom", 64, 0);
 }
 
-const struct kparams_s STROBE_128 = { 0, 0, 200-128/4, 0, 0, 0, 0, 0 };
-const struct kparams_s STROBE_256 = { 0, 0, 200-256/4, 0, 0, 0, 0, 0 };
-const struct kparams_s STROBE_KEYED_256 = { 0, 0, 200-256/4, 12, 0, 0, 0, 0 };
-const struct kparams_s STROBE_KEYED_128 = { 0, 0, 200-128/4, 12, 0, 0, 0, 0 };
+const struct decaf_kparams_s STROBE_128 = { 0, 0, 200-128/4, 0, 0, 0, 0, 0 };
+const struct decaf_kparams_s STROBE_256 = { 0, 0, 200-256/4, 0, 0, 0, 0, 0 };
+const struct decaf_kparams_s STROBE_KEYED_256 = { 0, 0, 200-256/4, 12, 0, 0, 0, 0 };
+const struct decaf_kparams_s STROBE_KEYED_128 = { 0, 0, 200-128/4, 12, 0, 0, 0, 0 };
 
 /* Strobe is different in that its rate is padded by one byte. */
 void strobe_init(
     keccak_strobe_t strobe,
-    const struct kparams_s *params,
+    const struct decaf_kparams_s *params,
     const char *proto,
     uint8_t am_client
 ) {
-    keccak_sponge_s *sponge = strobe->sponge;
-    sponge_init(sponge,params);
+    decaf_keccak_sponge_s *decaf_sponge = strobe->sponge;
+    decaf_sponge_init(decaf_sponge,params);
     
     const char *a_string = "STROBE full v0.2";
     unsigned len = strlen(a_string);
     memcpy (
-        &sponge->state->b[sizeof(sponge->state)-len],
+        &decaf_sponge->state->b[sizeof(decaf_sponge->state)-len],
         a_string,
         len
     );
         
     strobe_transact(strobe,  NULL, (const unsigned char *)proto, strlen(proto), STROBE_CW_INIT);
         
-    sponge->state->b[sponge->params->rate+1] = 1;
-    sponge->params->client = !!am_client;
+    decaf_sponge->state->b[decaf_sponge->params->rate+1] = 1;
+    decaf_sponge->params->client = !!am_client;
 }
 
 static const uint8_t EXCEEDED_RATE_PAD = 0x2;
@@ -433,17 +433,17 @@ static __inline__ uint8_t CONTROL_WORD_PAD(int cw_size) {
 
 /* PERF vectorize */
 static void strobe_duplex (
-    struct keccak_sponge_s *__restrict__ sponge,
+    struct decaf_keccak_sponge_s *__restrict__ decaf_sponge,
     unsigned char *out,
     const unsigned char *in,
     size_t len,
     mode_t mode
 ) {
-    unsigned int j, r = sponge->params->rate, p = sponge->params->position;
-    uint8_t* __restrict__ state = &sponge->state->b[0];
+    unsigned int j, r = decaf_sponge->params->rate, p = decaf_sponge->params->position;
+    uint8_t* __restrict__ state = &decaf_sponge->state->b[0];
     
     /* sanity */
-    assert(r < sizeof(sponge->state) && r >= p);
+    assert(r < sizeof(decaf_sponge->state) && r >= p);
     switch (mode) {
     case STROBE_MODE_PLAINTEXT:
         assert(in || len==0);
@@ -533,11 +533,11 @@ static void strobe_duplex (
         };
         
         if (last) {
-            sponge->params->position = p+len;
+            decaf_sponge->params->position = p+len;
             return;
         } else {
             state[r] ^= EXCEEDED_RATE_PAD;
-            keccakf(sponge->state, sponge->params->startRound);
+            keccakf(decaf_sponge->state, decaf_sponge->params->start_round);
             len -= cando;
             p = 0;
         }
@@ -559,10 +559,10 @@ void strobe_transact (
     size_t len,
     uint32_t cw_flags
 ) {
-    keccak_sponge_s *sponge = strobe->sponge;
+    decaf_keccak_sponge_s *decaf_sponge = strobe->sponge;
     if ( (cw_flags & STROBE_FLAG_NONDIR) == 0
         /* extraneous nots to change ints to bools :-/ */
-        && !(cw_flags & STROBE_FLAG_RECV) != !(sponge->params->client) ) {
+        && !(cw_flags & STROBE_FLAG_RECV) != !(decaf_sponge->params->client) ) {
         cw_flags ^= STROBE_FLAG_CLIENT_SENT;
     }
     
@@ -588,30 +588,30 @@ void strobe_transact (
             my_len>>48,
             my_len>>56
         };
-        strobe_duplex(sponge, NULL, cwb, len_cw, STROBE_MODE_ABSORB_R);
-        if ((cw_flags & STROBE_FLAG_RUN_F) || (sponge->params->flags & FLAG_NOPARSE)) {
-            sponge->state->b[sponge->params->position] ^= CONTROL_WORD_PAD(len_cw);
-            dokeccak(sponge);
+        strobe_duplex(decaf_sponge, NULL, cwb, len_cw, STROBE_MODE_ABSORB_R);
+        if ((cw_flags & STROBE_FLAG_RUN_F) || (decaf_sponge->params->flags & FLAG_NOPARSE)) {
+            decaf_sponge->state->b[decaf_sponge->params->position] ^= CONTROL_WORD_PAD(len_cw);
+            dokeccak(decaf_sponge);
         }
 
-        sponge->params->flags &= ~FLAG_NOPARSE;
+        decaf_sponge->params->flags &= ~FLAG_NOPARSE;
         if (cw_flags & STROBE_FLAG_NO_LENGTH) {
-            sponge->params->flags |= FLAG_NOPARSE;
+            decaf_sponge->params->flags |= FLAG_NOPARSE;
         }
     }
         
-    strobe_duplex(sponge, out, in, len, get_mode(cw_flags));
+    strobe_duplex(decaf_sponge, out, in, len, get_mode(cw_flags));
     if (cw_flags & STROBE_FLAG_FORGET) {
         
-        uint32_t len = sponge->params->rate - sponge->params->position;
-        if (len < STROBE_FORGET_BYTES + len_cw) len += sponge->params->rate;
+        uint32_t len = decaf_sponge->params->rate - decaf_sponge->params->position;
+        if (len < STROBE_FORGET_BYTES + len_cw) len += decaf_sponge->params->rate;
         len -= len_cw; /* HACK */
         
         if (cw_flags & STROBE_FLAG_NO_LENGTH) len = 2*STROBE_FORGET_BYTES;
         assert(!(cw_flags & STROBE_FLAG_MORE));
         
         strobe_duplex(
-            sponge, NULL, NULL, len,
+            decaf_sponge, NULL, NULL, len,
             STROBE_MODE_FORGET
         );
     }
@@ -622,14 +622,14 @@ decaf_error_t strobe_verify_auth (
     const unsigned char *in,
     uint16_t len
 ) {
-    keccak_sponge_s *sponge = strobe->sponge;
-    if (len > sponge->params->rate) return DECAF_FAILURE;
+    decaf_keccak_sponge_s *decaf_sponge = strobe->sponge;
+    if (len > decaf_sponge->params->rate) return DECAF_FAILURE;
     strobe_transact(strobe, NULL, in, len, strobe_cw_recv(STROBE_CW_MAC));
     
     int32_t residue = 0;
     int i;
     for (i=0; i<len; i++) {
-        residue |= sponge->state->b[i];
+        residue |= decaf_sponge->state->b[i];
     }
     
     return decaf_succeed_if((residue-1)>>8);
@@ -637,15 +637,15 @@ decaf_error_t strobe_verify_auth (
 
 void strobe_respec (
     keccak_strobe_t strobe,
-    const struct kparams_s *params
+    const struct decaf_kparams_s *params
 ) {
-    keccak_sponge_s *sponge = strobe->sponge;
-    uint8_t in[] = { params->rate, params->startRound };
+    decaf_keccak_sponge_s *decaf_sponge = strobe->sponge;
+    uint8_t in[] = { params->rate, params->start_round };
     strobe_transact( strobe, NULL, in, sizeof(in), STROBE_CW_RESPEC_INFO );
     strobe_transact( strobe, NULL, NULL, 0, STROBE_CW_RESPEC );
-    assert(sponge->params->position == 0);
-    sponge->params->rate = params->rate;
-    sponge->params->startRound = params->startRound;
+    assert(decaf_sponge->params->position == 0);
+    decaf_sponge->params->rate = params->rate;
+    decaf_sponge->params->start_round = params->start_round;
 }
 
 /* FUTURE: Keyak instances, etc */

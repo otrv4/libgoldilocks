@@ -38,7 +38,7 @@ namespace decaf {
 class SpongeRng : public Rng {
 private:
     /** C wrapped object */
-    keccak_prng_t sp;
+    decaf_keccak_prng_t sp;
     
 public:
     /** Deterministic flag.
@@ -61,13 +61,13 @@ public:
     
     /** Initialize, deterministically by default, from block */
     inline SpongeRng( const Block &in, Deterministic det ) {
-        spongerng_init_from_buffer(sp,in.data(),in.size(),(int)det);
+        decaf_spongerng_init_from_buffer(sp,in.data(),in.size(),(int)det);
     }
     
     /** Initialize, non-deterministically by default, from C/C++ filename */
     inline SpongeRng( const std::string &in = "/dev/urandom", size_t len = 32, Deterministic det = RANDOM )
         throw(RngException) {
-        decaf_error_t ret = spongerng_init_from_file(sp,in.c_str(),len,det);
+        decaf_error_t ret = decaf_spongerng_init_from_file(sp,in.c_str(),len,det);
         if (!decaf_successful(ret)) {
             throw RngException(errno, "Couldn't load from file");
         }
@@ -75,11 +75,11 @@ public:
     
     /** Stir in new data */
     inline void stir( const Block &data ) NOEXCEPT {
-        spongerng_stir(sp,data.data(),data.size());
+        decaf_spongerng_stir(sp,data.data(),data.size());
     }
     
     /** Securely destroy by overwriting state. */
-    inline ~SpongeRng() NOEXCEPT { spongerng_destroy(sp); }
+    inline ~SpongeRng() NOEXCEPT { decaf_spongerng_destroy(sp); }
     
     using Rng::read;
     
@@ -88,7 +88,7 @@ public:
 #if __cplusplus >= 201103L
         final
 #endif
-        { spongerng_next(sp,buffer.data(),buffer.size()); }
+        { decaf_spongerng_next(sp,buffer.data(),buffer.size()); }
     
 private:
     SpongeRng(const SpongeRng &) DELETE;

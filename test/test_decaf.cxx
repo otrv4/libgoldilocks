@@ -421,8 +421,8 @@ static void test_crypto() {
 
             pub1.verify(message, sig);
     
-            SecureBuffer s1(priv1.sharedSecret(pub2,32,true));
-            SecureBuffer s2(priv2.sharedSecret(pub1,32,false));
+            SecureBuffer s1(priv1.shared_secret(pub2,32,true));
+            SecureBuffer s2(priv2.shared_secret(pub1,32,false));
             if (!memeq(s1,s2)) {
                 test.fail();
                 printf("    Shared secrets disagree on iteration %d.\n",i);

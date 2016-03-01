@@ -62,7 +62,7 @@ public:
     }
     
     /** Serialization size. */
-    inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const NOEXCEPT { return SER_BYTES; }
     
     /** Verify a message */
     inline void verify(
@@ -132,7 +132,7 @@ public:
     }
     
     /** Serialization size. */
-    inline size_t serSize() const NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const NOEXCEPT { return SER_BYTES; }
     
     /** Serialize into a buffer. */
     inline void serialize_into(unsigned char *x) const NOEXCEPT {
@@ -152,7 +152,7 @@ public:
     }
     
     /** Derive a shared secret */
-    inline SecureBuffer sharedSecret(
+    inline SecureBuffer shared_secret(
         const PublicKey<$(cxx_ns)> &pub,
         size_t bytes,
         bool me_first
@@ -166,7 +166,7 @@ public:
     
     /** Derive a shared secret */
     inline decaf_error_t __attribute__((warn_unused_result))
-    sharedSecretNoexcept(
+    shared_secret_noexcept(
         Buffer ret,
         const PublicKey<$(cxx_ns)> &pub,
         bool me_first
