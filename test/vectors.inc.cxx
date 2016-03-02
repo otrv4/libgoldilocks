@@ -162,6 +162,7 @@ const uint8_t ed448_eddsa_message[][12] = {{
     0x64,0xa6,0x5f,0x3c,0xde,0xdc,0xdd,0x66,
     0x81,0x1e,0x29,0x15
 }};
+/* TODO: prehashed test vectors, once spec is fixed */
 
 
 template<> const bool Tests<Ed448Goldilocks>::eddsa_prehashed[] = {
