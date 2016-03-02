@@ -270,7 +270,7 @@ size_t decaf_sponge_max_output_bytes (
 ) {
     return (s->params->max_out == 0xFF)
         ? SIZE_MAX
-        : ((200-s->params->rate)/2);
+        : (size_t)((200-s->params->rate)/2);
 }
 
 DEFSHAKE(128)

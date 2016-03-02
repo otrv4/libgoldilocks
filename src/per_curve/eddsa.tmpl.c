@@ -3,10 +3,10 @@
  * @brief EdDSA routines.
  */
 
+#include "word.h"
 #include <decaf/eddsa_$(gf_bits).h>
 #include <decaf/shake.h>
 #include <decaf/sha512.h>
-#include "word.h"
 #include <string.h>
 
 #define API_NAME "$(c_ns)"

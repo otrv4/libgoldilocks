@@ -70,7 +70,7 @@ private:
         }
         
         if (SUPPORTS_CONTEXTS) {
-            uint8_t dom[2] = {2, context_.size() };
+            uint8_t dom[2] = {2, (uint8_t)context_.size() };
             update(dom,2);
             update(context_);
         }
