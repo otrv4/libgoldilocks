@@ -29,7 +29,7 @@ namespace decaf {
 
 /**
  * Hash function derived from Keccak
- * @todo throw exceptions when hash is misused.
+ * FUTURE: throw ProtocolException when hash is misused by calling update() after output().
  */
 class KeccakHash {
 protected:
