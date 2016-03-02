@@ -321,6 +321,7 @@ test: $(BUILD_IBIN)/test
 	./$<
 
 test_ct: $(BUILD_IBIN)/test_ct
+	# NB: you must compile with XCFLAGS=-DNDEBUG or you will get lots of extra warnings.
 	valgrind ./$<
 	
 microbench: $(BUILD_IBIN)/bench

@@ -23,7 +23,7 @@ static const long NTESTS = 10;
 const char *undef_str = "Valgrind thinks this string is undefined.";
 const Block undef_block(undef_str);
 
-static inline void ignore(decaf_error_t x) {
+static inline void ignore_result(decaf_error_t x) {
     (void)x;
 }
 
@@ -44,7 +44,7 @@ static void test_arithmetic() {
         (void)(x+y);
         (void)(x-y);
         (void)(x*y);
-        ignore(x.inverse_noexcept(y));
+        ignore_result(x.inverse_noexcept(y));
         (void)(x==y);
         (void)(z=y);
         x.serialize_into(ser);
@@ -61,7 +61,7 @@ static void test_elligator() {
     for (int i=0; i<NTESTS; i++) {
         Point x(rng), y(rng,false);
         
-        ignore((x+y).invert_elligator(inv,i));
+        ignore_result((x+y).invert_elligator(inv,i));
     }
 }
 
@@ -76,7 +76,7 @@ static void test_ec() {
         Point p(rng),q(rng),r;
 
         p.serialize_into(ser);
-        ignore(Group::Point::decode(p,FixedBlock<Group::Point::SER_BYTES>(ser)));
+        ignore_result(p.decode(FixedBlock<Group::Point::SER_BYTES>(ser)));
         (void)(p*y);
         (void)(p+q);
         (void)(p-q);
@@ -101,7 +101,7 @@ static void test_cfrg() {
         FixedArrayBuffer<Group::DhLadder::PRIVATE_BYTES> priv(rng);
         
         Group::DhLadder::generate_key(priv);
-        ignore(Group::DhLadder::shared_secret_noexcept(pub,pub,priv));
+        ignore_result(Group::DhLadder::shared_secret_noexcept(pub,pub,priv));
     }
 }
 
@@ -126,10 +126,10 @@ static void test_crypto() {
 
 #if DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
         PrivateKey<Group> sk2(defrng);
-        (void)sk1.shared_secretNoexcept(shared,sk2.pub(),i&1);
+        ignore_result(sk1.shared_secret_noexcept(shared,sk2.pub(),i&1));
 #else
         PrivateKey<Group> sk3(rng);
-        (void)sk1.shared_secretNoexcept(shared,sk3.pub(),i&1);
+        ignore_result(sk1.shared_secret_noexcept(shared,sk3.pub(),i&1));
 #endif
     }
 }
