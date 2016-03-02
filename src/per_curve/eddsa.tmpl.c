@@ -23,7 +23,7 @@
 #define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
 #define COFACTOR $(cofactor)
 
-static void clamp(
+static void clamp (
     uint8_t secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES]
 ) {
     /* Blarg */
@@ -78,9 +78,8 @@ void API_NS(eddsa_derive_public_key) (
         
     API_NS(scalar_t) secret_scalar;
     API_NS(scalar_decode_long)(secret_scalar, secret_scalar_ser, sizeof(secret_scalar_ser));
-    /* TODO: write documentation for why (due to isogenies) this needs to be quartered */
-    API_NS(scalar_sub)(secret_scalar,API_NS(scalar_zero),secret_scalar);
     
+    /* TODO: write documentation for why (due to isogenies) this needs to be quartered/eighthed */
     for (unsigned int c = 1; c < COFACTOR/(1+EDDSA_USE_SIGMA_ISOGENY); c <<= 1) {
         API_NS(scalar_halve)(secret_scalar,secret_scalar);
     }
@@ -149,9 +148,8 @@ void API_NS(eddsa_sign) (
     {
         /* Scalarmul to create the nonce-point */
         API_NS(scalar_t) nonce_scalar_2;
-        API_NS(scalar_sub)(nonce_scalar_2,API_NS(scalar_zero),nonce_scalar);
-    
-        for (unsigned int c = 1; c < COFACTOR/(1+EDDSA_USE_SIGMA_ISOGENY); c <<= 1) {
+        API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar);
+        for (unsigned int c = 2; c < COFACTOR/(1+EDDSA_USE_SIGMA_ISOGENY); c <<= 1) {
             API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar_2);
         }
         
@@ -233,7 +231,6 @@ decaf_error_t API_NS(eddsa_verify) (
         &signature[$(C_NS)_EDDSA_PUBLIC_BYTES],
         $(C_NS)_EDDSA_PRIVATE_BYTES
     );
-    API_NS(scalar_sub)(response_scalar, API_NS(scalar_zero), response_scalar); /* TODO because nega-base point */
 #if EDDSA_USE_SIGMA_ISOGENY
     API_NS(scalar_add)(response_scalar,response_scalar,response_scalar);
 #endif

@@ -165,17 +165,22 @@ void decaf_sha3_update (
     }
 }
 
-void decaf_sha3_output (
+decaf_error_t decaf_sha3_output (
     decaf_keccak_sponge_t decaf_sponge,
     uint8_t * __restrict__ out,
     size_t len
 ) {
+    decaf_error_t ret = DECAF_SUCCESS;
     assert(decaf_sponge->params->position < decaf_sponge->params->rate);
     assert(decaf_sponge->params->rate < sizeof(decaf_sponge->state));
     
     if (decaf_sponge->params->max_out != 0xFF) {
-        assert(decaf_sponge->params->client >= len);
-        decaf_sponge->params->client -= len;
+        if (decaf_sponge->params->client >= len) {
+            decaf_sponge->params->client -= len;
+        } else {
+            decaf_sponge->params->client = 0;
+            ret = DECAF_FAILURE;
+        }
     }
     
     switch (decaf_sponge->params->flags) {
@@ -198,7 +203,7 @@ void decaf_sha3_output (
         if (cando > len) {
             memcpy(out, state, len);
             decaf_sponge->params->position += len;
-            return;
+            return ret;
         } else {
             memcpy(out, state, cando);
             dokeccak(decaf_sponge);
@@ -206,15 +211,17 @@ void decaf_sha3_output (
             out += cando;
         }
     }
+    return ret;
 }
 
-void decaf_sha3_final (
+decaf_error_t decaf_sha3_final (
     decaf_keccak_sponge_t decaf_sponge,
     uint8_t * __restrict__ out,
     size_t len
 ) {
-    decaf_sha3_output(decaf_sponge,out,len);
+    decaf_error_t ret = decaf_sha3_output(decaf_sponge,out,len);
     decaf_sha3_reset(decaf_sponge);
+    return ret;
 }
 
 void decaf_sha3_reset (

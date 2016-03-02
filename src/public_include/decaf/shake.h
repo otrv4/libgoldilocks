@@ -68,8 +68,10 @@ void decaf_sha3_update (
  * @param [inout] sponge The context.
  * @param [out] out The output data.
  * @param [in] len The requested output data length in bytes.
+ * @return DECAF_FAILURE if the sponge has exhausted its output capacity.
+ * @return DECAF_SUCCESS otherwise.
  */  
-void decaf_sha3_output (
+decaf_error_t decaf_sha3_output (
     decaf_keccak_sponge_t sponge,
     uint8_t * __restrict__ out,
     size_t len
@@ -83,7 +85,7 @@ void decaf_sha3_output (
  * @param [out] out The output data.
  * @param [in] len The requested output data length in bytes.
  */  
-void decaf_sha3_final (
+decaf_error_t decaf_sha3_final (
     decaf_keccak_sponge_t sponge,
     uint8_t * __restrict__ out,
     size_t len

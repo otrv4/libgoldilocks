@@ -58,7 +58,9 @@ public:
     inline SecureBuffer output(size_t len) throw(std::bad_alloc, LengthException) {
         if (len > max_output_size()) throw LengthException();
         SecureBuffer buffer(len);
-        decaf_sha3_output(sp,buffer.data(),len);
+        if (DECAF_SUCCESS != decaf_sha3_output(sp,buffer.data(),len)) {
+            throw LengthException();
+        }
         return buffer;
     }
     
@@ -66,21 +68,28 @@ public:
     inline SecureBuffer final(size_t len) throw(std::bad_alloc, LengthException) {
         if (len > max_output_size()) throw LengthException();
         SecureBuffer buffer(len);
-        decaf_sha3_final(sp,buffer.data(),len);
+        if (DECAF_SUCCESS != decaf_sha3_final(sp,buffer.data(),len)) {
+            throw LengthException();
+        }
         return buffer;
     }
 
-    /**
-     * @brief Output bytes from the sponge.
-     * @todo make this throw exceptions.
+    /** @brief Output bytes from the sponge.  Throw LengthException if you've
+     * output too many bytes from a SHA-3 instance.
      */
     inline void output(Buffer b) throw(LengthException) {
-        decaf_sha3_output(sp,b.data(),b.size());
+        if (DECAF_SUCCESS != decaf_sha3_output(sp,b.data(),b.size())) {
+            throw LengthException();
+        }
     }
     
-    /**  @brief Output bytes from the sponge and reinitialize it. */
+    /**  @brief Output bytes from the sponge and reinitialize it.  Throw
+     * LengthException if you've output too many bytes from a SHA3 instance.
+     */
     inline void final(Buffer b) throw(LengthException) {
-        decaf_sha3_final(sp,b.data(),b.size());
+        if (DECAF_SUCCESS != decaf_sha3_final(sp,b.data(),b.size())) {
+            throw LengthException();
+        }
     }
     
     /** @brief Return the sponge's default output size. */
@@ -94,12 +103,12 @@ public:
     }
     
     /** Output the default number of bytes. */
-    inline SecureBuffer output() throw(std::bad_alloc) {
+    inline SecureBuffer output() throw(std::bad_alloc,LengthException) {
         return output(default_output_size());
     }
     
     /** Output the default number of bytes, and reset hash. */
-    inline SecureBuffer final() throw(std::bad_alloc) {
+    inline SecureBuffer final() throw(std::bad_alloc,LengthException) {
         return final(default_output_size());
     }
 

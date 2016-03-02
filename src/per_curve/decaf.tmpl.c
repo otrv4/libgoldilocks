@@ -1076,7 +1076,7 @@ void API_NS(point_encode_like_eddsa) (
         gf_add( u, x, t ); // x^2 + y^2
         gf_add( z, q->y, q->x );
         gf_sqr ( y, z);
-        gf_sub ( y, y, u ); // 2xy
+        gf_sub ( y, u, y ); // -2xy
         gf_sub ( z, t, x ); // y^2 - x^2
         gf_sqr ( x, q->z );
         gf_add ( t, x, x);
@@ -1093,7 +1093,7 @@ void API_NS(point_encode_like_eddsa) (
     {
         API_NS(point_double)(q,q);
         API_NS(point_double)(q,q);
-        gf_div_qnr(x, q->x);
+        gf_mul_qnr(x, q->x);
         gf_copy(y, q->y);
         gf_copy(z, q->z);
     }
@@ -1106,7 +1106,7 @@ void API_NS(point_encode_like_eddsa) (
         gf_add( u, x, t );
         gf_add( z, q->y, q->x );
         gf_sqr ( y, z);
-        gf_sub ( y, y, u );
+        gf_sub ( y, u, y );
         gf_sub ( z, t, x );
         gf_sqr ( x, q->z );
         gf_add ( t, x, x); 
@@ -1167,7 +1167,7 @@ decaf_error_t API_NS(point_decode_like_eddsa) (
     succ &= gf_isr(p->t,p->x); /* 1/sqrt(num * denom) */
     
     gf_mul(p->x,p->t,p->z); /* sqrt(num / denom) */
-    gf_cond_neg(p->x,gf_lobit(p->x)^low);
+    gf_cond_neg(p->x,~gf_lobit(p->x)^low);
     gf_copy(p->z,ONE);
   
     #if EDDSA_USE_SIGMA_ISOGENY

@@ -679,7 +679,6 @@ void $(c_ns)_scalar_destroy (
 
 /**
  * @brief Overwrite point with zeros.
- * @todo Use this internally.
  */
 void $(c_ns)_point_destroy (
     $(c_ns)_point_t point
