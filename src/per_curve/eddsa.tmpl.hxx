@@ -110,7 +110,7 @@ template<class CRTP, Prehashed ph> class Signing;
 template<class CRTP> class Signing<CRTP,PREHASHED> {
 public:
     /* Sign a prehash context, and reset the context */
-    inline SecureBuffer sign_prehashed ( Prehash &ph ) const throw(std::bad_alloc) {
+    inline SecureBuffer sign_prehashed ( Prehash &ph ) const /*throw(std::bad_alloc)*/ {
         SecureBuffer out(CRTP::SIG_BYTES);
         FixedArrayBuffer<Prehash::OUTPUT_BYTES> tmp;
         ph.final(tmp);
@@ -126,6 +126,17 @@ public:
             ph.context_.size()
 #endif
         );
+        return out;
+    }
+    
+    /* Sign a message using the prehasher */
+    inline SecureBuffer sign_with_prehash (
+        const Block &message,
+        const Block &context = Block(NULL,0)
+    ) const /*throw(LengthException,CryptoException)*/ {
+        Prehash ph(context);
+        ph += message;
+        return sign_prehashed(ph);
     }
 };
 
@@ -229,14 +240,14 @@ public:
     }
     
     /** Assignment from string */
-    inline PrivateKey &operator=(const FixedBlock<SER_BYTES> &b) NOEXCEPT {
+    inline PrivateKeyBase &operator=(const FixedBlock<SER_BYTES> &b) NOEXCEPT {
         memcpy(priv_.data(),b.data(),b.size());
         $(c_ns)_eddsa_derive_public_key(pub_.data(), priv_.data());
         return *this;
     }
     
     /** Copy assignment */
-    inline PrivateKey &operator=(const PrivateKey &k) NOEXCEPT {
+    inline PrivateKeyBase &operator=(const PrivateKey &k) NOEXCEPT {
         memcpy(priv_.data(),k.priv_.data(), priv_.size());
         memcpy(pub_.data(),k.pub_.data(), pub_.size());
         return *this;
@@ -354,6 +365,17 @@ public:
         )) {
             throw CryptoException();
         }
+    }
+    
+    /* Verify a message using the prehasher */
+    inline void verify_with_prehash (
+        const FixedBlock<$(C_NS)_EDDSA_SIGNATURE_BYTES> &sig,
+        const Block &message,
+        const Block &context = Block(NULL,0)
+    ) const /*throw(LengthException,CryptoException)*/ {
+        Prehash ph(context);
+        ph += message;
+        verify_prehashed(sig,ph);
     }
 };
 

@@ -466,6 +466,7 @@ static void test_cfrg_crypto() {
     }
 }
 
+static const bool eddsa_prehashed[];
 static const Block eddsa_sk[], eddsa_pk[], eddsa_message[], eddsa_context[], eddsa_sig[];
 
 static void test_cfrg_vectors() {
@@ -490,10 +491,20 @@ static void test_cfrg_vectors() {
             printf("\n");
         }
         SecureBuffer sig;
-        if (priv.SUPPORTS_CONTEXTS) {
-            sig = priv.sign(eddsa_message[t],eddsa_context[t]);
+        
+        if (eddsa_prehashed[t]) {
+            typename EdDSA<Group>::PrivateKeyPh priv2(eddsa_sk[t]); 
+            if (priv2.SUPPORTS_CONTEXTS) {
+                sig = priv2.sign_with_prehash(eddsa_message[t],eddsa_context[t]);
+            } else {
+                sig = priv2.sign_with_prehash(eddsa_message[t]);
+            }
         } else {
-            sig = priv.sign(eddsa_message[t]);
+            if (priv.SUPPORTS_CONTEXTS) {
+                sig = priv.sign(eddsa_message[t],eddsa_context[t]);
+            } else {
+                sig = priv.sign(eddsa_message[t]);
+            }
         }
 
         if (!memeq(SecureBuffer(eddsa_sig[t]),sig)) {
@@ -572,7 +583,7 @@ static void run() {
 
 }; /* template<GroupId GROUP> struct Tests */
 
-#include "vectors.inc.c"
+#include "vectors.inc.cxx"
 
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
