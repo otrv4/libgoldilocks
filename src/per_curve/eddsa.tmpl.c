@@ -4,7 +4,7 @@
  */
 
 #include "word.h"
-#include <decaf/eddsa_$(gf_bits).h>
+#include <decaf/ed$(gf_bits).h>
 #include <decaf/shake.h>
 #include <decaf/sha512.h>
 #include <string.h>
@@ -67,7 +67,7 @@ static void hash_init_with_dom(
 #endif
 }
 
-void decaf_eddsa_$(gf_shortname)_derive_public_key (
+void decaf_ed$(gf_shortname)_derive_public_key (
     uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
 ) {
@@ -101,7 +101,7 @@ void decaf_eddsa_$(gf_shortname)_derive_public_key (
     decaf_bzero(secret_scalar_ser, sizeof(secret_scalar_ser));
 }
 
-void decaf_eddsa_$(gf_shortname)_sign (
+void decaf_ed$(gf_shortname)_sign (
     uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
@@ -193,7 +193,7 @@ void decaf_eddsa_$(gf_shortname)_sign (
 }
 
 
-decaf_error_t decaf_eddsa_$(gf_shortname)_verify (
+decaf_error_t decaf_ed$(gf_shortname)_verify (
     const uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t *message,

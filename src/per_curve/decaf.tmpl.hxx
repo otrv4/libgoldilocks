@@ -21,7 +21,7 @@
 #include <string.h> /* for memcpy */
 
 #include <decaf/decaf_$(gf_bits).h>
-#include <decaf/eddsa_$(gf_bits).h>
+#include <decaf/ed$(gf_bits).h>
 #include <decaf/secure_buffer.hxx>
 #include <string>
 #include <sys/types.h>
@@ -640,7 +640,7 @@ public:
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) throw(std::bad_alloc,CryptoException) {
         SecureBuffer out(PUBLIC_BYTES);
-        if (DECAF_SUCCESS != decaf_x$(gf_shortname)_direct_scalarmul(out.data(), pk.data(), scalar.data())) {
+        if (DECAF_SUCCESS != decaf_x$(gf_shortname)(out.data(), pk.data(), scalar.data())) {
             throw CryptoException();
         }
         return out;
@@ -653,7 +653,7 @@ public:
         const FixedBlock<PUBLIC_BYTES> &pk,
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) NOEXCEPT {
-       return decaf_x$(gf_shortname)_direct_scalarmul(out.data(), pk.data(), scalar.data());
+       return decaf_x$(gf_shortname)(out.data(), pk.data(), scalar.data());
     }
 
     /** Generate and return a public key; equivalent to shared_secret(base_point(),scalar)
@@ -663,7 +663,7 @@ public:
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) throw(std::bad_alloc) {
         SecureBuffer out(PUBLIC_BYTES);
-        decaf_x$(gf_shortname)_base_scalarmul(out.data(), scalar.data());
+        decaf_x$(gf_shortname)_generate_key(out.data(), scalar.data());
         return out;
     }
 
@@ -675,7 +675,7 @@ public:
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) NOEXCEPT {
-        decaf_x$(gf_shortname)_base_scalarmul(out.data(), scalar.data());
+        decaf_x$(gf_shortname)_generate_key(out.data(), scalar.data());
     }
 };
 

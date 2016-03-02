@@ -9,7 +9,7 @@
 
 #include <decaf/eddsa.hxx>
 #include <decaf/decaf_$(gf_bits).hxx>
-#include <decaf/eddsa_$(gf_bits).h>
+#include <decaf/ed$(gf_bits).h>
 
 #include <decaf/shake.hxx>
 #include <decaf/sha512.hxx>
@@ -113,7 +113,7 @@ public:
         SecureBuffer out(CRTP::SIG_BYTES);
         FixedArrayBuffer<Prehash::OUTPUT_BYTES> tmp;
         ph.final(tmp);
-        decaf_eddsa_$(gf_shortname)_sign (
+        decaf_ed$(gf_shortname)_sign (
             out.data(),
             ((const CRTP*)this)->priv_.data(),
             ((const CRTP*)this)->pub_.data(),
@@ -162,7 +162,7 @@ public:
         }
         
         SecureBuffer out(CRTP::SIG_BYTES);
-        decaf_eddsa_$(gf_shortname)_sign (
+        decaf_ed$(gf_shortname)_sign (
             out.data(),
             ((const CRTP*)this)->priv_.data(),
             ((const CRTP*)this)->pub_.data(),
@@ -235,13 +235,13 @@ public:
     
     /** Create at random */
     inline explicit PrivateKeyBase(Rng &r) NOEXCEPT : priv_(r) {
-        decaf_eddsa_$(gf_shortname)_derive_public_key(pub_.data(), priv_.data());
+        decaf_ed$(gf_shortname)_derive_public_key(pub_.data(), priv_.data());
     }
     
     /** Assignment from string */
     inline PrivateKeyBase &operator=(const FixedBlock<SER_BYTES> &b) NOEXCEPT {
         memcpy(priv_.data(),b.data(),b.size());
-        decaf_eddsa_$(gf_shortname)_derive_public_key(pub_.data(), priv_.data());
+        decaf_ed$(gf_shortname)_derive_public_key(pub_.data(), priv_.data());
         return *this;
     }
     
@@ -283,7 +283,7 @@ public:
             return DECAF_FAILURE;
         }
         
-        return decaf_eddsa_$(gf_shortname)_verify (
+        return decaf_ed$(gf_shortname)_verify (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
             message.data(),
@@ -331,7 +331,7 @@ public:
     ) const /*NOEXCEPT*/ {
         FixedArrayBuffer<Prehash::OUTPUT_BYTES> m;
         ph.final(m);
-        return decaf_eddsa_$(gf_shortname)_verify (
+        return decaf_ed$(gf_shortname)_verify (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
             m.data(),
@@ -351,7 +351,7 @@ public:
     ) const /*throw(CryptoException)*/ {
         FixedArrayBuffer<Prehash::OUTPUT_BYTES> m;
         ph.final(m);
-        if (DECAF_SUCCESS != decaf_eddsa_$(gf_shortname)_verify (
+        if (DECAF_SUCCESS != decaf_ed$(gf_shortname)_verify (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
             m.data(),

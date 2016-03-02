@@ -170,7 +170,7 @@ LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/elligator.o $$(BU
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
 GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/decaf/decaf_$(3).h $(BUILD_INC)/decaf/decaf_$(3).hxx \
 		$(BUILD_INC)/decaf/crypto_$(3).h $(BUILD_INC)/decaf/crypto_$(3).hxx \
-		$(BUILD_INC)/decaf/eddsa_$(3).h $(BUILD_INC)/decaf/eddsa_$(3).hxx
+		$(BUILD_INC)/decaf/ed$(3).h $(BUILD_INC)/decaf/ed$(3).hxx
 HEADERS_OF_$(1) = $$(HEADERS_OF_$(2)) $$(GLOBAL_HEADERS_OF_$(1))
 HEADERS += $$(GLOBAL_HEADERS_OF_$(1))
 
@@ -183,7 +183,7 @@ $$(BUILD_H)/$(1)/%.h: src/per_curve/%.tmpl.h src/gen_headers/* $$(HEADERS_OF_$(2
 $$(BUILD_INC)/decaf/decaf_$(3).%: src/per_curve/decaf.tmpl.% src/gen_headers/* $$(HEADERS_OF_$(2))
 	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 	
-$$(BUILD_INC)/decaf/eddsa_$(3).%: src/per_curve/eddsa.tmpl.% src/gen_headers/* $$(HEADERS_OF_$(2))
+$$(BUILD_INC)/decaf/ed$(3).%: src/per_curve/eddsa.tmpl.% src/gen_headers/* $$(HEADERS_OF_$(2))
 	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 	
 $$(BUILD_INC)/decaf/elligator_$(3).%: src/per_curve/elligator.tmpl.% src/gen_headers/* $$(HEADERS_OF_$(2))

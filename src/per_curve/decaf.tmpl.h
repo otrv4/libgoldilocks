@@ -383,7 +383,7 @@ decaf_error_t $(c_ns)_direct_scalarmul (
  * @retval DECAF_FAILURE The scalarmul didn't succeed, because the base
  * point is in a small subgroup.
  */
-decaf_error_t decaf_x$(gf_shortname)_direct_scalarmul (
+decaf_error_t decaf_x$(gf_shortname) (
     uint8_t out[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t base[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X$(gf_shortname)_PRIVATE_BYTES]
@@ -399,7 +399,7 @@ extern const uint8_t decaf_x$(gf_shortname)_base_point[DECAF_X$(gf_shortname)_PU
  * @param [out] scaled The scaled point base*scalar
  * @param [in] scalar The scalar to multiply by.
  */
-void decaf_x$(gf_shortname)_base_scalarmul (
+void decaf_x$(gf_shortname)_generate_key (
     uint8_t out[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X$(gf_shortname)_PRIVATE_BYTES]
 ) API_VIS NONNULL NOINLINE;

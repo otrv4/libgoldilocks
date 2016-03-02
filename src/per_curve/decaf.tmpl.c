@@ -5,7 +5,7 @@
 #include "field.h"
 
 #include <decaf.h>
-#include <decaf/eddsa_$(gf_bits).h>
+#include <decaf/ed$(gf_bits).h>
 
 /* Template stuff */
 #define API_NS(_id) $(c_ns)_##_id
@@ -1239,7 +1239,7 @@ decaf_error_t API_NS(point_decode_like_eddsa) (
     return decaf_succeed_if(succ);
 }
 
-decaf_error_t decaf_x$(gf_shortname)_direct_scalarmul (
+decaf_error_t decaf_x$(gf_shortname) (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t base[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
@@ -1310,7 +1310,7 @@ decaf_error_t decaf_x$(gf_shortname)_direct_scalarmul (
     return decaf_succeed_if(mask_to_bool(nz));
 }
 
-void decaf_x$(gf_shortname)_base_scalarmul (
+void decaf_x$(gf_shortname)_generate_key (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
 ) {

@@ -25,7 +25,7 @@ extern "C" {
  * @param [out] pubkey The public key.
  * @param [in] privkey The private key.
  */    
-void decaf_eddsa_$(gf_shortname)_derive_public_key (
+void decaf_ed$(gf_shortname)_derive_public_key (
     uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
 ) API_VIS NONNULL NOINLINE;
@@ -42,7 +42,7 @@ void decaf_eddsa_$(gf_shortname)_derive_public_key (
  * @param [in] message_len The length of the message.
  * @param [in] prehashed Nonzero if the message is actually the hash of something you want to sign.
  */  
-void decaf_eddsa_$(gf_shortname)_sign (
+void decaf_ed$(gf_shortname)_sign (
     uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
@@ -68,7 +68,7 @@ void decaf_eddsa_$(gf_shortname)_sign (
  * @param [in] message_len The length of the message.
  * @param [in] prehashed Nonzero if the message is actually the hash of something you want to verify.
  */
-decaf_error_t decaf_eddsa_$(gf_shortname)_verify (
+decaf_error_t decaf_ed$(gf_shortname)_verify (
     const uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t *message,
