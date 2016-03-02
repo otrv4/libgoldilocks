@@ -75,14 +75,7 @@ extern const $(c_ns)_scalar_t $(c_ns)_scalar_zero API_VIS;
 /** The identity point on the curve. */
 extern const $(c_ns)_point_t $(c_ns)_point_identity API_VIS;
 
-/** An arbitrarily chosen base point on the curve.
- * @warning TODO: this is subject to change.  It is currently
- * the preimage of the X$(gf_shortname) base point.  Sometime
- * soon, we will merge and finalize support for X$(gf_shortname)
- * and Ed$(gf_shortname) integration.  This might make some
- * multiple of the current basepoint (eg twice it, or the cofactor
- * times it) more convenient API-wise, and trigger a changeover.
- */
+/** An arbitrarily chosen base point on the curve. */
 extern const $(c_ns)_point_t $(c_ns)_point_base API_VIS;
 
 /** Precomputed table for the base point on the curve. */

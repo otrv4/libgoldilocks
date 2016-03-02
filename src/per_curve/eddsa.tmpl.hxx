@@ -48,7 +48,7 @@ typedef class PrivateKeyBase<PREHASHED> PrivateKeyPh;
 """)
 /** @endcond */
 
-/** Prehash context for EdDSA.  TODO: test me! */
+/** Prehash context for EdDSA. */
 class Prehash : public $(re.sub(r"SHAKE(\d+)",r"SHAKE<\1>", eddsa_hash.upper())) {
 public:
     /** Do we support contexts for signatures?  If not, they must always be NULL */

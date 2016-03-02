@@ -41,6 +41,11 @@ void decaf_ed$(gf_shortname)_derive_public_key (
  * @param [in] message The message to sign.
  * @param [in] message_len The length of the message.
  * @param [in] prehashed Nonzero if the message is actually the hash of something you want to sign.
+ *
+ * @warning For Ed25519, it is unsafe to use the same key for both prehashed and non-prehashed
+ * messages, at least without some very careful protocol-level disambiguation.  For Ed448 it is
+ * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
+ * you no seat belt.
  */  
 void decaf_ed$(gf_shortname)_sign (
     uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
@@ -67,6 +72,11 @@ void decaf_ed$(gf_shortname)_sign (
  * @param [in] message The message to verify.
  * @param [in] message_len The length of the message.
  * @param [in] prehashed Nonzero if the message is actually the hash of something you want to verify.
+ *
+ * @warning For Ed25519, it is unsafe to use the same key for both prehashed and non-prehashed
+ * messages, at least without some very careful protocol-level disambiguation.  For Ed448 it is
+ * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
+ * you no seat belt.
  */
 decaf_error_t decaf_ed$(gf_shortname)_verify (
     const uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
@@ -84,26 +94,25 @@ decaf_error_t decaf_ed$(gf_shortname)_verify (
 
 /**
  * @brief EdDSA point encoding.  Used internally, exposed externally.
+ * Multiplies the point by the current cofactor first.
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
- *
- * FIXME: encode and decode aren't inverses of each other: they
- * multiply by a factor.  Rename to reflect this once the base
- * point doctrine is worked out.
  */       
-void $(c_ns)_point_encode_like_eddsa (
+void $(c_ns)_point_mul_by_cofactor_and_encode_like_eddsa (
     uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const $(c_ns)_point_t p
 ) API_VIS NONNULL NOINLINE;
 
 /**
- * @brief EdDSA  point encoding.
+ * @brief EdDSA point decoding.  Remember that while points on the
+ * EdDSA curves have cofactor information, Decaf ignores (quotients
+ * out) all cofactor information.
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
  */       
-decaf_error_t $(c_ns)_point_decode_like_eddsa (
+decaf_error_t $(c_ns)_point_decode_like_eddsa_and_ignore_cofactor (
     $(c_ns)_point_t p,
     const uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
 ) API_VIS NONNULL NOINLINE;

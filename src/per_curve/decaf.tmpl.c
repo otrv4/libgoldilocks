@@ -1047,7 +1047,7 @@ decaf_error_t API_NS(direct_scalarmul) (
     return succ;
 }
 
-void API_NS(point_encode_like_eddsa) (
+void API_NS(point_mul_by_cofactor_and_encode_like_eddsa) (
     uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const point_t p
 ) {
@@ -1135,7 +1135,7 @@ void API_NS(point_encode_like_eddsa) (
 }
 
 
-decaf_error_t API_NS(point_decode_like_eddsa) (
+decaf_error_t API_NS(point_decode_like_eddsa_and_ignore_cofactor) (
     point_t p,
     const uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
 ) {

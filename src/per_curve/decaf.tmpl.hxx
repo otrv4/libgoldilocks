@@ -315,24 +315,22 @@ public:
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point.
      * Contents of the point are undefined.
      */
-    inline decaf_error_t WARN_UNUSED decode_like_eddsa_noexcept (
+    inline decaf_error_t WARN_UNUSED decode_like_eddsa_and_ignore_cofactor_noexcept (
         const FixedBlock<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &buffer
     ) NOEXCEPT {
-        return $(c_ns)_point_decode_like_eddsa(p,buffer.data());
+        return $(c_ns)_point_decode_like_eddsa_and_ignore_cofactor(p,buffer.data());
     }
 
-    inline void decode_like_eddsa (
+    inline void decode_like_eddsa_and_ignore_cofactor (
         const FixedBlock<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &buffer
     ) throw(CryptoException) {
-        if (DECAF_SUCCESS != decode_like_eddsa_noexcept(buffer)) throw(CryptoException());
+        if (DECAF_SUCCESS != decode_like_eddsa_and_ignore_cofactor_noexcept(buffer)) throw(CryptoException());
     }
 
-    /**
-     * Encode like EdDSA.  FIXME: and multiply by the cofactor...
-     */
-    inline SecureBuffer encode_like_eddsa() const {
+    /** Multiply out cofactor and encode like EdDSA. */
+    inline SecureBuffer mul_by_cofactor_and_encode_like_eddsa() const {
         SecureBuffer ret(DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
-        $(c_ns)_point_encode_like_eddsa(ret.data(),p);
+        $(c_ns)_point_mul_by_cofactor_and_encode_like_eddsa(ret.data(),p);
         return ret;
     }
 

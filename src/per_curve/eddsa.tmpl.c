@@ -85,15 +85,20 @@ void decaf_ed$(gf_shortname)_derive_public_key (
     API_NS(scalar_t) secret_scalar;
     API_NS(scalar_decode_long)(secret_scalar, secret_scalar_ser, sizeof(secret_scalar_ser));
     
-    /* TODO: write documentation for why (due to isogenies) this needs to be quartered/eighthed */
-    for (unsigned int c = 1; c < COFACTOR/EDDSA_BASE_POINT_RATIO; c <<= 1) {
+    /* Since we are going to mul_by_cofactor during encoding, divide by it here.
+     * However, the EdDSA base point is not the same as the decaf base point if
+     * the sigma isogeny is in use: the EdDSA base point is on Etwist_d/(1-d) and
+     * the decaf base point is on Etwist_d, and when converted it effectively
+     * picks up a factor of 2 from the isogenies.  So we might start at 2 instead of 1. 
+     */
+    for (unsigned int c = EDDSA_BASE_POINT_RATIO; c < COFACTOR; c <<= 1) {
         API_NS(scalar_halve)(secret_scalar,secret_scalar);
     }
     
     API_NS(point_t) p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),secret_scalar);
     
-    API_NS(point_encode_like_eddsa)(pubkey, p);
+    API_NS(point_mul_by_cofactor_and_encode_like_eddsa)(pubkey, p);
         
     /* Cleanup */
     API_NS(scalar_destroy)(secret_scalar);
@@ -155,13 +160,13 @@ void decaf_ed$(gf_shortname)_sign (
         /* Scalarmul to create the nonce-point */
         API_NS(scalar_t) nonce_scalar_2;
         API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar);
-        for (unsigned int c = 2; c < COFACTOR/EDDSA_BASE_POINT_RATIO; c <<= 1) {
+        for (unsigned int c = 2*EDDSA_BASE_POINT_RATIO; c < COFACTOR; c <<= 1) {
             API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar_2);
         }
         
         API_NS(point_t) p;
         API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),nonce_scalar_2);
-        API_NS(point_encode_like_eddsa)(nonce_point, p);
+        API_NS(point_mul_by_cofactor_and_encode_like_eddsa)(nonce_point, p);
         API_NS(point_destroy)(p);
         API_NS(scalar_destroy)(nonce_scalar_2);
     }
@@ -209,10 +214,10 @@ decaf_error_t decaf_ed$(gf_shortname)_verify (
     const uint8_t context_len = 0;
 #endif
     API_NS(point_t) pk_point, r_point;
-    decaf_error_t error = API_NS(point_decode_like_eddsa)(pk_point,pubkey);
+    decaf_error_t error = API_NS(point_decode_like_eddsa_and_ignore_cofactor)(pk_point,pubkey);
     if (DECAF_SUCCESS != error) { return error; }
     
-    error = API_NS(point_decode_like_eddsa)(r_point,signature);
+    error = API_NS(point_decode_like_eddsa_and_ignore_cofactor)(r_point,signature);
     if (DECAF_SUCCESS != error) { return error; }
     
     API_NS(scalar_t) challenge_scalar;
