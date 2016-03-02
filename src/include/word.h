@@ -9,6 +9,9 @@
 #define _XOPEN_SOURCE 600
 #define __STDC_WANT_LIB_EXT1__ 1 /* for memset_s */
 #include <string.h>
+#if defined(__sun) && defined(__SVR4)
+extern int posix_memalign(void **, size_t, size_t);
+#endif
 
 #include <assert.h>
 #include <stdint.h>
@@ -16,13 +19,11 @@
 
 #include <decaf/common.h>
 
-
-#ifndef __APPLE__
 #ifndef _BSD_SOURCE
 #define _BSD_SOURCE 1
 #endif
-#include <endian.h>
-#endif
+
+#include "portable_endian.h"
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -168,12 +169,6 @@ typedef struct {
     }
 #else
     #define br_is_zero word_is_zero
-#endif
-
-
-#ifdef __APPLE__
-    static INLINE uint64_t htole64 (uint64_t x) { return x; }
-    static INLINE uint64_t letoh64 (uint64_t x) { return x; }
 #endif
 
 /**

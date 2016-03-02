@@ -237,6 +237,9 @@ $(BUILD_LIB)/libdecaf.so.1: $(LIBCOMPONENTS)
 ifeq ($(UNAME),Darwin)
 	libtool -macosx_version_min $(MACOSX_VERSION_MIN) -dynamic -dead_strip -lc -x -o $@ \
 		  $(LIBCOMPONENTS)
+else ifeq ($(UNAME),SunOS)
+	$(LD) $(LDFLAGS) -shared -Wl,-soname,`basename $@` -o $@ $(LIBCOMPONENTS)
+	strip --discard-all $@
 else
 	$(LD) $(LDFLAGS) -shared -Wl,-soname,`basename $@` -Wl,--gc-sections -o $@ $(LIBCOMPONENTS)
 	strip --discard-all $@

@@ -23,33 +23,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-/* Subset of Mathias Panzenböck's portable endian code, public domain */
-#if defined(__linux__) || defined(__CYGWIN__)
-#	include <endian.h>
-#elif defined(__OpenBSD__)
-#	include <sys/endian.h>
-#elif defined(__APPLE__)
-#	include <libkern/OSByteOrder.h>
-#	define htole64(x) OSSwapHostToLittleInt64(x)
-#	define le64toh(x) OSSwapLittleToHostInt64(x)
-#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
-#	include <sys/endian.h>
-#	define le64toh(x) letoh64(x)
-#elif defined(_WIN16) || defined(_WIN32) || defined(_WIN64) || defined(__WINDOWS__)
-#	include <winsock2.h>
-#	include <sys/param.h>
-#	if BYTE_ORDER == LITTLE_ENDIAN
-#		define htole64(x) (x)
-#		define le64toh(x) (x)
-#	elif BYTE_ORDER == BIG_ENDIAN
-#		define htole64(x) __builtin_bswap64(x)
-#		define le64toh(x) __builtin_bswap64(x)
-#	else
-#		error byte order not supported
-#	endif
-#else
-#	error platform not supported
-#endif
+#include "portable_endian.h"
 
 /* The internal, non-opaque definition of the decaf_sponge struct. */
 typedef union {
@@ -292,7 +266,7 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
 # if (defined(__i386__) || defined(__x86_64__))
     static char tested = 0, have_rdrand = 0;
     if (!tested) {
-        u_int32_t a,b,c,d;
+        uint32_t a,b,c,d;
         a=1; __asm__("cpuid" : "+a"(a), "=b"(b), "=c"(c), "=d"(d));
         have_rdrand = (c>>30)&1;
         tested = 1;
@@ -314,9 +288,20 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
             *eo ^= out;
         }
     } else if (len>=8) {
-        uint64_t out;
-        __asm__ __volatile__ ("rdtsc" : "=A"(out));
-        *(uint64_t*) entropy ^= out;
+#ifndef __has_builtin
+#define __has_builtin(X) 0
+#endif
+#if defined(__clang__) && __has_builtin(__builtin_readcyclecounter)
+        *(uint64_t*) entropy ^= __builtin_readcyclecounter();
+#elif defined(__x86_64__)
+        uint32_t lobits, hibits;
+        __asm__ __volatile__ ("rdtsc" : "=a"(lobits), "=d"(hibits));
+        *(uint64_t*) entropy ^= (lobits | ((uint64_t)(hibits) << 32));
+#elif defined(__i386__)
+        uint64_t __value;
+        __asm__ __volatile__ ("rdtsc" : "=A"(__value));
+        *(uint64_t*) entropy ^= __value;
+#endif
     }
 
 #else

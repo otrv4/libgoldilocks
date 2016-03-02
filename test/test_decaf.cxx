@@ -208,7 +208,7 @@ static void test_elligator() {
     SecureBuffer *alts2[NHINTS];
     bool successes2[NHINTS];
 
-    for (int i=0; i<NTESTS/10 && (i<10 || test.passing_now); i++) {
+    for (unsigned int i=0; i<NTESTS/10 && (i<10 || test.passing_now); i++) {
         size_t len =  (i % (2*Point::HASH_BYTES + 3));
         SecureBuffer b1(len);
         if (i!=Point::HASH_BYTES) rng.read(b1); /* special test case */
@@ -222,7 +222,7 @@ static void test_elligator() {
         
         
         Point s = Point::from_hash(b1), ss=s;
-        for (int j=0; j<(i&3); j++) ss = ss.debugging_torque();
+        for (unsigned int j=0; j<(i&3); j++) ss = ss.debugging_torque();
         
         ss = ss.debugging_pscale(rng);
         

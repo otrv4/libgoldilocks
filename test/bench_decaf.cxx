@@ -43,11 +43,17 @@ static double now(void) {
 #define rdtsc __builtin_readcyclecounter
 #else
 static inline uint64_t rdtsc(void) {
-  u_int64_t out = 0;
-# if (defined(__i386__) || defined(__x86_64__))
-    __asm__ __volatile__ ("rdtsc" : "=A"(out));
+# if defined(__x86_64__)
+    uint32_t lobits, hibits;
+    __asm__ __volatile__ ("rdtsc" : "=a"(lobits), "=d"(hibits));
+    return (lobits | ((uint64_t)(hibits) << 32));
+# elif defined(__i386__)
+    uint64_t __value;
+    __asm__ __volatile__ ("rdtsc" : "=A"(__value));
+    return __value;
+# else
+    return 0;
 # endif
-  return out;
 }
 #endif
 
