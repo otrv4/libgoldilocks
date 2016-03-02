@@ -7,6 +7,7 @@
  * @warning Experimental!  The names, parameter orders etc are likely to change.
  */
 
+#include <decaf/eddsa.hxx>
 #include <decaf/decaf_$(gf_bits).hxx>
 #include <decaf/eddsa_$(gf_bits).h>
 
@@ -28,8 +29,6 @@ template <typename Group> struct EdDSA;
 
 /** A public key for crypto over $(name) */
 template<> struct EdDSA<$(cxx_ns)> {
-    
-enum Prehashed { PURE, PREHASHED };
 
 /** @cond internal */
 template<class CRTP, Prehashed> class Signing;
