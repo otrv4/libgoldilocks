@@ -474,63 +474,70 @@ static void strobe_duplex (
             cando = len;
         }
         
-        switch (mode) {
-        case STROBE_MODE_PLAINTEXT:
-            for (j=0; j<cando; j++) state[p+j] ^= in[j];
-            if (out) {
-                memcpy(out, in, cando);
+        if (cando) {
+        
+            switch (mode) {
+            case STROBE_MODE_PLAINTEXT:
+                for (j=0; j<cando; j++) state[p+j] ^= in[j];
+                if (out) {
+                    assert(in != NULL);
+                    memcpy(out, in, cando);
+                    out += cando;
+                }
+                in += cando;
+                break;
+            
+            case STROBE_MODE_ABSORB:
+                for (j=0; j<cando; j++) state[p+j] ^= in[j];
+                in += cando;
+                break;
+            
+            case STROBE_MODE_ABSORB_R:
+                assert(in != NULL);
+                memcpy(state+p, in, cando);
+                in += cando;
+                break;
+        
+            case STROBE_MODE_SQUEEZE:
+                assert(out != NULL);
+                memcpy(out, state+p, cando);
                 out += cando;
-            }
-            in += cando;
-            break;
+                break;
+        
+            case STROBE_MODE_SQUEEZE_R:
+                assert(out != NULL);
+                memcpy(out, state+p, cando);
+                out += cando;
+                memset(state+p, 0, cando);
+                break;
             
-        case STROBE_MODE_ABSORB:
-            for (j=0; j<cando; j++) state[p+j] ^= in[j];
-            in += cando;
-            break;
-            
-        case STROBE_MODE_ABSORB_R:
-            memcpy(state+p, in, cando);
-            in += cando;
-            break;
+            case STROBE_MODE_FORGET:
+                memset(state+p, 0, cando);
+                break;
         
-        case STROBE_MODE_SQUEEZE:
-            memcpy(out, state+p, cando);
-            out += cando;
-            break;
+            case STROBE_MODE_DUPLEX:
+                for (j=0; j<cando; j++) {
+                    state[p+j] ^= in[j];
+                    out[j] = state[p+j];
+                }
+                in += cando;
+                out += cando;
+                break;
         
-        case STROBE_MODE_SQUEEZE_R:
-            memcpy(out, state+p, cando);
-            out += cando;
-            memset(state+p, 0, cando);
-            break;
-            
-        case STROBE_MODE_FORGET:
-            memset(state+p, 0, cando);
-            break;
-        
-        case STROBE_MODE_DUPLEX:
-            for (j=0; j<cando; j++) {
-                state[p+j] ^= in[j];
-                out[j] = state[p+j];
-            }
-            in += cando;
-            out += cando;
-            break;
-        
-        case STROBE_MODE_DUPLEX_R:
-            for (j=0; j<cando; j++) {
-                unsigned char c = in[j];
-                out[j] = c ^ state[p+j];
-                state[p+j] = c;
-            }
-            in += cando;
-            out += cando;
-            break;
+            case STROBE_MODE_DUPLEX_R:
+                for (j=0; j<cando; j++) {
+                    unsigned char c = in[j];
+                    out[j] = c ^ state[p+j];
+                    state[p+j] = c;
+                }
+                in += cando;
+                out += cando;
+                break;
 
-        default:
-            assert(0);
-        };
+            default:
+                assert(0);
+            };
+        }
         
         if (last) {
             decaf_sponge->params->position = p+len;
