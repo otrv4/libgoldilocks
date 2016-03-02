@@ -35,7 +35,7 @@ static const scalar_t point_scalarmul_adjustment = {{{
     $(ser((2**(combs.n*combs.t*combs.s) - 1) % q,64,"SC_LIMB"))
 }}};
 
-const uint8_t API_NS(x_base_point)[X_SER_BYTES] = { $(ser(mont_base,8)) };
+const uint8_t decaf_x$(gf_shortname)_base_point[DECAF_X$(gf_shortname)_PUBLIC_BYTES] = { $(ser(mont_base,8)) };
 
 #if COFACTOR==8 || EDDSA_USE_SIGMA_ISOGENY
     static const gf SQRT_ONE_MINUS_D = {FIELD_LITERAL(
@@ -47,7 +47,7 @@ const uint8_t API_NS(x_base_point)[X_SER_BYTES] = { $(ser(mont_base,8)) };
 
 /* Sanity */
 #if (COFACTOR == 8) && !IMAGINE_TWIST
-/* FUTURE: Curve41417 doesn't have these properties. */
+/* FUTURE MAGIC: Curve41417 doesn't have these properties. */
     #error "Currently require IMAGINE_TWIST (and thus p=5 mod 8) for cofactor 8"
 #endif
 
@@ -1048,7 +1048,7 @@ decaf_error_t API_NS(direct_scalarmul) (
 }
 
 void API_NS(point_encode_like_eddsa) (
-    uint8_t enc[$(C_NS)_EDDSA_PUBLIC_BYTES],
+    uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const point_t p
 ) {
     
@@ -1123,9 +1123,9 @@ void API_NS(point_encode_like_eddsa) (
     gf_mul(x,y,z);
     
     /* Encode */
-    enc[$(C_NS)_EDDSA_PRIVATE_BYTES-1] = 0;
+    enc[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] = 0;
     gf_serialize(enc, x, 1);
-    enc[$(C_NS)_EDDSA_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
+    enc[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
 
     decaf_bzero(x,sizeof(x));
     decaf_bzero(y,sizeof(y));
@@ -1137,17 +1137,17 @@ void API_NS(point_encode_like_eddsa) (
 
 decaf_error_t API_NS(point_decode_like_eddsa) (
     point_t p,
-    const uint8_t enc[$(C_NS)_EDDSA_PUBLIC_BYTES]
+    const uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
 ) {
-    uint8_t enc2[$(C_NS)_EDDSA_PUBLIC_BYTES];
+    uint8_t enc2[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES];
     memcpy(enc2,enc,sizeof(enc2));
 
-    mask_t low = ~word_is_zero(enc2[$(C_NS)_EDDSA_PRIVATE_BYTES-1] & 0x80);
-    enc2[$(C_NS)_EDDSA_PRIVATE_BYTES-1] &= ~0x80;
+    mask_t low = ~word_is_zero(enc2[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] & 0x80);
+    enc2[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] &= ~0x80;
     
     mask_t succ = DECAF_TRUE;
 #if $(gf_bits % 8) == 0
-    succ = word_is_zero(enc2[$(C_NS)_EDDSA_PRIVATE_BYTES-1]);
+    succ = word_is_zero(enc2[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1]);
 #endif
     
     succ &= gf_deserialize(p->y, enc2, 1);

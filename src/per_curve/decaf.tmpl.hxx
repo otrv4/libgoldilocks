@@ -316,13 +316,13 @@ public:
      * Contents of the point are undefined.
      */
     inline decaf_error_t WARN_UNUSED decode_like_eddsa_noexcept (
-        const FixedBlock<$(C_NS)_EDDSA_PUBLIC_BYTES> &buffer
+        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &buffer
     ) NOEXCEPT {
         return $(c_ns)_point_decode_like_eddsa(p,buffer.data());
     }
 
     inline void decode_like_eddsa (
-        const FixedBlock<$(C_NS)_EDDSA_PUBLIC_BYTES> &buffer
+        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &buffer
     ) throw(CryptoException) {
         if (DECAF_SUCCESS != decode_like_eddsa_noexcept(buffer)) throw(CryptoException());
     }
@@ -331,7 +331,7 @@ public:
      * Encode like EdDSA.  FIXME: and multiply by the cofactor...
      */
     inline SecureBuffer encode_like_eddsa() const {
-        SecureBuffer ret($(C_NS)_EDDSA_PUBLIC_BYTES);
+        SecureBuffer ret(DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
         $(c_ns)_point_encode_like_eddsa(ret.data(),p);
         return ret;
     }
@@ -624,14 +624,14 @@ public:
 struct DhLadder {
 public:
     /** Bytes in an X$(gf_shortname) public key. */
-    static const size_t PUBLIC_BYTES = X$(gf_shortname)_PUBLIC_BYTES;
+    static const size_t PUBLIC_BYTES = DECAF_X$(gf_shortname)_PUBLIC_BYTES;
 
     /** Bytes in an X$(gf_shortname) private key. */
-    static const size_t PRIVATE_BYTES = X$(gf_shortname)_PRIVATE_BYTES;
+    static const size_t PRIVATE_BYTES = DECAF_X$(gf_shortname)_PRIVATE_BYTES;
 
     /** Base point for a scalar multiplication. */
     static const FixedBlock<PUBLIC_BYTES> base_point() NOEXCEPT {
-        return FixedBlock<PUBLIC_BYTES>($(c_ns)_x_base_point);
+        return FixedBlock<PUBLIC_BYTES>(decaf_x$(gf_shortname)_base_point);
     }
 
     /** Generate and return a shared secret with public key.  */

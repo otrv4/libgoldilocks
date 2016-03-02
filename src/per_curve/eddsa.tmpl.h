@@ -7,16 +7,16 @@ extern "C" {
 #endif
 
 /** Number of bytes in an EdDSA public key. */
-#define $(C_NS)_EDDSA_PUBLIC_BYTES $((gf_bits)/8 + 1)
+#define DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES $((gf_bits)/8 + 1)
 
 /** Number of bytes in an EdDSA private key. */
-#define $(C_NS)_EDDSA_PRIVATE_BYTES $(C_NS)_EDDSA_PUBLIC_BYTES
+#define DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES
 
 /** Number of bytes in an EdDSA private key. */
-#define $(C_NS)_EDDSA_SIGNATURE_BYTES ($(C_NS)_EDDSA_PUBLIC_BYTES + $(C_NS)_EDDSA_PRIVATE_BYTES)
+#define DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES (DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES + DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES)
 
 /** Does EdDSA support contexts? */
-#define $(C_NS)_EDDSA_SUPPORTS_CONTEXTS $(eddsa_supports_contexts)
+#define DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS $(eddsa_supports_contexts)
 
 /**
  * @brief EdDSA key generation.  This function uses a different (non-Decaf)
@@ -25,9 +25,9 @@ extern "C" {
  * @param [out] pubkey The public key.
  * @param [in] privkey The private key.
  */    
-void $(c_ns)_eddsa_derive_public_key (
-    uint8_t pubkey[$(C_NS)_EDDSA_PUBLIC_BYTES],
-    const uint8_t privkey[$(C_NS)_EDDSA_PRIVATE_BYTES]
+void decaf_eddsa_$(gf_shortname)_derive_public_key (
+    uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
+    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
 ) API_VIS NONNULL NOINLINE;
 
 /**
@@ -42,14 +42,14 @@ void $(c_ns)_eddsa_derive_public_key (
  * @param [in] message_len The length of the message.
  * @param [in] prehashed Nonzero if the message is actually the hash of something you want to sign.
  */  
-void $(c_ns)_eddsa_sign (
-    uint8_t signature[$(C_NS)_EDDSA_SIGNATURE_BYTES],
-    const uint8_t privkey[$(C_NS)_EDDSA_PRIVATE_BYTES],
-    const uint8_t pubkey[$(C_NS)_EDDSA_PUBLIC_BYTES],
+void decaf_eddsa_$(gf_shortname)_sign (
+    uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
+    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
     uint8_t prehashed
-#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
     , const uint8_t *context,
     uint8_t context_len
 #endif
@@ -68,13 +68,13 @@ void $(c_ns)_eddsa_sign (
  * @param [in] message_len The length of the message.
  * @param [in] prehashed Nonzero if the message is actually the hash of something you want to verify.
  */
-decaf_error_t $(c_ns)_eddsa_verify (
-    const uint8_t signature[$(C_NS)_EDDSA_SIGNATURE_BYTES],
-    const uint8_t pubkey[$(C_NS)_EDDSA_PUBLIC_BYTES],
+decaf_error_t decaf_eddsa_$(gf_shortname)_verify (
+    const uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
     uint8_t prehashed
-#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
     , const uint8_t *context,
     uint8_t context_len
 #endif
@@ -93,7 +93,7 @@ decaf_error_t $(c_ns)_eddsa_verify (
  * point doctrine is worked out.
  */       
 void $(c_ns)_point_encode_like_eddsa (
-    uint8_t enc[$(C_NS)_EDDSA_PUBLIC_BYTES],
+    uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const $(c_ns)_point_t p
 ) API_VIS NONNULL NOINLINE;
 
@@ -105,7 +105,7 @@ void $(c_ns)_point_encode_like_eddsa (
  */       
 decaf_error_t $(c_ns)_point_decode_like_eddsa (
     $(c_ns)_point_t p,
-    const uint8_t enc[$(C_NS)_EDDSA_PUBLIC_BYTES]
+    const uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
 ) API_VIS NONNULL NOINLINE;
 
 #ifdef __cplusplus

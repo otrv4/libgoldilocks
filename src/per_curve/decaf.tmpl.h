@@ -38,10 +38,10 @@ typedef struct gf_$(gf_shortname)_s {
 #define $(C_NS)_INVERT_ELLIGATOR_WHICH_BITS $(ceil_log2(cofactor) + 7 + elligator_onto - ((gf_bits-2) % 8))
 
 /** Number of bytes in an x$(gf_shortname) public key */
-#define X$(gf_shortname)_PUBLIC_BYTES $((gf_bits-1)/8 + 1)
+#define DECAF_X$(gf_shortname)_PUBLIC_BYTES $((gf_bits-1)/8 + 1)
 
 /** Number of bytes in an x$(gf_shortname) private key */
-#define X$(gf_shortname)_PRIVATE_BYTES $((gf_bits-1)/8 + 1)
+#define DECAF_X$(gf_shortname)_PRIVATE_BYTES $((gf_bits-1)/8 + 1)
 
 /** Twisted Edwards extended homogeneous coordinates */
 typedef struct $(c_ns)_point_s {
@@ -384,13 +384,13 @@ decaf_error_t $(c_ns)_direct_scalarmul (
  * point is in a small subgroup.
  */
 decaf_error_t decaf_x$(gf_shortname)_direct_scalarmul (
-    uint8_t out[X$(gf_shortname)_PUBLIC_BYTES],
-    const uint8_t base[X$(gf_shortname)_PUBLIC_BYTES],
-    const uint8_t scalar[X$(gf_shortname)_PRIVATE_BYTES]
+    uint8_t out[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
+    const uint8_t base[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
+    const uint8_t scalar[DECAF_X$(gf_shortname)_PRIVATE_BYTES]
 ) API_VIS NONNULL WARN_UNUSED NOINLINE;
 
 /** The base point for X$(gf_shortname) Diffie-Hellman */
-extern const uint8_t $(c_ns)_x_base_point[X$(gf_shortname)_PUBLIC_BYTES] API_VIS;
+extern const uint8_t decaf_x$(gf_shortname)_base_point[DECAF_X$(gf_shortname)_PUBLIC_BYTES] API_VIS;
 
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
@@ -400,8 +400,8 @@ extern const uint8_t $(c_ns)_x_base_point[X$(gf_shortname)_PUBLIC_BYTES] API_VIS
  * @param [in] scalar The scalar to multiply by.
  */
 void decaf_x$(gf_shortname)_base_scalarmul (
-    uint8_t out[X$(gf_shortname)_PUBLIC_BYTES],
-    const uint8_t scalar[X$(gf_shortname)_PRIVATE_BYTES]
+    uint8_t out[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
+    const uint8_t scalar[DECAF_X$(gf_shortname)_PRIVATE_BYTES]
 ) API_VIS NONNULL NOINLINE;
 
 /* FUTURE: uint8_t $(c_ns)_encode_like_curve$(gf_shortname)) */

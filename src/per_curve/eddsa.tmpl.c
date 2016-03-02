@@ -19,22 +19,28 @@
 #define hash_destroy decaf_$(eddsa_hash)_destroy
 #define hash_hash    decaf_$(eddsa_hash)_hash
 
-#define SUPPORTS_CONTEXTS $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+#define SUPPORTS_CONTEXTS DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
 #define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
 #define COFACTOR $(cofactor)
 
+/* EDDSA_BASE_POINT_RATIO = 1 or 2
+ * Because EdDSA25519 is not on E_d but on the isogenous E_sigma_d,
+ * its base point is twice ours.
+ */
+#define EDDSA_BASE_POINT_RATIO (1+EDDSA_USE_SIGMA_ISOGENY)
+
 static void clamp (
-    uint8_t secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES]
+    uint8_t secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
 ) {
     /* Blarg */
     secret_scalar_ser[0] &= -COFACTOR;
     uint8_t hibit = (1<<$(gf_bits % 8))>>1;
     if (hibit == 0) {
-        secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES - 1] = 0;
-        secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES - 2] |= 0x80;
+        secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES - 1] = 0;
+        secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES - 2] |= 0x80;
     } else {
-        secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES - 1] &= hibit-1;
-        secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES - 1] |= hibit;
+        secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES - 1] &= hibit-1;
+        secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES - 1] |= hibit;
     }
 }
 
@@ -61,18 +67,18 @@ static void hash_init_with_dom(
 #endif
 }
 
-void API_NS(eddsa_derive_public_key) (
-    uint8_t pubkey[$(C_NS)_EDDSA_PUBLIC_BYTES],
-    const uint8_t privkey[$(C_NS)_EDDSA_PRIVATE_BYTES]
+void decaf_eddsa_$(gf_shortname)_derive_public_key (
+    uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
+    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
 ) {
     /* only this much used for keygen */
-    uint8_t secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES];
+    uint8_t secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
     
     hash_hash(
         secret_scalar_ser,
         sizeof(secret_scalar_ser),
         privkey,
-        $(C_NS)_EDDSA_PRIVATE_BYTES
+        DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES
     );
     clamp(secret_scalar_ser);
         
@@ -80,7 +86,7 @@ void API_NS(eddsa_derive_public_key) (
     API_NS(scalar_decode_long)(secret_scalar, secret_scalar_ser, sizeof(secret_scalar_ser));
     
     /* TODO: write documentation for why (due to isogenies) this needs to be quartered/eighthed */
-    for (unsigned int c = 1; c < COFACTOR/(1+EDDSA_USE_SIGMA_ISOGENY); c <<= 1) {
+    for (unsigned int c = 1; c < COFACTOR/EDDSA_BASE_POINT_RATIO; c <<= 1) {
         API_NS(scalar_halve)(secret_scalar,secret_scalar);
     }
     
@@ -95,10 +101,10 @@ void API_NS(eddsa_derive_public_key) (
     decaf_bzero(secret_scalar_ser, sizeof(secret_scalar_ser));
 }
 
-void API_NS(eddsa_sign) (
-    uint8_t signature[$(C_NS)_EDDSA_SIGNATURE_BYTES],
-    const uint8_t privkey[$(C_NS)_EDDSA_PRIVATE_BYTES],
-    const uint8_t pubkey[$(C_NS)_EDDSA_PUBLIC_BYTES],
+void decaf_eddsa_$(gf_shortname)_sign (
+    uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
+    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
     uint8_t prehashed
@@ -116,14 +122,14 @@ void API_NS(eddsa_sign) (
     {
         /* Schedule the secret key */
         struct {
-            uint8_t secret_scalar_ser[$(C_NS)_EDDSA_PRIVATE_BYTES];
-            uint8_t seed[$(C_NS)_EDDSA_PRIVATE_BYTES];
+            uint8_t secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
+            uint8_t seed[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
         } __attribute__((packed)) expanded;
         hash_hash(
             (uint8_t *)&expanded,
             sizeof(expanded),
             privkey,
-            $(C_NS)_EDDSA_PRIVATE_BYTES
+            DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES
         );
         clamp(expanded.secret_scalar_ser);   
         API_NS(scalar_decode_long)(secret_scalar, expanded.secret_scalar_ser, sizeof(expanded.secret_scalar_ser));
@@ -138,18 +144,18 @@ void API_NS(eddsa_sign) (
     /* Decode the nonce */
     API_NS(scalar_t) nonce_scalar;
     {
-        uint8_t nonce[2*$(C_NS)_EDDSA_PRIVATE_BYTES];
+        uint8_t nonce[2*DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
         hash_final(hash,nonce,sizeof(nonce));
         API_NS(scalar_decode_long)(nonce_scalar, nonce, sizeof(nonce));
         decaf_bzero(nonce, sizeof(nonce));
     }
     
-    uint8_t nonce_point[$(C_NS)_EDDSA_PUBLIC_BYTES] = {0};
+    uint8_t nonce_point[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES] = {0};
     {
         /* Scalarmul to create the nonce-point */
         API_NS(scalar_t) nonce_scalar_2;
         API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar);
-        for (unsigned int c = 2; c < COFACTOR/(1+EDDSA_USE_SIGMA_ISOGENY); c <<= 1) {
+        for (unsigned int c = 2; c < COFACTOR/EDDSA_BASE_POINT_RATIO; c <<= 1) {
             API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar_2);
         }
         
@@ -165,9 +171,9 @@ void API_NS(eddsa_sign) (
         /* Compute the challenge */
         hash_init_with_dom(hash,prehashed,context,context_len);
         hash_update(hash,nonce_point,sizeof(nonce_point));
-        hash_update(hash,pubkey,$(C_NS)_EDDSA_PUBLIC_BYTES);
+        hash_update(hash,pubkey,DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
         hash_update(hash,message,message_len);
-        uint8_t challenge[2*$(C_NS)_EDDSA_PRIVATE_BYTES];
+        uint8_t challenge[2*DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
         hash_final(hash,challenge,sizeof(challenge));
         hash_destroy(hash);
         API_NS(scalar_decode_long)(challenge_scalar,challenge,sizeof(challenge));
@@ -177,9 +183,9 @@ void API_NS(eddsa_sign) (
     API_NS(scalar_mul)(challenge_scalar,challenge_scalar,secret_scalar);
     API_NS(scalar_add)(challenge_scalar,challenge_scalar,nonce_scalar);
     
-    decaf_bzero(signature,$(C_NS)_EDDSA_SIGNATURE_BYTES);
+    decaf_bzero(signature,DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES);
     memcpy(signature,nonce_point,sizeof(nonce_point));
-    API_NS(scalar_encode)(&signature[$(C_NS)_EDDSA_PUBLIC_BYTES],challenge_scalar);
+    API_NS(scalar_encode)(&signature[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],challenge_scalar);
     
     API_NS(scalar_destroy)(secret_scalar);
     API_NS(scalar_destroy)(nonce_scalar);
@@ -187,9 +193,9 @@ void API_NS(eddsa_sign) (
 }
 
 
-decaf_error_t API_NS(eddsa_verify) (
-    const uint8_t signature[$(C_NS)_EDDSA_SIGNATURE_BYTES],
-    const uint8_t pubkey[$(C_NS)_EDDSA_PUBLIC_BYTES],
+decaf_error_t decaf_eddsa_$(gf_shortname)_verify (
+    const uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
     uint8_t prehashed
@@ -214,10 +220,10 @@ decaf_error_t API_NS(eddsa_verify) (
         /* Compute the challenge */
         hash_ctx_t hash;
         hash_init_with_dom(hash,prehashed,context,context_len);
-        hash_update(hash,signature,$(C_NS)_EDDSA_PUBLIC_BYTES);
-        hash_update(hash,pubkey,$(C_NS)_EDDSA_PUBLIC_BYTES);
+        hash_update(hash,signature,DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
+        hash_update(hash,pubkey,DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
         hash_update(hash,message,message_len);
-        uint8_t challenge[2*$(C_NS)_EDDSA_PRIVATE_BYTES];
+        uint8_t challenge[2*DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
         hash_final(hash,challenge,sizeof(challenge));
         hash_destroy(hash);
         API_NS(scalar_decode_long)(challenge_scalar,challenge,sizeof(challenge));
@@ -228,10 +234,10 @@ decaf_error_t API_NS(eddsa_verify) (
     API_NS(scalar_t) response_scalar;
     API_NS(scalar_decode_long)(
         response_scalar,
-        &signature[$(C_NS)_EDDSA_PUBLIC_BYTES],
-        $(C_NS)_EDDSA_PRIVATE_BYTES
+        &signature[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
+        DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES
     );
-#if EDDSA_USE_SIGMA_ISOGENY
+#if EDDSA_BASE_POINT_RATIO == 2
     API_NS(scalar_add)(response_scalar,response_scalar,response_scalar);
 #endif
     

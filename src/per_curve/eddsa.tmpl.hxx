@@ -52,7 +52,7 @@ typedef class PrivateKeyBase<PREHASHED> PrivateKeyPh;
 class Prehash : public $(re.sub(r"SHAKE(\d+)",r"SHAKE<\1>", eddsa_hash.upper())) {
 public:
     /** Do we support contexts for signatures?  If not, they must always be NULL */
-    static const bool SUPPORTS_CONTEXTS = $(C_NS)_EDDSA_SUPPORTS_CONTEXTS;
+    static const bool SUPPORTS_CONTEXTS = DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS;
     
 private:
     typedef $(re.sub(r"SHAKE(\d+)",r"SHAKE<\1>", eddsa_hash.upper())) Super;
@@ -113,14 +113,14 @@ public:
         SecureBuffer out(CRTP::SIG_BYTES);
         FixedArrayBuffer<Prehash::OUTPUT_BYTES> tmp;
         ph.final(tmp);
-        $(c_ns)_eddsa_sign (
+        decaf_eddsa_$(gf_shortname)_sign (
             out.data(),
             ((const CRTP*)this)->priv_.data(),
             ((const CRTP*)this)->pub_.data(),
             tmp.data(),
             tmp.size(),
             1
-#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
             , ph.context_.data(),
             ph.context_.size()
 #endif
@@ -162,14 +162,14 @@ public:
         }
         
         SecureBuffer out(CRTP::SIG_BYTES);
-        $(c_ns)_eddsa_sign (
+        decaf_eddsa_$(gf_shortname)_sign (
             out.data(),
             ((const CRTP*)this)->priv_.data(),
             ((const CRTP*)this)->pub_.data(),
             message.data(),
             message.size(),
             0
-#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
             , context.data(),
             context.size()
 #endif
@@ -205,23 +205,23 @@ private:
 """)
     
     /** The pre-expansion form of the signing key. */
-    FixedArrayBuffer<$(C_NS)_EDDSA_PRIVATE_BYTES> priv_;
+    FixedArrayBuffer<DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES> priv_;
     
     /** The post-expansion public key. */
-    FixedArrayBuffer<$(C_NS)_EDDSA_PUBLIC_BYTES> pub_;
+    FixedArrayBuffer<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> pub_;
     
 public:
     /** Underlying group */
     typedef $(cxx_ns) Group;
     
     /** Signature size. */
-    static const size_t SIG_BYTES = $(C_NS)_EDDSA_SIGNATURE_BYTES;
+    static const size_t SIG_BYTES = DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES;
     
     /** Serialization size. */
-    static const size_t SER_BYTES = $(C_NS)_EDDSA_PRIVATE_BYTES;
+    static const size_t SER_BYTES = DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES;
     
     /** Do we support contexts for signatures?  If not, they must always be NULL */
-    static const bool SUPPORTS_CONTEXTS = $(C_NS)_EDDSA_SUPPORTS_CONTEXTS;
+    static const bool SUPPORTS_CONTEXTS = DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS;
     
     
     /** Create but don't initialize */
@@ -235,13 +235,13 @@ public:
     
     /** Create at random */
     inline explicit PrivateKeyBase(Rng &r) NOEXCEPT : priv_(r) {
-        $(c_ns)_eddsa_derive_public_key(pub_.data(), priv_.data());
+        decaf_eddsa_$(gf_shortname)_derive_public_key(pub_.data(), priv_.data());
     }
     
     /** Assignment from string */
     inline PrivateKeyBase &operator=(const FixedBlock<SER_BYTES> &b) NOEXCEPT {
         memcpy(priv_.data(),b.data(),b.size());
-        $(c_ns)_eddsa_derive_public_key(pub_.data(), priv_.data());
+        decaf_eddsa_$(gf_shortname)_derive_public_key(pub_.data(), priv_.data());
         return *this;
     }
     
@@ -273,7 +273,7 @@ template<class CRTP> class Verification<CRTP,PURE> {
 public:
     /** Verify a signature, returning DECAF_FAILURE if verification fails */
     inline decaf_error_t WARN_UNUSED verify_noexcept (
-        const FixedBlock<$(C_NS)_EDDSA_SIGNATURE_BYTES> &sig,
+        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
         const Block &message,
         const Block &context = Block(NULL,0)
     ) const /*NOEXCEPT*/ {
@@ -283,13 +283,13 @@ public:
             return DECAF_FAILURE;
         }
         
-        return $(c_ns)_eddsa_verify (
+        return decaf_eddsa_$(gf_shortname)_verify (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
             message.data(),
             message.size(),
             0
-#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
             , context.data(),
             context.size()
 #endif
@@ -305,7 +305,7 @@ public:
      * @warning It is generally unsafe to use Ed25519 with both prehashed and non-prehashed messages.
      */
     inline void verify (
-        const FixedBlock<$(C_NS)_EDDSA_SIGNATURE_BYTES> &sig,
+        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
         const Block &message,
         const Block &context = Block(NULL,0)
     ) const /*throw(LengthException,CryptoException)*/ {
@@ -326,18 +326,18 @@ template<class CRTP> class Verification<CRTP,PREHASHED> {
 public:
     /* Verify a prehash context, and reset the context */
     inline decaf_error_t WARN_UNUSED verify_prehashed_noexcept (
-        const FixedBlock<$(C_NS)_EDDSA_SIGNATURE_BYTES> &sig,
+        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
         Prehash &ph
     ) const /*NOEXCEPT*/ {
         FixedArrayBuffer<Prehash::OUTPUT_BYTES> m;
         ph.final(m);
-        return $(c_ns)_eddsa_verify (
+        return decaf_eddsa_$(gf_shortname)_verify (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
             m.data(),
             m.size(),
             1
-#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
             , ph.context_.data(),
             ph.context_.size()
 #endif
@@ -346,18 +346,18 @@ public:
     
     /* Verify a prehash context, and reset the context */
     inline void verify_prehashed (
-        const FixedBlock<$(C_NS)_EDDSA_SIGNATURE_BYTES> &sig,
+        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
         Prehash &ph
     ) const /*throw(CryptoException)*/ {
         FixedArrayBuffer<Prehash::OUTPUT_BYTES> m;
         ph.final(m);
-        if (DECAF_SUCCESS != $(c_ns)_eddsa_verify (
+        if (DECAF_SUCCESS != decaf_eddsa_$(gf_shortname)_verify (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
             m.data(),
             m.size(),
             1
-#if $(C_NS)_EDDSA_SUPPORTS_CONTEXTS
+#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
             , ph.context_.data(),
             ph.context_.size()
 #endif
@@ -368,7 +368,7 @@ public:
     
     /* Verify a message using the prehasher */
     inline void verify_with_prehash (
-        const FixedBlock<$(C_NS)_EDDSA_SIGNATURE_BYTES> &sig,
+        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
         const Block &message,
         const Block &context = Block(NULL,0)
     ) const /*throw(LengthException,CryptoException)*/ {
@@ -409,7 +409,7 @@ private:
 
 private:
     /** The pre-expansion form of the signature */
-    FixedArrayBuffer<$(C_NS)_EDDSA_PUBLIC_BYTES> pub_;
+    FixedArrayBuffer<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> pub_;
     
 public:
     /* PERF FUTURE: Pre-cached decoding? Precomputed table?? */
@@ -418,13 +418,13 @@ public:
     typedef $(cxx_ns) Group;
     
     /** Signature size. */
-    static const size_t SIG_BYTES = $(C_NS)_EDDSA_SIGNATURE_BYTES;
+    static const size_t SIG_BYTES = DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES;
     
     /** Serialization size. */
-    static const size_t SER_BYTES = $(C_NS)_EDDSA_PRIVATE_BYTES;
+    static const size_t SER_BYTES = DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES;
     
     /** Do we support contexts for signatures?  If not, they must always be NULL */
-    static const bool SUPPORTS_CONTEXTS = $(C_NS)_EDDSA_SUPPORTS_CONTEXTS;
+    static const bool SUPPORTS_CONTEXTS = DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS;
     
     
     /** Create but don't initialize */
