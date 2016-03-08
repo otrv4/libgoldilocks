@@ -70,7 +70,9 @@ private:
         }
         
         if (SUPPORTS_CONTEXTS) {
+            const char pfx[] = "$(eddsa_dom)";
             uint8_t dom[2] = {2, (uint8_t)context_.size() };
+            update((const unsigned char*)pfx,strlen(pfx));
             update(dom,2);
             update(context_);
         }
