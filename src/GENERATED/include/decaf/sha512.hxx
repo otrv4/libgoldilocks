@@ -30,7 +30,7 @@ class SHA512 {
 protected:
     /** @cond internal */
     /** The C-wrapper sponge state */
-    decaf_sha512_ctx_t sha;
+    decaf_sha512_ctx_t wrapped;
 
 public:
     
@@ -44,10 +44,10 @@ public:
     static const size_t DEFAULT_OUTPUT_BYTES = OUTPUT_BYTES;
     
     /** Constructor */
-    inline SHA512() NOEXCEPT { decaf_sha512_init(sha); }
+    inline SHA512() NOEXCEPT { decaf_sha512_init(wrapped); }
     
     /** Add more data to running hash */
-    inline void update(const uint8_t *__restrict__ in, size_t len) NOEXCEPT { decaf_sha512_update(sha,in,len); }
+    inline void update(const uint8_t *__restrict__ in, size_t len) NOEXCEPT { decaf_sha512_update(wrapped,in,len); }
 
     /** Add more data to running hash, C++ version. */
     inline void update(const Block &s) NOEXCEPT { update(s.data(),s.size()); }
@@ -61,17 +61,17 @@ public:
     /** @brief Output bytes from the SHA context, and resets it. */
     inline void final(Buffer b) throw(LengthException) {
         if (b.size() > OUTPUT_BYTES) throw LengthException();
-        decaf_sha512_final(sha,b.data(),b.size());
+        decaf_sha512_final(wrapped,b.data(),b.size());
     }
     
     /** Resets the SHA context */
-    inline void reset() NOEXCEPT { decaf_sha512_init(sha); }
+    inline void reset() NOEXCEPT { decaf_sha512_init(wrapped); }
 
     /** @brief Output bytes from the sponge. */
     inline SecureBuffer final(size_t len = OUTPUT_BYTES) throw(LengthException) {
         if (len > OUTPUT_BYTES) throw LengthException();
         SecureBuffer buffer(len);
-        decaf_sha512_final(sha,buffer.data(),len);
+        decaf_sha512_final(wrapped,buffer.data(),len);
         return buffer;
     }
 
@@ -93,7 +93,7 @@ public:
     }
 
     /** Destructor zeroizes state */
-    inline ~SHA512() NOEXCEPT { decaf_sha512_destroy(sha); }
+    inline ~SHA512() NOEXCEPT { decaf_sha512_destroy(wrapped); }
 };
   
 } /* namespace decaf */

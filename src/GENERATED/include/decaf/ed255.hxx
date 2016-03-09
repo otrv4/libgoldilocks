@@ -79,14 +79,12 @@ private:
         ) {
             throw LengthException();
         }
-        
-        if (SUPPORTS_CONTEXTS) {
-            const char pfx[] = "";
-            uint8_t dom[2] = {2, (uint8_t)context_.size() };
-            update((const unsigned char*)pfx,strlen(pfx));
-            update(dom,2);
-            update(context_);
-        }
+
+#if DECAF_EDDSA_25519_SUPPORTS_CONTEXTS
+        decaf_ed25519_prehash_init((decaf_sha512_ctx_s *)wrapped,context_.data(),context_.size());
+#else
+        decaf_ed25519_prehash_init(wrapped);
+#endif
     }
     
 public:
@@ -122,17 +120,13 @@ template<class CRTP, Prehashed ph> class Signing;
 template<class CRTP> class Signing<CRTP,PREHASHED> {
 public:
     /* Sign a prehash context, and reset the context */
-    inline SecureBuffer sign_prehashed ( Prehash &ph ) const /*throw(std::bad_alloc)*/ {
+    inline SecureBuffer sign_prehashed ( const Prehash &ph ) const /*throw(std::bad_alloc)*/ {
         SecureBuffer out(CRTP::SIG_BYTES);
-        FixedArrayBuffer<Prehash::OUTPUT_BYTES> tmp;
-        ph.final(tmp);
-        decaf_ed25519_sign (
+        decaf_ed25519_sign_prehash (
             out.data(),
             ((const CRTP*)this)->priv_.data(),
             ((const CRTP*)this)->pub_.data(),
-            tmp.data(),
-            tmp.size(),
-            1
+            (const decaf_ed25519_prehash_ctx_s*)ph.wrapped
 #if DECAF_EDDSA_25519_SUPPORTS_CONTEXTS
             , ph.context_.data(),
             ph.context_.size()
@@ -324,19 +318,15 @@ public:
 
 template<class CRTP> class Verification<CRTP,PREHASHED> {
 public:
-    /* Verify a prehash context, and reset the context */
+    /* Verify a prehash context. */
     inline decaf_error_t WARN_UNUSED verify_prehashed_noexcept (
         const FixedBlock<DECAF_EDDSA_25519_SIGNATURE_BYTES> &sig,
-        Prehash &ph
+        const Prehash &ph
     ) const /*NOEXCEPT*/ {
-        FixedArrayBuffer<Prehash::OUTPUT_BYTES> m;
-        ph.final(m);
-        return decaf_ed25519_verify (
+        return decaf_ed25519_verify_prehash (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
-            m.data(),
-            m.size(),
-            1
+            (const decaf_ed25519_prehash_ctx_s*)ph.wrapped
 #if DECAF_EDDSA_25519_SUPPORTS_CONTEXTS
             , ph.context_.data(),
             ph.context_.size()
@@ -344,19 +334,15 @@ public:
         );
     }
     
-    /* Verify a prehash context, and reset the context */
+    /* Verify a prehash context. */
     inline void verify_prehashed (
         const FixedBlock<DECAF_EDDSA_25519_SIGNATURE_BYTES> &sig,
-        Prehash &ph
+        const Prehash &ph
     ) const /*throw(CryptoException)*/ {
-        FixedArrayBuffer<Prehash::OUTPUT_BYTES> m;
-        ph.final(m);
-        if (DECAF_SUCCESS != decaf_ed25519_verify (
+        if (DECAF_SUCCESS != decaf_ed25519_verify_prehash (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
-            m.data(),
-            m.size(),
-            1
+            (const decaf_ed25519_prehash_ctx_s*)ph.wrapped
 #if DECAF_EDDSA_25519_SUPPORTS_CONTEXTS
             , ph.context_.data(),
             ph.context_.size()

@@ -35,18 +35,18 @@ class KeccakHash {
 protected:
     /** @cond internal */
     /** The C-wrapper sponge state */
-    decaf_keccak_sponge_t sp;
+    decaf_keccak_sponge_t wrapped;
     
     /** Initialize from parameters */
-    inline KeccakHash(const decaf_kparams_s *params) NOEXCEPT { decaf_sponge_init(sp, params); }
+    inline KeccakHash(const decaf_kparams_s *params) NOEXCEPT { decaf_sponge_init(wrapped, params); }
     /** @endcond */
     
 public:
     /** Add more data to running hash */
-    inline void update(const uint8_t *__restrict__ in, size_t len) NOEXCEPT { decaf_sha3_update(sp,in,len); }
+    inline void update(const uint8_t *__restrict__ in, size_t len) NOEXCEPT { decaf_sha3_update(wrapped,in,len); }
 
     /** Add more data to running hash, C++ version. */
-    inline void update(const Block &s) NOEXCEPT { decaf_sha3_update(sp,s.data(),s.size()); }
+    inline void update(const Block &s) NOEXCEPT { decaf_sha3_update(wrapped,s.data(),s.size()); }
     
     /** Add more data, stream version. */
     inline KeccakHash &operator<<(const Block &s) NOEXCEPT { update(s); return *this; }
@@ -58,7 +58,7 @@ public:
     inline SecureBuffer output(size_t len) throw(std::bad_alloc, LengthException) {
         if (len > max_output_size()) throw LengthException();
         SecureBuffer buffer(len);
-        if (DECAF_SUCCESS != decaf_sha3_output(sp,buffer.data(),len)) {
+        if (DECAF_SUCCESS != decaf_sha3_output(wrapped,buffer.data(),len)) {
             throw LengthException();
         }
         return buffer;
@@ -68,7 +68,7 @@ public:
     inline SecureBuffer final(size_t len) throw(std::bad_alloc, LengthException) {
         if (len > max_output_size()) throw LengthException();
         SecureBuffer buffer(len);
-        if (DECAF_SUCCESS != decaf_sha3_final(sp,buffer.data(),len)) {
+        if (DECAF_SUCCESS != decaf_sha3_final(wrapped,buffer.data(),len)) {
             throw LengthException();
         }
         return buffer;
@@ -78,7 +78,7 @@ public:
      * output too many bytes from a SHA-3 instance.
      */
     inline void output(Buffer b) throw(LengthException) {
-        if (DECAF_SUCCESS != decaf_sha3_output(sp,b.data(),b.size())) {
+        if (DECAF_SUCCESS != decaf_sha3_output(wrapped,b.data(),b.size())) {
             throw LengthException();
         }
     }
@@ -87,19 +87,19 @@ public:
      * LengthException if you've output too many bytes from a SHA3 instance.
      */
     inline void final(Buffer b) throw(LengthException) {
-        if (DECAF_SUCCESS != decaf_sha3_final(sp,b.data(),b.size())) {
+        if (DECAF_SUCCESS != decaf_sha3_final(wrapped,b.data(),b.size())) {
             throw LengthException();
         }
     }
     
     /** @brief Return the sponge's default output size. */
     inline size_t default_output_size() const NOEXCEPT {
-        return decaf_sponge_default_output_bytes(sp);
+        return decaf_sponge_default_output_bytes(wrapped);
     }
     
     /** @brief Return the sponge's maximum output size. */
     inline size_t max_output_size() const NOEXCEPT {
-        return decaf_sponge_max_output_bytes(sp);
+        return decaf_sponge_max_output_bytes(wrapped);
     }
     
     /** Output the default number of bytes. */
@@ -113,10 +113,10 @@ public:
     }
 
     /** Reset the hash to the empty string */
-    inline void reset() NOEXCEPT { decaf_sha3_reset(sp); }
+    inline void reset() NOEXCEPT { decaf_sha3_reset(wrapped); }
     
     /** Destructor zeroizes state */
-    inline ~KeccakHash() NOEXCEPT { decaf_sponge_destroy(sp); }
+    inline ~KeccakHash() NOEXCEPT { decaf_sponge_destroy(wrapped); }
 };
 
 /** Fixed-output-length SHA3 */

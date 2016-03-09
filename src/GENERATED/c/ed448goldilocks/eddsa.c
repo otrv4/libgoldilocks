@@ -56,6 +56,7 @@ static void clamp (
 static void hash_init_with_dom(
     hash_ctx_t hash,
     uint8_t prehashed,
+    uint8_t for_prehash,
     const uint8_t *context,
     uint8_t context_len
 ) {
@@ -63,16 +64,31 @@ static void hash_init_with_dom(
     
 #if SUPPORTS_CONTEXTS
     const char *dom_s = "SigEd448";
-    const uint8_t dom[2] = {1+word_is_zero(prehashed), context_len};
+    const uint8_t dom[2] = {2+word_is_zero(prehashed)+word_is_zero(for_prehash), context_len};
     hash_update(hash,(const unsigned char *)dom_s, strlen(dom_s));
     hash_update(hash,dom,2);
     hash_update(hash,context,context_len);
 #else
     (void)prehashed;
+    (void)for_prehash;
     (void)context;
     assert(context==NULL);
     (void)context_len;
     assert(context_len == 0);
+#endif
+}
+
+void decaf_ed448_prehash_init (
+    hash_ctx_t hash
+#if DECAF_EDDSA_448_SUPPORTS_CONTEXTS
+    , const uint8_t *context,
+    uint8_t context_len
+#endif
+) {
+#if DECAF_EDDSA_448_SUPPORTS_CONTEXTS
+    hash_init_with_dom(hash,1,1,context,context_len);
+#else
+    hash_init_with_dom(hash,1,1,NULL,0);
 #endif
 }
 
@@ -149,7 +165,7 @@ void decaf_ed448_sign (
         API_NS(scalar_decode_long)(secret_scalar, expanded.secret_scalar_ser, sizeof(expanded.secret_scalar_ser));
     
         /* Hash to create the nonce */
-        hash_init_with_dom(hash,prehashed,context,context_len);
+        hash_init_with_dom(hash,prehashed,0,context,context_len);
         hash_update(hash,expanded.seed,sizeof(expanded.seed));
         hash_update(hash,message,message_len);
         decaf_bzero(&expanded, sizeof(expanded));
@@ -183,7 +199,7 @@ void decaf_ed448_sign (
     API_NS(scalar_t) challenge_scalar;
     {
         /* Compute the challenge */
-        hash_init_with_dom(hash,prehashed,context,context_len);
+        hash_init_with_dom(hash,prehashed,0,context,context_len);
         hash_update(hash,nonce_point,sizeof(nonce_point));
         hash_update(hash,pubkey,DECAF_EDDSA_448_PUBLIC_BYTES);
         hash_update(hash,message,message_len);
@@ -206,6 +222,33 @@ void decaf_ed448_sign (
     API_NS(scalar_destroy)(challenge_scalar);
 }
 
+
+void decaf_ed448_sign_prehash (
+    uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+    const decaf_ed448_prehash_ctx_t hash
+#if DECAF_EDDSA_448_SUPPORTS_CONTEXTS
+    , const uint8_t *context,
+    uint8_t context_len
+#endif
+) {
+    uint8_t hash_output[64]; /* MAGIC but true for all existing schemes */
+    {
+        decaf_ed448_prehash_ctx_t hash_too;
+        memcpy(hash_too,hash,sizeof(hash_too));
+        hash_final(hash_too,hash_output,sizeof(hash_output));
+        hash_destroy(hash_too);
+    }
+    
+#if DECAF_EDDSA_448_SUPPORTS_CONTEXTS
+    decaf_ed448_sign(signature,privkey,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
+#else
+    decaf_ed448_sign(signature,privkey,pubkey,hash_output,sizeof(hash_output),1);
+#endif
+    
+    decaf_bzero(hash_output,sizeof(hash_output));
+}
 
 decaf_error_t decaf_ed448_verify (
     const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
@@ -233,7 +276,7 @@ decaf_error_t decaf_ed448_verify (
     {
         /* Compute the challenge */
         hash_ctx_t hash;
-        hash_init_with_dom(hash,prehashed,context,context_len);
+        hash_init_with_dom(hash,prehashed,0,context,context_len);
         hash_update(hash,signature,DECAF_EDDSA_448_PUBLIC_BYTES);
         hash_update(hash,pubkey,DECAF_EDDSA_448_PUBLIC_BYTES);
         hash_update(hash,message,message_len);
@@ -264,4 +307,33 @@ decaf_error_t decaf_ed448_verify (
         challenge_scalar
     );
     return decaf_succeed_if(API_NS(point_eq(pk_point,r_point)));
+}
+
+
+decaf_error_t decaf_ed448_verify_prehash (
+    const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+    const decaf_ed448_prehash_ctx_t hash
+#if DECAF_EDDSA_448_SUPPORTS_CONTEXTS
+    , const uint8_t *context,
+    uint8_t context_len
+#endif
+) {
+    decaf_error_t ret;
+    
+    uint8_t hash_output[64]; /* MAGIC but true for all existing schemes */
+    {
+        decaf_ed448_prehash_ctx_t hash_too;
+        memcpy(hash_too,hash,sizeof(hash_too));
+        hash_final(hash_too,hash_output,sizeof(hash_output));
+        hash_destroy(hash_too);
+    }
+    
+#if DECAF_EDDSA_448_SUPPORTS_CONTEXTS
+    ret = decaf_ed448_verify(signature,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
+#else
+    ret = decaf_ed448_verify(signature,pubkey,hash_output,sizeof(hash_output),1);
+#endif
+    
+    return ret;
 }
