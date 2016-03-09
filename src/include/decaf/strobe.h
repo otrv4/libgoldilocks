@@ -20,10 +20,10 @@ extern "C" {
 /** Keccak STROBE structure as struct. */
 typedef struct {
     decaf_keccak_sponge_t sponge; /**< Internal sponge object. */
-} keccak_strobe_s;
+} keccak_decaf_TOY_strobe_s;
     
 /** Keccak STROBE structure as one-element array */
-typedef keccak_strobe_s keccak_strobe_t[1];
+typedef keccak_decaf_TOY_strobe_s keccak_decaf_TOY_strobe_t[1];
 
 /** STROBE parameters, 128-bit estimated security for hashing and encryption */
 extern const struct decaf_kparams_s STROBE_128 API_VIS;
@@ -39,16 +39,16 @@ extern const struct decaf_kparams_s STROBE_KEYED_256 API_VIS;
 
 
 /** Initialize Strobe protocol context. */
-void strobe_init (
-    keccak_strobe_t strobe,         /**< [out] The uninitialized strobe object. */
+void decaf_TOY_strobe_init (
+    keccak_decaf_TOY_strobe_t strobe,         /**< [out] The uninitialized strobe object. */
     const struct decaf_kparams_s *params, /**< [in] Parameter set descriptor. */
     const char *proto,              /**< [in] Unique identifier for the protocol.  TODO: define namespaces for this */
     uint8_t am_client               /**< [in] Nonzero if this party. */
 ) NONNULL API_VIS;
 
 /** Run a transaction against a STROBE state. */
-void strobe_transact (
-    keccak_strobe_t strobe,  /**< [inout] The initialized STROBE object. */
+void decaf_TOY_strobe_transact (
+    keccak_decaf_TOY_strobe_t strobe,  /**< [inout] The initialized STROBE object. */
     unsigned char *out,      /**< [out] The output. */
     const unsigned char *in, /**< [in] The input. */
     size_t len,              /**< [in] The length of the input/output. */
@@ -56,8 +56,8 @@ void strobe_transact (
 ) __attribute__((nonnull(1))) API_VIS;
 
 /** Record a message sent in plaintext */
-static INLINE UNUSED NONNULL void strobe_plaintext (
-    keccak_strobe_t strobe,  /**< [inout] The STROBE object */
+static INLINE UNUSED NONNULL void decaf_TOY_strobe_plaintext (
+    keccak_decaf_TOY_strobe_t strobe,  /**< [inout] The STROBE object */
     const unsigned char *in, /**< [in] The message. */
     uint16_t len,            /**< [in] The length of the message. */
     uint8_t iSent            /**< [in] If nonzero, I sent the message. */
@@ -65,43 +65,43 @@ static INLINE UNUSED NONNULL void strobe_plaintext (
 
 /** Report authenticated data in strobe context. */
 static INLINE UNUSED NONNULL void
-strobe_ad (
-    keccak_strobe_t strobe,  /**< [inout] The strobe object. */
+decaf_TOY_strobe_ad (
+    keccak_decaf_TOY_strobe_t strobe,  /**< [inout] The strobe object. */
     const unsigned char *in, /**< [in] The plaintext. */
     size_t len               /**< [in] The length of the ad. */
 );
 
 /** Set nonce in strobe context. */
 static INLINE UNUSED NONNULL void
-strobe_nonce (
-   keccak_strobe_t strobe,  /**< [inout] The initialized strobe object. */
+decaf_TOY_strobe_nonce (
+   keccak_decaf_TOY_strobe_t strobe,  /**< [inout] The initialized strobe object. */
    const unsigned char *in, /**< [in] The nonce. */
    uint16_t len             /**< [in] The length of the nonce. */
 );
 
 /** Set fixed key in strobe context. */
 static INLINE UNUSED NONNULL void
-strobe_fixed_key (
-   keccak_strobe_t strobe,  /**< [inout] The initialized strobe object. */
+decaf_TOY_strobe_fixed_key (
+   keccak_decaf_TOY_strobe_t strobe,  /**< [inout] The initialized strobe object. */
    const unsigned char *in, /**< [in] The key. */
    uint16_t len             /**< [in] The length of the key. */
 );
 
 /** Set Diffie-Hellman key in strobe context. */
 static INLINE UNUSED NONNULL void
-strobe_dh_key (
-   keccak_strobe_t strobe,  /**< [inout] The initialized strobe object. */
+decaf_TOY_strobe_dh_key (
+   keccak_decaf_TOY_strobe_t strobe,  /**< [inout] The initialized strobe object. */
    const unsigned char *in, /**< [in] The key. */
    uint16_t len             /**< [in] The length of the key. */
 );
 
-/** The maximum number of bytes that strobe_produce_auth can spit out. */
+/** The maximum number of bytes that decaf_TOY_strobe_produce_auth can spit out. */
 #define STROBE_MAX_AUTH_BYTES 32
  
 /** Produce an authenticator. */
 static INLINE UNUSED NONNULL void
-strobe_produce_auth (
-   keccak_strobe_t strobe, /**< [inout] The Strobe protocol context. */
+decaf_TOY_strobe_produce_auth (
+   keccak_decaf_TOY_strobe_t strobe, /**< [inout] The Strobe protocol context. */
    unsigned char *out,     /**< [out] The authenticator. */
    uint16_t len            /**< [in] The length, at most STROBE_MAX_AUTH_BYTES. */
 );
@@ -112,8 +112,8 @@ strobe_produce_auth (
  * @retval DECAF_FAILURE The operation failed because of a
  * bad validator (or because you aren't keyed)
  */
-decaf_error_t strobe_verify_auth (
-   keccak_strobe_t strobe,  /**< [inout] The Strobe protocol context */
+decaf_error_t decaf_TOY_strobe_verify_auth (
+   keccak_decaf_TOY_strobe_t strobe,  /**< [inout] The Strobe protocol context */
    const unsigned char *in, /**< [in] The authenticator */
    uint16_t len             /**< [in] The length, at most STROBE_MAX_AUTH_BYTES. */
 ) WARN_UNUSED NONNULL API_VIS;
@@ -123,8 +123,8 @@ decaf_error_t strobe_verify_auth (
  * @warning Doesn't produce an auth tag.
  */
 static INLINE UNUSED NONNULL void
-strobe_encrypt (
-  keccak_strobe_t strobe,  /**< [inout] strobe The Strobe protocol context. */
+decaf_TOY_strobe_encrypt (
+  keccak_decaf_TOY_strobe_t strobe,  /**< [inout] strobe The Strobe protocol context. */
   unsigned char *out,      /**< [out] The ciphertext. */
   const unsigned char *in, /**< [in] The plaintext. */
   uint16_t len             /**< [in] The length of plaintext and ciphertext. */
@@ -135,8 +135,8 @@ strobe_encrypt (
  * @warning Doesn't check an auth tag.
  */
 static INLINE UNUSED NONNULL void
-strobe_decrypt (
-  keccak_strobe_t strobe,  /**< [inout] The Strobe protocol context. */
+decaf_TOY_strobe_decrypt (
+  keccak_decaf_TOY_strobe_t strobe,  /**< [inout] The Strobe protocol context. */
   unsigned char *out,      /**< [out] The plaintext. */
   const unsigned char *in, /**< [in] The ciphertext. */
   uint16_t len             /**< [in] The length of plaintext and ciphertext. */
@@ -149,22 +149,22 @@ strobe_decrypt (
  * refreshing forward secrecy!  It's to replace things
  * like TCP session hash.
  */
-static inline void NONNULL strobe_prng (
-   keccak_strobe_t strobe, /**< [inout] The Strobe protocol context */
+static inline void NONNULL decaf_TOY_strobe_prng (
+   keccak_decaf_TOY_strobe_t strobe, /**< [inout] The Strobe protocol context */
    unsigned char *out,     /**< [out] The output random data. */
    uint16_t len            /**< The length. */
 );
 
 /** Respecify Strobe protocol object's crypto. */
-void strobe_respec (
-   keccak_strobe_t strobe,        /**< [inout] The initialized strobe context. */
+void decaf_TOY_strobe_respec (
+   keccak_decaf_TOY_strobe_t strobe,        /**< [inout] The initialized strobe context. */
    const struct decaf_kparams_s *params /**< [in] Strobe parameter descriptor. */
 ) NONNULL API_VIS;
 
 /** Securely destroy a STROBE object by overwriting it. */
 static INLINE UNUSED NONNULL void
-strobe_destroy (
-    keccak_strobe_t doomed /**< [in] The object to destroy. */
+decaf_TOY_strobe_destroy (
+    keccak_decaf_TOY_strobe_t doomed /**< [in] The object to destroy. */
 );
 
 /** @cond internal */
@@ -184,7 +184,7 @@ typedef enum {
    STROBE_MODE_SQUEEZE   = 5, 
    STROBE_MODE_FORGET    = 6,
    STROBE_MODE_SQUEEZE_R = 7
-} strobe_mode_t;
+} decaf_TOY_strobe_mode_t;
 
 #define STROBE_FLAG_CLIENT_SENT (1<<8)  /**< Set if the client this message. */
 #define STROBE_FLAG_IMPLICIT    (1<<9)  /**< Set if nobody set this message. */
@@ -263,7 +263,7 @@ STROBE_CONTROL_WORD(STROBE_CW_ACKNOWLEDGE,        0x45, STROBE_MODE_PLAINTEXT, 0
 
 /** Reverse a keyword because it's being received instead of sent */
 static INLINE UNUSED WARN_UNUSED uint32_t
-strobe_cw_recv(uint32_t cw) {
+decaf_TOY_strobe_cw_recv(uint32_t cw) {
    uint32_t recv_toggle = (cw & STROBE_FLAG_NONDIR) ? 0 : STROBE_FLAG_RECV;
    if (cw & STROBE_FLAG_IMPLICIT) {
        return cw ^ recv_toggle;
@@ -288,47 +288,47 @@ strobe_cw_recv(uint32_t cw) {
 /* Implementations of inline functions */
 /***************************************/
 
-void strobe_plaintext(keccak_strobe_t strobe, const unsigned char *in, uint16_t len, uint8_t iSent) {
-   strobe_transact(
+void decaf_TOY_strobe_plaintext(keccak_decaf_TOY_strobe_t strobe, const unsigned char *in, uint16_t len, uint8_t iSent) {
+   decaf_TOY_strobe_transact(
        strobe, NULL, in, len,
        iSent ? STROBE_CW_PAYLOAD_PLAINTEXT
-             : strobe_cw_recv(STROBE_CW_PAYLOAD_PLAINTEXT)
+             : decaf_TOY_strobe_cw_recv(STROBE_CW_PAYLOAD_PLAINTEXT)
    );
 }
 
-void strobe_ad(keccak_strobe_t strobe, const unsigned char *in, size_t len) {
-    strobe_transact( strobe, NULL, in, len, STROBE_CW_AD_EXPLICIT );
+void decaf_TOY_strobe_ad(keccak_decaf_TOY_strobe_t strobe, const unsigned char *in, size_t len) {
+    decaf_TOY_strobe_transact( strobe, NULL, in, len, STROBE_CW_AD_EXPLICIT );
 }
 
-void strobe_nonce (keccak_strobe_t strobe, const unsigned char *in, uint16_t len) {
-   strobe_transact( strobe, NULL, in, len, STROBE_CW_NONCE_EXPLICIT );
+void decaf_TOY_strobe_nonce (keccak_decaf_TOY_strobe_t strobe, const unsigned char *in, uint16_t len) {
+   decaf_TOY_strobe_transact( strobe, NULL, in, len, STROBE_CW_NONCE_EXPLICIT );
 }
 
-void strobe_fixed_key (keccak_strobe_t strobe, const unsigned char *in, uint16_t len) {
-   strobe_transact( strobe, NULL, in, len, STROBE_CW_FIXED_KEY );
+void decaf_TOY_strobe_fixed_key (keccak_decaf_TOY_strobe_t strobe, const unsigned char *in, uint16_t len) {
+   decaf_TOY_strobe_transact( strobe, NULL, in, len, STROBE_CW_FIXED_KEY );
 }
 
-void strobe_dh_key (keccak_strobe_t strobe, const unsigned char *in, uint16_t len) {
-   strobe_transact( strobe, NULL, in, len, STROBE_CW_DH_KEY );
+void decaf_TOY_strobe_dh_key (keccak_decaf_TOY_strobe_t strobe, const unsigned char *in, uint16_t len) {
+   decaf_TOY_strobe_transact( strobe, NULL, in, len, STROBE_CW_DH_KEY );
 }
 
-void strobe_produce_auth (keccak_strobe_t strobe, unsigned char *out, uint16_t len) {
-   strobe_transact( strobe, out, NULL, len, STROBE_CW_MAC );
+void decaf_TOY_strobe_produce_auth (keccak_decaf_TOY_strobe_t strobe, unsigned char *out, uint16_t len) {
+   decaf_TOY_strobe_transact( strobe, out, NULL, len, STROBE_CW_MAC );
 }
 
-void strobe_encrypt (keccak_strobe_t strobe, unsigned char *out, const unsigned char *in, uint16_t len) {
-    strobe_transact(strobe, out, in, len, STROBE_CW_PAYLOAD_CIPHERTEXT);
+void decaf_TOY_strobe_encrypt (keccak_decaf_TOY_strobe_t strobe, unsigned char *out, const unsigned char *in, uint16_t len) {
+    decaf_TOY_strobe_transact(strobe, out, in, len, STROBE_CW_PAYLOAD_CIPHERTEXT);
 }
 
-void strobe_decrypt(keccak_strobe_t strobe, unsigned char *out, const unsigned char *in, uint16_t len) {
-    strobe_transact(strobe, out, in, len, strobe_cw_recv(STROBE_CW_PAYLOAD_CIPHERTEXT));
+void decaf_TOY_strobe_decrypt(keccak_decaf_TOY_strobe_t strobe, unsigned char *out, const unsigned char *in, uint16_t len) {
+    decaf_TOY_strobe_transact(strobe, out, in, len, decaf_TOY_strobe_cw_recv(STROBE_CW_PAYLOAD_CIPHERTEXT));
 }
 
-void strobe_prng(keccak_strobe_t strobe, unsigned char *out, uint16_t len) {
-    strobe_transact( strobe, out, NULL, len, STROBE_CW_PRNG );
+void decaf_TOY_strobe_prng(keccak_decaf_TOY_strobe_t strobe, unsigned char *out, uint16_t len) {
+    decaf_TOY_strobe_transact( strobe, out, NULL, len, STROBE_CW_PRNG );
 }
 
-void strobe_destroy (keccak_strobe_t doomed) {
+void decaf_TOY_strobe_destroy (keccak_decaf_TOY_strobe_t doomed) {
     decaf_sponge_destroy(doomed->sponge);
 }
 

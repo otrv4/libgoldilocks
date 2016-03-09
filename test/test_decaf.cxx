@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 using namespace decaf;
+using namespace decaf::TOY;
 
 static bool passing = true;
 static const long NTESTS = 10000;

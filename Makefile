@@ -57,7 +57,7 @@ endif
 ARCHFLAGS += $(XARCHFLAGS)
 CFLAGS  = $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
 PUB_CFLAGS  = $(LANGFLAGS) $(WARNFLAGS) $(PUB_INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
-CXXFLAGS = $(LANGXXFLAGS) $(WARNFLAGS) $(PUB_INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCXXFLAGS)
+CXXFLAGS = $(LANGXXFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCXXFLAGS)
 LDFLAGS = $(XLDFLAGS)
 ASFLAGS = $(ARCHFLAGS) $(XASFLAGS)
 
@@ -66,18 +66,20 @@ SAGES= $(shell ls test/*.sage)
 BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 
 .PHONY: clean all test test_ct bench todo doc lib bat sage sagetest gen_code
-.PRECIOUS: $(BUILD_C)/*/%.c $(BUILD_H)/*/%.h $(BUILD_IBIN)/%
+.PRECIOUS: $(BUILD_C)/*/%.c $(BUILD_H)/*/%.h  $(BUILD_H)/%.h  $(BUILD_H)/%.hxx $(BUILD_H)/*/%.hxx $(BUILD_IBIN)/%
 
 HEADER_SRCS= $(shell find src/public_include -name "*.h*")
+HEADER_PRIVATE_SRCS= $(shell find src/include -name "*.tmpl.h*")
 GEN_CODE_0= $(HEADER_SRCS:src/public_include/%=$(BUILD_INC)/%)
+GEN_CODE_0+= $(HEADER_PRIVATE_SRCS:src/include/%=$(BUILD_C)/%)
 GEN_CODE_1= $(GEN_CODE_0:%.tmpl.h=%.h)
 GEN_CODE= $(GEN_CODE_1:%.tmpl.hxx=%.hxx)
 HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_CODE)
 
 # components needed by the lib
-LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/sha512.o # and per-field components
+LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/strobe.o $(BUILD_OBJ)/sha512.o # and per-field components
 
-BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o
+BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/strobe.o 
 
 all: lib $(BUILD_IBIN)/test $(BUILD_IBIN)/bench $(BUILD_BIN)/shakesum
 
@@ -114,7 +116,7 @@ endif
 $(BUILD_OBJ)/timestamp:
 	mkdir -p $(BUILD_OBJ) $(BUILD_C) $(BUILD_PY) \
 		$(BUILD_LIB) $(BUILD_INC) $(BUILD_BIN) $(BUILD_IBIN) $(BUILD_H) $(BUILD_INC)/decaf \
-		$(PER_OBJ_DIRS)
+		$(PER_OBJ_DIRS) $(BUILD_C)/decaf
 	touch $@
 
 gen_code: $(GEN_CODE)
@@ -125,8 +127,14 @@ $(BUILD_INC)/%: src/public_include/% $(BUILD_OBJ)/timestamp
 $(BUILD_INC)/%.h: src/public_include/%.tmpl.h src/generator/*
 	python -B src/generator/template.py --per=global --guard=$(@:$(BUILD_INC)/%=%) -o $@ $<
 	
+$(BUILD_C)/%.h: src/include/%.tmpl.h src/generator/*
+	python -B src/generator/template.py --per=global --guard=$(@:$(BUILD_C)/%=%) -o $@ $<
+	
 $(BUILD_INC)/%.hxx: src/public_include/%.tmpl.hxx src/generator/*
 	python -B src/generator/template.py --per=global --guard=$(@:$(BUILD_INC)/%=%) -o $@ $<
+	
+$(BUILD_C)/%.hxx: src/include/%.tmpl.hxx src/generator/*
+	python -B src/generator/template.py --per=global --guard=$(@:$(BUILD_C)/%=%) -o $@ $<
 
 ################################################################
 # Per-field code: call with field, arch
@@ -169,7 +177,7 @@ LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/elligator.o $$(BU
 	 $$(BUILD_OBJ)/$(1)/crypto.o $$(BUILD_OBJ)/$(1)/eddsa.o $$(BUILD_OBJ)/$(1)/decaf_tables.o
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
 GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/decaf/decaf_$(3).h $(BUILD_INC)/decaf/decaf_$(3).hxx \
-		$(BUILD_INC)/decaf/crypto_$(3).h $(BUILD_INC)/decaf/crypto_$(3).hxx \
+		$(BUILD_C)/decaf/crypto_$(3).h $(BUILD_C)/decaf/crypto_$(3).hxx \
 		$(BUILD_INC)/decaf/ed$(3).h $(BUILD_INC)/decaf/ed$(3).hxx
 HEADERS_OF_$(1) = $$(HEADERS_OF_$(2)) $$(GLOBAL_HEADERS_OF_$(1))
 HEADERS += $$(GLOBAL_HEADERS_OF_$(1))
@@ -192,7 +200,7 @@ $$(BUILD_INC)/decaf/elligator_$(3).%: src/per_curve/elligator.tmpl.% src/generat
 $$(BUILD_INC)/decaf/scalar_$(3).%: src/per_curve/scalar.tmpl.% src/generator/* Makefile
 	python -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 	
-$$(BUILD_INC)/decaf/crypto_$(3).%: src/per_curve/crypto.tmpl.% src/generator/* Makefile
+$$(BUILD_C)/decaf/crypto_$(3).%: src/per_curve/crypto.tmpl.% src/generator/* Makefile
 	python -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
 $$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/$(1)/decaf_gen_tables.o \
@@ -279,30 +287,10 @@ $(BUILD_DOC)/timestamp:
 #
 doc: Doxyfile $(BUILD_OBJ)/timestamp $(HEADERS)
 	doxygen > /dev/null
-
-# # The eBATS benchmarking script
-# bat: $(BATNAME)
-#
-# $(BATNAME): include/* src/* src/*/* test/batarch.map $(BUILD_C)/decaf_tables.c # TODO tables some other way
-# 	rm -fr $@
-# 	for prim in dh sign; do \
-#           targ="$@/crypto_$$prim/ed448goldilocks_decaf"; \
-# 	  (while read arch where; do \
-# 	    mkdir -p $$targ/`basename $$arch`; \
-# 	    cp include/*.h $(BUILD_C)/decaf_tables.c src/decaf.c src/decaf_crypto.c src/shake.c src/include/*.h src/bat/$$prim.c src/p448/$$where/*.c src/p448/$$where/*.h src/p448/*.c src/p448/*.h $$targ/`basename $$arch`; \
-# 	    cp src/bat/api_$$prim.h $$targ/`basename $$arch`/api.h; \
-# 	    perl -p -i -e 's/SYSNAME/'`basename $(BATNAME)`_`basename $$arch`'/g' $$targ/`basename $$arch`/api.h;  \
-# 	    perl -p -i -e 's/__TODAY__/'$(TODAY)'/g' $$targ/`basename $$arch`/api.h;  \
-# 	    done \
-# 	  ) < test/batarch.map; \
-# 	  echo 'Mike Hamburg' > $$targ/designers; \
-# 	  echo 'Ed448-Goldilocks Decaf sign and dh' > $$targ/description; \
-#         done
-# 	(cd $(BATNAME)/.. && tar czf $(BATBASE).tgz $(BATBASE) )
 	
 # Finds todo items in .h and .c files
 TODO_TYPES ?= HACK TODO @todo FIXME BUG XXX PERF FUTURE REMOVE MAGIC UNIFY
-TODO_LOCATIONS ?= src test Makefile Doxyfile
+TODO_LOCATIONS ?= src/*.c src/include src/p* src/generator test Makefile Doxyfile
 todo::
 	@(find $(TODO_LOCATIONS) -name '*.h' -or -name '*.c' -or -name '*.cxx' -or -name '*.hxx' -or -name '*.py') | xargs egrep --color=auto -w \
 		`echo $(TODO_TYPES) | tr ' ' '|'`
@@ -324,7 +312,7 @@ test: $(BUILD_IBIN)/test
 	./$<
 
 test_ct: $(BUILD_IBIN)/test_ct
-	# NB: you must compile with XCFLAGS=-DNDEBUG or you will get lots of extra warnings.
+	# NB: you must compile with XCFLAGS=-DNDEBUG or you will get lots of extra warnings due to assert(thing that is always true).
 	valgrind ./$<
 	
 microbench: $(BUILD_IBIN)/bench

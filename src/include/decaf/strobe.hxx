@@ -41,7 +41,7 @@ public:
 class Strobe {
 public:
     /** The wrapped object */
-    keccak_strobe_t wrapped;
+    keccak_decaf_TOY_strobe_t wrapped;
     
     /** Number of bytes in a default authentication size. */
     static const uint16_t DEFAULT_AUTH_SIZE = 16;
@@ -55,18 +55,18 @@ public:
         client_or_server whoami, /**< Am I client or server? */
         const decaf_kparams_s &params = STROBE_256 /**< Strength parameters */
     ) NOEXCEPT {
-        strobe_init(wrapped, &params, description, whoami == CLIENT);
+        decaf_TOY_strobe_init(wrapped, &params, description, whoami == CLIENT);
         keyed = false;
     }
     
     /** Securely destroy by overwriting state. */
-    inline ~Strobe() NOEXCEPT { strobe_destroy(wrapped); }
+    inline ~Strobe() NOEXCEPT { decaf_TOY_strobe_destroy(wrapped); }
 
     /** Stir in fixed key, from a C++ block. */
     inline void fixed_key (
         const Block &data /**< The key. */
     ) throw(ProtocolException) {
-        strobe_fixed_key(wrapped, data.data(), data.size());
+        decaf_TOY_strobe_fixed_key(wrapped, data.data(), data.size());
         keyed = true;
     }
 
@@ -81,7 +81,7 @@ public:
     inline void dh_key (
         const Block &data /**< The key. */
     ) throw(ProtocolException) {
-        strobe_dh_key(wrapped, data.data(), data.size());
+        decaf_TOY_strobe_dh_key(wrapped, data.data(), data.size());
         keyed = true;
     }
 
@@ -94,12 +94,12 @@ public:
 
     /** Stir in an explicit nonce. */
     inline void nonce(const Block &data) NOEXCEPT {
-        strobe_nonce(wrapped, data.data(), data.size());
+        decaf_TOY_strobe_nonce(wrapped, data.data(), data.size());
     }
 
     /** Stir in data we sent as plaintext.  NB This doesn't actually send anything. */
     inline void send_plaintext(const Block &data) NOEXCEPT {
-        strobe_plaintext(wrapped, data.data(), data.size(), true);
+        decaf_TOY_strobe_plaintext(wrapped, data.data(), data.size(), true);
     }
 
     /** Stir in serializeable data we sent as plaintext.  NB This doesn't actually send anything. */
@@ -109,12 +109,12 @@ public:
 
     /** Stir in data we received as plaintext.  NB This doesn't actually receive anything. */
     inline void recv_plaintext(const Block &data) NOEXCEPT {
-        strobe_plaintext(wrapped, data.data(), data.size(), false);
+        decaf_TOY_strobe_plaintext(wrapped, data.data(), data.size(), false);
     }
 
     /** Stir in associated data. */
     inline void ad(const Block &data) {
-        strobe_ad(wrapped, data.data(), data.size());
+        decaf_TOY_strobe_ad(wrapped, data.data(), data.size());
     }
 
     /** Stir in associated serializable data. */
@@ -126,7 +126,7 @@ public:
     inline void encrypt_no_auth(Buffer out, const Block &data) throw(LengthException,ProtocolException) {
         if (!keyed) throw ProtocolException();
         if (out.size() != data.size()) throw LengthException();
-        strobe_encrypt(wrapped, out.data(), data.data(), data.size());
+        decaf_TOY_strobe_encrypt(wrapped, out.data(), data.data(), data.size());
     }
     
     /** Encrypt, without appending authentication data */
@@ -143,7 +143,7 @@ public:
     inline void decrypt_no_auth(Buffer out, const Block &data) throw(LengthException,ProtocolException) {
         if (!keyed) throw ProtocolException();
         if (out.size() != data.size()) throw LengthException();
-        strobe_decrypt(wrapped, out.data(), data.data(), data.size());
+        decaf_TOY_strobe_decrypt(wrapped, out.data(), data.data(), data.size());
     }
     
     /** Decrypt, without checking authentication data. */
@@ -155,7 +155,7 @@ public:
     inline void produce_auth(Buffer out, bool even_though_unkeyed = false) throw(LengthException,ProtocolException) {
         if (!keyed && !even_though_unkeyed) throw ProtocolException();
         if (out.size() > STROBE_MAX_AUTH_BYTES) throw LengthException();
-        strobe_produce_auth(wrapped, out.data(), out.size());
+        decaf_TOY_strobe_produce_auth(wrapped, out.data(), out.size());
     }
     
     /** Produce an authenticator. */
@@ -206,12 +206,12 @@ public:
     /** Check authentication data */
     inline void verify_auth(const Block &auth) throw(LengthException,CryptoException) {
         if (auth.size() == 0 || auth.size() > STROBE_MAX_AUTH_BYTES) throw LengthException();
-        if (strobe_verify_auth(wrapped, auth.data(), auth.size()) != DECAF_SUCCESS) throw CryptoException();
+        if (decaf_TOY_strobe_verify_auth(wrapped, auth.data(), auth.size()) != DECAF_SUCCESS) throw CryptoException();
     }
     
     /** Fill pseudorandom data into a buffer */
     inline void prng(Buffer out) NOEXCEPT {
-        (void)strobe_prng(wrapped, out.data(), out.size());
+        (void)decaf_TOY_strobe_prng(wrapped, out.data(), out.size());
     }
     
     /** Return pseudorandom data */
@@ -224,7 +224,7 @@ public:
      */
     inline void respec(const decaf_kparams_s &params) throw(ProtocolException) {
         if (!keyed) throw(ProtocolException());
-        strobe_respec(wrapped, &params);
+        decaf_TOY_strobe_respec(wrapped, &params);
     }
     
 private:

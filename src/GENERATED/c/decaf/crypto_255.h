@@ -1,5 +1,5 @@
 /**
- * @file decaf/crypto_448.h
+ * @file src/GENERATED/c/decaf/crypto_255.h
  * @author Mike Hamburg
  *
  * @copyright
@@ -16,10 +16,10 @@
  * Please do not edit it.
  */
 
-#ifndef __DECAF_CRYPTO_448_H__
-#define __DECAF_CRYPTO_448_H__ 1
+#ifndef __SRC_GENERATED_C_DECAF_CRYPTO_255_H__
+#define __SRC_GENERATED_C_DECAF_CRYPTO_255_H__ 1
 
-#include <decaf/decaf_448.h>
+#include <decaf/decaf_255.h>
 #include <decaf/strobe.h>
 
 #ifdef __cplusplus
@@ -27,48 +27,48 @@ extern "C" {
 #endif
 
 /** Number of bytes for a symmetric key (expanded to full key) */
-#define DECAF_448_SYMMETRIC_KEY_BYTES 32
+#define DECAF_255_SYMMETRIC_KEY_BYTES 32
 
 /** A symmetric key, the compressed point of a private key. */
-typedef unsigned char decaf_448_symmetric_key_t[DECAF_448_SYMMETRIC_KEY_BYTES];
+typedef unsigned char decaf_255_TOY_symmetric_key_t[DECAF_255_SYMMETRIC_KEY_BYTES];
 
 /** An encoded public key. */
-typedef unsigned char decaf_448_public_key_t[DECAF_448_SER_BYTES];
+typedef unsigned char decaf_255_TOY_public_key_t[DECAF_255_SER_BYTES];
 
 /** A signature. */
-typedef unsigned char decaf_448_signature_t[DECAF_448_SER_BYTES + DECAF_448_SCALAR_BYTES];
+typedef unsigned char decaf_255_TOY_signature_t[DECAF_255_SER_BYTES + DECAF_255_SCALAR_BYTES];
 
 typedef struct {
     /** @cond internal */
     /** The symmetric key from which everything is expanded */
-    decaf_448_symmetric_key_t sym;
+    decaf_255_TOY_symmetric_key_t sym;
     
     /** The scalar x */
-    decaf_448_scalar_t secret_scalar;
+    decaf_255_scalar_t secret_scalar;
     
     /** x*Base */
-    decaf_448_public_key_t pub;
+    decaf_255_TOY_public_key_t pub;
     /** @endcond */
 } /** Private key structure for pointers. */
-  decaf_448_private_key_s,
+  decaf_255_TOY_private_key_s,
   /** A private key (gmp array[1] style). */
-  decaf_448_private_key_t[1];
+  decaf_255_TOY_private_key_t[1];
     
 /**
  * Derive a key from its compressed form.
  * @param [out] priv The derived private key.
  * @param [in] proto The compressed or proto-key, which must be 32 random bytes.
  */
-void decaf_448_derive_private_key (
-    decaf_448_private_key_t priv,
-    const decaf_448_symmetric_key_t proto
+void decaf_255_TOY_derive_private_key (
+    decaf_255_TOY_private_key_t priv,
+    const decaf_255_TOY_symmetric_key_t proto
 ) NONNULL API_VIS;
 
 /**
  * Destroy a private key.
  */
-void decaf_448_destroy_private_key (
-    decaf_448_private_key_t priv
+void decaf_255_TOY_destroy_private_key (
+    decaf_255_TOY_private_key_t priv
 ) NONNULL API_VIS;
 
 /**
@@ -76,9 +76,9 @@ void decaf_448_destroy_private_key (
  * @param [out] pub The extracted private key.
  * @param [in] priv The private key.
  */
-void decaf_448_private_to_public (
-    decaf_448_public_key_t pub,
-    const decaf_448_private_key_t priv
+void decaf_255_TOY_private_to_public (
+    decaf_255_TOY_public_key_t pub,
+    const decaf_255_TOY_private_key_t priv
 ) NONNULL API_VIS;
     
 /**
@@ -97,11 +97,11 @@ void decaf_448_private_to_public (
  * @retval DECAF_FAILURE Key exchange failed.
  */
 decaf_error_t
-decaf_448_shared_secret (
+decaf_255_TOY_shared_secret (
     uint8_t *shared,
     size_t shared_bytes,
-    const decaf_448_private_key_t my_privkey,
-    const decaf_448_public_key_t your_pubkey,
+    const decaf_255_TOY_private_key_t my_privkey,
+    const decaf_255_TOY_public_key_t your_pubkey,
     int me_first
 ) NONNULL WARN_UNUSED API_VIS;
    
@@ -113,10 +113,10 @@ decaf_448_shared_secret (
  * @param [in] strobe A STROBE context with the message.
  */ 
 void
-decaf_448_sign_strobe (
-    keccak_strobe_t strobe,
-    decaf_448_signature_t sig,
-    const decaf_448_private_key_t priv
+decaf_255_TOY_sign_strobe (
+    keccak_decaf_TOY_strobe_t strobe,
+    decaf_255_TOY_signature_t sig,
+    const decaf_255_TOY_private_key_t priv
 ) NONNULL API_VIS;
 
 /**
@@ -128,9 +128,9 @@ decaf_448_sign_strobe (
  * @param [in] message_len The message's length.
  */ 
 void
-decaf_448_sign (
-    decaf_448_signature_t sig,
-    const decaf_448_private_key_t priv,
+decaf_255_TOY_sign (
+    decaf_255_TOY_signature_t sig,
+    const decaf_255_TOY_private_key_t priv,
     const unsigned char *message,
     size_t message_len
 ) NONNULL API_VIS;
@@ -146,10 +146,10 @@ decaf_448_sign (
  * @return DECAF_FAILURE The signature did not verify successfully.
  */    
 decaf_error_t
-decaf_448_verify_strobe (
-    keccak_strobe_t strobe,
-    const decaf_448_signature_t sig,
-    const decaf_448_public_key_t pub
+decaf_255_TOY_verify_strobe (
+    keccak_decaf_TOY_strobe_t strobe,
+    const decaf_255_TOY_signature_t sig,
+    const decaf_255_TOY_public_key_t pub
 ) NONNULL API_VIS WARN_UNUSED;
 
 /**
@@ -164,9 +164,9 @@ decaf_448_verify_strobe (
  * @return DECAF_FAILURE The signature did not verify successfully.
  */    
 decaf_error_t
-decaf_448_verify (
-    const decaf_448_signature_t sig,
-    const decaf_448_public_key_t pub,
+decaf_255_TOY_verify (
+    const decaf_255_TOY_signature_t sig,
+    const decaf_255_TOY_public_key_t pub,
     const unsigned char *message,
     size_t message_len
 ) NONNULL API_VIS WARN_UNUSED;
@@ -175,4 +175,4 @@ decaf_448_verify (
 } /* extern "C" */
 #endif
 
-#endif /* __DECAF_CRYPTO_448_H__ */
+#endif /* __SRC_GENERATED_C_DECAF_CRYPTO_255_H__ */

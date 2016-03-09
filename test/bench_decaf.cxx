@@ -26,6 +26,7 @@
 #include <algorithm>
 
 using namespace decaf;
+using namespace decaf::TOY;
 
 
 static __inline__ void __attribute__((unused)) ignore_result ( int result ) { (void)result; }

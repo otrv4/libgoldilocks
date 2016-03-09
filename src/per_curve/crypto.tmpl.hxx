@@ -18,7 +18,7 @@
 #endif
 /** @endcond */
 
-namespace decaf {
+namespace decaf { namespace TOY {
 
 /** A public key for crypto over some Group */
 template <typename Group> class PublicKey;
@@ -31,7 +31,7 @@ template<> class PublicKey<$(cxx_ns)>
   : public Serializable< PublicKey<$(cxx_ns)> > {
 private:
 /** @cond internal */
-    typedef $(c_ns)_public_key_t Wrapped;
+    typedef $(c_ns)_TOY_public_key_t Wrapped;
     Wrapped wrapped;
     template<class Group> friend class PrivateKey;
 /** @endcond */
@@ -40,7 +40,7 @@ public:
     typedef $(cxx_ns) Group;
     
     /** Signature size. */
-    static const size_t SIG_BYTES = sizeof($(c_ns)_signature_t);
+    static const size_t SIG_BYTES = sizeof($(c_ns)_TOY_signature_t);
     
     /** Serialization size. */
     static const size_t SER_BYTES = sizeof(Wrapped);
@@ -69,7 +69,7 @@ public:
         const Block &message,
         const FixedBlock<SIG_BYTES> &sig
     ) const throw(CryptoException) {
-        if (DECAF_SUCCESS != $(c_ns)_verify(sig.data(),wrapped,message.data(),message.size())) {
+        if (DECAF_SUCCESS != $(c_ns)_TOY_verify(sig.data(),wrapped,message.data(),message.size())) {
             throw(CryptoException());
         }
     }
@@ -79,7 +79,7 @@ public:
         Strobe &context,
         const FixedBlock<SIG_BYTES> &sig
     ) const throw(CryptoException) {
-        if (DECAF_SUCCESS != $(c_ns)_verify_strobe(context.wrapped,sig.data(),wrapped)) {
+        if (DECAF_SUCCESS != $(c_ns)_TOY_verify_strobe(context.wrapped,sig.data(),wrapped)) {
             throw(CryptoException());
         }
     }
@@ -90,7 +90,7 @@ template<> class PrivateKey<$(cxx_ns)>
   : public Serializable< PrivateKey<$(cxx_ns)> > {
 private:
 /** @cond internal */
-    typedef $(c_ns)_private_key_t Wrapped;
+    typedef $(c_ns)_TOY_private_key_t Wrapped;
     Wrapped wrapped;
     template<class Group> friend class PublicKey;
 /** @endcond */
@@ -99,7 +99,7 @@ public:
     typedef $(cxx_ns) Group;
     
     /** Signature size. */
-    static const size_t SIG_BYTES = sizeof($(c_ns)_signature_t);
+    static const size_t SIG_BYTES = sizeof($(c_ns)_TOY_signature_t);
     
     /** Serialization size. */
     static const size_t SER_BYTES = sizeof(Wrapped);
@@ -117,18 +117,18 @@ public:
     
     /** Read a private key from a string*/
     inline explicit PrivateKey(const FixedBlock<SYM_BYTES> &b) NOEXCEPT {
-        $(c_ns)_derive_private_key(wrapped, b.data());
+        $(c_ns)_TOY_derive_private_key(wrapped, b.data());
     }
     
     /** Create at random */
     inline explicit PrivateKey(Rng &r) NOEXCEPT {
         FixedArrayBuffer<SYM_BYTES> tmp(r);
-        $(c_ns)_derive_private_key(wrapped, tmp.data());
+        $(c_ns)_TOY_derive_private_key(wrapped, tmp.data());
     }
     
     /** Secure destructor */
     inline ~PrivateKey() NOEXCEPT {
-        $(c_ns)_destroy_private_key(wrapped);
+        $(c_ns)_TOY_destroy_private_key(wrapped);
     }
     
     /** Serialization size. */
@@ -158,7 +158,7 @@ public:
         bool me_first
     ) const throw(CryptoException,std::bad_alloc) {
         SecureBuffer ret(bytes);
-        if (DECAF_SUCCESS != $(c_ns)_shared_secret(ret.data(),bytes,wrapped,pub.wrapped,me_first)) {
+        if (DECAF_SUCCESS != $(c_ns)_TOY_shared_secret(ret.data(),bytes,wrapped,pub.wrapped,me_first)) {
             throw(CryptoException());
         }
         return ret;
@@ -171,29 +171,29 @@ public:
         const PublicKey<$(cxx_ns)> &pub,
         bool me_first
     ) const NOEXCEPT {
-        return $(c_ns)_shared_secret(ret.data(),ret.size(),wrapped,pub.wrapped,me_first);
+        return $(c_ns)_TOY_shared_secret(ret.data(),ret.size(),wrapped,pub.wrapped,me_first);
     }
 
     /** Sign a message. */ 
     inline SecureBuffer sign(const Block &message) const {
         SecureBuffer sig(SIG_BYTES);
-        $(c_ns)_sign(sig.data(), wrapped, message.data(), message.size());
+        $(c_ns)_TOY_sign(sig.data(), wrapped, message.data(), message.size());
         return sig;
     }
 
     /** Sign a message. */ 
     inline SecureBuffer verify(Strobe &context) const {
         SecureBuffer sig(SIG_BYTES);
-        $(c_ns)_sign_strobe(context.wrapped, sig.data(), wrapped);
+        $(c_ns)_TOY_sign_strobe(context.wrapped, sig.data(), wrapped);
         return sig;
     }
 };
 
 /** @cond internal */
 PublicKey<$(cxx_ns)>::PublicKey(const PrivateKey<$(cxx_ns)> &b) NOEXCEPT {
-    $(c_ns)_private_to_public(wrapped,b.wrapped);
+    $(c_ns)_TOY_private_to_public(wrapped,b.wrapped);
 }
 /** @endcond */
 
 #undef NOEXCEPT
-} /* namespace decaf */
+}} /* namespace decaf::TOY */

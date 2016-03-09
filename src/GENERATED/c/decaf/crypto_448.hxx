@@ -1,5 +1,5 @@
 /**
- * @file decaf/crypto_448.hxx
+ * @file src/GENERATED/c/decaf/crypto_448.hxx
  * @author Mike Hamburg
  *
  * @copyright
@@ -12,8 +12,8 @@
  * Please do not edit it.
  */
 
-#ifndef __DECAF_CRYPTO_448_HXX__
-#define __DECAF_CRYPTO_448_HXX__ 1
+#ifndef __SRC_GENERATED_C_DECAF_CRYPTO_448_HXX__
+#define __SRC_GENERATED_C_DECAF_CRYPTO_448_HXX__ 1
 /*
  * Example Decaf cyrpto routines, C++ wrapper.
  * @warning These are merely examples, though they ought to be secure.  But real
@@ -34,7 +34,7 @@
 #endif
 /** @endcond */
 
-namespace decaf {
+namespace decaf { namespace TOY {
 
 /** A public key for crypto over some Group */
 template <typename Group> class PublicKey;
@@ -47,7 +47,7 @@ template<> class PublicKey<Ed448Goldilocks>
   : public Serializable< PublicKey<Ed448Goldilocks> > {
 private:
 /** @cond internal */
-    typedef decaf_448_public_key_t Wrapped;
+    typedef decaf_448_TOY_public_key_t Wrapped;
     Wrapped wrapped;
     template<class Group> friend class PrivateKey;
 /** @endcond */
@@ -56,7 +56,7 @@ public:
     typedef Ed448Goldilocks Group;
     
     /** Signature size. */
-    static const size_t SIG_BYTES = sizeof(decaf_448_signature_t);
+    static const size_t SIG_BYTES = sizeof(decaf_448_TOY_signature_t);
     
     /** Serialization size. */
     static const size_t SER_BYTES = sizeof(Wrapped);
@@ -85,7 +85,7 @@ public:
         const Block &message,
         const FixedBlock<SIG_BYTES> &sig
     ) const throw(CryptoException) {
-        if (DECAF_SUCCESS != decaf_448_verify(sig.data(),wrapped,message.data(),message.size())) {
+        if (DECAF_SUCCESS != decaf_448_TOY_verify(sig.data(),wrapped,message.data(),message.size())) {
             throw(CryptoException());
         }
     }
@@ -95,7 +95,7 @@ public:
         Strobe &context,
         const FixedBlock<SIG_BYTES> &sig
     ) const throw(CryptoException) {
-        if (DECAF_SUCCESS != decaf_448_verify_strobe(context.wrapped,sig.data(),wrapped)) {
+        if (DECAF_SUCCESS != decaf_448_TOY_verify_strobe(context.wrapped,sig.data(),wrapped)) {
             throw(CryptoException());
         }
     }
@@ -106,7 +106,7 @@ template<> class PrivateKey<Ed448Goldilocks>
   : public Serializable< PrivateKey<Ed448Goldilocks> > {
 private:
 /** @cond internal */
-    typedef decaf_448_private_key_t Wrapped;
+    typedef decaf_448_TOY_private_key_t Wrapped;
     Wrapped wrapped;
     template<class Group> friend class PublicKey;
 /** @endcond */
@@ -115,7 +115,7 @@ public:
     typedef Ed448Goldilocks Group;
     
     /** Signature size. */
-    static const size_t SIG_BYTES = sizeof(decaf_448_signature_t);
+    static const size_t SIG_BYTES = sizeof(decaf_448_TOY_signature_t);
     
     /** Serialization size. */
     static const size_t SER_BYTES = sizeof(Wrapped);
@@ -133,18 +133,18 @@ public:
     
     /** Read a private key from a string*/
     inline explicit PrivateKey(const FixedBlock<SYM_BYTES> &b) NOEXCEPT {
-        decaf_448_derive_private_key(wrapped, b.data());
+        decaf_448_TOY_derive_private_key(wrapped, b.data());
     }
     
     /** Create at random */
     inline explicit PrivateKey(Rng &r) NOEXCEPT {
         FixedArrayBuffer<SYM_BYTES> tmp(r);
-        decaf_448_derive_private_key(wrapped, tmp.data());
+        decaf_448_TOY_derive_private_key(wrapped, tmp.data());
     }
     
     /** Secure destructor */
     inline ~PrivateKey() NOEXCEPT {
-        decaf_448_destroy_private_key(wrapped);
+        decaf_448_TOY_destroy_private_key(wrapped);
     }
     
     /** Serialization size. */
@@ -174,7 +174,7 @@ public:
         bool me_first
     ) const throw(CryptoException,std::bad_alloc) {
         SecureBuffer ret(bytes);
-        if (DECAF_SUCCESS != decaf_448_shared_secret(ret.data(),bytes,wrapped,pub.wrapped,me_first)) {
+        if (DECAF_SUCCESS != decaf_448_TOY_shared_secret(ret.data(),bytes,wrapped,pub.wrapped,me_first)) {
             throw(CryptoException());
         }
         return ret;
@@ -187,30 +187,30 @@ public:
         const PublicKey<Ed448Goldilocks> &pub,
         bool me_first
     ) const NOEXCEPT {
-        return decaf_448_shared_secret(ret.data(),ret.size(),wrapped,pub.wrapped,me_first);
+        return decaf_448_TOY_shared_secret(ret.data(),ret.size(),wrapped,pub.wrapped,me_first);
     }
 
     /** Sign a message. */ 
     inline SecureBuffer sign(const Block &message) const {
         SecureBuffer sig(SIG_BYTES);
-        decaf_448_sign(sig.data(), wrapped, message.data(), message.size());
+        decaf_448_TOY_sign(sig.data(), wrapped, message.data(), message.size());
         return sig;
     }
 
     /** Sign a message. */ 
     inline SecureBuffer verify(Strobe &context) const {
         SecureBuffer sig(SIG_BYTES);
-        decaf_448_sign_strobe(context.wrapped, sig.data(), wrapped);
+        decaf_448_TOY_sign_strobe(context.wrapped, sig.data(), wrapped);
         return sig;
     }
 };
 
 /** @cond internal */
 PublicKey<Ed448Goldilocks>::PublicKey(const PrivateKey<Ed448Goldilocks> &b) NOEXCEPT {
-    decaf_448_private_to_public(wrapped,b.wrapped);
+    decaf_448_TOY_private_to_public(wrapped,b.wrapped);
 }
 /** @endcond */
 
 #undef NOEXCEPT
-} /* namespace decaf */
-#endif /* __DECAF_CRYPTO_448_HXX__ */
+}} /* namespace decaf::TOY */
+#endif /* __SRC_GENERATED_C_DECAF_CRYPTO_448_HXX__ */
