@@ -17,6 +17,7 @@
 #include <valgrind/memcheck.h>
 
 using namespace decaf;
+using namespace decaf::TOY;
 
 static const long NTESTS = 10;
 

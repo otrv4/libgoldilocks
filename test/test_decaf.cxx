@@ -410,8 +410,8 @@ static void test_ec() {
     }
 }
 
-static void test_crypto() {
-    Test test("Sample crypto");
+static void test_toy_crypto() {
+    Test test("Toy crypto");
     SpongeRng rng(Block("test_decaf_crypto"),SpongeRng::DETERMINISTIC);
 
     for (int i=0; i<NTESTS && test.passing_now; i++) {
@@ -580,7 +580,7 @@ static void run() {
     test_eddsa();
     test_cfrg_crypto();
     test_cfrg_vectors();
-    test_crypto();
+    test_toy_crypto();
     printf("\n");
 }
 

@@ -319,7 +319,7 @@ static void macro() {
     printf("CFRG crypto benchmarks:\n");
     cfrg();
     
-    printf("\nSample crypto benchmarks:\n");
+    printf("\nToy crypto benchmarks:\n");
     SpongeRng rng(Block("macro rng seed"),SpongeRng::DETERMINISTIC);
     PrivateKey<Group> s1((NOINIT())), s2(rng);
     PublicKey<Group> p1((NOINIT())), p2(s2);
