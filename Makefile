@@ -9,11 +9,11 @@ MACHINE := $(shell uname -m)
 # Many of them are mapped to build/obj right now, but could be split later.
 # The non-build/obj directories are the public interface.
 BUILD_OBJ = build/obj
-BUILD_C   = build/c
-BUILD_H   = build/c
+BUILD_C   = src/GENERATED/c
+BUILD_H   = src/GENERATED/c
 BUILD_PY  = build/obj
 BUILD_LIB = build/lib
-BUILD_INC = build/include
+BUILD_INC = src/GENERATED/include
 BUILD_BIN = build/bin
 BUILD_IBIN = build/obj/bin
 BATBASE=ed448goldilocks_decaf_bats_$(TODAY)
@@ -65,14 +65,14 @@ SAGE ?= sage
 SAGES= $(shell ls test/*.sage)
 BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 
-.PHONY: clean all test test_ct bench todo doc lib bat sage sagetest gen_headers
+.PHONY: clean all test test_ct bench todo doc lib bat sage sagetest gen_code
 .PRECIOUS: $(BUILD_C)/*/%.c $(BUILD_H)/*/%.h $(BUILD_IBIN)/%
 
 HEADER_SRCS= $(shell find src/public_include -name "*.h*")
-GEN_HEADERS_0= $(HEADER_SRCS:src/public_include/%=$(BUILD_INC)/%)
-GEN_HEADERS_1= $(GEN_HEADERS_0:%.tmpl.h=%.h)
-GEN_HEADERS= $(GEN_HEADERS_1:%.tmpl.hxx=%.hxx)
-HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_HEADERS)
+GEN_CODE_0= $(HEADER_SRCS:src/public_include/%=$(BUILD_INC)/%)
+GEN_CODE_1= $(GEN_CODE_0:%.tmpl.h=%.h)
+GEN_CODE= $(GEN_CODE_1:%.tmpl.hxx=%.hxx)
+HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_CODE)
 
 # components needed by the lib
 LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/sha512.o # and per-field components
@@ -117,16 +117,16 @@ $(BUILD_OBJ)/timestamp:
 		$(PER_OBJ_DIRS)
 	touch $@
 
-gen_headers: $(GEN_HEADERS)
+gen_code: $(GEN_CODE)
 
 $(BUILD_INC)/%: src/public_include/% $(BUILD_OBJ)/timestamp
 	cp -f $< $@
 	
-$(BUILD_INC)/%.h: src/public_include/%.tmpl.h src/gen_headers/*
-	python -B src/gen_headers/template.py --per=global --guard=$(@:$(BUILD_INC)/%=%) -o $@ $<
+$(BUILD_INC)/%.h: src/public_include/%.tmpl.h src/generator/*
+	python -B src/generator/template.py --per=global --guard=$(@:$(BUILD_INC)/%=%) -o $@ $<
 	
-$(BUILD_INC)/%.hxx: src/public_include/%.tmpl.hxx src/gen_headers/*
-	python -B src/gen_headers/template.py --per=global --guard=$(@:$(BUILD_INC)/%=%) -o $@ $<
+$(BUILD_INC)/%.hxx: src/public_include/%.tmpl.hxx src/generator/*
+	python -B src/generator/template.py --per=global --guard=$(@:$(BUILD_INC)/%=%) -o $@ $<
 
 ################################################################
 # Per-field code: call with field, arch
@@ -138,11 +138,11 @@ HEADERS_OF_$(1) = $(HEADERS) $$(BUILD_H)/$(1)/f_field.h
 LIBCOMPONENTS += $$(COMPONENTS_OF_$(1))
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
 
-$$(BUILD_C)/$(1)/%.c: src/per_field/%.tmpl.c src/gen_headers/* $(HEADERS)
-	python -B src/gen_headers/template.py --per=field --guard=$(1)/`basename $$@` --item=$(1) -o $$@ $$<
+$$(BUILD_C)/$(1)/%.c: src/per_field/%.tmpl.c src/generator/* Makefile
+	python -B src/generator/template.py --per=field --guard=$(1)/`basename $$@` --item=$(1) -o $$@ $$<
 	
-$$(BUILD_H)/$(1)/%.h: src/per_field/%.tmpl.h src/gen_headers/* $(HEADERS)
-	python -B src/gen_headers/template.py --per=field --guard=$(1)/`basename $$@` --item=$(1) -o $$@ $$<
+$$(BUILD_H)/$(1)/%.h: src/per_field/%.tmpl.h src/generator/* Makefile
+	python -B src/generator/template.py --per=field --guard=$(1)/`basename $$@` --item=$(1) -o $$@ $$<
 
 $$(BUILD_OBJ)/$(1)/%.o: $$(BUILD_C)/$(1)/%.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) -I src/$(1) -I src/$(1)/$$(ARCH_FOR_$(1)) -I $(BUILD_H)/$(1) \
@@ -174,26 +174,26 @@ GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/decaf/decaf_$(3).h $(BUILD_INC)/decaf/deca
 HEADERS_OF_$(1) = $$(HEADERS_OF_$(2)) $$(GLOBAL_HEADERS_OF_$(1))
 HEADERS += $$(GLOBAL_HEADERS_OF_$(1))
 
-$$(BUILD_C)/$(1)/%.c: src/per_curve/%.tmpl.c src/gen_headers/* $$(HEADERS_OF_$(2))
-	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
+$$(BUILD_C)/$(1)/%.c: src/per_curve/%.tmpl.c src/generator/* Makefile
+	python -B src/generator/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
 	
-$$(BUILD_H)/$(1)/%.h: src/per_curve/%.tmpl.h src/gen_headers/* $$(HEADERS_OF_$(2))
-	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
+$$(BUILD_H)/$(1)/%.h: src/per_curve/%.tmpl.h src/generator/* Makefile
+	python -B src/generator/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
 	
-$$(BUILD_INC)/decaf/decaf_$(3).%: src/per_curve/decaf.tmpl.% src/gen_headers/* $$(HEADERS_OF_$(2))
-	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
+$$(BUILD_INC)/decaf/decaf_$(3).%: src/per_curve/decaf.tmpl.% src/generator/* Makefile
+	python -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 	
-$$(BUILD_INC)/decaf/ed$(3).%: src/per_curve/eddsa.tmpl.% src/gen_headers/* $$(HEADERS_OF_$(2))
-	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
+$$(BUILD_INC)/decaf/ed$(3).%: src/per_curve/eddsa.tmpl.% src/generator/* Makefile
+	python -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 	
-$$(BUILD_INC)/decaf/elligator_$(3).%: src/per_curve/elligator.tmpl.% src/gen_headers/* $$(HEADERS_OF_$(2))
-	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
+$$(BUILD_INC)/decaf/elligator_$(3).%: src/per_curve/elligator.tmpl.% src/generator/* Makefile
+	python -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 	
-$$(BUILD_INC)/decaf/scalar_$(3).%: src/per_curve/scalar.tmpl.% src/gen_headers/* $$(HEADERS_OF_$(2))
-	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
+$$(BUILD_INC)/decaf/scalar_$(3).%: src/per_curve/scalar.tmpl.% src/generator/* Makefile
+	python -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 	
-$$(BUILD_INC)/decaf/crypto_$(3).%: src/per_curve/crypto.tmpl.% src/gen_headers/* $$(HEADERS_OF_$(2))
-	python -B src/gen_headers/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
+$$(BUILD_INC)/decaf/crypto_$(3).%: src/per_curve/crypto.tmpl.% src/generator/* Makefile
+	python -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
 $$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/$(1)/decaf_gen_tables.o \
 		$$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/scalar.o $$(BUILD_OBJ)/utils.o \
@@ -332,3 +332,6 @@ microbench: $(BUILD_IBIN)/bench
 
 clean:
 	rm -fr build
+
+clean_generated:
+	rm -fr $(BUILD_C)/* $(BUILD_H)/* $(BUILD_INC)/*
