@@ -19,7 +19,7 @@
 #ifndef __SRC_GENERATED_C_DECAF_CRYPTO_448_H__
 #define __SRC_GENERATED_C_DECAF_CRYPTO_448_H__ 1
 
-#include <decaf/decaf_448.h>
+#include <decaf/point_448.h>
 #include <decaf/strobe.h>
 
 #ifdef __cplusplus

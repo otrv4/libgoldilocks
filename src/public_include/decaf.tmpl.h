@@ -14,5 +14,5 @@
  */
 
 $("\n".join([
-    "#include <decaf/decaf_%s.h>" % g for g in sorted([c["bits"] for _,c in curve.iteritems()])
+    "#include <decaf/point_%s.h>" % g for g in sorted([c["bits"] for _,c in curve.iteritems()])
 ]))

@@ -24,7 +24,7 @@
  */
 
 #include <decaf/eddsa.hxx>
-#include <decaf/decaf_448.hxx>
+#include <decaf/point_448.hxx>
 #include <decaf/ed448.h>
 
 #include <decaf/shake.hxx>

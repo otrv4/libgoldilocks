@@ -6,7 +6,7 @@
  * @warning Experimental!  The names, parameter orders etc are likely to change.
  */
 
-#include <decaf/$(c_ns).h>
+#include <decaf/point_$(gf_bits).h>
 #include <decaf/strobe.h>
 
 #ifdef __cplusplus

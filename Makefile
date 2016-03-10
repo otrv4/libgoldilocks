@@ -176,7 +176,7 @@ define define_curve
 LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/elligator.o $$(BUILD_OBJ)/$(1)/scalar.o \
 	 $$(BUILD_OBJ)/$(1)/crypto.o $$(BUILD_OBJ)/$(1)/eddsa.o $$(BUILD_OBJ)/$(1)/decaf_tables.o
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
-GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/decaf/decaf_$(3).h $(BUILD_INC)/decaf/decaf_$(3).hxx \
+GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/decaf/point_$(3).h $(BUILD_INC)/decaf/point_$(3).hxx \
 		$(BUILD_C)/decaf/crypto_$(3).h $(BUILD_C)/decaf/crypto_$(3).hxx \
 		$(BUILD_INC)/decaf/ed$(3).h $(BUILD_INC)/decaf/ed$(3).hxx
 HEADERS_OF_$(1) = $$(HEADERS_OF_$(2)) $$(GLOBAL_HEADERS_OF_$(1))
@@ -188,7 +188,7 @@ $$(BUILD_C)/$(1)/%.c: src/per_curve/%.tmpl.c src/generator/* Makefile
 $$(BUILD_H)/$(1)/%.h: src/per_curve/%.tmpl.h src/generator/* Makefile
 	python -B src/generator/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
 	
-$$(BUILD_INC)/decaf/decaf_$(3).%: src/per_curve/decaf.tmpl.% src/generator/* Makefile
+$$(BUILD_INC)/decaf/point_$(3).%: src/per_curve/point.tmpl.% src/generator/* Makefile
 	python -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 	
 $$(BUILD_INC)/decaf/ed$(3).%: src/per_curve/eddsa.tmpl.% src/generator/* Makefile
@@ -321,5 +321,5 @@ microbench: $(BUILD_IBIN)/bench
 clean:
 	rm -fr build
 
-clean_generated:
+clean_generated: clean
 	rm -fr $(BUILD_C)/* $(BUILD_H)/* $(BUILD_INC)/*

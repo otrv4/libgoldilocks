@@ -15,8 +15,8 @@
 #ifndef __DECAF_HXX__
 #define __DECAF_HXX__ 1
 
-#include <decaf/decaf_255.hxx>
-#include <decaf/decaf_448.hxx>
+#include <decaf/point_255.hxx>
+#include <decaf/point_448.hxx>
 
 namespace decaf {
     template <template<typename Group> class Run>

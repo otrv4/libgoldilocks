@@ -15,7 +15,7 @@
 #ifndef __DECAF_ED255_H__
 #define __DECAF_ED255_H__ 1
 
-#include <decaf/decaf_255.h>
+#include <decaf/point_255.h>
 #include <decaf/shake.h>
 #include <decaf/sha512.h>
 

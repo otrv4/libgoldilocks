@@ -22,7 +22,7 @@
  * @warning Experimental!  The names, parameter orders etc are likely to change.
  */
 
-#include <decaf/decaf_255.hxx>
+#include <decaf/point_255.hxx>
 #include <decaf/shake.hxx>
 #include <decaf/strobe.hxx>
 

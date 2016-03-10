@@ -6,7 +6,7 @@
  * @warning Experimental!  The names, parameter orders etc are likely to change.
  */
 
-#include <decaf/decaf_$(gf_bits).hxx>
+#include <decaf/point_$(gf_bits).hxx>
 #include <decaf/shake.hxx>
 #include <decaf/strobe.hxx>
 

@@ -1,7 +1,7 @@
 /** Master header for Decaf library, C++ version. */
 
 $("\n".join([
-    "#include <decaf/decaf_%s.hxx>" % g for g in sorted([c["bits"] for _,c in curve.iteritems()])
+    "#include <decaf/point_%s.hxx>" % g for g in sorted([c["bits"] for _,c in curve.iteritems()])
 ]))
 
 namespace decaf {

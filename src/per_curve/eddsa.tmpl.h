@@ -1,6 +1,6 @@
 /** @brief A group of prime order p, based on $(iso_to). */
 
-#include <decaf/decaf_$(gf_bits).h>
+#include <decaf/point_$(gf_bits).h>
 #include <decaf/shake.h>
 #include <decaf/sha512.h>
 

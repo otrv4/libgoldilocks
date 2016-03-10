@@ -8,7 +8,7 @@
  */
 
 #include <decaf/eddsa.hxx>
-#include <decaf/decaf_$(gf_bits).hxx>
+#include <decaf/point_$(gf_bits).hxx>
 #include <decaf/ed$(gf_bits).h>
 
 #include <decaf/shake.hxx>

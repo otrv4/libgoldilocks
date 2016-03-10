@@ -22,7 +22,7 @@
  * @warning Experimental!  The names, parameter orders etc are likely to change.
  */
 
-#include <decaf/decaf_448.hxx>
+#include <decaf/point_448.hxx>
 #include <decaf/shake.hxx>
 #include <decaf/strobe.hxx>
 

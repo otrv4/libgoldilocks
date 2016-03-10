@@ -24,7 +24,7 @@
  */
 
 #include <decaf/eddsa.hxx>
-#include <decaf/decaf_255.hxx>
+#include <decaf/point_255.hxx>
 #include <decaf/ed255.h>
 
 #include <decaf/shake.hxx>

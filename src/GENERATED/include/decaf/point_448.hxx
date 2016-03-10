@@ -1,5 +1,5 @@
 /**
- * @file decaf/decaf_448.hxx
+ * @file decaf/point_448.hxx
  * @author Mike Hamburg
  *
  * @copyright
@@ -23,8 +23,8 @@
  * Please do not edit it.
  */
 
-#ifndef __DECAF_DECAF_448_HXX__
-#define __DECAF_DECAF_448_HXX__ 1
+#ifndef __DECAF_POINT_448_HXX__
+#define __DECAF_POINT_448_HXX__ 1
 
 /** This code uses posix_memalign. */
 #ifndef _XOPEN_SOURCE
@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <string.h> /* for memcpy */
 
-#include <decaf/decaf_448.h>
+#include <decaf/point_448.h>
 #include <decaf/ed448.h>
 #include <decaf/secure_buffer.hxx>
 #include <string>
@@ -711,4 +711,4 @@ inline SecureBuffer Ed448Goldilocks::Scalar::direct_scalarmul (
 #undef NOEXCEPT
 } /* namespace decaf */
 
-#endif /* __DECAF_DECAF_448_HXX__ */
+#endif /* __DECAF_POINT_448_HXX__ */

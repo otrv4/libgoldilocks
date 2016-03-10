@@ -19,7 +19,7 @@
 #ifndef __SRC_GENERATED_C_DECAF_CRYPTO_255_H__
 #define __SRC_GENERATED_C_DECAF_CRYPTO_255_H__ 1
 
-#include <decaf/decaf_255.h>
+#include <decaf/point_255.h>
 #include <decaf/strobe.h>
 
 #ifdef __cplusplus
