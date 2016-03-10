@@ -345,7 +345,7 @@ static void macro() {
         ss = s1.shared_secret(p2,32,true);
     }
     
-    printf("\nProtocol benchmarks:\n");
+    printf("\nToy protocol benchmarks:\n");
     SpongeRng clientRng(Block("client rng seed"),SpongeRng::DETERMINISTIC);
     SpongeRng serverRng(Block("server rng seed"),SpongeRng::DETERMINISTIC);
     SecureBuffer hashedPassword(Block("hello world"));
