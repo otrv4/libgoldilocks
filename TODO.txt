@@ -1,6 +1,6 @@
 Important work items for Ed448-Goldilocks / decaf:
 
-* Signed 32-bit NEON implementation to avoid bias/reduce after subtract
+* Test signed 32-bit NEON implementation to avoid bias/reduce after subtract
 
 * Documentation: write high-level API docs, and internal docs to help
   other implementors.
@@ -8,15 +8,7 @@ Important work items for Ed448-Goldilocks / decaf:
 
 * Documentation: write a spec or add to Watson's
 
-* Cleanup: rename everything consistently.
-    * namespace_op or op_namespace?  namespace_op_type?
-    * We don't have to be super-careful with the namespacing, because
-      symbols will be scrubbed by visibility
-    * Mostly done.
-
 * Cleanup: unify intrinsics code
-    * Word_t, mask_t, bigregister_t, etc.
-        * [ MOSTLY DONE ]
     * Generate asm intrinsics with a script?
 
 * Testing:
@@ -31,23 +23,14 @@ Important work items for Ed448-Goldilocks / decaf:
 
 * Portability: test and make clean with other compilers
     * Using a fair amount of __attribute__ code.
-    * [Should work for GCC now.  But not really on ARM.
+    * Should work for GCC now.
+    * Autoconf
 
 * Portability: try to make the vector code as portable as possible
     * Currently using clang ext_vector_length.
     * I can't get a simple for-loop to autovectorize :-/
     * SAGE tool?
 
-* Portability: make the outer layers of the code 32-bit clean.
-    * Was [DONE], but a regression on ARM GCC.
-
-* Performance: Improve SHAKE.
-    * Improve speed.  (Maybe)
-
-* Clear other TODO/FIXME/HACK/PERF items in the code
-
 * More curves?  E-521 at least?  Ed41417?
-
-* CFRG compat modes.
 
 * Submit Decaf to SUPERCOP
