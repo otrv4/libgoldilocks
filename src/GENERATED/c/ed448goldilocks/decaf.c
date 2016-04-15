@@ -1330,7 +1330,7 @@ void decaf_x448_generate_key (
     memcpy(scalar2,scalar,sizeof(scalar2));
     scalar2[0] &= -(uint8_t)COFACTOR;
     
-    scalar2[X_PRIVATE_BYTES-1] &= ~(-1<<((X_PRIVATE_BITS+7)%8));
+    scalar2[X_PRIVATE_BYTES-1] &= ~(-1u<<((X_PRIVATE_BITS+7)%8));
     scalar2[X_PRIVATE_BYTES-1] |= 1<<((X_PRIVATE_BITS+7)%8);
     
     scalar_t the_scalar;
