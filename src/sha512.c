@@ -232,7 +232,8 @@ void decaf_sha512_update(decaf_sha512_ctx_t ctx, const uint8_t *message, size_t 
 void decaf_sha512_final(decaf_sha512_ctx_t ctx, uint8_t *out, size_t length) {
     assert(length <= 512/8);
     
-    size_t off = ctx->bytes_processed % 128, bp = ctx->bytes_processed * 8;
+    size_t off = ctx->bytes_processed % 128;
+    uint64_t bp = ctx->bytes_processed * 8;
     ctx->block[off] = 0x80;
     memset(&ctx->block[off+1], 0, 128-off-1);
     
