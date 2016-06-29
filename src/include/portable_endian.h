@@ -13,7 +13,9 @@
 #	define le64toh(x) OSSwapLittleToHostInt64(x)
 #elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
 #	include <sys/endian.h>
-#	define le64toh(x) letoh64(x)
+#	ifndef le64toh
+#		define le64toh(x) letoh64(x)
+#	endif
 #elif defined(__sun) && defined(__SVR4)
 #	include <sys/byteorder.h>
 #	define htole64(x) LE_64(x)
