@@ -19,7 +19,7 @@
 #define hash_destroy decaf_$(eddsa_hash)_destroy
 #define hash_hash    decaf_$(eddsa_hash)_hash
 
-#define SUPPORTS_CONTEXTS DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
+#define NO_CONTEXT DECAF_EDDSA_$(gf_shortname)_NO_CONTEXT
 #define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
 #define COFACTOR $(cofactor)
 
@@ -49,38 +49,33 @@ static void hash_init_with_dom(
     uint8_t prehashed,
     uint8_t for_prehash,
     const uint8_t *context,
-    uint8_t context_len
+    uint8_t context_len,
+    uint8_t no_context
 ) {
     hash_init(hash);
     
-#if SUPPORTS_CONTEXTS
+#if NO_CONTEXT
+    if (no_context) {
+        (void)prehashed;
+        (void)for_prehash;
+        (void)context;
+        (void)context_len;
+        return;
+    }
+#else
+    (void)no_context;
+#endif
     const char *dom_s = "$(eddsa_dom)";
     const uint8_t dom[2] = {2+word_is_zero(prehashed)+word_is_zero(for_prehash), context_len};
     hash_update(hash,(const unsigned char *)dom_s, strlen(dom_s));
     hash_update(hash,dom,2);
     hash_update(hash,context,context_len);
-#else
-    (void)prehashed;
-    (void)for_prehash;
-    (void)context;
-    assert(context==NULL);
-    (void)context_len;
-    assert(context_len == 0);
-#endif
 }
 
 void decaf_ed$(gf_shortname)_prehash_init (
     hash_ctx_t hash
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-    , const uint8_t *context,
-    uint8_t context_len
-#endif
 ) {
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-    hash_init_with_dom(hash,1,1,context,context_len);
-#else
-    hash_init_with_dom(hash,1,1,NULL,0);
-#endif
+    hash_init(hash);
 }
 
 void decaf_ed$(gf_shortname)_derive_public_key (
@@ -128,16 +123,11 @@ void decaf_ed$(gf_shortname)_sign (
     const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
-    uint8_t prehashed
-#if SUPPORTS_CONTEXTS
-    , const uint8_t *context,
-    uint8_t context_len
-#endif
+    uint8_t prehashed,
+    const uint8_t *context,
+    uint8_t context_len,
+    uint8_t no_context
 ) {
-#if !SUPPORTS_CONTEXTS
-    const uint8_t *const context = NULL;
-    const uint8_t context_len = 0;
-#endif
     API_NS(scalar_t) secret_scalar;
     hash_ctx_t hash;
     {
@@ -156,7 +146,7 @@ void decaf_ed$(gf_shortname)_sign (
         API_NS(scalar_decode_long)(secret_scalar, expanded.secret_scalar_ser, sizeof(expanded.secret_scalar_ser));
     
         /* Hash to create the nonce */
-        hash_init_with_dom(hash,prehashed,0,context,context_len);
+        hash_init_with_dom(hash,prehashed,0,context,context_len,no_context);
         hash_update(hash,expanded.seed,sizeof(expanded.seed));
         hash_update(hash,message,message_len);
         decaf_bzero(&expanded, sizeof(expanded));
@@ -190,7 +180,7 @@ void decaf_ed$(gf_shortname)_sign (
     API_NS(scalar_t) challenge_scalar;
     {
         /* Compute the challenge */
-        hash_init_with_dom(hash,prehashed,0,context,context_len);
+        hash_init_with_dom(hash,prehashed,0,context,context_len,no_context);
         hash_update(hash,nonce_point,sizeof(nonce_point));
         hash_update(hash,pubkey,DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
         hash_update(hash,message,message_len);
@@ -218,11 +208,9 @@ void decaf_ed$(gf_shortname)_sign_prehash (
     uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
-    const decaf_ed$(gf_shortname)_prehash_ctx_t hash
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-    , const uint8_t *context,
+    const decaf_ed$(gf_shortname)_prehash_ctx_t hash,
+    const uint8_t *context,
     uint8_t context_len
-#endif
 ) {
     uint8_t hash_output[64]; /* MAGIC but true for all existing schemes */
     {
@@ -231,13 +219,8 @@ void decaf_ed$(gf_shortname)_sign_prehash (
         hash_final(hash_too,hash_output,sizeof(hash_output));
         hash_destroy(hash_too);
     }
-    
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-    decaf_ed$(gf_shortname)_sign(signature,privkey,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
-#else
-    decaf_ed$(gf_shortname)_sign(signature,privkey,pubkey,hash_output,sizeof(hash_output),1);
-#endif
-    
+
+    decaf_ed$(gf_shortname)_sign(signature,privkey,pubkey,hash_output,sizeof(hash_output),1,context,context_len,0);
     decaf_bzero(hash_output,sizeof(hash_output));
 }
 
@@ -246,16 +229,11 @@ decaf_error_t decaf_ed$(gf_shortname)_verify (
     const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
-    uint8_t prehashed
-#if SUPPORTS_CONTEXTS
-    , const uint8_t *context,
-    uint8_t context_len
-#endif
+    uint8_t prehashed,
+    const uint8_t *context,
+    uint8_t context_len,
+    uint8_t no_context
 ) { 
-#if !SUPPORTS_CONTEXTS
-    const uint8_t *const context = NULL;
-    const uint8_t context_len = 0;
-#endif
     API_NS(point_t) pk_point, r_point;
     decaf_error_t error = API_NS(point_decode_like_eddsa_and_ignore_cofactor)(pk_point,pubkey);
     if (DECAF_SUCCESS != error) { return error; }
@@ -267,7 +245,7 @@ decaf_error_t decaf_ed$(gf_shortname)_verify (
     {
         /* Compute the challenge */
         hash_ctx_t hash;
-        hash_init_with_dom(hash,prehashed,0,context,context_len);
+        hash_init_with_dom(hash,prehashed,0,context,context_len,no_context);
         hash_update(hash,signature,DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
         hash_update(hash,pubkey,DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
         hash_update(hash,message,message_len);
@@ -304,11 +282,9 @@ decaf_error_t decaf_ed$(gf_shortname)_verify (
 decaf_error_t decaf_ed$(gf_shortname)_verify_prehash (
     const uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
-    const decaf_ed$(gf_shortname)_prehash_ctx_t hash
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-    , const uint8_t *context,
+    const decaf_ed$(gf_shortname)_prehash_ctx_t hash,
+    const uint8_t *context,
     uint8_t context_len
-#endif
 ) {
     decaf_error_t ret;
     
@@ -320,11 +296,7 @@ decaf_error_t decaf_ed$(gf_shortname)_verify_prehash (
         hash_destroy(hash_too);
     }
     
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-    ret = decaf_ed$(gf_shortname)_verify(signature,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
-#else
-    ret = decaf_ed$(gf_shortname)_verify(signature,pubkey,hash_output,sizeof(hash_output),1);
-#endif
+    ret = decaf_ed$(gf_shortname)_verify(signature,pubkey,hash_output,sizeof(hash_output),1,context,context_len,0);
     
     return ret;
 }

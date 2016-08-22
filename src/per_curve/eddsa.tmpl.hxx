@@ -33,27 +33,14 @@ template<> struct EdDSA<$(cxx_ns)> {
 /** @cond internal */
 template<class CRTP, Prehashed> class Signing;
 template<class CRTP, Prehashed> class Verification;
-$("""
 class PublicKeyBase;
 class PrivateKeyBase;
 typedef class PrivateKeyBase PrivateKey, PrivateKeyPure, PrivateKeyPh;
 typedef class PublicKeyBase PublicKey, PublicKeyPure, PublicKeyPh;
-  """ if eddsa_supports_contexts else """
-template<Prehashed=PURE> class PublicKeyBase;
-template<Prehashed=PURE> class PrivateKeyBase;
-typedef class PublicKeyBase<PURE> PublicKey, PublicKeyPure;
-typedef class PublicKeyBase<PREHASHED> PublicKeyPh;
-typedef class PrivateKeyBase<PURE> PrivateKey, PrivateKeyPure;
-typedef class PrivateKeyBase<PREHASHED> PrivateKeyPh;
-""")
 /** @endcond */
 
 /** Prehash context for EdDSA. */
 class Prehash : public $(re.sub(r"SHAKE(\d+)",r"SHAKE<\1>", eddsa_hash.upper())) {
-public:
-    /** Do we support contexts for signatures?  If not, they must always be NULL */
-    static const bool SUPPORTS_CONTEXTS = DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS;
-    
 private:
     typedef $(re.sub(r"SHAKE(\d+)",r"SHAKE<\1>", eddsa_hash.upper())) Super;
     SecureBuffer context_;
@@ -63,17 +50,11 @@ private:
     void init() throw(LengthException) {
         Super::reset();
         
-        if (context_.size() > 255
-            || (context_.size() != 0 && !SUPPORTS_CONTEXTS)
-        ) {
+        if (context_.size() > 255) {
             throw LengthException();
         }
 
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-        decaf_ed$(gf_shortname)_prehash_init((decaf_$(eddsa_hash)_ctx_s *)wrapped,context_.data(),context_.size());
-#else
-        decaf_ed$(gf_shortname)_prehash_init(wrapped);
-#endif
+        decaf_ed$(gf_shortname)_prehash_init((decaf_$(eddsa_hash)_ctx_s *)wrapped);
     }
     
 public:
@@ -115,11 +96,9 @@ public:
             out.data(),
             ((const CRTP*)this)->priv_.data(),
             ((const CRTP*)this)->pub_.data(),
-            (const decaf_ed$(gf_shortname)_prehash_ctx_s*)ph.wrapped
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-            , ph.context_.data(),
+            (const decaf_ed$(gf_shortname)_prehash_ctx_s*)ph.wrapped,
+            ph.context_.data(),
             ph.context_.size()
-#endif
         );
         return out;
     }
@@ -140,20 +119,18 @@ public:
     /**
      * Sign a message.
      * @param [in] message The message to be signed.
-     * @param [in] context A context for the signature; must be at most 255 bytes;
-     * must be absent if SUPPORTS_CONTEXTS == false.
+     * @param [in] context A context for the signature; must be at most 255 bytes.
      *
      * @warning It is generally unsafe to use Ed25519 with both prehashed and non-prehashed messages.
      */
     inline SecureBuffer sign (
         const Block &message,
-        const Block &context = Block(NULL,0)
+        const Block &context = Block(NULL,0),
+        const bool no_context = false
     ) const /* TODO: this exn spec tickles a Clang bug?
              * throw(LengthException, std::bad_alloc)
              */ {
-        if (context.size() > 255
-            || (context.size() != 0 && !CRTP::SUPPORTS_CONTEXTS)
-        ) {
+        if (context.size() > 255) {
             throw LengthException();
         }
         
@@ -164,17 +141,15 @@ public:
             ((const CRTP*)this)->pub_.data(),
             message.data(),
             message.size(),
-            0
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-            , context.data(),
-            context.size()
-#endif
+            0,
+            context.data(),
+            context.size(),
+            no_context
         );
         return out;
     }
 };
 
-$("""
 class PrivateKeyBase
     : public Serializable<PrivateKeyBase>
     , public Signing<PrivateKeyBase,PURE>
@@ -187,18 +162,6 @@ private:
     friend class Signing<PrivateKey,PURE>;
     friend class Signing<PrivateKey,PREHASHED>;
 /** @endcond */
-""" if eddsa_supports_contexts else """
-template<Prehashed ph> class PrivateKeyBase
-    : public Serializable<PrivateKeyBase<ph> >
-    , public Signing<PrivateKeyBase<ph>,ph> {
-public:
-    typedef class PublicKeyBase<ph> MyPublicKey;
-private:
-/** @cond internal */
-    friend class PublicKeyBase<ph>;
-    friend class Signing<PrivateKeyBase<ph>, ph>;
-/** @endcond */
-""")
     
     /** The pre-expansion form of the signing key. */
     FixedArrayBuffer<DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES> priv_;
@@ -215,9 +178,6 @@ public:
     
     /** Serialization size. */
     static const size_t SER_BYTES = DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES;
-    
-    /** Do we support contexts for signatures?  If not, they must always be NULL */
-    static const bool SUPPORTS_CONTEXTS = DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS;
     
     
     /** Create but don't initialize */
@@ -271,11 +231,10 @@ public:
     inline decaf_error_t WARN_UNUSED verify_noexcept (
         const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
         const Block &message,
-        const Block &context = Block(NULL,0)
+        const Block &context = Block(NULL,0),
+        const bool no_context = false
     ) const /*NOEXCEPT*/ {
-        if (context.size() > 255
-            || (context.size() != 0 && !CRTP::SUPPORTS_CONTEXTS)
-        ) {
+        if (context.size() > 255) {
             return DECAF_FAILURE;
         }
         
@@ -284,34 +243,31 @@ public:
             ((const CRTP*)this)->pub_.data(),
             message.data(),
             message.size(),
-            0
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-            , context.data(),
-            context.size()
-#endif
+            0,
+            context.data(),
+            context.size(),
+            no_context
         );
     }
     
     /** Verify a signature, throwing an exception if verification fails
      * @param [in] sig The signature.
      * @param [in] message The signed message.
-     * @param [in] context A context for the signature; must be at most 255 bytes;
-     * must be absent if SUPPORTS_CONTEXTS == false.
+     * @param [in] context A context for the signature; must be at most 255 bytes.
      *
      * @warning It is generally unsafe to use Ed25519 with both prehashed and non-prehashed messages.
      */
     inline void verify (
         const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
         const Block &message,
-        const Block &context = Block(NULL,0)
+        const Block &context = Block(NULL,0),
+        const bool no_context = false
     ) const /*throw(LengthException,CryptoException)*/ {
-        if (context.size() > 255
-            || (context.size() != 0 && !CRTP::SUPPORTS_CONTEXTS)
-        ) {
+        if (context.size() > 255) {
             throw LengthException();
         }
         
-        if (DECAF_SUCCESS != verify_noexcept( sig, message, context )) {
+        if (DECAF_SUCCESS != verify_noexcept( sig, message, context, no_context )) {
             throw CryptoException();
         }
     }
@@ -328,11 +284,9 @@ public:
         return decaf_ed$(gf_shortname)_verify_prehash (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
-            (const decaf_ed$(gf_shortname)_prehash_ctx_s*)ph.wrapped
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-            , ph.context_.data(),
+            (const decaf_ed$(gf_shortname)_prehash_ctx_s*)ph.wrapped,
+            ph.context_.data(),
             ph.context_.size()
-#endif
         );
     }
     
@@ -344,11 +298,9 @@ public:
         if (DECAF_SUCCESS != decaf_ed$(gf_shortname)_verify_prehash (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
-            (const decaf_ed$(gf_shortname)_prehash_ctx_s*)ph.wrapped
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS
-            , ph.context_.data(),
+            (const decaf_ed$(gf_shortname)_prehash_ctx_s*)ph.wrapped,
+            ph.context_.data(),
             ph.context_.size()
-#endif
         )) {
             throw CryptoException();
         }
@@ -367,7 +319,6 @@ public:
 };
 
 
-$("""
 class PublicKeyBase
     : public Serializable<PublicKeyBase>
     , public Verification<PublicKeyBase,PURE>
@@ -381,19 +332,6 @@ private:
     friend class Verification<PublicKey,PURE>;
     friend class Verification<PublicKey,PREHASHED>;
 /** @endcond */
-""" if eddsa_supports_contexts else """
-template<Prehashed ph> class PublicKeyBase
-    : public Serializable<PublicKeyBase<ph> >
-    , public Verification<PublicKeyBase<ph>,ph> {
-public:
-    typedef class PrivateKeyBase<ph> MyPrivateKey;
-    
-private:
-/** @cond internal */
-    friend class PrivateKeyBase<ph>;
-    friend class Verification<PublicKeyBase<ph>, ph>;
-/** @endcond */
-""")
 
 private:
     /** The pre-expansion form of the signature */
@@ -410,9 +348,6 @@ public:
     
     /** Serialization size. */
     static const size_t SER_BYTES = DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES;
-    
-    /** Do we support contexts for signatures?  If not, they must always be NULL */
-    static const bool SUPPORTS_CONTEXTS = DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTS;
     
     
     /** Create but don't initialize */

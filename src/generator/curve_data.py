@@ -36,8 +36,8 @@ curve_data = {
         "window_bits":4,
         
         "eddsa_hash": "sha512",
-        "eddsa_supports_contexts": 0,
-        "eddsa_dom": "",
+        "eddsa_no_context": 1,
+        "eddsa_dom": "SigEd25519 no Ed25519 collisions",
         "eddsa_sigma_iso": 1
     },
     "ed448goldilocks" : {
@@ -112,8 +112,8 @@ for curve,data in curve_data.iteritems():
     if "eddsa_hash" not in data:
         data["eddsa_hash"] = "shake256"
         
-    if "eddsa_supports_contexts" not in data:
-        data["eddsa_supports_contexts"] = 1
+    if "eddsa_no_context" not in data:
+        data["eddsa_no_context"] = 0
     
     if "cxx_ns" not in data:
         data["cxx_ns"] = data["name"].replace("-","")
