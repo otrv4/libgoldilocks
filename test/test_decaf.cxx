@@ -469,7 +469,7 @@ static void test_cfrg_crypto() {
     }
 }
 
-static const bool eddsa_prehashed[], eddsa_no_context[];
+static const bool eddsa_prehashed[];
 static const Block eddsa_sk[], eddsa_pk[], eddsa_message[], eddsa_context[], eddsa_sig[];
 
 static void test_cfrg_vectors() {
@@ -499,7 +499,7 @@ static void test_cfrg_vectors() {
             typename EdDSA<Group>::PrivateKeyPh priv2(eddsa_sk[t]); 
             sig = priv2.sign_with_prehash(eddsa_message[t],eddsa_context[t]);
         } else {
-            sig = priv.sign(eddsa_message[t],eddsa_context[t],eddsa_no_context[t]);
+            sig = priv.sign(eddsa_message[t],eddsa_context[t]);
         }
 
         if (!memeq(SecureBuffer(eddsa_sig[t]),sig)) {

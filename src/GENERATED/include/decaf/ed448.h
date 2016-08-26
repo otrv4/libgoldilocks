@@ -34,7 +34,7 @@ extern "C" {
 
 /** Does EdDSA support non-contextual signatures? */
 #define DECAF_EDDSA_448_NO_CONTEXT 0
-    
+
 /** Prehash context renaming macros. */
 #define decaf_ed448_prehash_ctx_s   decaf_shake256_ctx_s
 #define decaf_ed448_prehash_ctx_t   decaf_shake256_ctx_t
@@ -64,7 +64,6 @@ void decaf_ed448_derive_public_key (
  * @param [in] prehashed Nonzero if the message is actually the hash of something you want to sign.
  * @param [in] context A "context" for this signature of up to 255 bytes.
  * @param [in] context_len Length of the context.
- * @param [in] no_context Nonzero if no context should be used (only Ed25519 supported).
  *
  * @warning For Ed25519, it is unsafe to use the same key for both prehashed and non-prehashed
  * messages, at least without some very careful protocol-level disambiguation.  For Ed448 it is
@@ -79,8 +78,7 @@ void decaf_ed448_sign (
     size_t message_len,
     uint8_t prehashed,
     const uint8_t *context,
-    uint8_t context_len,
-    uint8_t no_context
+    uint8_t context_len
 ) API_VIS __attribute__((nonnull(1,2,3))) NOINLINE;
 
 /**
@@ -128,7 +126,6 @@ void decaf_ed448_prehash_init (
  * @param [in] prehashed Nonzero if the message is actually the hash of something you want to verify.
  * @param [in] context A "context" for this signature of up to 255 bytes.
  * @param [in] context_len Length of the context.
- * @param [in] no_context Nonzero if no context should be used (only Ed25519 supported).
  *
  * @warning For Ed25519, it is unsafe to use the same key for both prehashed and non-prehashed
  * messages, at least without some very careful protocol-level disambiguation.  For Ed448 it is
@@ -142,8 +139,7 @@ decaf_error_t decaf_ed448_verify (
     size_t message_len,
     uint8_t prehashed,
     const uint8_t *context,
-    uint8_t context_len,
-    uint8_t no_context
+    uint8_t context_len
 ) API_VIS __attribute__((nonnull(1,2))) NOINLINE;
 
 /**

@@ -125,8 +125,7 @@ public:
      */
     inline SecureBuffer sign (
         const Block &message,
-        const Block &context = Block(NULL,0),
-        const bool no_context = false
+        const Block &context = Block(NULL,0)
     ) const /* TODO: this exn spec tickles a Clang bug?
              * throw(LengthException, std::bad_alloc)
              */ {
@@ -143,8 +142,7 @@ public:
             message.size(),
             0,
             context.data(),
-            context.size(),
-            no_context
+            context.size()
         );
         return out;
     }
@@ -231,8 +229,7 @@ public:
     inline decaf_error_t WARN_UNUSED verify_noexcept (
         const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
         const Block &message,
-        const Block &context = Block(NULL,0),
-        const bool no_context = false
+        const Block &context = Block(NULL,0)
     ) const /*NOEXCEPT*/ {
         if (context.size() > 255) {
             return DECAF_FAILURE;
@@ -245,8 +242,7 @@ public:
             message.size(),
             0,
             context.data(),
-            context.size(),
-            no_context
+            context.size()
         );
     }
     
@@ -260,14 +256,13 @@ public:
     inline void verify (
         const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
         const Block &message,
-        const Block &context = Block(NULL,0),
-        const bool no_context = false
+        const Block &context = Block(NULL,0)
     ) const /*throw(LengthException,CryptoException)*/ {
         if (context.size() > 255) {
             throw LengthException();
         }
         
-        if (DECAF_SUCCESS != verify_noexcept( sig, message, context, no_context )) {
+        if (DECAF_SUCCESS != verify_noexcept( sig, message, context )) {
             throw CryptoException();
         }
     }

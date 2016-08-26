@@ -346,15 +346,6 @@ template<> const Block Tests<Ed448Goldilocks>::eddsa_context[] = {
     Block(NULL,0),
     Block(ed448_eddsa_context[0],3)
 };
-template<> const bool Tests<Ed448Goldilocks>::eddsa_no_context[] = {
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false
-};
 template<> const Block Tests<Ed448Goldilocks>::eddsa_sig[] = {
     Block(ed448_eddsa_sig[0],114),
     Block(ed448_eddsa_sig[1],114),
@@ -516,20 +507,12 @@ template<> const Block Tests<IsoEd25519>::eddsa_pk[] = {
     Block(ed25519_eddsa_pk[4],32)
 };
 template<> const Block Tests<IsoEd25519>::eddsa_context[] = {
-    Block(NULL,0),
-    Block(NULL,0),
-    Block(NULL,0),
+    Block(ED25519_NO_CONTEXT,0),
+    Block(ED25519_NO_CONTEXT,0),
+    Block(ED25519_NO_CONTEXT,0),
     Block(NULL,0),
     Block(ed25519_eddsa_context[0],3),
     Block(ed25519_eddsa_context[1],3)
-};
-template<> const bool Tests<IsoEd25519>::eddsa_no_context[] = {
-    true,
-    true,
-    true,
-    false,
-    false,
-    false
 };
 template<> const Block Tests<IsoEd25519>::eddsa_message[] = {
     Block(ed25519_eddsa_message[0],0),
