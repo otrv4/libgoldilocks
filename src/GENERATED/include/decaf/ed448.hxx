@@ -56,8 +56,8 @@ typedef class PublicKeyBase PublicKey, PublicKeyPure, PublicKeyPh;
 /** @endcond */
 
 
-#if DECAF_EDDSA_448_NO_CONTEXT
-static inline const Block NO_CONTEXT() { return Block(ED448_NO_CONTEXT,0); }
+#if DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS
+static inline const Block NO_CONTEXT() { return Block(DECAF_ED448_NO_CONTEXT,0); }
 #else
 static inline const Block NO_CONTEXT() { return Block(NULL,0); }
 #endif

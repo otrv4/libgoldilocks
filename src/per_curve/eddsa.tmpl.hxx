@@ -40,8 +40,8 @@ typedef class PublicKeyBase PublicKey, PublicKeyPure, PublicKeyPh;
 /** @endcond */
 
 
-#if DECAF_EDDSA_$(gf_shortname)_NO_CONTEXT
-static inline const Block NO_CONTEXT() { return Block(ED$(gf_shortname)_NO_CONTEXT,0); }
+#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTLESS_SIGS
+static inline const Block NO_CONTEXT() { return Block(DECAF_ED$(gf_shortname)_NO_CONTEXT,0); }
 #else
 static inline const Block NO_CONTEXT() { return Block(NULL,0); }
 #endif

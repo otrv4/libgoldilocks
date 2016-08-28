@@ -28,13 +28,13 @@
 #define hash_destroy decaf_shake256_destroy
 #define hash_hash    decaf_shake256_hash
 
-#define NO_CONTEXT DECAF_EDDSA_448_NO_CONTEXT
+#define NO_CONTEXT DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS
 #define EDDSA_USE_SIGMA_ISOGENY 0
 #define COFACTOR 4
 
 #if NO_CONTEXT
 const uint8_t NO_CONTEXT_POINTS_HERE = 0;
-const uint8_t * const ED448_NO_CONTEXT = &NO_CONTEXT_POINTS_HERE;
+const uint8_t * const DECAF_ED448_NO_CONTEXT = &NO_CONTEXT_POINTS_HERE;
 #endif
 
 /* EDDSA_BASE_POINT_RATIO = 1 or 2
@@ -68,7 +68,7 @@ static void hash_init_with_dom(
     hash_init(hash);
 
 #if NO_CONTEXT
-    if (context_len == 0 && context == ED448_NO_CONTEXT) {
+    if (context_len == 0 && context == DECAF_ED448_NO_CONTEXT) {
         (void)prehashed;
         (void)for_prehash;
         (void)context;

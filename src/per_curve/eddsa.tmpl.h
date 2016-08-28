@@ -18,8 +18,8 @@ extern "C" {
 #define DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES (DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES + DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES)
 
 /** Does EdDSA support non-contextual signatures? */
-#define DECAF_EDDSA_$(gf_shortname)_NO_CONTEXT $(eddsa_no_context)
-$("extern const uint8_t * const ED" + gf_shortname + "_NO_CONTEXT API_VIS;\n" if eddsa_no_context else "")
+#define DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTLESS_SIGS $(eddsa_no_context)
+$("extern const uint8_t * const DECAF_ED" + gf_shortname + "_NO_CONTEXT API_VIS;\n" if eddsa_no_context else "")
 /** Prehash context renaming macros. */
 #define decaf_ed$(gf_shortname)_prehash_ctx_s   decaf_$(eddsa_hash)_ctx_s
 #define decaf_ed$(gf_shortname)_prehash_ctx_t   decaf_$(eddsa_hash)_ctx_t

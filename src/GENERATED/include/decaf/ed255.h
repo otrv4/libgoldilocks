@@ -33,8 +33,8 @@ extern "C" {
 #define DECAF_EDDSA_25519_SIGNATURE_BYTES (DECAF_EDDSA_25519_PUBLIC_BYTES + DECAF_EDDSA_25519_PRIVATE_BYTES)
 
 /** Does EdDSA support non-contextual signatures? */
-#define DECAF_EDDSA_25519_NO_CONTEXT 1
-extern const uint8_t * const ED25519_NO_CONTEXT API_VIS;
+#define DECAF_EDDSA_25519_SUPPORTS_CONTEXTLESS_SIGS 1
+extern const uint8_t * const DECAF_ED25519_NO_CONTEXT API_VIS;
 
 /** Prehash context renaming macros. */
 #define decaf_ed25519_prehash_ctx_s   decaf_sha512_ctx_s

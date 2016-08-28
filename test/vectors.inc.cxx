@@ -507,9 +507,9 @@ template<> const Block Tests<IsoEd25519>::eddsa_pk[] = {
     Block(ed25519_eddsa_pk[4],32)
 };
 template<> const Block Tests<IsoEd25519>::eddsa_context[] = {
-    Block(ED25519_NO_CONTEXT,0),
-    Block(ED25519_NO_CONTEXT,0),
-    Block(ED25519_NO_CONTEXT,0),
+    EdDSA<IsoEd25519>::NO_CONTEXT(),
+    EdDSA<IsoEd25519>::NO_CONTEXT(),
+    EdDSA<IsoEd25519>::NO_CONTEXT(),
     Block(NULL,0),
     Block(ed25519_eddsa_context[0],3),
     Block(ed25519_eddsa_context[1],3)
