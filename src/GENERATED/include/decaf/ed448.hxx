@@ -55,6 +55,13 @@ typedef class PrivateKeyBase PrivateKey, PrivateKeyPure, PrivateKeyPh;
 typedef class PublicKeyBase PublicKey, PublicKeyPure, PublicKeyPh;
 /** @endcond */
 
+
+#if DECAF_EDDSA_448_NO_CONTEXT
+static inline const Block NO_CONTEXT() { return Block(ED448_NO_CONTEXT,0); }
+#else
+static inline const Block NO_CONTEXT() { return Block(NULL,0); }
+#endif
+
 /** Prehash context for EdDSA. */
 class Prehash : public SHAKE<256> {
 private:
@@ -78,7 +85,7 @@ public:
     static const size_t OUTPUT_BYTES = Super::DEFAULT_OUTPUT_BYTES;
     
     /** Create the prehash */
-    Prehash(Block context = Block(NULL,0)) throw(LengthException) {
+    Prehash(const Block &context = NO_CONTEXT()) throw(LengthException) {
         context_ = context;
         init();
     }
@@ -122,7 +129,7 @@ public:
     /* Sign a message using the prehasher */
     inline SecureBuffer sign_with_prehash (
         const Block &message,
-        const Block &context = Block(NULL,0)
+        const Block &context = NO_CONTEXT()
     ) const /*throw(LengthException,CryptoException)*/ {
         Prehash ph(context);
         ph += message;
@@ -141,7 +148,7 @@ public:
      */
     inline SecureBuffer sign (
         const Block &message,
-        const Block &context = Block(NULL,0)
+        const Block &context = NO_CONTEXT()
     ) const /* TODO: this exn spec tickles a Clang bug?
              * throw(LengthException, std::bad_alloc)
              */ {
@@ -245,7 +252,7 @@ public:
     inline decaf_error_t WARN_UNUSED verify_noexcept (
         const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Block &message,
-        const Block &context = Block(NULL,0)
+        const Block &context = NO_CONTEXT()
     ) const /*NOEXCEPT*/ {
         if (context.size() > 255) {
             return DECAF_FAILURE;
@@ -272,7 +279,7 @@ public:
     inline void verify (
         const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Block &message,
-        const Block &context = Block(NULL,0)
+        const Block &context = NO_CONTEXT()
     ) const /*throw(LengthException,CryptoException)*/ {
         if (context.size() > 255) {
             throw LengthException();
@@ -321,7 +328,7 @@ public:
     inline void verify_with_prehash (
         const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Block &message,
-        const Block &context = Block(NULL,0)
+        const Block &context = NO_CONTEXT()
     ) const /*throw(LengthException,CryptoException)*/ {
         Prehash ph(context);
         ph += message;

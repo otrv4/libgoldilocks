@@ -34,7 +34,7 @@ extern "C" {
 
 /** Does EdDSA support non-contextual signatures? */
 #define DECAF_EDDSA_25519_NO_CONTEXT 1
-const uint8_t * const ED25519_NO_CONTEXT = (const uint8_t * const)(25519);
+extern const uint8_t * const ED25519_NO_CONTEXT API_VIS;
 
 /** Prehash context renaming macros. */
 #define decaf_ed25519_prehash_ctx_s   decaf_sha512_ctx_s

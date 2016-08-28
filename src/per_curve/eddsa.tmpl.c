@@ -23,6 +23,11 @@
 #define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
 #define COFACTOR $(cofactor)
 
+#if NO_CONTEXT
+const uint8_t NO_CONTEXT_POINTS_HERE = 0;
+$("const uint8_t * const ED" + gf_shortname + "_NO_CONTEXT") = &NO_CONTEXT_POINTS_HERE;
+#endif
+
 /* EDDSA_BASE_POINT_RATIO = 1 or 2
  * Because EdDSA25519 is not on E_d but on the isogenous E_sigma_d,
  * its base point is twice ours.
