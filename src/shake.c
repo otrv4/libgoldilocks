@@ -291,7 +291,7 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
         # if defined(__x86_64__)
             uint64_t out, a=0, *eo = (uint64_t *)entropy;
         # elif defined(__i386__)
-            uint32_t out, a=0, *eo = (uint64_t *)entropy;
+            uint32_t out, a=0, *eo = (uint32_t *)entropy;
         #endif
         len /= sizeof(out);
 
