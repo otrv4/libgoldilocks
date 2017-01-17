@@ -190,9 +190,9 @@ static __inline__ void mac_rr(__uint128_t *acc, uint64_t a, const uint64_t b) {
           ("mulq %[b]; "
            "addq %%rax, %[lo]; "
            "adcq %%rdx, %[hi]; "
-           : [lo]"+r"(lo), [hi]"+r"(hi)
-           : [b]"r"(b), "a"(a)
-           : "rax", "rdx", "cc");
+           : [lo]"+r"(lo), [hi]"+r"(hi), "+a"(a)
+           : [b]"r"(b)
+           : "rdx", "cc");
   #endif
   
   *acc = (((__uint128_t)(hi))<<64) | lo;
