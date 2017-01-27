@@ -24,8 +24,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: //depot/python/pyctflac/main/ctflac/__init__.py#2 $
-#
 #
 
 '''This is a wrapper around Ed448-Goldilocks.
