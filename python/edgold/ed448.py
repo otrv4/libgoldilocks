@@ -40,17 +40,22 @@ __status__ = 'alpha'
 
 import array
 import os
+import os.path
+import sys
 import unittest
 import warnings
-import sys
 
 from ctypes import *
 
 try:
-	decaf = CDLL('../build/lib/libdecaf.so')
+	_dname = os.path.dirname(__file__)
+	if not _dname:
+		_dname = '.'
+	_path = os.path.join(_dname, 'libdecaf.so')
+	decaf = CDLL(_path)
 except OSError as e: # pragma: no cover
 	import warnings
-	warnings.warn('goldilocks.so not installed.')
+	warnings.warn('libdecaf.so not installed.')
 	raise ImportError(str(e))
 
 DECAF_EDDSA_448_PUBLIC_BYTES = 57
@@ -231,6 +236,8 @@ class TestEd448(unittest.TestCase):
 		# Verify that the public key can be imported and verifies
 		key3 = EDDSA448(pub=pubkey)
 		key3.verify(sig, message)
+
+		self.assertRaises(ValueError, key.export_key, 'PEM')
 
 	def test_keyimportexport(self):
 		privkey = b'1' * DECAF_EDDSA_448_PRIVATE_BYTES
