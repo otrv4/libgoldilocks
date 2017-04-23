@@ -13,6 +13,7 @@
 
 #define __STDC_WANT_LIB_EXT1__ 1 /* for memset_s */
 #define _BSD_SOURCE 1 /* for endian */
+#define _DEFAULT_SOURCE 1 /* for endian with glibc 2.20 */
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
