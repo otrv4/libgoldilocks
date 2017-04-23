@@ -23,6 +23,10 @@ extern int posix_memalign(void **, size_t, size_t);
 #define _BSD_SOURCE 1
 #endif
 
+#ifndef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE 1
+#endif
+
 #include "portable_endian.h"
 
 #include <stdlib.h>
