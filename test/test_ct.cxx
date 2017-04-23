@@ -101,7 +101,7 @@ static void test_cfrg() {
         FixedArrayBuffer<Group::DhLadder::PUBLIC_BYTES> pub(rng);
         FixedArrayBuffer<Group::DhLadder::PRIVATE_BYTES> priv(rng);
         
-        Group::DhLadder::generate_key(priv);
+        Group::DhLadder::derive_public_key(priv);
         ignore_result(Group::DhLadder::shared_secret_noexcept(pub,pub,priv));
     }
 }
