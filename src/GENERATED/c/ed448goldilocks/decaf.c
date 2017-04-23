@@ -1156,12 +1156,10 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_ignore_cofactor) (
     mask_t low = ~word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] & 0x80);
     enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] &= ~0x80;
     
-    mask_t succ = DECAF_TRUE;
+    mask_t succ = gf_deserialize(p->y, enc2, 1);
 #if 0 == 0
-    succ = word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1]);
+    succ &= word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1]);
 #endif
-    
-    succ &= gf_deserialize(p->y, enc2, 1);
 
     gf_sqr(p->x,p->y);
     gf_sub(p->z,ONE,p->x); /* num = 1-y^2 */
@@ -1247,7 +1245,7 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_ignore_cofactor) (
     
     decaf_bzero(enc2,sizeof(enc2));
     assert(API_NS(point_valid)(p) || ~succ);
-    return decaf_succeed_if(succ);
+    return decaf_succeed_if(mask_to_bool(succ));
 }
 
 decaf_error_t decaf_x448 (
