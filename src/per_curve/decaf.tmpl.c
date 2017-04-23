@@ -1314,6 +1314,13 @@ void decaf_x$(gf_shortname)_generate_key (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
 ) {
+    decaf_x$(gf_shortname)_derive_public_key(out,scalar);
+}
+
+void decaf_x$(gf_shortname)_derive_public_key (
+    uint8_t out[X_PUBLIC_BYTES],
+    const uint8_t scalar[X_PRIVATE_BYTES]
+) {
     /* Scalar conditioning */
     uint8_t scalar2[X_PRIVATE_BYTES];
     memcpy(scalar2,scalar,sizeof(scalar2));

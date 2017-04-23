@@ -645,7 +645,7 @@ public:
         return FixedBlock<PUBLIC_BYTES>(decaf_x25519_base_point);
     }
 
-    /** Generate and return a shared secret with public key.  */
+    /** Calculate and return a shared secret with public key.  */
     static inline SecureBuffer shared_secret(
         const FixedBlock<PUBLIC_BYTES> &pk,
         const FixedBlock<PRIVATE_BYTES> &scalar
@@ -657,7 +657,7 @@ public:
         return out;
     }
 
-    /** Generate and return a shared secret with public key, noexcept version.  */
+    /** Calculate and write into out a shared secret with public key, noexcept version.  */
     static inline decaf_error_t WARN_UNUSED
     shared_secret_noexcept (
         FixedBuffer<PUBLIC_BYTES> &out,
@@ -667,26 +667,55 @@ public:
        return decaf_x25519(out.data(), pk.data(), scalar.data());
     }
 
-    /** Generate and return a public key; equivalent to shared_secret(base_point(),scalar)
+    /** Calculate and return a public key; equivalent to shared_secret(base_point(),scalar)
      * but possibly faster.
+     * @deprecated Renamed to derive_public_key.
      */
-    static inline SecureBuffer generate_key(
+    static inline SecureBuffer __attribute__((deprecated(
+        "Renamed to derive_public_key"
+    ))) generate_key(
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) throw(std::bad_alloc) {
         SecureBuffer out(PUBLIC_BYTES);
-        decaf_x25519_generate_key(out.data(), scalar.data());
+        decaf_x25519_derive_public_key(out.data(), scalar.data());
         return out;
     }
 
-    /** Generate and return a public key into a fixed buffer;
+    /** Calculate and return a public key; equivalent to shared_secret(base_point(),scalar)
+     * but possibly faster.
+     */
+    static inline SecureBuffer derive_public_key(
+        const FixedBlock<PRIVATE_BYTES> &scalar
+    ) throw(std::bad_alloc) {
+        SecureBuffer out(PUBLIC_BYTES);
+        decaf_x25519_derive_public_key(out.data(), scalar.data());
+        return out;
+    }
+
+    /** Calculate and return a public key into a fixed buffer;
      * equivalent to shared_secret(base_point(),scalar) but possibly faster.
      */
     static inline void
+    derive_public_key_noexcept (
+        FixedBuffer<PUBLIC_BYTES> &out,
+        const FixedBlock<PRIVATE_BYTES> &scalar
+    ) NOEXCEPT {
+        decaf_x25519_derive_public_key(out.data(), scalar.data());
+    }
+
+    /** Calculate and return a public key into a fixed buffer;
+     * equivalent to shared_secret(base_point(),scalar) but possibly faster.
+     * @deprecated Renamed to derive_public_key_noexcept.
+     */
+    static inline void
+    __attribute__((deprecated(
+        "Renamed to derive_public_key_noexcept"
+    )))
     generate_key_noexcept (
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) NOEXCEPT {
-        decaf_x25519_generate_key(out.data(), scalar.data());
+        decaf_x25519_derive_public_key(out.data(), scalar.data());
     }
 };
 

@@ -301,7 +301,7 @@ static void cfrg() {
     SpongeRng rng(Block("bench_cfrg_crypto"),SpongeRng::DETERMINISTIC);
     FixedArrayBuffer<Group::DhLadder::PUBLIC_BYTES> base(rng);
     FixedArrayBuffer<Group::DhLadder::PRIVATE_BYTES> s1(rng);
-    for (Benchmark b("RFC 7748 keygen"); b.iter(); ) { Group::DhLadder::generate_key(s1); }
+    for (Benchmark b("RFC 7748 keygen"); b.iter(); ) { Group::DhLadder::derive_public_key(s1); }
     for (Benchmark b("RFC 7748 shared secret"); b.iter(); ) { Group::DhLadder::shared_secret(base,s1); }
 
     FixedArrayBuffer<EdDSA<Group>::PrivateKey::SER_BYTES> e1(rng);

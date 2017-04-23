@@ -461,10 +461,10 @@ static void test_cfrg_crypto() {
         
         if (!memeq(
             DhLadder::shared_secret(DhLadder::base_point(),s1),
-            DhLadder::generate_key(s1)
+            DhLadder::derive_public_key(s1)
         )) {
             test.fail();
-            printf("    Generated keys disagree on iteration %d.\n",i);
+            printf("    Public keys disagree on iteration %d.\n",i);
         }
     }
 }

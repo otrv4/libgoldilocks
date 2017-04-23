@@ -404,10 +404,31 @@ extern const uint8_t decaf_x25519_base_point[DECAF_X25519_PUBLIC_BYTES] API_VIS;
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
  * a different (non-Decaf) encoding.
  *
+ * @deprecated Renamed to decaf_x25519_derive_public_key.
+ * I have no particular timeline for removing this name.
+ *
  * @param [out] scaled The scaled point base*scalar
  * @param [in] scalar The scalar to multiply by.
  */
 void decaf_x25519_generate_key (
+    uint8_t out[DECAF_X25519_PUBLIC_BYTES],
+    const uint8_t scalar[DECAF_X25519_PRIVATE_BYTES]
+) API_VIS NONNULL NOINLINE
+__attribute__((deprecated(
+    "Renamed to decaf_x25519_derive_public_key"
+)));
+    
+/**
+ * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
+ * a different (non-Decaf) encoding.
+ *
+ * Does exactly the same thing as decaf_x25519_generate_key,
+ * but has a better name.
+ *
+ * @param [out] scaled The scaled point base*scalar
+ * @param [in] scalar The scalar to multiply by.
+ */
+void decaf_x25519_derive_public_key (
     uint8_t out[DECAF_X25519_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X25519_PRIVATE_BYTES]
 ) API_VIS NONNULL NOINLINE;
