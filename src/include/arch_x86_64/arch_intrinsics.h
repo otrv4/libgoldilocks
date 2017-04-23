@@ -16,7 +16,7 @@ static __inline__ __uint128_t widemul(const uint64_t *a, const uint64_t *b) {
       __asm__ volatile
           ("movq %[a], %%rax;"
            "mulq %[b];"
-           : [c]"=a"(c), [d]"=d"(d)
+           : [c]"=&a"(c), [d]"=d"(d)
            : [b]"m"(*b), [a]"m"(*a)
            : "cc");
   #else
@@ -36,7 +36,7 @@ static __inline__ __uint128_t widemul_rm(uint64_t a, const uint64_t *b) {
       __asm__ volatile
           ("movq %[a], %%rax;"
            "mulq %[b];"
-           : [c]"=a"(c), [d]"=d"(d)
+           : [c]"=&a"(c), [d]"=d"(d)
            : [b]"m"(*b), [a]"r"(a)
            : "cc");
   #else
@@ -72,7 +72,7 @@ static __inline__ __uint128_t widemul2(const uint64_t *a, const uint64_t *b) {
           ("movq %[a], %%rax; "
            "addq %%rax, %%rax; "
            "mulq %[b];"
-           : [c]"=a"(c), [d]"=d"(d)
+           : [c]"=&a"(c), [d]"=d"(d)
            : [b]"m"(*b), [a]"m"(*a)
            : "cc");
   #else
@@ -97,7 +97,7 @@ static __inline__ void mac(__uint128_t *acc, const uint64_t *a, const uint64_t *
            "mulx %[b], %[c], %[d]; "
            "addq %[c], %[lo]; "
            "adcq %[d], %[hi]; "
-           : [c]"=r"(c), [d]"=r"(d), [lo]"+r"(lo), [hi]"+r"(hi)
+           : [c]"=&r"(c), [d]"=&r"(d), [lo]"+r"(lo), [hi]"+r"(hi)
            : [b]"m"(*b), [a]"m"(*a)
            : "rdx", "cc");
   #else
