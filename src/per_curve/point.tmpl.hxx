@@ -49,7 +49,7 @@ static inline const char *name() { return "$(name)"; }
 static const int REMOVED_COFACTOR = $(cofactor);
 
 /** Residue class of field modulus: p == this mod 2*(this-1) */
-static const int FIELD_MODULUS_TYPE = $([2**i+1 for i in xrange(1,10) if modulus % 2**(i+1) != 1][0]);
+static const int FIELD_MODULUS_TYPE = $(modulus &~ (modulus-3));
 
 /** @cond internal */
 class Point;

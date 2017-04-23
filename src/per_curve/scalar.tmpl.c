@@ -15,7 +15,7 @@ static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x$("%x" % pow(-q,2*
 static const scalar_t sc_p = {{{
     $(ser(q,64,"SC_LIMB"))
 }}}, sc_r2 = {{{
-    $(ser(((2**128)**((scalar_bits+63)/64))%q,64,"SC_LIMB"))
+    $(ser(((2**128)**((scalar_bits+63)//64))%q,64,"SC_LIMB"))
 }}};
 /* End of template stuff */
 

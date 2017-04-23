@@ -74,7 +74,7 @@ def ser(x,bits,paren=None):
 def msqrt(x,p,hi_bit_clear = True):
     if p % 4 == 3: ret = pow(x,(p+1)//4,p)
     elif p % 8 == 5:
-        for u in xrange(1,1000):
+        for u in range(1,1000):
             if pow(u,(p-1)//2,p) != 1: break
         u = pow(u,(p-1)//4,p)
         ret = pow(x,(p+3)//8,p)
@@ -93,14 +93,14 @@ def ceil_log2(x):
         out += 1
     return out
 
-for field,data in field_data.iteritems():
+for field,data in field_data.items():
     if "modulus" not in data:
         data["modulus"] = eval(data["gf_desc"].replace("^","**"))
     
     if "gf_bits" not in data:
         data["gf_bits"] = ceil_log2(data["modulus"])
 
-for curve,data in curve_data.iteritems():
+for curve,data in curve_data.items():
     for key in field_data[data["field"]]:
         if key not in data:
             data[key] = field_data[data["field"]][key]

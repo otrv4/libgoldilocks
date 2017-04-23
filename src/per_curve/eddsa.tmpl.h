@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 /** Number of bytes in an EdDSA public key. */
-#define DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES $((gf_bits)/8 + 1)
+#define DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES $((gf_bits)//8 + 1)
 
 /** Number of bytes in an EdDSA private key. */
 #define DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES

@@ -7,9 +7,9 @@
 #include "word.h"
 
 #define __DECAF_$(gf_shortname)_GF_DEFINED__ 1
-#define NLIMBS ($(gf_impl_bits/8)/sizeof(word_t))
-#define X_SER_BYTES $(((gf_bits-1)/8 + 1))
-#define SER_BYTES $(((gf_bits-2)/8 + 1))
+#define NLIMBS ($(gf_impl_bits//8)/sizeof(word_t))
+#define X_SER_BYTES $(((gf_bits-1)//8 + 1))
+#define SER_BYTES $(((gf_bits-2)//8 + 1))
 typedef struct gf_$(gf_shortname)_s {
     word_t limb[NLIMBS];
 } __attribute__((aligned(32))) gf_$(gf_shortname)_s, gf_$(gf_shortname)_t[1];

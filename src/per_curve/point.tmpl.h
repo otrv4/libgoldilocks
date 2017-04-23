@@ -24,24 +24,24 @@ typedef struct gf_$(gf_shortname)_s {
 /** @endcond */
 
 /** Number of bytes in a serialized point. */
-#define $(C_NS)_SER_BYTES $((gf_bits-2)/8 + 1)
+#define $(C_NS)_SER_BYTES $((gf_bits-2)//8 + 1)
 
 /** Number of bytes in an elligated point.  For now set the same as SER_BYTES
  * but could be different for other curves.
  */
-#define $(C_NS)_HASH_BYTES $((gf_bits-2)/8 + 1)
+#define $(C_NS)_HASH_BYTES $((gf_bits-2)//8 + 1)
 
 /** Number of bytes in a serialized scalar. */
-#define $(C_NS)_SCALAR_BYTES $((scalar_bits-1)/8 + 1)
+#define $(C_NS)_SCALAR_BYTES $((scalar_bits-1)//8 + 1)
 
 /** Number of bits in the "which" field of an elligator inverse */
 #define $(C_NS)_INVERT_ELLIGATOR_WHICH_BITS $(ceil_log2(cofactor) + 7 + elligator_onto - ((gf_bits-2) % 8))
 
 /** Number of bytes in an x$(gf_shortname) public key */
-#define DECAF_X$(gf_shortname)_PUBLIC_BYTES $((gf_bits-1)/8 + 1)
+#define DECAF_X$(gf_shortname)_PUBLIC_BYTES $((gf_bits-1)//8 + 1)
 
 /** Number of bytes in an x$(gf_shortname) private key */
-#define DECAF_X$(gf_shortname)_PRIVATE_BYTES $((gf_bits-1)/8 + 1)
+#define DECAF_X$(gf_shortname)_PRIVATE_BYTES $((gf_bits-1)//8 + 1)
 
 /** Twisted Edwards extended homogeneous coordinates */
 typedef struct $(c_ns)_point_s {
