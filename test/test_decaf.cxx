@@ -11,13 +11,10 @@
 
 #include <decaf.hxx>
 #include <decaf/spongerng.hxx>
-#include <decaf/crypto.h>
-#include <decaf/crypto.hxx>
 #include <decaf/eddsa.hxx>
 #include <stdio.h>
 
 using namespace decaf;
-using namespace decaf::TOY;
 
 static bool passing = true;
 static const long NTESTS = 10000;
@@ -410,33 +407,6 @@ static void test_ec() {
     }
 }
 
-static void test_toy_crypto() {
-    Test test("Toy crypto");
-    SpongeRng rng(Block("test_decaf_crypto"),SpongeRng::DETERMINISTIC);
-
-    for (int i=0; i<NTESTS && test.passing_now; i++) {
-        try {
-            PrivateKey<Group> priv1(rng), priv2(rng);
-            PublicKey<Group> pub1(priv1), pub2(priv2);
-    
-            SecureBuffer message = rng.read(i);
-            SecureBuffer sig(priv1.sign(message));
-
-            pub1.verify(message, sig);
-    
-            SecureBuffer s1(priv1.shared_secret(pub2,32,true));
-            SecureBuffer s2(priv2.shared_secret(pub1,32,false));
-            if (!memeq(s1,s2)) {
-                test.fail();
-                printf("    Shared secrets disagree on iteration %d.\n",i);
-            }
-        } catch (CryptoException) {
-            test.fail();
-            printf("    Threw CryptoException.\n");
-        }
-    }
-}
-
 static const uint8_t rfc7748_1[DhLadder::PUBLIC_BYTES];
 static const uint8_t rfc7748_1000[DhLadder::PUBLIC_BYTES];
 static const uint8_t rfc7748_1000000[DhLadder::PUBLIC_BYTES];
@@ -572,16 +542,63 @@ static void run() {
     test_eddsa();
     test_cfrg_crypto();
     test_cfrg_vectors();
-    test_toy_crypto();
     printf("\n");
 }
 
 }; /* template<GroupId GROUP> struct Tests */
 
+static void test_rng() {
+    Test test("RNG");
+    SpongeRng rng_d1(Block("test_rng"),SpongeRng::DETERMINISTIC);
+    SpongeRng rng_d2(Block("test_rng"),SpongeRng::DETERMINISTIC);
+    SpongeRng rng_d3(Block("best_rng"),SpongeRng::DETERMINISTIC);
+    SpongeRng rng_n1;
+    SpongeRng rng_n2;
+    SecureBuffer s1,s2,s3;
+    
+    for (int i=0; i<5; i++) {
+        s1 = rng_d1.read(16<<i);
+        s2 = rng_d2.read(16<<i);
+        s3 = rng_d3.read(16<<i);
+        if (s1 != s2) {
+            test.fail();
+            printf("  Deterministic RNG didn't match!\n");
+        }
+        if (s1 == s3) {
+            test.fail();
+            printf("  Deterministic matched with different data!\n");
+        }
+        
+        rng_d1.stir("hello");
+        rng_d2.stir("hello");
+        rng_d3.stir("hello");
+        
+        
+        s1 = rng_n1.read(16<<i);
+        s2 = rng_n2.read(16<<i);
+        if (s1 == s2) {
+            test.fail();
+            printf("  Nondeterministic RNG matched!\n");
+        }
+    }
+    
+    
+    rng_d1.stir("hello");
+    rng_d2.stir("jello");
+    s1 = rng_d1.read(16);
+    s2 = rng_d2.read(16);
+    if (s1 == s2) {
+        test.fail();
+        printf("  Deterministic matched with different data!\n");
+    }
+}
+
 #include "vectors.inc.cxx"
 
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
+    test_rng();
+    printf("\n");
     run_for_all_curves<Tests>();
     if (passing) printf("Passed all tests.\n");
     return passing ? 0 : 1;

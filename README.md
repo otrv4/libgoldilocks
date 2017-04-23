@@ -60,19 +60,6 @@ The Decaf library doesn't implement much symmetric crypto, but it does
 contain the hash functions required by the CFRG cryptosystems: SHA512,
 SHA-3 and SHAKE.
 
-The library also includes some work on an experimental protocol framework
-called STROBE (based on Markku-Juhani Saarinen's BLINKER).  This
-framework is incomplete and will change in the future!  There's also a
-significant chance that it's insecure in its current form.  Therefore,
-all the STROBE interfaces have been marked as TOY for this version.
-Please don't use them for anything serious.
-
-The Decaf library contains a random number generator, SpongeRNG, which
-uses STROBE internally.  This is used in the test suite to generate
-random tests.  It's probably secure, but since STROBE is not final,
-its internals will almost certainly change.  I recommend using your own
-RNG instead for now.  For example, consider libottery.
-
 ## Internals
 
 The "decaf" technique is described in https://eprint.iacr.org/2015/673

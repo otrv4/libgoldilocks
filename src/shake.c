@@ -119,10 +119,10 @@ decaf_error_t decaf_sha3_output (
     assert(decaf_sponge->params->rate < sizeof(decaf_sponge->state));
     
     if (decaf_sponge->params->max_out != 0xFF) {
-        if (decaf_sponge->params->client >= len) {
-            decaf_sponge->params->client -= len;
+        if (decaf_sponge->params->remaining >= len) {
+            decaf_sponge->params->remaining -= len;
         } else {
-            decaf_sponge->params->client = 0;
+            decaf_sponge->params->remaining = 0;
             ret = DECAF_FAILURE;
         }
     }
@@ -172,7 +172,7 @@ void decaf_sha3_reset (
     decaf_keccak_sponge_t decaf_sponge
 ) {
     decaf_sponge_init(decaf_sponge, decaf_sponge->params);
-    decaf_sponge->params->client = decaf_sponge->params->max_out;
+    decaf_sponge->params->remaining = decaf_sponge->params->max_out;
 }
 
 void decaf_sponge_destroy (decaf_keccak_sponge_t decaf_sponge) { decaf_bzero(decaf_sponge, sizeof(decaf_keccak_sponge_t)); }

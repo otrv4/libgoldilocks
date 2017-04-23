@@ -12,11 +12,7 @@
 #include <decaf.hxx>
 #include <decaf/shake.hxx>
 #include <decaf/sha512.hxx>
-#include <decaf/strobe.hxx>
 #include <decaf/spongerng.hxx>
-#include <decaf/crypto_255.h>
-#include <decaf/crypto_448.h>
-#include <decaf/crypto.hxx>
 #include <decaf/eddsa.hxx>
 #include <stdio.h>
 #include <sys/time.h>
@@ -26,7 +22,6 @@
 #include <algorithm>
 
 using namespace decaf;
-using namespace decaf::TOY;
 
 
 static __inline__ void __attribute__((unused)) ignore_result ( int result ) { (void)result; }
@@ -157,146 +152,6 @@ typedef typename Group::Scalar Scalar;
 typedef typename Group::Point Point;
 typedef typename Group::Precomputed Precomputed;
 
-static void tdh (
-    SpongeRng &clientRng,
-    SpongeRng &serverRng,
-    Scalar x, const Block &gx,
-    Scalar y, const Block &gy
-) {
-    /* "TripleDH".  A bit of a hack, really: the real TripleDH
-     * sends gx and gy and certs over the channel, but its goal
-     * is actually the opposite of STROBE in this case: it doesn't
-     * hash gx and gy into the session secret (only into the MAC
-     * and AD) because of IPR concerns.
-     */
-    Strobe client("example::tripleDH",Strobe::CLIENT), server("example::tripleDH",Strobe::SERVER);
-    
-    Scalar xe(clientRng);
-    SecureBuffer gxe((Precomputed::base() * xe).serialize());
-    client.send_plaintext(gxe);
-    server.recv_plaintext(gxe);
-    
-    Scalar ye(serverRng);
-    SecureBuffer gye((Precomputed::base() * ye).serialize());
-    server.send_plaintext(gye);
-    client.recv_plaintext(gye);
-    
-    Point pgxe(gxe);
-    server.dh_key(pgxe*ye);
-    SecureBuffer tag1 = server.produce_auth();
-    //SecureBuffer ct = server.encrypt(gy);
-    server.dh_key(pgxe*y);
-    SecureBuffer tag2 = server.produce_auth();
-    
-    Point pgye(gye);
-    client.dh_key(pgye*xe);
-    client.verify_auth(tag1);
-    client.dh_key(Point(gy) * xe);
-    client.verify_auth(tag2);
-    // ct = client.encrypt(gx);
-    client.dh_key(pgye * x);
-    tag1 = client.produce_auth();
-    client.respec(STROBE_KEYED_128);
-    
-    server.dh_key(Point(gx) * ye);
-    server.verify_auth(tag1);
-    server.respec(STROBE_KEYED_128);
-}
-
-static void fhmqv (
-    SpongeRng &clientRng,
-    SpongeRng &serverRng,
-    Scalar x, const Block &gx,
-    Scalar y, const Block &gy
-) {
-    /* Don't use this, it's probably patented */
-    Strobe client("example::fhmqv",Strobe::CLIENT), server("example::fhmqv",Strobe::SERVER);
-    
-    Scalar xe(clientRng);
-    client.send_plaintext(gx);
-    server.recv_plaintext(gx);
-    SecureBuffer gxe((Precomputed::base() * xe).serialize());
-    server.send_plaintext(gxe);
-    client.recv_plaintext(gxe);
-
-    Scalar ye(serverRng);
-    server.send_plaintext(gy);
-    client.recv_plaintext(gy);
-    SecureBuffer gye((Precomputed::base() * ye).serialize());
-    server.send_plaintext(gye);
-    
-    Scalar schx(server.prng(Scalar::SER_BYTES));
-    Scalar schy(server.prng(Scalar::SER_BYTES));
-    Scalar yec = y + ye*schy;
-    server.dh_key(Point::double_scalarmul(Point(gx),yec,Point(gxe),yec*schx));
-    SecureBuffer as = server.produce_auth();
-    
-    client.recv_plaintext(gye);
-    Scalar cchx(client.prng(Scalar::SER_BYTES));
-    Scalar cchy(client.prng(Scalar::SER_BYTES));
-    Scalar xec = x + xe*schx;
-    client.dh_key(Point::double_scalarmul(Point(gy),xec,Point(gye),xec*schy));
-    client.verify_auth(as);
-    SecureBuffer ac = client.produce_auth();
-    client.respec(STROBE_KEYED_128);
-    
-    server.verify_auth(ac);
-    server.respec(STROBE_KEYED_128);
-}
-
-static void spake2ee(
-    SpongeRng &clientRng,
-    SpongeRng &serverRng,
-    const Block &hashed_password,
-    bool aug
-) {
-    Strobe client("example::spake2ee",Strobe::CLIENT), server("example::spake2ee",Strobe::SERVER);
-    
-    Scalar x(clientRng);
-    
-    SHAKE<256> shake;
-    shake.update(hashed_password);
-    SecureBuffer h0 = shake.output(Point::HASH_BYTES);
-    SecureBuffer h1 = shake.output(Point::HASH_BYTES);
-    SecureBuffer h2 = shake.output(Scalar::SER_BYTES);
-    Scalar gs(h2);
-    
-    Point hc = Point::from_hash(h0);
-    hc = Point::from_hash(h0); // double-count
-    Point hs = Point::from_hash(h1);
-    hs = Point::from_hash(h1); // double-count
-    
-    SecureBuffer gx((Precomputed::base() * x + hc).serialize());
-    client.send_plaintext(gx);
-    server.recv_plaintext(gx);
-    
-    Scalar y(serverRng);
-    SecureBuffer gy((Precomputed::base() * y + hs).serialize());
-    server.send_plaintext(gy);
-    client.recv_plaintext(gy);
-    
-    server.dh_key(h1);
-    server.dh_key((Point(gx) - hc)*y);
-    if(aug) {
-        /* This step isn't actually online but whatever, it's fastish */
-        SecureBuffer serverAug((Precomputed::base() * gs).serialize());
-        server.dh_key(Point(serverAug)*y);
-    }
-    SecureBuffer tag = server.produce_auth();
-    
-    client.dh_key(h1);
-    Point pgy(gy); pgy -= hs;
-    client.dh_key(pgy*x);
-    if (aug) client.dh_key(pgy * gs);
-    client.verify_auth(tag);    
-    tag = client.produce_auth();
-    client.respec(STROBE_KEYED_128);
-    /* A real protocol would continue with fork etc here... */
-    
-    server.verify_auth(tag);
-    server.respec(STROBE_KEYED_128);
-}
-
 static void cfrg() {
     SpongeRng rng(Block("bench_cfrg_crypto"),SpongeRng::DETERMINISTIC);
     FixedArrayBuffer<Group::DhLadder::PUBLIC_BYTES> base(rng);
@@ -318,57 +173,6 @@ static void macro() {
     printf("\nMacro-benchmarks for %s:\n", Group::name());
     printf("CFRG crypto benchmarks:\n");
     cfrg();
-    
-    printf("\nToy crypto benchmarks:\n");
-    SpongeRng rng(Block("macro rng seed"),SpongeRng::DETERMINISTIC);
-    PrivateKey<Group> s1((NOINIT())), s2(rng);
-    PublicKey<Group> p1((NOINIT())), p2(s2);
-
-    SecureBuffer message = rng.read(5), sig, ss;
-
-    for (Benchmark b("Create private key",1); b.iter(); ) {
-        s1 = PrivateKey<Group>(rng);
-        SecureBuffer bb = s1.serialize();
-    }
-    
-    for (Benchmark b("Sign",1); b.iter(); ) {
-        sig = s1.sign(message);
-    }
-    
-    p1 = s1.pub();
-    for (Benchmark b("Verify",1); b.iter(); ) {
-        rng.read(Buffer(message));
-        try { p1.verify(message, sig); } catch (CryptoException) {}
-    }
-    
-    for (Benchmark b("SharedSecret",1); b.iter(); ) {
-        ss = s1.shared_secret(p2,32,true);
-    }
-    
-    printf("\nToy protocol benchmarks:\n");
-    SpongeRng clientRng(Block("client rng seed"),SpongeRng::DETERMINISTIC);
-    SpongeRng serverRng(Block("server rng seed"),SpongeRng::DETERMINISTIC);
-    SecureBuffer hashedPassword(Block("hello world"));
-    for (Benchmark b("Spake2ee c+s",0.1); b.iter(); ) {
-        spake2ee(clientRng, serverRng, hashedPassword,false);
-    }
-    
-    for (Benchmark b("Spake2ee c+s aug",0.1); b.iter(); ) {
-        spake2ee(clientRng, serverRng, hashedPassword,true);
-    }
-    
-    Scalar x(clientRng);
-    SecureBuffer gx((Precomputed::base() * x).serialize());
-    Scalar y(serverRng);
-    SecureBuffer gy((Precomputed::base() * y).serialize());
-    
-    for (Benchmark b("FHMQV c+s",0.1); b.iter(); ) {
-        fhmqv(clientRng, serverRng,x,gx,y,gy);
-    }
-    
-    for (Benchmark b("TripleDH anon c+s",0.1); b.iter(); ) {
-        tdh(clientRng, serverRng, x,gx,y,gy);
-    }
 }
 
 static void micro() {
@@ -421,29 +225,11 @@ int main(int argc, char **argv) {
         SHAKE<256> shake2;
         SHA3<512> sha5;
         SHA512 sha2;
-        Strobe strobe("example::bench",Strobe::CLIENT);
         unsigned char b1024[1024] = {1};
         for (Benchmark b("SHAKE128 1kiB", 30); b.iter(); ) { shake1 += Buffer(b1024,1024); }
         for (Benchmark b("SHAKE256 1kiB", 30); b.iter(); ) { shake2 += Buffer(b1024,1024); }
         for (Benchmark b("SHA3-512 1kiB", 30); b.iter(); ) { sha5 += Buffer(b1024,1024); }
         for (Benchmark b("SHA512 1kiB", 30); b.iter(); ) { sha2 += Buffer(b1024,1024); }
-        strobe.dh_key(Buffer(b1024,1024));
-        strobe.respec(STROBE_128);
-        for (Benchmark b("STROBE128 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024));
-        }
-        strobe.respec(STROBE_256);
-        for (Benchmark b("STROBE256 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024));
-        }
-        strobe.respec(STROBE_KEYED_128);
-        for (Benchmark b("STROBEk128 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024));
-        }
-        strobe.respec(STROBE_KEYED_256);
-        for (Benchmark b("STROBEk256 1kiB", 10); b.iter(); ) {
-            strobe.encrypt_no_auth(Buffer(b1024,1024),Buffer(b1024,1024));
-        }
         
         run_for_all_curves<Micro>();
     }

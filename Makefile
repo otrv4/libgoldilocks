@@ -1,4 +1,4 @@
-# Copyright (c) 2014 Cryptography Research, Inc.
+# Copyright (c) 2014-2017 Cryptography Research, Inc.
 # Released under the MIT License.  See LICENSE.txt for license information.
 
 
@@ -77,9 +77,9 @@ GEN_CODE= $(GEN_CODE_1:%.tmpl.hxx=%.hxx)
 HEADERS= Makefile $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_CODE)
 
 # components needed by the lib
-LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/strobe.o $(BUILD_OBJ)/sha512.o # and per-field components
+LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/sha512.o $(BUILD_OBJ)/spongerng.o # and per-field components
 
-BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/strobe.o 
+BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o
 
 all: lib $(BUILD_IBIN)/test $(BUILD_IBIN)/bench $(BUILD_BIN)/shakesum
 
@@ -174,10 +174,9 @@ endef
 define define_curve
 
 LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/elligator.o $$(BUILD_OBJ)/$(1)/scalar.o \
-	 $$(BUILD_OBJ)/$(1)/crypto.o $$(BUILD_OBJ)/$(1)/eddsa.o $$(BUILD_OBJ)/$(1)/decaf_tables.o
+	 $$(BUILD_OBJ)/$(1)/eddsa.o $$(BUILD_OBJ)/$(1)/decaf_tables.o
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
 GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/decaf/point_$(3).h $(BUILD_INC)/decaf/point_$(3).hxx \
-		$(BUILD_C)/decaf/crypto_$(3).h $(BUILD_C)/decaf/crypto_$(3).hxx \
 		$(BUILD_INC)/decaf/ed$(3).h $(BUILD_INC)/decaf/ed$(3).hxx
 HEADERS_OF_$(1) = $$(HEADERS_OF_$(2)) $$(GLOBAL_HEADERS_OF_$(1))
 HEADERS += $$(GLOBAL_HEADERS_OF_$(1))
@@ -198,9 +197,6 @@ $$(BUILD_INC)/decaf/elligator_$(3).%: src/per_curve/elligator.tmpl.% src/generat
 	python -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 	
 $$(BUILD_INC)/decaf/scalar_$(3).%: src/per_curve/scalar.tmpl.% src/generator/* Makefile
-	python -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
-	
-$$(BUILD_C)/decaf/crypto_$(3).%: src/per_curve/crypto.tmpl.% src/generator/* Makefile
 	python -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
 $$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/$(1)/decaf_gen_tables.o \

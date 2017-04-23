@@ -1,3 +1,11 @@
+April 22, 2017:
+    Remove STROBE in preparation for 1.0 release.  STROBE has its own
+    repo now at https://strobe.sourceforge.io.  I might re-integrate
+    it into Decaf once I have produced a version that matches the
+    STROBE v1 spec, but it's just confusing to keep v0.2 in here.
+    
+    Change x{25519,448}_generate_key to _derive_public_key.
+
 January 15, 2016:
     Lots of changes since the last entry in HISTORY.TXT.
     

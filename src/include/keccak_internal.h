@@ -5,7 +5,7 @@
  *   Copyright (c) 2016 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  * @author Mike Hamburg
- * @brief Keccak internal interfaces, used by STROBE.
+ * @brief Keccak internal interfaces.  Will be used by STROBE once reintegrated.
  */
 #ifndef __DECAF_KECCAK_INTERNAL_H__
 #define __DECAF_KECCAK_INTERNAL_H__ 1
@@ -18,8 +18,8 @@ typedef union {
 } kdomain_t[1];
 
 typedef struct decaf_kparams_s {
-    uint8_t position, flags, rate, start_round, pad, rate_pad, max_out, client; /* client = max_outRemaining for decaf_sha3 */
-} decaf_kparams_t[1];
+    uint8_t position, flags, rate, start_round, pad, rate_pad, max_out, remaining;
+} decaf_kparams_s, decaf_kparams_t[1];
 
 typedef struct decaf_keccak_sponge_s {
     kdomain_t state;
