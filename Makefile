@@ -67,7 +67,7 @@ SAGE ?= sage
 SAGES= $(shell ls test/*.sage)
 BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 
-.PHONY: clean all test test_ct bench todo doc lib bat sage sagetest gen_code
+.PHONY: clean all test test_ct bench todo doc lib bat sage sagetest gen_code gen_code_static
 .PRECIOUS: $(BUILD_C)/*/%.c $(BUILD_H)/*/%.h  $(BUILD_H)/%.h  $(BUILD_H)/%.hxx $(BUILD_H)/*/%.hxx $(BUILD_IBIN)/%
 
 HEADER_SRCS= $(shell find src/public_include -name "*.h*")
@@ -122,8 +122,6 @@ $(BUILD_OBJ)/timestamp:
 		$(PER_OBJ_DIRS) $(BUILD_C)/decaf
 	touch $@
 
-gen_code: $(GEN_CODE)
-
 $(BUILD_INC)/%: src/public_include/% $(BUILD_OBJ)/timestamp
 	cp -f $< $@
 	
@@ -142,11 +140,16 @@ $(BUILD_C)/%.hxx: src/include/%.tmpl.hxx src/generator/*
 ################################################################
 # Per-field code: call with field, arch
 ################################################################
+PER_FIELD_C = $(wildcard src/per_field/*.tmpl.c)
+PER_FIELD_H = $(wildcard src/per_field/*.tmpl.h*)
 define define_field
 ARCH_FOR_$(1) ?= $(2)
 COMPONENTS_OF_$(1) = $$(BUILD_OBJ)/$(1)/f_impl.o $$(BUILD_OBJ)/$(1)/f_arithmetic.o $$(BUILD_OBJ)/$(1)/f_generic.o
 HEADERS_OF_$(1) = $(HEADERS) $$(BUILD_H)/$(1)/f_field.h
 LIBCOMPONENTS += $$(COMPONENTS_OF_$(1))
+GEN_CODE_FOR_$(1)  = $$(patsubst src/per_field/%,$(BUILD_C)/$(1)/%,$(patsubst %.tmpl.c,%.c,$(PER_FIELD_C)))
+GEN_CODE_FOR_$(1) += $$(patsubst src/per_field/%,$(BUILD_H)/$(1)/%,$(patsubst %.tmpl.h,%.h,$(PER_FIELD_H)))
+GEN_CODE += $$(GEN_CODE_FOR_$(1))
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
 
 $$(BUILD_C)/$(1)/%.c: src/per_field/%.tmpl.c src/generator/* Makefile
@@ -174,6 +177,7 @@ endef
 ################################################################
 # Per-field, per-curve code: call with curve, field
 ################################################################
+PER_CURVE_C = $(wildcard src/per_curve/*.tmpl.c)
 define define_curve
 
 LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/elligator.o $$(BUILD_OBJ)/$(1)/scalar.o \
@@ -183,6 +187,11 @@ GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/decaf/point_$(3).h $(BUILD_INC)/decaf/poin
 		$(BUILD_INC)/decaf/ed$(3).h $(BUILD_INC)/decaf/ed$(3).hxx
 HEADERS_OF_$(1) = $$(HEADERS_OF_$(2)) $$(GLOBAL_HEADERS_OF_$(1))
 HEADERS += $$(GLOBAL_HEADERS_OF_$(1))
+
+GEN_CODE_FOR_$(1)  = $$(patsubst src/per_curve/%,$(BUILD_C)/$(1)/%,$(patsubst %.tmpl.c,%.c,$(PER_CURVE_C)))
+GEN_CODE_FOR_$(1) += $$(GLOBAL_HEADERS_OF_$(1))
+GEN_CODE_P2 += $(BUILD_C)/$(1)/decaf_tables.c
+GEN_CODE += $$(GEN_CODE_FOR_$(1))
 
 $$(BUILD_C)/$(1)/%.c: src/per_curve/%.tmpl.c src/generator/* Makefile
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
@@ -286,7 +295,10 @@ $(BUILD_DOC)/timestamp:
 #
 doc: Doxyfile $(BUILD_OBJ)/timestamp $(HEADERS)
 	doxygen > /dev/null
-	
+
+gen_code_static: $(GEN_CODE)
+gen_code: gen_code_static $(GEN_CODE_P2)
+
 # Finds todo items in .h and .c files
 TODO_TYPES ?= HACK TODO @todo FIXME BUG XXX PERF FUTURE REMOVE MAGIC UNIFY
 TODO_LOCATIONS ?= src/*.c src/include src/p* src/generator test Makefile Doxyfile
