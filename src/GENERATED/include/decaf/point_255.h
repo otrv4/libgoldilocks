@@ -413,10 +413,7 @@ extern const uint8_t decaf_x25519_base_point[DECAF_X25519_PUBLIC_BYTES] API_VIS;
 void decaf_x25519_generate_key (
     uint8_t out[DECAF_X25519_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X25519_PRIVATE_BYTES]
-) API_VIS NONNULL NOINLINE
-__attribute__((deprecated(
-    "Renamed to decaf_x25519_derive_public_key"
-)));
+) API_VIS NONNULL NOINLINE DEPRECATED("Renamed to decaf_x25519_derive_public_key");
     
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses

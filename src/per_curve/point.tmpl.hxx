@@ -658,9 +658,8 @@ public:
      * but possibly faster.
      * @deprecated Renamed to derive_public_key.
      */
-    static inline SecureBuffer __attribute__((deprecated(
-        "Renamed to derive_public_key"
-    ))) generate_key(
+    static inline SecureBuffer DEPRECATED("Renamed to derive_public_key")
+    generate_key(
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) throw(std::bad_alloc) {
         SecureBuffer out(PUBLIC_BYTES);
@@ -694,10 +693,7 @@ public:
      * equivalent to shared_secret(base_point(),scalar) but possibly faster.
      * @deprecated Renamed to derive_public_key_noexcept.
      */
-    static inline void
-    __attribute__((deprecated(
-        "Renamed to derive_public_key_noexcept"
-    )))
+    static inline void DEPRECATED("Renamed to derive_public_key_noexcept")
     generate_key_noexcept (
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PRIVATE_BYTES> &scalar

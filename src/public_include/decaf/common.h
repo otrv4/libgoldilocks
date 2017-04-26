@@ -30,6 +30,14 @@ extern "C" {
 #define NONNULL __attribute__((nonnull))
 #define INLINE inline __attribute__((always_inline))
 #define UNUSED __attribute__((unused))
+// Cribbed from libnotmuch
+#if defined (__clang_major__) && __clang_major__ >= 3 \
+    || defined (__GNUC__) && __GNUC__ >= 5 \
+    || defined (__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ >= 5
+#define DEPRECATED(msg) __attribute__ ((deprecated(msg)))
+#else
+#define DEPRECATED(msg) __attribute__ ((deprecated))
+#endif
 /** @endcond */
 
 /* Internal word types.
@@ -77,14 +85,14 @@ typedef enum {
 
 
 /** Return success if x is true */
-static __inline__ __attribute__((unused,always_inline))
+static UNUSED INLINE
 decaf_error_t
 decaf_succeed_if(decaf_bool_t x) {
     return (decaf_error_t)x;
 }
 
 /** Return DECAF_TRUE iff x == DECAF_SUCCESS */
-static __inline__ __attribute__((unused,always_inline))
+static UNUSED INLINE
 decaf_bool_t
 decaf_successful(decaf_error_t e) {
     decaf_dword_t w = ((decaf_word_t)e) ^  ((decaf_word_t)DECAF_SUCCESS);
