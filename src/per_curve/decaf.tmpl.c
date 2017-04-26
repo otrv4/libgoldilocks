@@ -69,8 +69,7 @@ extern const point_t API_NS(point_base);
 
 /* Projective Niels coordinates */
 typedef struct { gf a, b, c; } niels_s, niels_t[1];
-typedef struct { niels_t n; gf z; } __attribute__((aligned(sizeof(big_register_t))))
-    pniels_s, pniels_t[1];
+typedef struct { niels_t n; gf z; } VECTOR_ALIGNED pniels_s, pniels_t[1];
 
 /* Precomputed base */
 struct precomputed_s { niels_t table [COMBS_N<<(COMBS_T-1)]; };

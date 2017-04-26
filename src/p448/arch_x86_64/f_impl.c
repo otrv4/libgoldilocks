@@ -11,7 +11,7 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     __uint128_t accum0 = 0, accum1 = 0, accum2;
     uint64_t mask = (1ull<<56) - 1;  
 
-    uint64_t aa[4] __attribute__((aligned(32))), bb[4] __attribute__((aligned(32))), bbb[4] __attribute__((aligned(32)));
+    uint64_t aa[4] VECTOR_ALIGNED, bb[4] VECTOR_ALIGNED, bbb[4] VECTOR_ALIGNED;
 
     /* For some reason clang doesn't vectorize this without prompting? */
     unsigned int i;
@@ -186,7 +186,7 @@ void gf_sqr (gf_s *__restrict__ cs, const gf as) {
     __uint128_t accum0 = 0, accum1 = 0, accum2;
     uint64_t mask = (1ull<<56) - 1;  
 
-    uint64_t aa[4] __attribute__((aligned(32)));
+    uint64_t aa[4] VECTOR_ALIGNED;
 
     /* For some reason clang doesn't vectorize this without prompting? */
     unsigned int i;
