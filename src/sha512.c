@@ -64,7 +64,7 @@ static uint64_t load_bigendian(const uint8_t *x)
   b = a; \
   a = T1 + T2;
 
-static NOINLINE void hashblock(decaf_sha512_ctx_t ctx) {
+static DECAF_NOINLINE void hashblock(decaf_sha512_ctx_t ctx) {
     const uint8_t *in = ctx->block;
     uint64_t a = ctx->state[0];
     uint64_t b = ctx->state[1];

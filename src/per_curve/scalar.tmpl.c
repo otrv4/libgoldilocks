@@ -26,7 +26,7 @@ const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
 /** {extra,accum} - sub +? p
  * Must have extra <= 1
  */
-static NOINLINE void sc_subx(
+static DECAF_NOINLINE void sc_subx(
     scalar_t out,
     const decaf_word_t accum[SCALAR_LIMBS],
     const scalar_t sub,
@@ -50,7 +50,7 @@ static NOINLINE void sc_subx(
     }
 }
 
-static NOINLINE void sc_montmul (
+static DECAF_NOINLINE void sc_montmul (
     scalar_t out,
     const scalar_t a,
     const scalar_t b
@@ -98,7 +98,7 @@ void API_NS(scalar_mul) (
 }
 
 /* PERF: could implement this */
-static INLINE void sc_montsqr (scalar_t out, const scalar_t a) {
+static DECAF_INLINE void sc_montsqr (scalar_t out, const scalar_t a) {
     sc_montmul(out,a,a);
 }
 
@@ -211,7 +211,7 @@ API_NS(scalar_eq) (
     return mask_to_bool(word_is_zero(diff));
 }
 
-static INLINE void scalar_decode_short (
+static DECAF_INLINE void scalar_decode_short (
     scalar_t s,
     const unsigned char *ser,
     unsigned int nbytes

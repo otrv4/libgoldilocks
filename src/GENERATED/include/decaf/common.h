@@ -24,19 +24,18 @@ extern "C" {
 #if defined(DOXYGEN) && !defined(__attribute__)
 #define __attribute__((x))
 #endif
-#define API_VIS __attribute__((visibility("default")))
-#define NOINLINE  __attribute__((noinline))
-#define WARN_UNUSED __attribute__((warn_unused_result))
-#define NONNULL __attribute__((nonnull))
-#define INLINE inline __attribute__((always_inline))
-#define UNUSED __attribute__((unused))
+#define DECAF_API_VIS __attribute__((visibility("default")))
+#define DECAF_NOINLINE  __attribute__((noinline))
+#define DECAF_WARN_UNUSED __attribute__((warn_unused_result))
+#define DECAF_NONNULL __attribute__((nonnull))
+#define DECAF_INLINE inline __attribute__((always_inline,unused))
 // Cribbed from libnotmuch
 #if defined (__clang_major__) && __clang_major__ >= 3 \
     || defined (__GNUC__) && __GNUC__ >= 5 \
     || defined (__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ >= 5
-#define DEPRECATED(msg) __attribute__ ((deprecated(msg)))
+#define DECAF_DEPRECATED(msg) __attribute__ ((deprecated(msg)))
 #else
-#define DEPRECATED(msg) __attribute__ ((deprecated))
+#define DECAF_DEPRECATED(msg) __attribute__ ((deprecated))
 #endif
 /** @endcond */
 
@@ -85,15 +84,13 @@ typedef enum {
 
 
 /** Return success if x is true */
-static UNUSED INLINE
-decaf_error_t
+static DECAF_INLINE decaf_error_t
 decaf_succeed_if(decaf_bool_t x) {
     return (decaf_error_t)x;
 }
 
 /** Return DECAF_TRUE iff x == DECAF_SUCCESS */
-static UNUSED INLINE
-decaf_bool_t
+static DECAF_INLINE decaf_bool_t
 decaf_successful(decaf_error_t e) {
     decaf_dword_t w = ((decaf_word_t)e) ^  ((decaf_word_t)DECAF_SUCCESS);
     return (w-1)>>DECAF_WORD_BITS;
@@ -103,14 +100,14 @@ decaf_successful(decaf_error_t e) {
 void decaf_bzero (
     void *data,
     size_t size
-) NONNULL API_VIS;
+) DECAF_NONNULL DECAF_API_VIS;
 
 /** Compare two buffers, returning DECAF_TRUE if they are equal. */
 decaf_bool_t decaf_memeq (
     const void *data1,
     const void *data2,
     size_t size
-) NONNULL WARN_UNUSED API_VIS;
+) DECAF_NONNULL DECAF_WARN_UNUSED DECAF_API_VIS;
     
 #ifdef __cplusplus
 } /* extern "C" */

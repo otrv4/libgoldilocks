@@ -17,11 +17,11 @@
 
 /** @cond internal */
 #if __cplusplus >= 201103L
-#define NOEXCEPT noexcept
-#define DELETE = delete
+#define DECAF_NOEXCEPT noexcept
+#define DECAF_DELETE = delete
 #else
-#define NOEXCEPT throw()
-#define DELETE
+#define DECAF_NOEXCEPT throw()
+#define DECAF_DELETE
 #endif
 /** @endcond */
 
@@ -38,21 +38,21 @@ protected:
     decaf_keccak_sponge_t wrapped;
     
     /** Initialize from parameters */
-    inline KeccakHash(const decaf_kparams_s *params) NOEXCEPT { decaf_sponge_init(wrapped, params); }
+    inline KeccakHash(const decaf_kparams_s *params) DECAF_NOEXCEPT { decaf_sponge_init(wrapped, params); }
     /** @endcond */
     
 public:
     /** Add more data to running hash */
-    inline void update(const uint8_t *__restrict__ in, size_t len) NOEXCEPT { decaf_sha3_update(wrapped,in,len); }
+    inline void update(const uint8_t *__restrict__ in, size_t len) DECAF_NOEXCEPT { decaf_sha3_update(wrapped,in,len); }
 
     /** Add more data to running hash, C++ version. */
-    inline void update(const Block &s) NOEXCEPT { decaf_sha3_update(wrapped,s.data(),s.size()); }
+    inline void update(const Block &s) DECAF_NOEXCEPT { decaf_sha3_update(wrapped,s.data(),s.size()); }
     
     /** Add more data, stream version. */
-    inline KeccakHash &operator<<(const Block &s) NOEXCEPT { update(s); return *this; }
+    inline KeccakHash &operator<<(const Block &s) DECAF_NOEXCEPT { update(s); return *this; }
     
     /** Same as <<. */
-    inline KeccakHash &operator+=(const Block &s) NOEXCEPT { return *this << s; }
+    inline KeccakHash &operator+=(const Block &s) DECAF_NOEXCEPT { return *this << s; }
     
     /** @brief Output bytes from the sponge. */
     inline SecureBuffer output(size_t len) throw(std::bad_alloc, LengthException) {
@@ -93,12 +93,12 @@ public:
     }
     
     /** @brief Return the sponge's default output size. */
-    inline size_t default_output_size() const NOEXCEPT {
+    inline size_t default_output_size() const DECAF_NOEXCEPT {
         return decaf_sponge_default_output_bytes(wrapped);
     }
     
     /** @brief Return the sponge's maximum output size. */
-    inline size_t max_output_size() const NOEXCEPT {
+    inline size_t max_output_size() const DECAF_NOEXCEPT {
         return decaf_sponge_max_output_bytes(wrapped);
     }
     
@@ -113,10 +113,10 @@ public:
     }
 
     /** Reset the hash to the empty string */
-    inline void reset() NOEXCEPT { decaf_sha3_reset(wrapped); }
+    inline void reset() DECAF_NOEXCEPT { decaf_sha3_reset(wrapped); }
     
     /** Destructor zeroizes state */
-    inline ~KeccakHash() NOEXCEPT { decaf_sponge_destroy(wrapped); }
+    inline ~KeccakHash() DECAF_NOEXCEPT { decaf_sponge_destroy(wrapped); }
 };
 
 /** Fixed-output-length SHA3 */
@@ -133,7 +133,7 @@ public:
     static const size_t DEFAULT_OUTPUT_BYTES = bits/8;
     
     /** Initializer */
-    inline SHA3() NOEXCEPT : KeccakHash(get_params()) {}
+    inline SHA3() DECAF_NOEXCEPT : KeccakHash(get_params()) {}
 
     /** Hash bytes with this SHA3 instance.
      * @throw LengthException if nbytes > MAX_OUTPUT_BYTES
@@ -165,7 +165,7 @@ public:
     static const size_t DEFAULT_OUTPUT_BYTES = bits/4;
     
     /** Initializer */
-    inline SHAKE() NOEXCEPT : KeccakHash(get_params()) {}
+    inline SHAKE() DECAF_NOEXCEPT : KeccakHash(get_params()) {}
     
     /** Hash bytes with this SHAKE instance */
     static inline SecureBuffer hash(const Block &b, size_t outlen) throw(std::bad_alloc) {
@@ -184,7 +184,7 @@ template<> inline const struct decaf_kparams_s *SHA3<512>::get_params() { return
   
 } /* namespace decaf */
 
-#undef NOEXCEPT
-#undef DELETE
+#undef DECAF_NOEXCEPT
+#undef DECAF_DELETE
 
 #endif /* __DECAF_SHAKE_HXX__ */

@@ -34,7 +34,7 @@ extern "C" {
 
 /** Does EdDSA support non-contextual signatures? */
 #define DECAF_EDDSA_25519_SUPPORTS_CONTEXTLESS_SIGS 1
-extern const uint8_t * const DECAF_ED25519_NO_CONTEXT API_VIS;
+extern const uint8_t * const DECAF_ED25519_NO_CONTEXT DECAF_API_VIS;
 
 /** Prehash context renaming macros. */
 #define decaf_ed25519_prehash_ctx_s   decaf_sha512_ctx_s
@@ -52,7 +52,7 @@ extern const uint8_t * const DECAF_ED25519_NO_CONTEXT API_VIS;
 void decaf_ed25519_derive_public_key (
     uint8_t pubkey[DECAF_EDDSA_25519_PUBLIC_BYTES],
     const uint8_t privkey[DECAF_EDDSA_25519_PRIVATE_BYTES]
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief EdDSA signing.
@@ -80,7 +80,7 @@ void decaf_ed25519_sign (
     uint8_t prehashed,
     const uint8_t *context,
     uint8_t context_len
-) API_VIS __attribute__((nonnull(1,2,3))) NOINLINE;
+) DECAF_API_VIS __attribute__((nonnull(1,2,3))) DECAF_NOINLINE;
 
 /**
  * @brief EdDSA signing with prehash.
@@ -104,7 +104,7 @@ void decaf_ed25519_sign_prehash (
     const decaf_ed25519_prehash_ctx_t hash,
     const uint8_t *context,
     uint8_t context_len
-) API_VIS __attribute__((nonnull(1,2,3,4))) NOINLINE;
+) DECAF_API_VIS __attribute__((nonnull(1,2,3,4))) DECAF_NOINLINE;
     
 /**
  * @brief Prehash initialization, with contexts if supported.
@@ -113,7 +113,7 @@ void decaf_ed25519_sign_prehash (
  */
 void decaf_ed25519_prehash_init (
     decaf_ed25519_prehash_ctx_t hash
-) API_VIS __attribute__((nonnull(1))) NOINLINE;
+) DECAF_API_VIS __attribute__((nonnull(1))) DECAF_NOINLINE;
 
 /**
  * @brief EdDSA signature verification.
@@ -141,7 +141,7 @@ decaf_error_t decaf_ed25519_verify (
     uint8_t prehashed,
     const uint8_t *context,
     uint8_t context_len
-) API_VIS __attribute__((nonnull(1,2))) NOINLINE;
+) DECAF_API_VIS __attribute__((nonnull(1,2))) DECAF_NOINLINE;
 
 /**
  * @brief EdDSA signature verification.
@@ -165,7 +165,7 @@ decaf_error_t decaf_ed25519_verify_prehash (
     const decaf_ed25519_prehash_ctx_t hash,
     const uint8_t *context,
     uint8_t context_len
-) API_VIS __attribute__((nonnull(1,2))) NOINLINE;
+) DECAF_API_VIS __attribute__((nonnull(1,2))) DECAF_NOINLINE;
 
 /**
  * @brief EdDSA point encoding.  Used internally, exposed externally.
@@ -177,7 +177,7 @@ decaf_error_t decaf_ed25519_verify_prehash (
 void decaf_255_point_mul_by_cofactor_and_encode_like_eddsa (
     uint8_t enc[DECAF_EDDSA_25519_PUBLIC_BYTES],
     const decaf_255_point_t p
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief EdDSA point decoding.  Remember that while points on the
@@ -190,12 +190,15 @@ void decaf_255_point_mul_by_cofactor_and_encode_like_eddsa (
 decaf_error_t decaf_255_point_decode_like_eddsa_and_ignore_cofactor (
     decaf_255_point_t p,
     const uint8_t enc[DECAF_EDDSA_25519_PUBLIC_BYTES]
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief EdDSA to ECDH public key conversion
  * Deserialize the point to get y on Edwards curve,
  * Convert it to u coordinate on Montgomery curve.
+ *
+ * @warning This function does not check that the public key being converted
+ * is a valid EdDSA public key (FUTURE?)
  *
  * @param[out] x The ECDH public key as in RFC7748(point on Montgomery curve)
  * @param[in] ed The EdDSA public key(point on Edwards curve)
@@ -203,7 +206,7 @@ decaf_error_t decaf_255_point_decode_like_eddsa_and_ignore_cofactor (
 void decaf_ed25519_convert_public_key_to_x25519 (
     uint8_t x[DECAF_X25519_PUBLIC_BYTES],
     const uint8_t ed[DECAF_EDDSA_25519_PUBLIC_BYTES]
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief EdDSA to ECDH private key conversion
@@ -216,7 +219,7 @@ void decaf_ed25519_convert_public_key_to_x25519 (
 void decaf_ed25519_convert_private_key_to_x25519 (
     uint8_t x[DECAF_X25519_PRIVATE_BYTES],
     const uint8_t ed[DECAF_EDDSA_25519_PRIVATE_BYTES]
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 #ifdef __cplusplus
 } /* extern "C" */

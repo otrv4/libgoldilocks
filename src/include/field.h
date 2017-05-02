@@ -15,7 +15,7 @@
 #include <string.h>
     
 /** Square x, n times. */
-static INLINE UNUSED void gf_sqrn (
+static DECAF_INLINE void gf_sqrn (
     gf_s *__restrict__ y,
     const gf x,
     int n
@@ -80,7 +80,7 @@ gf_cond_swap(gf x, gf_s *__restrict__ y, mask_t swap) {
     constant_time_cond_swap(x,y,sizeof(gf_s),swap);
 }
 
-static INLINE void gf_mul_qnr(gf_s *__restrict__ out, const gf x) {
+static DECAF_INLINE void gf_mul_qnr(gf_s *__restrict__ out, const gf x) {
 #if P_MOD_8 == 5
     /* r = QNR * r0^2 */
     gf_mul(out,x,SQRT_MINUS_ONE);
@@ -91,7 +91,7 @@ static INLINE void gf_mul_qnr(gf_s *__restrict__ out, const gf x) {
 #endif
 }
 
-static INLINE void gf_div_qnr(gf_s *__restrict__ out, const gf x) {
+static DECAF_INLINE void gf_div_qnr(gf_s *__restrict__ out, const gf x) {
 #if P_MOD_8 == 5
     /* r = QNR * r0^2 */
     gf_mul(out,x,SQRT_MINUS_ONE);

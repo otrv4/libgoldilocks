@@ -5,8 +5,8 @@
  * @brief SHA2-512
  */
 
-#ifndef __SHA512_H__
-#define __SHA512_H__
+#ifndef __DECAF_SHA512_H__
+#define __DECAF_SHA512_H__
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -25,9 +25,9 @@ typedef struct decaf_sha512_ctx_s {
     uint64_t bytes_processed;
 } decaf_sha512_ctx_s, decaf_sha512_ctx_t[1];
 
-void decaf_sha512_init(decaf_sha512_ctx_t ctx) NONNULL API_VIS;
-void decaf_sha512_update(decaf_sha512_ctx_t ctx, const uint8_t *message, size_t length) NONNULL API_VIS;
-void decaf_sha512_final(decaf_sha512_ctx_t ctx, uint8_t *out, size_t length) NONNULL API_VIS;
+void decaf_sha512_init(decaf_sha512_ctx_t ctx) DECAF_NONNULL DECAF_API_VIS;
+void decaf_sha512_update(decaf_sha512_ctx_t ctx, const uint8_t *message, size_t length) DECAF_NONNULL DECAF_API_VIS;
+void decaf_sha512_final(decaf_sha512_ctx_t ctx, uint8_t *out, size_t length) DECAF_NONNULL DECAF_API_VIS;
 
 static inline void decaf_sha512_destroy(decaf_sha512_ctx_t ctx) {
     decaf_bzero(ctx,sizeof(*ctx));
@@ -50,4 +50,4 @@ static inline void decaf_sha512_hash(
 } /* extern "C" */
 #endif
     
-#endif /* __SHA512_H__ */
+#endif /* __DECAF_SHA512_H__ */

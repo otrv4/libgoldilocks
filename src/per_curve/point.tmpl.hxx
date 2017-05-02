@@ -29,9 +29,9 @@
 
 /** @cond internal */
 #if __cplusplus >= 201103L
-#define NOEXCEPT noexcept
+#define DECAF_NOEXCEPT noexcept
 #else
-#define NOEXCEPT throw()
+#define DECAF_NOEXCEPT throw()
 #endif
 /** @endcond */
 
@@ -73,53 +73,53 @@ public:
 
     /** @cond internal */
     /** Don't initialize. */
-    inline Scalar(const NOINIT &) NOEXCEPT {}
+    inline Scalar(const NOINIT &) DECAF_NOEXCEPT {}
     /** @endcond */
 
     /** Set to an unsigned word */
-    inline Scalar(uint64_t w) NOEXCEPT { *this = w; }
+    inline Scalar(uint64_t w) DECAF_NOEXCEPT { *this = w; }
 
     /** Set to a signed word */
-    inline Scalar(int64_t w) NOEXCEPT { *this = w; }
+    inline Scalar(int64_t w) DECAF_NOEXCEPT { *this = w; }
 
     /** Set to an unsigned word */
-    inline Scalar(unsigned int w) NOEXCEPT { *this = w; }
+    inline Scalar(unsigned int w) DECAF_NOEXCEPT { *this = w; }
 
     /** Set to a signed word */
-    inline Scalar(int w) NOEXCEPT { *this = w; }
+    inline Scalar(int w) DECAF_NOEXCEPT { *this = w; }
 
     /** Construct from RNG */
-    inline explicit Scalar(Rng &rng) NOEXCEPT {
+    inline explicit Scalar(Rng &rng) DECAF_NOEXCEPT {
         FixedArrayBuffer<SER_BYTES + 16> sb(rng);
         *this = sb;
     }
 
     /** Construct from decaf_scalar_t object. */
-    inline Scalar(const Wrapped &t = $(c_ns)_scalar_zero) NOEXCEPT { $(c_ns)_scalar_copy(s,t); }
+    inline Scalar(const Wrapped &t = $(c_ns)_scalar_zero) DECAF_NOEXCEPT { $(c_ns)_scalar_copy(s,t); }
 
     /** Copy constructor. */
-    inline Scalar(const Scalar &x) NOEXCEPT { *this = x; }
+    inline Scalar(const Scalar &x) DECAF_NOEXCEPT { *this = x; }
 
     /** Construct from arbitrary-length little-endian byte sequence. */
-    inline Scalar(const Block &buffer) NOEXCEPT { *this = buffer; }
+    inline Scalar(const Block &buffer) DECAF_NOEXCEPT { *this = buffer; }
 
     /** Serializable instance */
-    inline size_t ser_size() const NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const DECAF_NOEXCEPT { return SER_BYTES; }
 
     /** Serializable instance */
-    inline void serialize_into(unsigned char *buffer) const NOEXCEPT {
+    inline void serialize_into(unsigned char *buffer) const DECAF_NOEXCEPT {
         $(c_ns)_scalar_encode(buffer, s);
     }
 
     /** Assignment. */
-    inline Scalar& operator=(const Scalar &x) NOEXCEPT { $(c_ns)_scalar_copy(s,x.s); return *this; }
+    inline Scalar& operator=(const Scalar &x) DECAF_NOEXCEPT { $(c_ns)_scalar_copy(s,x.s); return *this; }
 
     /** Assign from unsigned 64-bit integer. */
-    inline Scalar& operator=(uint64_t w) NOEXCEPT { $(c_ns)_scalar_set_unsigned(s,w); return *this; }
+    inline Scalar& operator=(uint64_t w) DECAF_NOEXCEPT { $(c_ns)_scalar_set_unsigned(s,w); return *this; }
 
 
     /** Assign from signed int. */
-    inline Scalar& operator=(int64_t w) NOEXCEPT {
+    inline Scalar& operator=(int64_t w) DECAF_NOEXCEPT {
         Scalar t(-(uint64_t)INT_MIN);
         $(c_ns)_scalar_set_unsigned(s,(uint64_t)w - (uint64_t)INT_MIN);
         *this -= t;
@@ -127,16 +127,16 @@ public:
     }
 
     /** Assign from unsigned int. */
-    inline Scalar& operator=(unsigned int w) NOEXCEPT { return *this = (uint64_t)w; }
+    inline Scalar& operator=(unsigned int w) DECAF_NOEXCEPT { return *this = (uint64_t)w; }
 
     /** Assign from signed int. */
-    inline Scalar& operator=(int w) NOEXCEPT { return *this = (int64_t)w; }
+    inline Scalar& operator=(int w) DECAF_NOEXCEPT { return *this = (int64_t)w; }
 
     /** Destructor securely zeorizes the scalar. */
-    inline ~Scalar() NOEXCEPT { $(c_ns)_scalar_destroy(s); }
+    inline ~Scalar() DECAF_NOEXCEPT { $(c_ns)_scalar_destroy(s); }
 
     /** Assign from arbitrary-length little-endian byte sequence in a Block. */
-    inline Scalar &operator=(const Block &bl) NOEXCEPT {
+    inline Scalar &operator=(const Block &bl) DECAF_NOEXCEPT {
         $(c_ns)_scalar_decode_long(s,bl.data(),bl.size()); return *this;
     }
 
@@ -144,32 +144,32 @@ public:
      * Decode from correct-length little-endian byte sequence.
      * @return DECAF_FAILURE if the scalar is greater than or equal to the group order q.
      */
-    static inline decaf_error_t WARN_UNUSED decode (
+    static inline decaf_error_t DECAF_WARN_UNUSED decode (
         Scalar &sc, const FixedBlock<SER_BYTES> buffer
-    ) NOEXCEPT {
+    ) DECAF_NOEXCEPT {
         return $(c_ns)_scalar_decode(sc.s,buffer.data());
     }
 
     /** Add. */
-    inline Scalar operator+ (const Scalar &q) const NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_add(r.s,s,q.s); return r; }
+    inline Scalar operator+ (const Scalar &q) const DECAF_NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_add(r.s,s,q.s); return r; }
 
     /** Add to this. */
-    inline Scalar &operator+=(const Scalar &q) NOEXCEPT { $(c_ns)_scalar_add(s,s,q.s); return *this; }
+    inline Scalar &operator+=(const Scalar &q) DECAF_NOEXCEPT { $(c_ns)_scalar_add(s,s,q.s); return *this; }
 
     /** Subtract. */
-    inline Scalar operator- (const Scalar &q) const NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_sub(r.s,s,q.s); return r; }
+    inline Scalar operator- (const Scalar &q) const DECAF_NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_sub(r.s,s,q.s); return r; }
 
     /** Subtract from this. */
-    inline Scalar &operator-=(const Scalar &q) NOEXCEPT { $(c_ns)_scalar_sub(s,s,q.s); return *this; }
+    inline Scalar &operator-=(const Scalar &q) DECAF_NOEXCEPT { $(c_ns)_scalar_sub(s,s,q.s); return *this; }
 
     /** Multiply */
-    inline Scalar operator* (const Scalar &q) const NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_mul(r.s,s,q.s); return r; }
+    inline Scalar operator* (const Scalar &q) const DECAF_NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_mul(r.s,s,q.s); return r; }
 
     /** Multiply into this. */
-    inline Scalar &operator*=(const Scalar &q) NOEXCEPT { $(c_ns)_scalar_mul(s,s,q.s); return *this; }
+    inline Scalar &operator*=(const Scalar &q) DECAF_NOEXCEPT { $(c_ns)_scalar_mul(s,s,q.s); return *this; }
 
     /** Negate */
-    inline Scalar operator- () const NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_sub(r.s,$(c_ns)_scalar_zero,s); return r; }
+    inline Scalar operator- () const DECAF_NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_sub(r.s,$(c_ns)_scalar_zero,s); return r; }
 
     /** Invert with Fermat's Little Theorem (slow!). If *this == 0,
      * throw CryptoException. */
@@ -183,8 +183,8 @@ public:
 
     /** Invert with Fermat's Little Theorem (slow!). If *this == 0, set r=0
      * and return DECAF_FAILURE. */
-    inline decaf_error_t WARN_UNUSED
-    inverse_noexcept(Scalar &r) const NOEXCEPT {
+    inline decaf_error_t DECAF_WARN_UNUSED
+    inverse_noexcept(Scalar &r) const DECAF_NOEXCEPT {
         return $(c_ns)_scalar_invert(r.s,s);
     }
 
@@ -198,16 +198,16 @@ public:
     inline Scalar half() const { Scalar out; $(c_ns)_scalar_halve(out.s,s); return out; }
 
     /** Compare in constant time */
-    inline bool operator!=(const Scalar &q) const NOEXCEPT { return !(*this == q); }
+    inline bool operator!=(const Scalar &q) const DECAF_NOEXCEPT { return !(*this == q); }
 
     /** Compare in constant time */
-    inline bool operator==(const Scalar &q) const NOEXCEPT { return !!$(c_ns)_scalar_eq(s,q.s); }
+    inline bool operator==(const Scalar &q) const DECAF_NOEXCEPT { return !!$(c_ns)_scalar_eq(s,q.s); }
 
     /** Scalarmul with scalar on left. */
-    inline Point operator* (const Point &q) const NOEXCEPT { return q * (*this); }
+    inline Point operator* (const Point &q) const DECAF_NOEXCEPT { return q * (*this); }
 
     /** Scalarmul-precomputed with scalar on left. */
-    inline Point operator* (const Precomputed &q) const NOEXCEPT { return q * (*this); }
+    inline Point operator* (const Precomputed &q) const DECAF_NOEXCEPT { return q * (*this); }
 
     /** Direct scalar multiplication. */
     inline SecureBuffer direct_scalarmul(
@@ -253,23 +253,23 @@ public:
 
     /** @cond internal */
     /** Don't initialize. */
-    inline Point(const NOINIT &) NOEXCEPT {}
+    inline Point(const NOINIT &) DECAF_NOEXCEPT {}
     /** @endcond */
 
     /** Constructor sets to identity by default. */
-    inline Point(const Wrapped &q = $(c_ns)_point_identity) NOEXCEPT { $(c_ns)_point_copy(p,q); }
+    inline Point(const Wrapped &q = $(c_ns)_point_identity) DECAF_NOEXCEPT { $(c_ns)_point_copy(p,q); }
 
     /** Copy constructor. */
-    inline Point(const Point &q) NOEXCEPT { *this = q; }
+    inline Point(const Point &q) DECAF_NOEXCEPT { *this = q; }
 
     /** Assignment. */
-    inline Point& operator=(const Point &q) NOEXCEPT { $(c_ns)_point_copy(p,q.p); return *this; }
+    inline Point& operator=(const Point &q) DECAF_NOEXCEPT { $(c_ns)_point_copy(p,q.p); return *this; }
 
     /** Destructor securely zeorizes the point. */
-    inline ~Point() NOEXCEPT { $(c_ns)_point_destroy(p); }
+    inline ~Point() DECAF_NOEXCEPT { $(c_ns)_point_destroy(p); }
 
     /** Construct from RNG */
-    inline explicit Point(Rng &rng, bool uniform = true) NOEXCEPT {
+    inline explicit Point(Rng &rng, bool uniform = true) DECAF_NOEXCEPT {
         if (uniform) {
             FixedArrayBuffer<2*HASH_BYTES> b(rng);
             set_to_hash(b);
@@ -301,9 +301,9 @@ public:
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point,
      * or was the identity and allow_identity was DECAF_FALSE. Contents of the buffer are undefined.
      */
-    inline decaf_error_t WARN_UNUSED decode (
+    inline decaf_error_t DECAF_WARN_UNUSED decode (
         const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE
-    ) NOEXCEPT {
+    ) DECAF_NOEXCEPT {
         return $(c_ns)_point_decode(p,buffer.data(),allow_identity);
     }
 
@@ -315,9 +315,9 @@ public:
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point.
      * Contents of the point are undefined.
      */
-    inline decaf_error_t WARN_UNUSED decode_like_eddsa_and_ignore_cofactor_noexcept (
+    inline decaf_error_t DECAF_WARN_UNUSED decode_like_eddsa_and_ignore_cofactor_noexcept (
         const FixedBlock<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &buffer
-    ) NOEXCEPT {
+    ) DECAF_NOEXCEPT {
         return $(c_ns)_point_decode_like_eddsa_and_ignore_cofactor(p,buffer.data());
     }
 
@@ -340,7 +340,7 @@ public:
      * If the buffer is shorter than 2*HASH_BYTES, well, it won't be as uniform,
      * but the buffer will be zero-padded on the right.
      */
-    static inline Point from_hash ( const Block &s ) NOEXCEPT {
+    static inline Point from_hash ( const Block &s ) DECAF_NOEXCEPT {
         Point p((NOINIT())); p.set_to_hash(s); return p;
     }
 
@@ -350,7 +350,7 @@ public:
      * If the buffer is shorter than 2*HASH_BYTES, well, it won't be as uniform,
      * but the buffer will be zero-padded on the right.
      */
-    inline void set_to_hash( const Block &s ) NOEXCEPT {
+    inline void set_to_hash( const Block &s ) DECAF_NOEXCEPT {
         if (s.size() < HASH_BYTES) {
             SecureBuffer b(HASH_BYTES);
             memcpy(b.data(), s.data(), s.size());
@@ -376,45 +376,45 @@ public:
     }
 
     /** Serializable instance */
-    inline size_t ser_size() const NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const DECAF_NOEXCEPT { return SER_BYTES; }
 
     /** Serializable instance */
-    inline void serialize_into(unsigned char *buffer) const NOEXCEPT {
+    inline void serialize_into(unsigned char *buffer) const DECAF_NOEXCEPT {
         $(c_ns)_point_encode(buffer, p);
     }
 
     /** Point add. */
-    inline Point operator+ (const Point &q) const NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_add(r.p,p,q.p); return r; }
+    inline Point operator+ (const Point &q) const DECAF_NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_add(r.p,p,q.p); return r; }
 
     /** Point add. */
-    inline Point &operator+=(const Point &q) NOEXCEPT { $(c_ns)_point_add(p,p,q.p); return *this; }
+    inline Point &operator+=(const Point &q) DECAF_NOEXCEPT { $(c_ns)_point_add(p,p,q.p); return *this; }
 
     /** Point subtract. */
-    inline Point operator- (const Point &q) const NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_sub(r.p,p,q.p); return r; }
+    inline Point operator- (const Point &q) const DECAF_NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_sub(r.p,p,q.p); return r; }
 
     /** Point subtract. */
-    inline Point &operator-=(const Point &q) NOEXCEPT { $(c_ns)_point_sub(p,p,q.p); return *this; }
+    inline Point &operator-=(const Point &q) DECAF_NOEXCEPT { $(c_ns)_point_sub(p,p,q.p); return *this; }
 
     /** Point negate. */
-    inline Point operator- () const NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_negate(r.p,p); return r; }
+    inline Point operator- () const DECAF_NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_negate(r.p,p); return r; }
 
     /** Double the point out of place. */
-    inline Point times_two () const NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_double(r.p,p); return r; }
+    inline Point times_two () const DECAF_NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_double(r.p,p); return r; }
 
     /** Double the point in place. */
-    inline Point &double_in_place() NOEXCEPT { $(c_ns)_point_double(p,p); return *this; }
+    inline Point &double_in_place() DECAF_NOEXCEPT { $(c_ns)_point_double(p,p); return *this; }
 
     /** Constant-time compare. */
-    inline bool operator!=(const Point &q) const NOEXCEPT { return ! $(c_ns)_point_eq(p,q.p); }
+    inline bool operator!=(const Point &q) const DECAF_NOEXCEPT { return ! $(c_ns)_point_eq(p,q.p); }
 
     /** Constant-time compare. */
-    inline bool operator==(const Point &q) const NOEXCEPT { return !!$(c_ns)_point_eq(p,q.p); }
+    inline bool operator==(const Point &q) const DECAF_NOEXCEPT { return !!$(c_ns)_point_eq(p,q.p); }
 
     /** Scalar multiply. */
-    inline Point operator* (const Scalar &s) const NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_scalarmul(r.p,p,s.s); return r; }
+    inline Point operator* (const Scalar &s) const DECAF_NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_scalarmul(r.p,p,s.s); return r; }
 
     /** Scalar multiply in place. */
-    inline Point &operator*=(const Scalar &s) NOEXCEPT { $(c_ns)_point_scalarmul(p,p,s.s); return *this; }
+    inline Point &operator*=(const Scalar &s) DECAF_NOEXCEPT { $(c_ns)_point_scalarmul(p,p,s.s); return *this; }
 
     /** Multiply by s.inverse(). If s=0, maps to the identity. */
     inline Point operator/ (const Scalar &s) const throw(CryptoException) { return (*this) * s.inverse(); }
@@ -423,19 +423,19 @@ public:
     inline Point &operator/=(const Scalar &s) throw(CryptoException) { return (*this) *= s.inverse(); }
 
     /** Validate / sanity check */
-    inline bool validate() const NOEXCEPT { return $(c_ns)_point_valid(p); }
+    inline bool validate() const DECAF_NOEXCEPT { return $(c_ns)_point_valid(p); }
 
     /** Double-scalar multiply, equivalent to q*qs + r*rs but faster. */
     static inline Point double_scalarmul (
         const Point &q, const Scalar &qs, const Point &r, const Scalar &rs
-    ) NOEXCEPT {
+    ) DECAF_NOEXCEPT {
         Point p((NOINIT())); $(c_ns)_point_double_scalarmul(p.p,q.p,qs.s,r.p,rs.s); return p;
     }
 
     /** Dual-scalar multiply, equivalent to this*r1, this*r2 but faster. */
     inline void dual_scalarmul (
         Point &q1, Point &q2, const Scalar &r1, const Scalar &r2
-    ) const NOEXCEPT {
+    ) const DECAF_NOEXCEPT {
         $(c_ns)_point_dual_scalarmul(q1.p,q2.p,p,r1.s,r2.s);
     }
 
@@ -445,7 +445,7 @@ public:
      */
     static inline Point double_scalarmul (
         const Scalar &qs, const Point &q, const Scalar &rs, const Point &r
-    ) NOEXCEPT {
+    ) DECAF_NOEXCEPT {
         return double_scalarmul(q,qs,r,rs);
     }
 
@@ -454,26 +454,26 @@ public:
      * @warning This function takes variable time, and may leak the scalars (or points, but currently
      * it doesn't).
      */
-    inline Point non_secret_combo_with_base(const Scalar &s, const Scalar &s_base) NOEXCEPT {
+    inline Point non_secret_combo_with_base(const Scalar &s, const Scalar &s_base) DECAF_NOEXCEPT {
         Point r((NOINIT())); $(c_ns)_base_double_scalarmul_non_secret(r.p,s_base.s,p,s.s); return r;
     }
 
     /** Return a point equal to *this, whose internal data is rotated by a torsion element. */
-    inline Point debugging_torque() const NOEXCEPT {
+    inline Point debugging_torque() const DECAF_NOEXCEPT {
         Point q;
         $(c_ns)_point_debugging_torque(q.p,p);
         return q;
     }
 
     /** Return a point equal to *this, whose internal data has a modified representation. */
-    inline Point debugging_pscale(const FixedBlock<SER_BYTES> factor) const NOEXCEPT {
+    inline Point debugging_pscale(const FixedBlock<SER_BYTES> factor) const DECAF_NOEXCEPT {
         Point q;
         $(c_ns)_point_debugging_pscale(q.p,p,factor.data());
         return q;
     }
 
     /** Return a point equal to *this, whose internal data has a randomized representation. */
-    inline Point debugging_pscale(Rng &r) const NOEXCEPT {
+    inline Point debugging_pscale(Rng &r) const DECAF_NOEXCEPT {
         FixedArrayBuffer<SER_BYTES> sb(r);
         return debugging_pscale(sb);
     }
@@ -484,7 +484,7 @@ public:
      */
     inline decaf_error_t invert_elligator (
         Buffer buf, uint32_t hint
-    ) const NOEXCEPT {
+    ) const DECAF_NOEXCEPT {
         unsigned char buf2[2*HASH_BYTES];
         memset(buf2,0,sizeof(buf2));
         memcpy(buf2,buf.data(),(buf.size() > 2*HASH_BYTES) ? 2*HASH_BYTES : buf.size());
@@ -519,10 +519,10 @@ public:
     }
 
     /** Return the base point */
-    static inline const Point base() NOEXCEPT { return Point($(c_ns)_point_base); }
+    static inline const Point base() DECAF_NOEXCEPT { return Point($(c_ns)_point_base); }
 
     /** Return the identity point */
-    static inline const Point identity() NOEXCEPT { return Point($(c_ns)_point_identity); }
+    static inline const Point identity() DECAF_NOEXCEPT { return Point($(c_ns)_point_identity); }
 };
 
 /**
@@ -543,7 +543,7 @@ class Precomputed
 public:
 
     /** Destructor securely zeorizes the memory. */
-    inline ~Precomputed() NOEXCEPT { clear(); }
+    inline ~Precomputed() DECAF_NOEXCEPT { clear(); }
 
     /**
      * Initialize from underlying type, declared as a reference to prevent
@@ -558,23 +558,23 @@ public:
      */
     inline Precomputed (
         const Precomputed_U &yours = *default_value()
-    ) NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>(yours) {}
+    ) DECAF_NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>(yours) {}
 
 
 #if __cplusplus >= 201103L
     /** Move-assign operator */
-    inline Precomputed &operator=(Precomputed &&it) NOEXCEPT {
+    inline Precomputed &operator=(Precomputed &&it) DECAF_NOEXCEPT {
         OwnedOrUnowned<Precomputed,Precomputed_U>::operator= (it);
         return *this;
     }
 
     /** Move constructor */
-    inline Precomputed(Precomputed &&it) NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>() {
+    inline Precomputed(Precomputed &&it) DECAF_NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>() {
         *this = it;
     }
 
     /** Undelete copy operator */
-    inline Precomputed &operator=(const Precomputed &it) NOEXCEPT {
+    inline Precomputed &operator=(const Precomputed &it) DECAF_NOEXCEPT {
         OwnedOrUnowned<Precomputed,Precomputed_U>::operator= (it);
         return *this;
     }
@@ -602,20 +602,20 @@ public:
         : OwnedOrUnowned<Precomputed,Precomputed_U>() { *this = it; }
 
     /** Fixed base scalarmul. */
-    inline Point operator* (const Scalar &s) const NOEXCEPT { Point r; $(c_ns)_precomputed_scalarmul(r.p,get(),s.s); return r; }
+    inline Point operator* (const Scalar &s) const DECAF_NOEXCEPT { Point r; $(c_ns)_precomputed_scalarmul(r.p,get(),s.s); return r; }
 
     /** Multiply by s.inverse(). If s=0, maps to the identity. */
     inline Point operator/ (const Scalar &s) const throw(CryptoException) { return (*this) * s.inverse(); }
 
     /** Return the table for the base point. */
-    static inline const Precomputed base() NOEXCEPT { return Precomputed(); }
+    static inline const Precomputed base() DECAF_NOEXCEPT { return Precomputed(); }
 
 public:
     /** @cond internal */
     friend class OwnedOrUnowned<Precomputed,Precomputed_U>;
-    static inline size_t size() NOEXCEPT { return $(c_ns)_sizeof_precomputed_s; }
-    static inline size_t alignment() NOEXCEPT { return $(c_ns)_alignof_precomputed_s; }
-    static inline const Precomputed_U * default_value() NOEXCEPT { return $(c_ns)_precomputed_base; }
+    static inline size_t size() DECAF_NOEXCEPT { return $(c_ns)_sizeof_precomputed_s; }
+    static inline size_t alignment() DECAF_NOEXCEPT { return $(c_ns)_alignof_precomputed_s; }
+    static inline const Precomputed_U * default_value() DECAF_NOEXCEPT { return $(c_ns)_precomputed_base; }
     /** @endcond */
 };
 
@@ -628,7 +628,7 @@ public:
     static const size_t PRIVATE_BYTES = DECAF_X$(gf_shortname)_PRIVATE_BYTES;
 
     /** Base point for a scalar multiplication. */
-    static const FixedBlock<PUBLIC_BYTES> base_point() NOEXCEPT {
+    static const FixedBlock<PUBLIC_BYTES> base_point() DECAF_NOEXCEPT {
         return FixedBlock<PUBLIC_BYTES>(decaf_x$(gf_shortname)_base_point);
     }
 
@@ -645,12 +645,12 @@ public:
     }
 
     /** Calculate and write into out a shared secret with public key, noexcept version.  */
-    static inline decaf_error_t WARN_UNUSED
+    static inline decaf_error_t DECAF_WARN_UNUSED
     shared_secret_noexcept (
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PUBLIC_BYTES> &pk,
         const FixedBlock<PRIVATE_BYTES> &scalar
-    ) NOEXCEPT {
+    ) DECAF_NOEXCEPT {
        return decaf_x$(gf_shortname)(out.data(), pk.data(), scalar.data());
     }
 
@@ -658,7 +658,7 @@ public:
      * but possibly faster.
      * @deprecated Renamed to derive_public_key.
      */
-    static inline SecureBuffer DEPRECATED("Renamed to derive_public_key")
+    static inline SecureBuffer DECAF_DEPRECATED("Renamed to derive_public_key")
     generate_key(
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) throw(std::bad_alloc) {
@@ -685,7 +685,7 @@ public:
     derive_public_key_noexcept (
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PRIVATE_BYTES> &scalar
-    ) NOEXCEPT {
+    ) DECAF_NOEXCEPT {
         decaf_x$(gf_shortname)_derive_public_key(out.data(), scalar.data());
     }
 
@@ -693,11 +693,11 @@ public:
      * equivalent to shared_secret(base_point(),scalar) but possibly faster.
      * @deprecated Renamed to derive_public_key_noexcept.
      */
-    static inline void DEPRECATED("Renamed to derive_public_key_noexcept")
+    static inline void DECAF_DEPRECATED("Renamed to derive_public_key_noexcept")
     generate_key_noexcept (
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PRIVATE_BYTES> &scalar
-    ) NOEXCEPT {
+    ) DECAF_NOEXCEPT {
         decaf_x$(gf_shortname)_derive_public_key(out.data(), scalar.data());
     }
 };
@@ -720,5 +720,5 @@ inline SecureBuffer $(cxx_ns)::Scalar::direct_scalarmul (
 }
 /** @endcond */
 
-#undef NOEXCEPT
+#undef DECAF_NOEXCEPT
 } /* namespace decaf */

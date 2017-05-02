@@ -72,7 +72,7 @@ struct decaf_255_precomputed_s;
 typedef struct decaf_255_precomputed_s decaf_255_precomputed_s; 
 
 /** Size and alignment of precomputed point tables. */
-extern const size_t decaf_255_sizeof_precomputed_s API_VIS, decaf_255_alignof_precomputed_s API_VIS;
+extern const size_t decaf_255_sizeof_precomputed_s DECAF_API_VIS, decaf_255_alignof_precomputed_s DECAF_API_VIS;
 
 /** Scalar is stored packed, because we don't need the speed. */
 typedef struct decaf_255_scalar_s {
@@ -82,19 +82,19 @@ typedef struct decaf_255_scalar_s {
 } decaf_255_scalar_t[1];
 
 /** A scalar equal to 1. */
-extern const decaf_255_scalar_t decaf_255_scalar_one API_VIS;
+extern const decaf_255_scalar_t decaf_255_scalar_one DECAF_API_VIS;
 
 /** A scalar equal to 0. */
-extern const decaf_255_scalar_t decaf_255_scalar_zero API_VIS;
+extern const decaf_255_scalar_t decaf_255_scalar_zero DECAF_API_VIS;
 
 /** The identity point on the curve. */
-extern const decaf_255_point_t decaf_255_point_identity API_VIS;
+extern const decaf_255_point_t decaf_255_point_identity DECAF_API_VIS;
 
 /** An arbitrarily chosen base point on the curve. */
-extern const decaf_255_point_t decaf_255_point_base API_VIS;
+extern const decaf_255_point_t decaf_255_point_base DECAF_API_VIS;
 
 /** Precomputed table for the base point on the curve. */
-extern const struct decaf_255_precomputed_s *decaf_255_precomputed_base API_VIS;
+extern const struct decaf_255_precomputed_s *decaf_255_precomputed_base DECAF_API_VIS;
 
 /**
  * @brief Read a scalar from wire format or from bytes.
@@ -109,7 +109,7 @@ extern const struct decaf_255_precomputed_s *decaf_255_precomputed_base API_VIS;
 decaf_error_t decaf_255_scalar_decode (
     decaf_255_scalar_t out,
     const unsigned char ser[DECAF_255_SCALAR_BYTES]
-) API_VIS WARN_UNUSED NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Read a scalar from wire format or from bytes.  Reduces mod
@@ -123,7 +123,7 @@ void decaf_255_scalar_decode_long (
     decaf_255_scalar_t out,
     const unsigned char *ser,
     size_t ser_len
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
     
 /**
  * @brief Serialize a scalar to wire format.
@@ -134,7 +134,7 @@ void decaf_255_scalar_decode_long (
 void decaf_255_scalar_encode (
     unsigned char ser[DECAF_255_SCALAR_BYTES],
     const decaf_255_scalar_t s
-) API_VIS NONNULL NOINLINE NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_NOINLINE;
         
 /**
  * @brief Add two scalars.  The scalars may use the same memory.
@@ -146,7 +146,7 @@ void decaf_255_scalar_add (
     decaf_255_scalar_t out,
     const decaf_255_scalar_t a,
     const decaf_255_scalar_t b
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Compare two scalars.
@@ -158,7 +158,7 @@ void decaf_255_scalar_add (
 decaf_bool_t decaf_255_scalar_eq (
     const decaf_255_scalar_t a,
     const decaf_255_scalar_t b
-) API_VIS WARN_UNUSED NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Subtract two scalars.  The scalars may use the same memory.
@@ -170,7 +170,7 @@ void decaf_255_scalar_sub (
     decaf_255_scalar_t out,
     const decaf_255_scalar_t a,
     const decaf_255_scalar_t b
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply two scalars.  The scalars may use the same memory.
@@ -182,7 +182,7 @@ void decaf_255_scalar_mul (
     decaf_255_scalar_t out,
     const decaf_255_scalar_t a,
     const decaf_255_scalar_t b
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
         
 /**
 * @brief Halve a scalar.  The scalars may use the same memory.
@@ -192,7 +192,7 @@ void decaf_255_scalar_mul (
 void decaf_255_scalar_halve (
    decaf_255_scalar_t out,
    const decaf_255_scalar_t a
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Invert a scalar.  When passed zero, return 0.  The input and output may alias.
@@ -203,7 +203,7 @@ void decaf_255_scalar_halve (
 decaf_error_t decaf_255_scalar_invert (
     decaf_255_scalar_t out,
     const decaf_255_scalar_t a
-) API_VIS WARN_UNUSED NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Copy a scalar.  The scalars may use the same memory, in which
@@ -211,7 +211,7 @@ decaf_error_t decaf_255_scalar_invert (
  * @param [in] a A scalar.
  * @param [out] out Will become a copy of a.
  */
-static inline void NONNULL decaf_255_scalar_copy (
+static inline void DECAF_NONNULL decaf_255_scalar_copy (
     decaf_255_scalar_t out,
     const decaf_255_scalar_t a
 ) {
@@ -226,7 +226,7 @@ static inline void NONNULL decaf_255_scalar_copy (
 void decaf_255_scalar_set_unsigned (
     decaf_255_scalar_t out,
     uint64_t a
-) API_VIS NONNULL;
+) DECAF_API_VIS DECAF_NONNULL;
 
 /**
  * @brief Encode a point as a sequence of bytes.
@@ -237,7 +237,7 @@ void decaf_255_scalar_set_unsigned (
 void decaf_255_point_encode (
     uint8_t ser[DECAF_255_SER_BYTES],
     const decaf_255_point_t pt
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Decode a point from a sequence of bytes.
@@ -257,7 +257,7 @@ decaf_error_t decaf_255_point_decode (
     decaf_255_point_t pt,
     const uint8_t ser[DECAF_255_SER_BYTES],
     decaf_bool_t allow_identity
-) API_VIS WARN_UNUSED NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Copy a point.  The input and output may alias,
@@ -266,7 +266,7 @@ decaf_error_t decaf_255_point_decode (
  * @param [out] a A copy of the point.
  * @param [in] b Any point.
  */
-static inline void NONNULL decaf_255_point_copy (
+static inline void DECAF_NONNULL decaf_255_point_copy (
     decaf_255_point_t a,
     const decaf_255_point_t b
 ) {
@@ -285,7 +285,7 @@ static inline void NONNULL decaf_255_point_copy (
 decaf_bool_t decaf_255_point_eq (
     const decaf_255_point_t a,
     const decaf_255_point_t b
-) API_VIS WARN_UNUSED NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Add two points to produce a third point.  The
@@ -300,7 +300,7 @@ void decaf_255_point_add (
     decaf_255_point_t sum,
     const decaf_255_point_t a,
     const decaf_255_point_t b
-) API_VIS NONNULL;
+) DECAF_API_VIS DECAF_NONNULL;
 
 /**
  * @brief Double a point.  Equivalent to
@@ -312,7 +312,7 @@ void decaf_255_point_add (
 void decaf_255_point_double (
     decaf_255_point_t two_a,
     const decaf_255_point_t a
-) API_VIS NONNULL;
+) DECAF_API_VIS DECAF_NONNULL;
 
 /**
  * @brief Subtract two points to produce a third point.  The
@@ -327,7 +327,7 @@ void decaf_255_point_sub (
     decaf_255_point_t diff,
     const decaf_255_point_t a,
     const decaf_255_point_t b
-) API_VIS NONNULL;
+) DECAF_API_VIS DECAF_NONNULL;
     
 /**
  * @brief Negate a point to produce another point.  The input
@@ -339,7 +339,7 @@ void decaf_255_point_sub (
 void decaf_255_point_negate (
    decaf_255_point_t nega,
    const decaf_255_point_t a
-) API_VIS NONNULL;
+) DECAF_API_VIS DECAF_NONNULL;
 
 /**
  * @brief Multiply a base point by a scalar: scaled = scalar*base.
@@ -352,7 +352,7 @@ void decaf_255_point_scalarmul (
     decaf_255_point_t scaled,
     const decaf_255_point_t base,
     const decaf_255_scalar_t scalar
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply a base point by a scalar: scaled = scalar*base.
@@ -377,7 +377,7 @@ decaf_error_t decaf_255_direct_scalarmul (
     const decaf_255_scalar_t scalar,
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
-) API_VIS NONNULL WARN_UNUSED NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
 
 /**
  * @brief RFC 7748 Diffie-Hellman scalarmul.  This function uses a different
@@ -395,10 +395,10 @@ decaf_error_t decaf_x25519 (
     uint8_t out[DECAF_X25519_PUBLIC_BYTES],
     const uint8_t base[DECAF_X25519_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X25519_PRIVATE_BYTES]
-) API_VIS NONNULL WARN_UNUSED NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
 
 /** The base point for X25519 Diffie-Hellman */
-extern const uint8_t decaf_x25519_base_point[DECAF_X25519_PUBLIC_BYTES] API_VIS;
+extern const uint8_t decaf_x25519_base_point[DECAF_X25519_PUBLIC_BYTES] DECAF_API_VIS;
 
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
@@ -413,7 +413,7 @@ extern const uint8_t decaf_x25519_base_point[DECAF_X25519_PUBLIC_BYTES] API_VIS;
 void decaf_x25519_generate_key (
     uint8_t out[DECAF_X25519_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X25519_PRIVATE_BYTES]
-) API_VIS NONNULL NOINLINE DEPRECATED("Renamed to decaf_x25519_derive_public_key");
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_DEPRECATED("Renamed to decaf_x25519_derive_public_key");
     
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
@@ -428,7 +428,7 @@ void decaf_x25519_generate_key (
 void decaf_x25519_derive_public_key (
     uint8_t out[DECAF_X25519_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X25519_PRIVATE_BYTES]
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /* FUTURE: uint8_t decaf_255_encode_like_curve25519) */
 
@@ -444,7 +444,7 @@ void decaf_x25519_derive_public_key (
 void decaf_255_precompute (
     decaf_255_precomputed_s *a,
     const decaf_255_point_t b
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply a precomputed base point by a scalar:
@@ -461,7 +461,7 @@ void decaf_255_precomputed_scalarmul (
     decaf_255_point_t scaled,
     const decaf_255_precomputed_s *base,
     const decaf_255_scalar_t scalar
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:
@@ -482,7 +482,7 @@ void decaf_255_point_double_scalarmul (
     const decaf_255_scalar_t scalar1,
     const decaf_255_point_t base2,
     const decaf_255_scalar_t scalar2
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
     
 /**
  * Multiply one base point by two scalars:
@@ -505,7 +505,7 @@ void decaf_255_point_dual_scalarmul (
     const decaf_255_point_t base1,
     const decaf_255_scalar_t scalar1,
     const decaf_255_scalar_t scalar2
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:
@@ -527,7 +527,7 @@ void decaf_255_base_double_scalarmul_non_secret (
     const decaf_255_scalar_t scalar1,
     const decaf_255_point_t base2,
     const decaf_255_scalar_t scalar2
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Constant-time decision between two points.  If pick_b
@@ -543,7 +543,7 @@ void decaf_255_point_cond_sel (
     const decaf_255_point_t a,
     const decaf_255_point_t b,
     decaf_word_t pick_b
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Constant-time decision between two scalars.  If pick_b
@@ -559,7 +559,7 @@ void decaf_255_scalar_cond_sel (
     const decaf_255_scalar_t a,
     const decaf_255_scalar_t b,
     decaf_word_t pick_b
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Test that a point is valid, for debugging purposes.
@@ -570,7 +570,7 @@ void decaf_255_scalar_cond_sel (
  */
 decaf_bool_t decaf_255_point_valid (
     const decaf_255_point_t to_test
-) API_VIS WARN_UNUSED NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Torque a point, for debugging purposes.  The output
@@ -582,7 +582,7 @@ decaf_bool_t decaf_255_point_valid (
 void decaf_255_point_debugging_torque (
     decaf_255_point_t q,
     const decaf_255_point_t p
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Projectively scale a point, for debugging purposes.
@@ -597,7 +597,7 @@ void decaf_255_point_debugging_pscale (
     decaf_255_point_t q,
     const decaf_255_point_t p,
     const unsigned char factor[DECAF_255_SER_BYTES]
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Almost-Elligator-like hash to curve.
@@ -631,7 +631,7 @@ void
 decaf_255_point_from_hash_nonuniform (
     decaf_255_point_t pt,
     const unsigned char hashed_data[DECAF_255_HASH_BYTES]
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Indifferentiable hash function encoding to curve.
@@ -644,7 +644,7 @@ decaf_255_point_from_hash_nonuniform (
 void decaf_255_point_from_hash_uniform (
     decaf_255_point_t pt,
     const unsigned char hashed_data[2*DECAF_255_HASH_BYTES]
-) API_VIS NONNULL NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Inverse of elligator-like hash to curve.
@@ -669,7 +669,7 @@ decaf_255_invert_elligator_nonuniform (
     unsigned char recovered_hash[DECAF_255_HASH_BYTES],
     const decaf_255_point_t pt,
     uint32_t which
-) API_VIS NONNULL NOINLINE WARN_UNUSED;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_WARN_UNUSED;
 
 /**
  * @brief Inverse of elligator-like hash to curve.
@@ -694,28 +694,28 @@ decaf_255_invert_elligator_uniform (
     unsigned char recovered_hash[2*DECAF_255_HASH_BYTES],
     const decaf_255_point_t pt,
     uint32_t which
-) API_VIS NONNULL NOINLINE WARN_UNUSED;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_WARN_UNUSED;
 
 /**
  * @brief Overwrite scalar with zeros.
  */
 void decaf_255_scalar_destroy (
     decaf_255_scalar_t scalar
-) NONNULL API_VIS;
+) DECAF_NONNULL DECAF_API_VIS;
 
 /**
  * @brief Overwrite point with zeros.
  */
 void decaf_255_point_destroy (
     decaf_255_point_t point
-) NONNULL API_VIS;
+) DECAF_NONNULL DECAF_API_VIS;
 
 /**
  * @brief Overwrite precomputed table with zeros.
  */
 void decaf_255_precomputed_destroy (
     decaf_255_precomputed_s *pre
-) NONNULL API_VIS;
+) DECAF_NONNULL DECAF_API_VIS;
 
 #ifdef __cplusplus
 } /* extern "C" */

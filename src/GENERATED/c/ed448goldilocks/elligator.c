@@ -109,7 +109,7 @@ void API_NS(point_from_hash_uniform) (
 #define MAX(A,B) (((A)>(B)) ? (A) : (B))
 #define PKP_MASK ((1<<(MAX(8*SER_BYTES + 0 - 448,0)))-1)
 #if PKP_MASK != 0
-static UNUSED mask_t plus_k_p (
+static DECAF_INLINE mask_t plus_k_p (
     uint8_t x[SER_BYTES],
     uint32_t factor_
 ) {

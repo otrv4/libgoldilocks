@@ -24,11 +24,11 @@
 
 /** @cond internal */
 #if __cplusplus >= 201103L
-#define NOEXCEPT noexcept
-#define DELETE = delete
+#define DECAF_NOEXCEPT noexcept
+#define DECAF_DELETE = delete
 #else
-#define NOEXCEPT throw()
-#define DELETE
+#define DECAF_NOEXCEPT throw()
+#define DECAF_DELETE
 #endif
 /** @endcond */
 
@@ -55,8 +55,8 @@ public:
         /** @endcond */
     public:
         const int err_code; /**< errno that caused the reseed to fail. */
-        const char *what() const NOEXCEPT { return what_; } /**< Description of exception. */
-        RngException(int err_code, const char *what_) NOEXCEPT : what_(what_), err_code(err_code) {} /**< Construct */
+        const char *what() const DECAF_NOEXCEPT { return what_; } /**< Description of exception. */
+        RngException(int err_code, const char *what_) DECAF_NOEXCEPT : what_(what_), err_code(err_code) {} /**< Construct */
     };
     
     /** Initialize, deterministically by default, from block */
@@ -74,31 +74,31 @@ public:
     }
     
     /** Stir in new data */
-    inline void stir( const Block &data ) NOEXCEPT {
+    inline void stir( const Block &data ) DECAF_NOEXCEPT {
         decaf_spongerng_stir(sp,data.data(),data.size());
     }
     
     /** Securely destroy by overwriting state. */
-    inline ~SpongeRng() NOEXCEPT { decaf_spongerng_destroy(sp); }
+    inline ~SpongeRng() DECAF_NOEXCEPT { decaf_spongerng_destroy(sp); }
     
     using Rng::read;
     
     /** Read data to a buffer. */
-    virtual inline void read(Buffer buffer) NOEXCEPT
+    virtual inline void read(Buffer buffer) DECAF_NOEXCEPT
 #if __cplusplus >= 201103L
         final
 #endif
         { decaf_spongerng_next(sp,buffer.data(),buffer.size()); }
     
 private:
-    SpongeRng(const SpongeRng &) DELETE;
-    SpongeRng &operator=(const SpongeRng &) DELETE;
+    SpongeRng(const SpongeRng &) DECAF_DELETE;
+    SpongeRng &operator=(const SpongeRng &) DECAF_DELETE;
 };
 /**@endcond*/
   
 } /* namespace decaf */
 
-#undef NOEXCEPT
-#undef DELETE
+#undef DECAF_NOEXCEPT
+#undef DECAF_DELETE
 
 #endif /* __DECAF_SPONGERNG_HXX__ */

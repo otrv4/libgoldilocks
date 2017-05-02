@@ -98,7 +98,7 @@ extern int posix_memalign(void **, size_t, size_t);
     typedef uint64x4_t uint64xn_t;
     typedef uint32x8_t uint32xn_t;
 
-    static INLINE big_register_t
+    static DECAF_INLINE big_register_t
     br_set_to_mask(mask_t x) {
         uint32_t y = (uint32_t)x;
         big_register_t ret = {y,y,y,y,y,y,y,y};
@@ -110,7 +110,7 @@ extern int posix_memalign(void **, size_t, size_t);
     typedef uint64x2_t uint64xn_t;
     typedef uint32x4_t uint32xn_t;
 
-    static INLINE big_register_t
+    static DECAF_INLINE big_register_t
     br_set_to_mask(mask_t x) {
         uint32_t y = x;
         big_register_t ret = {y,y,y,y};
@@ -122,7 +122,7 @@ extern int posix_memalign(void **, size_t, size_t);
     typedef uint64x2_t uint64xn_t;
     typedef uint32x4_t uint32xn_t;
     
-    static INLINE big_register_t
+    static DECAF_INLINE big_register_t
     br_set_to_mask(mask_t x) {
         return vdupq_n_u32(x);
     }
@@ -131,7 +131,7 @@ extern int posix_memalign(void **, size_t, size_t);
     typedef uint64_t big_register_t, uint64xn_t;
 
     typedef uint32_t uint32xn_t;
-    static INLINE big_register_t
+    static DECAF_INLINE big_register_t
     br_set_to_mask(mask_t x) {
         return (big_register_t)x;
     }
@@ -141,7 +141,7 @@ extern int posix_memalign(void **, size_t, size_t);
     typedef uint32_t uint32xn_t;
     typedef uint32_t big_register_t;
 
-    static INLINE big_register_t
+    static DECAF_INLINE big_register_t
     br_set_to_mask(mask_t x) {
         return (big_register_t)x;
     }
@@ -156,18 +156,18 @@ typedef struct {
 } __attribute__((packed)) unaligned_uint32xn_t;
 
 #if __AVX2__
-    static INLINE big_register_t
+    static DECAF_INLINE big_register_t
     br_is_zero(big_register_t x) {
         return (big_register_t)(x == br_set_to_mask(0));
     }
 #elif __SSE2__
-    static INLINE big_register_t
+    static DECAF_INLINE big_register_t
     br_is_zero(big_register_t x) {
         return (big_register_t)_mm_cmpeq_epi32((__m128i)x, _mm_setzero_si128());
         //return (big_register_t)(x == br_set_to_mask(0));
     }
 #elif __ARM_NEON__
-    static INLINE big_register_t
+    static DECAF_INLINE big_register_t
     br_is_zero(big_register_t x) {
         return vceqq_u32(x,x^x);
     }
@@ -193,13 +193,13 @@ typedef struct {
     #ifdef NEED_MEMSET_S_EXTERN
         extern int memset_s(void *, size_t, int, size_t);
     #endif
-    static INLINE void
+    static DECAF_INLINE void
     really_memset(void *p, char c, size_t s) {
         memset_s(p, s, c, s);
     }
 #else
     /* PERF: use words? */
-    static INLINE UNUSED void
+    static DECAF_INLINE void
     really_memset(void *p, char c, size_t s) {
         volatile char *pv = (volatile char *)p;
         size_t i;
@@ -218,7 +218,7 @@ typedef struct {
  * @return A suitable pointer, which can be free'd with free(),
  * or NULL if no memory can be allocated.
  */
-static INLINE UNUSED void *
+static DECAF_INLINE void *
 malloc_vector(size_t size) {
     void *out = NULL;
     
@@ -255,11 +255,11 @@ malloc_vector(size_t size) {
  * On the third hand, we have success vs boolean types, but that's handled in
  * common.h: it converts between decaf_bool_t and decaf_error_t.
  */
-static INLINE decaf_bool_t mask_to_bool (mask_t m) {
+static DECAF_INLINE decaf_bool_t mask_to_bool (mask_t m) {
     return (decaf_sword_t)(sword_t)m;
 }
 
-static INLINE mask_t bool_to_mask (decaf_bool_t m) {
+static DECAF_INLINE mask_t bool_to_mask (decaf_bool_t m) {
     /* On most arches this will be optimized to a simple cast. */
     mask_t ret = 0;
     unsigned int limit = sizeof(decaf_bool_t)/sizeof(mask_t);
@@ -270,7 +270,7 @@ static INLINE mask_t bool_to_mask (decaf_bool_t m) {
     return ret;
 }
 
-static INLINE void ignore_result ( decaf_bool_t boo ) {
+static DECAF_INLINE void ignore_result ( decaf_bool_t boo ) {
     (void)boo;
 }
 

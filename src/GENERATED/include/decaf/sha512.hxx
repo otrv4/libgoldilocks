@@ -17,9 +17,9 @@
 
 /** @cond internal */
 #if __cplusplus >= 201103L
-    #define NOEXCEPT noexcept
+    #define DECAF_NOEXCEPT noexcept
 #else
-    #define NOEXCEPT throw()
+    #define DECAF_NOEXCEPT throw()
 #endif
 /** @endcond */
 
@@ -44,13 +44,13 @@ public:
     static const size_t DEFAULT_OUTPUT_BYTES = OUTPUT_BYTES;
     
     /** Constructor */
-    inline SHA512() NOEXCEPT { decaf_sha512_init(wrapped); }
+    inline SHA512() DECAF_NOEXCEPT { decaf_sha512_init(wrapped); }
     
     /** Add more data to running hash */
-    inline void update(const uint8_t *__restrict__ in, size_t len) NOEXCEPT { decaf_sha512_update(wrapped,in,len); }
+    inline void update(const uint8_t *__restrict__ in, size_t len) DECAF_NOEXCEPT { decaf_sha512_update(wrapped,in,len); }
 
     /** Add more data to running hash, C++ version. */
-    inline void update(const Block &s) NOEXCEPT { update(s.data(),s.size()); }
+    inline void update(const Block &s) DECAF_NOEXCEPT { update(s.data(),s.size()); }
 
     /** Add more data, stream version. */
     inline SHA512 &operator<<(const Block &s) { update(s); return *this; }
@@ -65,7 +65,7 @@ public:
     }
     
     /** Resets the SHA context */
-    inline void reset() NOEXCEPT { decaf_sha512_init(wrapped); }
+    inline void reset() DECAF_NOEXCEPT { decaf_sha512_init(wrapped); }
 
     /** @brief Output bytes from the sponge. */
     inline SecureBuffer final(size_t len = OUTPUT_BYTES) throw(LengthException) {
@@ -76,10 +76,10 @@ public:
     }
 
     /** @brief Return the sponge's default output size. */
-    inline size_t default_output_size() const NOEXCEPT { return OUTPUT_BYTES; }
+    inline size_t default_output_size() const DECAF_NOEXCEPT { return OUTPUT_BYTES; }
 
     /** @brief Return the sponge's maximum output size. */
-    inline size_t max_output_size() const NOEXCEPT { return MAX_OUTPUT_BYTES; }
+    inline size_t max_output_size() const DECAF_NOEXCEPT { return MAX_OUTPUT_BYTES; }
 
     /** @brief Hash a message in one pass */
     static inline SecureBuffer hash (
@@ -93,11 +93,11 @@ public:
     }
 
     /** Destructor zeroizes state */
-    inline ~SHA512() NOEXCEPT { decaf_sha512_destroy(wrapped); }
+    inline ~SHA512() DECAF_NOEXCEPT { decaf_sha512_destroy(wrapped); }
 };
   
 } /* namespace decaf */
 
-#undef NOEXCEPT
+#undef DECAF_NOEXCEPT
 
 #endif /* __DECAF_SHA512_HXX__ */

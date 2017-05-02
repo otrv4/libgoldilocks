@@ -364,7 +364,7 @@ void API_NS(point_add) (
     gf_mul ( p->t, b, c );
 }
 
-static NOINLINE void
+static DECAF_NOINLINE void
 point_double_internal (
     point_t p,
     const point_t q,
@@ -403,7 +403,7 @@ void API_NS(point_negate) (
 }
 
 /* Operations on [p]niels */
-static INLINE void
+static DECAF_INLINE void
 cond_neg_niels (
     niels_t n,
     mask_t neg
@@ -412,7 +412,7 @@ cond_neg_niels (
     gf_cond_neg(n->c, neg);
 }
 
-static NOINLINE void pt_to_pniels (
+static DECAF_NOINLINE void pt_to_pniels (
     pniels_t b,
     const point_t a
 ) {
@@ -422,7 +422,7 @@ static NOINLINE void pt_to_pniels (
     gf_add ( b->z, a->z, a->z );
 }
 
-static NOINLINE void pniels_to_pt (
+static DECAF_NOINLINE void pniels_to_pt (
     point_t e,
     const pniels_t d
 ) {
@@ -435,7 +435,7 @@ static NOINLINE void pniels_to_pt (
     gf_sqr ( e->z, d->z );
 }
 
-static NOINLINE void
+static DECAF_NOINLINE void
 niels_to_pt (
     point_t e,
     const niels_t n
@@ -446,7 +446,7 @@ niels_to_pt (
     gf_copy ( e->z, ONE );
 }
 
-static NOINLINE void
+static DECAF_NOINLINE void
 add_niels_to_pt (
     point_t d,
     const niels_t e,
@@ -468,7 +468,7 @@ add_niels_to_pt (
     if (!before_double) gf_mul ( d->t, b, c );
 }
 
-static NOINLINE void
+static DECAF_NOINLINE void
 sub_niels_from_pt (
     point_t d,
     const niels_t e,
@@ -514,7 +514,7 @@ sub_pniels_from_pt (
     sub_niels_from_pt( p, pn->n, before_double );
 }
 
-static NOINLINE void
+static DECAF_NOINLINE void
 prepare_fixed_window(
     pniels_t *multiples,
     const point_t b,
@@ -973,7 +973,7 @@ void API_NS(precompute) (
     decaf_bzero(doubles,sizeof(doubles));
 }
 
-static INLINE void
+static DECAF_INLINE void
 constant_time_lookup_niels (
     niels_s *__restrict__ ni,
     const niels_t *table,

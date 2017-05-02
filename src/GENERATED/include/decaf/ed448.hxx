@@ -32,9 +32,9 @@
 
 /** @cond internal */
 #if __cplusplus >= 201103L
-#define NOEXCEPT noexcept
+#define DECAF_NOEXCEPT noexcept
 #else
-#define NOEXCEPT throw()
+#define DECAF_NOEXCEPT throw()
 #endif
 /** @endcond */
 
@@ -91,7 +91,7 @@ public:
     }
 
     /** Reset this hash */
-    void reset() NOEXCEPT { init(); }
+    void reset() DECAF_NOEXCEPT { init(); }
     
     /** Output from this hash */
     SecureBuffer final() throw(std::bad_alloc) {
@@ -202,38 +202,38 @@ public:
     
     
     /** Create but don't initialize */
-    inline explicit PrivateKeyBase(const NOINIT&) NOEXCEPT : priv_((NOINIT())), pub_((NOINIT())) { }
+    inline explicit PrivateKeyBase(const NOINIT&) DECAF_NOEXCEPT : priv_((NOINIT())), pub_((NOINIT())) { }
     
     /** Read a private key from a string */
-    inline explicit PrivateKeyBase(const FixedBlock<SER_BYTES> &b) NOEXCEPT { *this = b; }
+    inline explicit PrivateKeyBase(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT { *this = b; }
     
     /** Copy constructor */
-    inline PrivateKeyBase(const PrivateKey &k) NOEXCEPT { *this = k; }
+    inline PrivateKeyBase(const PrivateKey &k) DECAF_NOEXCEPT { *this = k; }
     
     /** Create at random */
-    inline explicit PrivateKeyBase(Rng &r) NOEXCEPT : priv_(r) {
+    inline explicit PrivateKeyBase(Rng &r) DECAF_NOEXCEPT : priv_(r) {
         decaf_ed448_derive_public_key(pub_.data(), priv_.data());
     }
     
     /** Assignment from string */
-    inline PrivateKeyBase &operator=(const FixedBlock<SER_BYTES> &b) NOEXCEPT {
+    inline PrivateKeyBase &operator=(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT {
         memcpy(priv_.data(),b.data(),b.size());
         decaf_ed448_derive_public_key(pub_.data(), priv_.data());
         return *this;
     }
     
     /** Copy assignment */
-    inline PrivateKeyBase &operator=(const PrivateKey &k) NOEXCEPT {
+    inline PrivateKeyBase &operator=(const PrivateKey &k) DECAF_NOEXCEPT {
         memcpy(priv_.data(),k.priv_.data(), priv_.size());
         memcpy(pub_.data(),k.pub_.data(), pub_.size());
         return *this;
     }
     
     /** Serialization size. */
-    inline size_t ser_size() const NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const DECAF_NOEXCEPT { return SER_BYTES; }
     
     /** Serialize into a buffer. */
-    inline void serialize_into(unsigned char *x) const NOEXCEPT {
+    inline void serialize_into(unsigned char *x) const DECAF_NOEXCEPT {
         memcpy(x,priv_.data(), priv_.size());
     }
     
@@ -245,7 +245,7 @@ public:
     }
     
     /** Return the corresponding public key */
-    inline MyPublicKey pub() const NOEXCEPT {
+    inline MyPublicKey pub() const DECAF_NOEXCEPT {
         MyPublicKey pub(*this);
         return pub;
     }
@@ -256,11 +256,11 @@ public:
 template<class CRTP> class Verification<CRTP,PURE> {
 public:
     /** Verify a signature, returning DECAF_FAILURE if verification fails */
-    inline decaf_error_t WARN_UNUSED verify_noexcept (
+    inline decaf_error_t DECAF_WARN_UNUSED verify_noexcept (
         const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Block &message,
         const Block &context = NO_CONTEXT()
-    ) const /*NOEXCEPT*/ {
+    ) const /*DECAF_NOEXCEPT*/ {
         if (context.size() > 255) {
             return DECAF_FAILURE;
         }
@@ -302,10 +302,10 @@ public:
 template<class CRTP> class Verification<CRTP,PREHASHED> {
 public:
     /* Verify a prehash context. */
-    inline decaf_error_t WARN_UNUSED verify_prehashed_noexcept (
+    inline decaf_error_t DECAF_WARN_UNUSED verify_prehashed_noexcept (
         const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Prehash &ph
-    ) const /*NOEXCEPT*/ {
+    ) const /*DECAF_NOEXCEPT*/ {
         return decaf_ed448_verify_prehash (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
@@ -376,38 +376,38 @@ public:
     
     
     /** Create but don't initialize */
-    inline explicit PublicKeyBase(const NOINIT&) NOEXCEPT : pub_((NOINIT())) { }
+    inline explicit PublicKeyBase(const NOINIT&) DECAF_NOEXCEPT : pub_((NOINIT())) { }
     
     /** Read a private key from a string */
-    inline explicit PublicKeyBase(const FixedBlock<SER_BYTES> &b) NOEXCEPT { *this = b; }
+    inline explicit PublicKeyBase(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT { *this = b; }
     
     /** Copy constructor */
-    inline PublicKeyBase(const PublicKeyBase &k) NOEXCEPT { *this = k; }
+    inline PublicKeyBase(const PublicKeyBase &k) DECAF_NOEXCEPT { *this = k; }
     
     /** Copy constructor */
-    inline explicit PublicKeyBase(const MyPrivateKey &k) NOEXCEPT { *this = k; }
+    inline explicit PublicKeyBase(const MyPrivateKey &k) DECAF_NOEXCEPT { *this = k; }
 
     /** Assignment from string */
-    inline PublicKey &operator=(const FixedBlock<SER_BYTES> &b) NOEXCEPT {
+    inline PublicKey &operator=(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT {
         memcpy(pub_.data(),b.data(),b.size());
         return *this;
     }
 
     /** Assignment from private key */
-    inline PublicKey &operator=(const PublicKey &p) NOEXCEPT {
+    inline PublicKey &operator=(const PublicKey &p) DECAF_NOEXCEPT {
         return *this = p.pub_;
     }
 
     /** Assignment from private key */
-    inline PublicKey &operator=(const MyPrivateKey &p) NOEXCEPT {
+    inline PublicKey &operator=(const MyPrivateKey &p) DECAF_NOEXCEPT {
         return *this = p.pub_;
     }
 
     /** Serialization size. */
-    inline size_t ser_size() const NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const DECAF_NOEXCEPT { return SER_BYTES; }
     
     /** Serialize into a buffer. */
-    inline void serialize_into(unsigned char *x) const NOEXCEPT {
+    inline void serialize_into(unsigned char *x) const DECAF_NOEXCEPT {
         memcpy(x,pub_.data(), pub_.size());
     }
     
@@ -421,7 +421,7 @@ public:
 
 }; /* template<> struct EdDSA<Ed448Goldilocks> */
 
-#undef NOEXCEPT
+#undef DECAF_NOEXCEPT
 } /* namespace decaf */
 
 #endif /* __DECAF_ED448_HXX__ */
