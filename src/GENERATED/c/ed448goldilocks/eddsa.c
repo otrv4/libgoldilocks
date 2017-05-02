@@ -89,6 +89,21 @@ void decaf_ed448_prehash_init (
     hash_init(hash);
 }
 
+/* In this file because it uses the hash */
+void decaf_ed448_convert_private_key_to_x448 (
+    uint8_t x[DECAF_X448_PRIVATE_BYTES],
+    const uint8_t ed[DECAF_EDDSA_448_PRIVATE_BYTES]
+) {
+    /* pass the private key through hash_hash function */
+    /* and keep the first DECAF_X448_PRIVATE_BYTES bytes */
+    hash_hash(
+        x,
+        DECAF_X448_PRIVATE_BYTES,
+        ed,
+        DECAF_EDDSA_448_PRIVATE_BYTES
+    );
+}
+    
 void decaf_ed448_derive_public_key (
     uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]

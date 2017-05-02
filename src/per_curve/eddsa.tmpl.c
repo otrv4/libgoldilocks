@@ -80,6 +80,21 @@ void decaf_ed$(gf_shortname)_prehash_init (
     hash_init(hash);
 }
 
+/* In this file because it uses the hash */
+void decaf_ed$(gf_shortname)_convert_private_key_to_x$(gf_shortname) (
+    uint8_t x[DECAF_X$(gf_shortname)_PRIVATE_BYTES],
+    const uint8_t ed[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
+) {
+    /* pass the private key through hash_hash function */
+    /* and keep the first DECAF_X$(gf_shortname)_PRIVATE_BYTES bytes */
+    hash_hash(
+        x,
+        DECAF_X$(gf_shortname)_PRIVATE_BYTES,
+        ed,
+        DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES
+    );
+}
+    
 void decaf_ed$(gf_shortname)_derive_public_key (
     uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]

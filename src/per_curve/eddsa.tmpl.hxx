@@ -221,6 +221,13 @@ public:
         memcpy(x,priv_.data(), priv_.size());
     }
     
+    /** Convert to X format (to be used for key exchange) */
+    inline SecureBuffer convert_to_x() const {
+        SecureBuffer out(DECAF_X$(gf_shortname)_PRIVATE_BYTES);
+        decaf_ed$(gf_shortname)_convert_private_key_to_x$(gf_shortname)(out.data(), priv_.data());
+        return out;
+    }
+    
     /** Return the corresponding public key */
     inline MyPublicKey pub() const NOEXCEPT {
         MyPublicKey pub(*this);
@@ -386,6 +393,13 @@ public:
     /** Serialize into a buffer. */
     inline void serialize_into(unsigned char *x) const NOEXCEPT {
         memcpy(x,pub_.data(), pub_.size());
+    }
+    
+    /** Convert to X format (to be used for key exchange) */
+    inline SecureBuffer convert_to_x() const {
+        SecureBuffer out(DECAF_X$(gf_shortname)_PRIVATE_BYTES);
+        decaf_ed$(gf_shortname)_convert_public_key_to_x$(gf_shortname)(out.data(), pub_.data());
+        return out;
     }
 }; /* class PublicKey */
 

@@ -1307,6 +1307,50 @@ decaf_error_t decaf_x$(gf_shortname) (
     return decaf_succeed_if(mask_to_bool(nz));
 }
 
+/* Thanks Johan Pascal */
+void decaf_ed$(gf_shortname)_convert_public_key_to_x$(gf_shortname) (
+    uint8_t x[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
+    const uint8_t ed[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
+) {
+    gf y;
+    {
+        uint8_t enc2[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES];
+        memcpy(enc2,ed,sizeof(enc2));
+
+        /* retrieve y from the ed compressed point */
+        enc2[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES-1] &= ~0x80;
+        ignore_result(gf_deserialize(y, enc2, 0));
+        decaf_bzero(enc2,sizeof(enc2));
+    }
+    
+    {
+        gf n,d;
+        
+#if EDDSA_USE_SIGMA_ISOGENY
+        /* u = (1+y)/(1-y)*/
+        gf_add(n, y, ONE); /* n = y+1 */
+        gf_sub(d, ONE, y); /* d = 1-y */
+        gf_invert(d, d); /* d = 1/(1-y) */
+        gf_mul(y, n, d); /* u = (y+1)/(1-y) */
+        gf_serialize(x,y,1);
+#else /* EDDSA_USE_SIGMA_ISOGENY */
+        /* u = y^2 * (1-dy^2) / (1-y^2) */
+        gf_sqr(n,y); /* y^2*/
+        gf_sub(d,ONE,n); /* 1-y^2*/
+        gf_invert(d,d); /* 1/(1-y^2)*/
+        gf_mul(y,n,d); /* y^2 / (1-y^2) */
+        gf_mulw(d,n,EDWARDS_D); /* dy^2*/
+        gf_sub(d, ONE, d); /* 1-dy^2*/
+        gf_mul(n, y, d); /* y^2 * (1-dy^2) / (1-y^2) */
+        gf_serialize(x,n,1);
+#endif /* EDDSA_USE_SIGMA_ISOGENY */
+        
+        decaf_bzero(y,sizeof(y));
+        decaf_bzero(n,sizeof(n));
+        decaf_bzero(d,sizeof(d));
+    }
+}
+
 void decaf_x$(gf_shortname)_generate_key (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]

@@ -176,6 +176,32 @@ decaf_error_t $(c_ns)_point_decode_like_eddsa_and_ignore_cofactor (
     const uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
 ) API_VIS NONNULL NOINLINE;
 
+/**
+ * @brief EdDSA to ECDH public key conversion
+ * Deserialize the point to get y on Edwards curve,
+ * Convert it to u coordinate on Montgomery curve.
+ *
+ * @param[out] x The ECDH public key as in RFC7748(point on Montgomery curve)
+ * @param[in] ed The EdDSA public key(point on Edwards curve)
+ */
+void decaf_ed$(gf_shortname)_convert_public_key_to_x$(gf_shortname) (
+    uint8_t x[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
+    const uint8_t ed[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
+) API_VIS NONNULL NOINLINE;
+
+/**
+ * @brief EdDSA to ECDH private key conversion
+ * Using the appropriate hash function, hash the EdDSA private key
+ * and keep only the lower bytes to get the ECDH private key
+ *
+ * @param[out] x The ECDH private key as in RFC7748
+ * @param[in] ed The EdDSA private key
+ */
+void decaf_ed$(gf_shortname)_convert_private_key_to_x$(gf_shortname) (
+    uint8_t x[DECAF_X$(gf_shortname)_PRIVATE_BYTES],
+    const uint8_t ed[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
+) API_VIS NONNULL NOINLINE;
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

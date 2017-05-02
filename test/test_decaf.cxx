@@ -534,12 +534,54 @@ static void test_eddsa() {
     
 }
 
+/* Thanks Johan Pascal */
+static void test_convert_eddsa_to_x() {
+    Test test("ECDH using EdDSA keys");
+    SpongeRng rng(Block("test_x_on_eddsa_key"),SpongeRng::DETERMINISTIC);
+
+    for (int i=0; i<NTESTS && test.passing_now; i++) {
+        /* generate 2 pairs of EdDSA keys */
+        typename EdDSA<Group>::PrivateKey alice_priv(rng);
+        typename EdDSA<Group>::PublicKey alice_pub(alice_priv);
+        typename EdDSA<Group>::PrivateKey bob_priv(rng);
+        typename EdDSA<Group>::PublicKey bob_pub(bob_priv);
+
+        /* convert them to ECDH format
+         * check public key value by computing it from direct conversion and regeneration from converted private)
+         */
+        SecureBuffer alice_priv_x = alice_priv.convert_to_x();
+        SecureBuffer alice_pub_x_conversion = alice_pub.convert_to_x();
+        SecureBuffer alice_pub_x_generated  = DhLadder::derive_public_key(alice_priv_x);
+        if (!memeq(alice_pub_x_conversion, alice_pub_x_generated)) {
+            test.fail();
+            printf("    Ed2X Public key convertion and regeneration from converted private key differs.\n");
+        }
+        SecureBuffer bob_priv_x = bob_priv.convert_to_x();
+        SecureBuffer bob_pub_x_conversion = bob_pub.convert_to_x();
+        SecureBuffer bob_pub_x_generated  = DhLadder::derive_public_key(bob_priv_x);
+        if (!memeq(bob_pub_x_conversion, bob_pub_x_generated)) {
+            test.fail();
+            printf("    Ed2X Public key convertion and regeneration from converted private key differs.\n");
+        }
+
+        /* compute shared secrets and check they match */
+        SecureBuffer alice_shared = DhLadder::shared_secret(bob_pub_x_conversion, alice_priv_x);
+        SecureBuffer bob_shared   = DhLadder::shared_secret(alice_pub_x_conversion, bob_priv_x);
+
+        if (!memeq(alice_shared, bob_shared)) {
+            test.fail();
+            printf("    ECDH shared secret mismatch.\n");
+        }
+    }
+}
+
 static void run() {
     printf("Testing %s:\n",Group::name());
     test_arithmetic();
     test_elligator();
     test_ec();
     test_eddsa();
+    test_convert_eddsa_to_x();
     test_cfrg_crypto();
     test_cfrg_vectors();
     printf("\n");
