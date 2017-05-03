@@ -11,7 +11,7 @@ const API_NS(point_t) API_NS(point_base) = {{
   {FIELD_LITERAL(0x00064dd34108cd8b,0x00074d6a76c1aa17,0x0007ee5469f0a08a,0x0007eb4b28e92c93,0x00076326b6a09052)}
 }};
 const gf API_NS(precomputed_base_as_fe)[144]
-__attribute__((aligned(32),visibility("hidden"))) = {
+VECTOR_ALIGNED __attribute__((visibility("hidden"))) = {
   {FIELD_LITERAL(0x00074308734f7d55,0x000380ac08a23a96,0x00024b4b5cef028b,0x000632cbb8646ab5,0x00075516b5681530)},
   {FIELD_LITERAL(0x0005729461e535df,0x0004a8e85565dffb,0x000246a85e49fde1,0x000285c20023113d,0x00028a44366a7a53)},
   {FIELD_LITERAL(0x0007900f448afdf1,0x0003b19d978aa5b4,0x00001f24c6a6a64c,0x0002087f8eafcb75,0x0002908747e585e7)},
@@ -158,7 +158,7 @@ __attribute__((aligned(32),visibility("hidden"))) = {
   {FIELD_LITERAL(0x0004ef6dec07d978,0x0001814721d17298,0x0002f3010824e385,0x0004dec0df1030ea,0x000732ccad416ca1)}
 };
 const gf API_NS(precomputed_wnaf_as_fe)[96]
-__attribute__((aligned(32),visibility("hidden"))) = {
+VECTOR_ALIGNED __attribute__((visibility("hidden"))) = {
   {FIELD_LITERAL(0x000743d2369750f6,0x000698b734af8c74,0x0003c7e6ca7de989,0x0004137b677d5a14,0x000602a70a1dd604)},
   {FIELD_LITERAL(0x000620e9c96ce4a2,0x000718e799056806,0x0003bdec5bbc2429,0x0003ca0864fd880d,0x00013df868873a16)},
   {FIELD_LITERAL(0x0005ac6e48dfc457,0x0004b83cf2fa3b88,0x000036ccd665d9e2,0x0003eb7fcdb11759,0x0001b35e6ddb1020)},

@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     output = (const gf_s *)pre;
     printf("const gf API_NS(precomputed_base_as_fe)[%d]\n", 
         (int)(API_NS(sizeof_precomputed_s) / sizeof(gf)));
-    printf("__attribute__((aligned(%d),visibility(\"hidden\"))) = {\n  ", (int)API_NS(alignof_precomputed_s));
+    printf("VECTOR_ALIGNED __attribute__((visibility(\"hidden\"))) = {\n  ");
     
     for (i=0; i < API_NS(sizeof_precomputed_s); i+=sizeof(gf)) {
         if (i) printf(",\n  ");
@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
     output = (const gf_s *)pre_wnaf;
     printf("const gf API_NS(precomputed_wnaf_as_fe)[%d]\n", 
         (int)(API_NS(sizeof_precomputed_wnafs) / sizeof(gf)));
-    printf("__attribute__((aligned(%d),visibility(\"hidden\"))) = {\n  ", (int)API_NS(alignof_precomputed_s));
+    printf("VECTOR_ALIGNED __attribute__((visibility(\"hidden\"))) = {\n  ");
     for (i=0; i < API_NS(sizeof_precomputed_wnafs); i+=sizeof(gf)) {
         if (i) printf(",\n  ");
         field_print(output++);
