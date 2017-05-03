@@ -54,7 +54,7 @@ private:
     template<class T, Prehashed Ph> friend class Signing;
     template<class T, Prehashed Ph> friend class Verification;
     
-    void init() throw(LengthException) {
+    void init() /*throw(LengthException)*/ {
         Super::reset();
         
         if (context_.size() > 255) {
@@ -69,7 +69,7 @@ public:
     static const size_t OUTPUT_BYTES = Super::DEFAULT_OUTPUT_BYTES;
     
     /** Create the prehash */
-    Prehash(const Block &context = NO_CONTEXT()) throw(LengthException) {
+    Prehash(const Block &context = NO_CONTEXT()) /*throw(LengthException)*/ {
         context_ = context;
         init();
     }
@@ -78,14 +78,14 @@ public:
     void reset() DECAF_NOEXCEPT { init(); }
     
     /** Output from this hash */
-    SecureBuffer final() throw(std::bad_alloc) {
+    SecureBuffer final() /*throw(std::bad_alloc)*/ {
         SecureBuffer ret = Super::final(OUTPUT_BYTES);
         reset();
         return ret;
     }
     
     /** Output from this hash */
-    void final(Buffer &b) throw(LengthException) {
+    void final(Buffer &b) /*throw(LengthException)*/ {
         if (b.size() != OUTPUT_BYTES) throw LengthException();
         Super::final(b);
         reset();

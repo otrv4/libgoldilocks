@@ -55,7 +55,7 @@ public:
     inline KeccakHash &operator+=(const Block &s) DECAF_NOEXCEPT { return *this << s; }
     
     /** @brief Output bytes from the sponge. */
-    inline SecureBuffer output(size_t len) throw(std::bad_alloc, LengthException) {
+    inline SecureBuffer output(size_t len) /*throw(std::bad_alloc, LengthException)*/ {
         if (len > max_output_size()) throw LengthException();
         SecureBuffer buffer(len);
         if (DECAF_SUCCESS != decaf_sha3_output(wrapped,buffer.data(),len)) {
@@ -65,7 +65,7 @@ public:
     }
     
     /** @brief Output bytes from the sponge. */
-    inline SecureBuffer final(size_t len) throw(std::bad_alloc, LengthException) {
+    inline SecureBuffer final(size_t len) /*throw(std::bad_alloc, LengthException)*/ {
         if (len > max_output_size()) throw LengthException();
         SecureBuffer buffer(len);
         if (DECAF_SUCCESS != decaf_sha3_final(wrapped,buffer.data(),len)) {
@@ -77,7 +77,7 @@ public:
     /** @brief Output bytes from the sponge.  Throw LengthException if you've
      * output too many bytes from a SHA-3 instance.
      */
-    inline void output(Buffer b) throw(LengthException) {
+    inline void output(Buffer b) /*throw(LengthException)*/ {
         if (DECAF_SUCCESS != decaf_sha3_output(wrapped,b.data(),b.size())) {
             throw LengthException();
         }
@@ -86,7 +86,7 @@ public:
     /**  @brief Output bytes from the sponge and reinitialize it.  Throw
      * LengthException if you've output too many bytes from a SHA3 instance.
      */
-    inline void final(Buffer b) throw(LengthException) {
+    inline void final(Buffer b) /*throw(LengthException)*/ {
         if (DECAF_SUCCESS != decaf_sha3_final(wrapped,b.data(),b.size())) {
             throw LengthException();
         }
@@ -103,12 +103,12 @@ public:
     }
     
     /** Output the default number of bytes. */
-    inline SecureBuffer output() throw(std::bad_alloc,LengthException) {
+    inline SecureBuffer output() /*throw(std::bad_alloc,LengthException)*/ {
         return output(default_output_size());
     }
     
     /** Output the default number of bytes, and reset hash. */
-    inline SecureBuffer final() throw(std::bad_alloc,LengthException) {
+    inline SecureBuffer final() /*throw(std::bad_alloc,LengthException)*/ {
         return final(default_output_size());
     }
 
@@ -138,7 +138,7 @@ public:
     /** Hash bytes with this SHA3 instance.
      * @throw LengthException if nbytes > MAX_OUTPUT_BYTES
      */
-    static inline SecureBuffer hash(const Block &b, size_t nbytes = MAX_OUTPUT_BYTES) throw(std::bad_alloc, LengthException) {
+    static inline SecureBuffer hash(const Block &b, size_t nbytes = MAX_OUTPUT_BYTES) /*throw(std::bad_alloc, LengthException)*/ {
         if (nbytes > MAX_OUTPUT_BYTES) {
             throw LengthException();
         }
@@ -168,7 +168,7 @@ public:
     inline SHAKE() DECAF_NOEXCEPT : KeccakHash(get_params()) {}
     
     /** Hash bytes with this SHAKE instance */
-    static inline SecureBuffer hash(const Block &b, size_t outlen) throw(std::bad_alloc) {
+    static inline SecureBuffer hash(const Block &b, size_t outlen) /*throw(std::bad_alloc)*/ {
         SHAKE s; s += b; return s.output(outlen);
     }
 };

@@ -173,7 +173,7 @@ public:
 
     /** Invert with Fermat's Little Theorem (slow!). If *this == 0,
      * throw CryptoException. */
-    inline Scalar inverse() const throw(CryptoException) {
+    inline Scalar inverse() const /*throw(CryptoException)*/ {
         Scalar r;
         if (DECAF_SUCCESS != $(c_ns)_scalar_invert(r.s,s)) {
             throw CryptoException();
@@ -189,10 +189,10 @@ public:
     }
 
     /** Divide by inverting q. If q == 0, return 0. */
-    inline Scalar operator/ (const Scalar &q) const throw(CryptoException) { return *this * q.inverse(); }
+    inline Scalar operator/ (const Scalar &q) const /*throw(CryptoException)*/ { return *this * q.inverse(); }
 
     /** Divide by inverting q. If q == 0, return 0. */
-    inline Scalar &operator/=(const Scalar &q) throw(CryptoException) { return *this *= q.inverse(); }
+    inline Scalar &operator/=(const Scalar &q) /*throw(CryptoException)*/ { return *this *= q.inverse(); }
 
     /** Return half this scalar.  Much faster than /2. */
     inline Scalar half() const { Scalar out; $(c_ns)_scalar_halve(out.s,s); return out; }
@@ -214,7 +214,7 @@ public:
         const Block &in,
         decaf_bool_t allow_identity=DECAF_FALSE,
         decaf_bool_t short_circuit=DECAF_TRUE
-    ) const throw(CryptoException);
+    ) const /*throw(CryptoException)*/;
 };
 
 /**
@@ -287,7 +287,7 @@ public:
     * or was the identity and allow_identity was DECAF_FALSE.
     */
     inline explicit Point(const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE)
-        throw(CryptoException) {
+        /*throw(CryptoException)*/ {
         if (DECAF_SUCCESS != decode(buffer,allow_identity)) {
             throw CryptoException();
         }
@@ -323,7 +323,7 @@ public:
 
     inline void decode_like_eddsa_and_ignore_cofactor (
         const FixedBlock<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &buffer
-    ) throw(CryptoException) {
+    ) /*throw(CryptoException)*/ {
         if (DECAF_SUCCESS != decode_like_eddsa_and_ignore_cofactor_noexcept(buffer)) throw(CryptoException());
     }
 
@@ -417,10 +417,10 @@ public:
     inline Point &operator*=(const Scalar &s) DECAF_NOEXCEPT { $(c_ns)_point_scalarmul(p,p,s.s); return *this; }
 
     /** Multiply by s.inverse(). If s=0, maps to the identity. */
-    inline Point operator/ (const Scalar &s) const throw(CryptoException) { return (*this) * s.inverse(); }
+    inline Point operator/ (const Scalar &s) const /*throw(CryptoException)*/ { return (*this) * s.inverse(); }
 
     /** Multiply by s.inverse(). If s=0, maps to the identity. */
-    inline Point &operator/=(const Scalar &s) throw(CryptoException) { return (*this) *= s.inverse(); }
+    inline Point &operator/=(const Scalar &s) /*throw(CryptoException)*/ { return (*this) *= s.inverse(); }
 
     /** Validate / sanity check */
     inline bool validate() const DECAF_NOEXCEPT { return $(c_ns)_point_valid(p); }
@@ -505,7 +505,7 @@ public:
     }
 
     /** Steganographically encode this */
-    inline SecureBuffer steg_encode(Rng &rng, size_t size=STEG_BYTES) const throw(std::bad_alloc, LengthException) {
+    inline SecureBuffer steg_encode(Rng &rng, size_t size=STEG_BYTES) const /*throw(std::bad_alloc, LengthException)*/ {
         if (size <= HASH_BYTES + 4 || size > 2*HASH_BYTES) throw LengthException();
         SecureBuffer out(STEG_BYTES);
         decaf_error_t done;
@@ -583,7 +583,7 @@ public:
     /**
      * Initilaize from point. Must allocate memory, and may throw.
      */
-    inline Precomputed &operator=(const Point &it) throw(std::bad_alloc) {
+    inline Precomputed &operator=(const Point &it) /*throw(std::bad_alloc)*/ {
         alloc();
         $(c_ns)_precompute(ours.mine,it.p);
         return *this;
@@ -592,20 +592,20 @@ public:
     /**
      * Copy constructor.
      */
-    inline Precomputed(const Precomputed &it) throw(std::bad_alloc)
+    inline Precomputed(const Precomputed &it) /*throw(std::bad_alloc)*/
         : OwnedOrUnowned<Precomputed,Precomputed_U>() { *this = it; }
 
     /**
      * Constructor which initializes from point.
      */
-    inline explicit Precomputed(const Point &it) throw(std::bad_alloc)
+    inline explicit Precomputed(const Point &it) /*throw(std::bad_alloc)*/
         : OwnedOrUnowned<Precomputed,Precomputed_U>() { *this = it; }
 
     /** Fixed base scalarmul. */
     inline Point operator* (const Scalar &s) const DECAF_NOEXCEPT { Point r; $(c_ns)_precomputed_scalarmul(r.p,get(),s.s); return r; }
 
     /** Multiply by s.inverse(). If s=0, maps to the identity. */
-    inline Point operator/ (const Scalar &s) const throw(CryptoException) { return (*this) * s.inverse(); }
+    inline Point operator/ (const Scalar &s) const /*throw(CryptoException)*/ { return (*this) * s.inverse(); }
 
     /** Return the table for the base point. */
     static inline const Precomputed base() DECAF_NOEXCEPT { return Precomputed(); }
@@ -636,7 +636,7 @@ public:
     static inline SecureBuffer shared_secret(
         const FixedBlock<PUBLIC_BYTES> &pk,
         const FixedBlock<PRIVATE_BYTES> &scalar
-    ) throw(std::bad_alloc,CryptoException) {
+    ) /*throw(std::bad_alloc,CryptoException)*/ {
         SecureBuffer out(PUBLIC_BYTES);
         if (DECAF_SUCCESS != decaf_x$(gf_shortname)(out.data(), pk.data(), scalar.data())) {
             throw CryptoException();
@@ -661,7 +661,7 @@ public:
     static inline SecureBuffer DECAF_DEPRECATED("Renamed to derive_public_key")
     generate_key(
         const FixedBlock<PRIVATE_BYTES> &scalar
-    ) throw(std::bad_alloc) {
+    ) /*throw(std::bad_alloc)*/ {
         SecureBuffer out(PUBLIC_BYTES);
         decaf_x$(gf_shortname)_derive_public_key(out.data(), scalar.data());
         return out;
@@ -672,7 +672,7 @@ public:
      */
     static inline SecureBuffer derive_public_key(
         const FixedBlock<PRIVATE_BYTES> &scalar
-    ) throw(std::bad_alloc) {
+    ) /*throw(std::bad_alloc)*/ {
         SecureBuffer out(PUBLIC_BYTES);
         decaf_x$(gf_shortname)_derive_public_key(out.data(), scalar.data());
         return out;
@@ -709,7 +709,7 @@ inline SecureBuffer $(cxx_ns)::Scalar::direct_scalarmul (
     const Block &in,
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
-) const throw(CryptoException) {
+) const /*throw(CryptoException)*/ {
     SecureBuffer out($(cxx_ns)::Point::SER_BYTES);
     if (DECAF_SUCCESS !=
         $(c_ns)_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit)

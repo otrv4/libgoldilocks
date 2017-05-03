@@ -66,7 +66,7 @@ public:
     
     /** Initialize, non-deterministically by default, from C/C++ filename */
     inline SpongeRng( const std::string &in = "/dev/urandom", size_t len = 32, Deterministic det = RANDOM )
-        throw(RngException) {
+        /*throw(RngException)*/ {
         decaf_error_t ret = decaf_spongerng_init_from_file(sp,in.c_str(),len,det);
         if (!decaf_successful(ret)) {
             throw RngException(errno, "Couldn't load from file");

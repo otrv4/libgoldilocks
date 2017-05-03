@@ -59,7 +59,7 @@ public:
     inline SHA512 &operator+=(const Block &s) { return *this << s; }
     
     /** @brief Output bytes from the SHA context, and resets it. */
-    inline void final(Buffer b) throw(LengthException) {
+    inline void final(Buffer b) /*throw(LengthException)*/ {
         if (b.size() > OUTPUT_BYTES) throw LengthException();
         decaf_sha512_final(wrapped,b.data(),b.size());
     }
@@ -68,7 +68,7 @@ public:
     inline void reset() DECAF_NOEXCEPT { decaf_sha512_init(wrapped); }
 
     /** @brief Output bytes from the sponge. */
-    inline SecureBuffer final(size_t len = OUTPUT_BYTES) throw(LengthException) {
+    inline SecureBuffer final(size_t len = OUTPUT_BYTES) /*throw(LengthException)*/ {
         if (len > OUTPUT_BYTES) throw LengthException();
         SecureBuffer buffer(len);
         decaf_sha512_final(wrapped,buffer.data(),len);
@@ -85,7 +85,7 @@ public:
     static inline SecureBuffer hash (
         const Block &message,
         size_t outlen = OUTPUT_BYTES
-    ) throw(LengthException, std::bad_alloc) {
+    ) /*throw(LengthException, std::bad_alloc)*/ {
         if (outlen > OUTPUT_BYTES) throw LengthException();
         SecureBuffer buffer(outlen);
         decaf_sha512_hash(buffer.data(),outlen,message.data(),message.size());

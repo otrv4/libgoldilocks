@@ -60,7 +60,7 @@ public:
    inline T* allocate (
        size_type cnt,
        typename std::allocator<void>::const_pointer = 0
-    ) throw(std::bad_alloc);
+    ) /*throw(std::bad_alloc)*/;
    inline void deallocate(T* p, size_t size) DECAF_NOEXCEPT;
    inline size_t max_size() const DECAF_NOEXCEPT { return std::numeric_limits<size_t>::max() / sizeof(T); }
    inline void construct(T* p, const T& t) { new(p) T(t); }
@@ -93,7 +93,7 @@ public:
     }
     
     /** @brief Serialize this object into a SecureBuffer and return it */
-    inline SecureBuffer serialize() const throw(std::bad_alloc) {
+    inline SecureBuffer serialize() const /*throw(std::bad_alloc)*/ {
         SecureBuffer out(ser_size());
         serialize_into(out.data());
         return out;
@@ -101,7 +101,7 @@ public:
     
     /** Cast operator */
 #if __cplusplus >= 201103L
-    explicit inline operator SecureBuffer() const throw(std::bad_alloc) {
+    explicit inline operator SecureBuffer() const /*throw(std::bad_alloc)*/ {
         return serialize();
     }
 #endif
@@ -147,7 +147,7 @@ public:
     virtual void read(Buffer buffer) DECAF_NOEXCEPT = 0;
 
     /** @brief Read into a SecureBuffer. */
-    inline SecureBuffer read(size_t length) throw(std::bad_alloc);
+    inline SecureBuffer read(size_t length) /*throw(std::bad_alloc)*/;
 };
 
 
@@ -189,7 +189,7 @@ public:
     inline const unsigned char *data() const DECAF_NOEXCEPT { return data_; }
     
     /** Subscript */
-    inline const unsigned char &operator[](size_t off) const throw(std::out_of_range) {
+    inline const unsigned char &operator[](size_t off) const /*throw(std::out_of_range)*/ {
         if (off >= size()) throw(std::out_of_range("decaf::Block"));
         return data_[off];
     }
@@ -203,7 +203,7 @@ public:
     }
 
     /** Slice the buffer*/
-    inline Block slice(size_t off, size_t length) const throw(LengthException) {
+    inline Block slice(size_t off, size_t length) const /*throw(LengthException)*/ {
         if (off > size() || length > size() - off) throw LengthException();
         return Block(data()+off, length);
     }
@@ -215,7 +215,7 @@ public:
     }
     
     /** Create new block from this */
-    inline operator SecureBuffer() const throw(std::bad_alloc) {
+    inline operator SecureBuffer() const /*throw(std::bad_alloc)*/ {
         return SecureBuffer(data_,data_+size_);
     }
 
@@ -243,7 +243,7 @@ private:
 template<size_t Size> class FixedBlock : public Block {
 public:
     /** Check a block's length. */
-    inline FixedBlock(const Block &b) throw(LengthException) : Block(b.data(),Size) {
+    inline FixedBlock(const Block &b) /*throw(LengthException)*/ : Block(b.data(),Size) {
         if (Size != b.size()) throw LengthException();
     }
     
@@ -275,16 +275,16 @@ public:
     inline unsigned char* data() DECAF_NOEXCEPT { return data_; }
 
     /** Slice the buffer*/
-    inline Buffer slice(size_t off, size_t length) throw(LengthException);
+    inline Buffer slice(size_t off, size_t length) /*throw(LengthException)*/;
     
     /** Subscript */
-    inline unsigned char &operator[](size_t off) throw(std::out_of_range) {
+    inline unsigned char &operator[](size_t off) /*throw(std::out_of_range)*/ {
         if (off >= size()) throw(std::out_of_range("decaf::Buffer"));
         return data_[off];
     }
     
     /** Copy from another block */
-    inline void assign(const Block b) throw(LengthException) {
+    inline void assign(const Block b) /*throw(LengthException)*/ {
         if (b.size() != size()) throw LengthException();
         memmove(data(),b.data(),size());
     }
@@ -300,12 +300,12 @@ private:
 template<size_t Size> class FixedBuffer : public Buffer {
 public:
     /** Check a block's length. */
-    inline FixedBuffer(Buffer b) throw(LengthException) : Buffer(b) {
+    inline FixedBuffer(Buffer b) /*throw(LengthException)*/ : Buffer(b) {
         if (Size != b.size()) throw LengthException();
     }
     
     /** Check a block's length. */
-    inline FixedBuffer(SecureBuffer &b) throw(LengthException) : Buffer(b) {
+    inline FixedBuffer(SecureBuffer &b) /*throw(LengthException)*/ : Buffer(b) {
         if (Size != b.size()) throw LengthException();
     }
     
@@ -355,12 +355,12 @@ public:
     }
     
     /** Copy operator */
-    inline FixedArrayBuffer& operator=(const Block &b) throw(LengthException) {
+    inline FixedArrayBuffer& operator=(const Block &b) /*throw(LengthException)*/ {
         *this = FixedBlock<Size>(b);
     }
     
     /** Copy constructor */
-    inline explicit FixedArrayBuffer(const Block &b) throw(LengthException) : FixedBuffer<Size>(storage,true) {
+    inline explicit FixedArrayBuffer(const Block &b) /*throw(LengthException)*/ : FixedBuffer<Size>(storage,true) {
         if (b.size() != Size) throw LengthException();
         memcpy(storage,b.data(),Size);
     }
@@ -375,12 +375,12 @@ public:
 };
 
 /** @cond internal */
-Buffer Buffer::slice(size_t off, size_t length) throw(LengthException) {
+Buffer Buffer::slice(size_t off, size_t length) /*throw(LengthException)*/ {
     if (off > size() || length > size() - off) throw LengthException();
     return Buffer(data()+off, length);
 }
 
-inline SecureBuffer Rng::read(size_t length) throw(std::bad_alloc) {
+inline SecureBuffer Rng::read(size_t length) /*throw(std::bad_alloc)*/ {
     SecureBuffer out(length); read(out); return out;
 }
 /** @endcond */
@@ -406,7 +406,7 @@ protected:
             is_mine = false;
         }
     }
-    inline void alloc() throw(std::bad_alloc) {
+    inline void alloc() /*throw(std::bad_alloc)*/ {
         if (is_mine) return;
         int ret = posix_memalign((void**)&ours.mine, T::alignment(), T::size());
         if (ret || !ours.mine) {
@@ -427,7 +427,7 @@ protected:
    /**
     * @brief Assign.  This may require an allocation and memcpy.
     */ 
-   inline T &operator=(const OwnedOrUnowned &it) throw(std::bad_alloc) {
+   inline T &operator=(const OwnedOrUnowned &it) /*throw(std::bad_alloc)*/ {
        if (this == &it) return *(T*)this;
        if (it.is_mine) {
            alloc();
@@ -463,7 +463,7 @@ template<typename T, size_t alignment>
 T* SanitizingAllocator<T,alignment>::allocate (
     size_type cnt, 
     typename std::allocator<void>::const_pointer
-) throw(std::bad_alloc) { 
+) /*throw(std::bad_alloc)*/ { 
     void *v;
     int ret = 0;
  
