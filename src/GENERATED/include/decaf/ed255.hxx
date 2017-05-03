@@ -149,9 +149,7 @@ public:
     inline SecureBuffer sign (
         const Block &message,
         const Block &context = NO_CONTEXT()
-    ) const /* TODO: this exn spec tickles a Clang bug?
-             * throw(LengthException, std::bad_alloc)
-             */ {
+    ) const /* throw(LengthException, std::bad_alloc) */ {
         if (context.size() > 255) {
             throw LengthException();
         }

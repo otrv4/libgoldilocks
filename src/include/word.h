@@ -36,7 +36,11 @@ extern int posix_memalign(void **, size_t, size_t);
 #if defined(__ARM_NEON__)
 #include <arm_neon.h>
 #elif defined(__SSE2__)
-#include <immintrin.h>
+    #if !defined(__GNUC__) || __clang__ || __GNUC__ >= 5 || (__GNUC__==4 && __GNUC_MINOR__ >= 4)
+        #include <immintrin.h>
+    #else
+        #include <emmintrin.h>
+    #endif
 #endif
 
 #if (ARCH_WORD_BITS == 64)

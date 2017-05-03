@@ -50,7 +50,7 @@ endif
 TODAY = $(shell date "+%Y-%m-%d")
 
 #FIXME ARCHFLAGS
-ARCHFLAGS ?= -maes -mavx2 -mbmi2 #TODO
+ARCHFLAGS ?= -mavx2 -mbmi2 #TODO
 
 ifeq ($(CC),clang)
 WARNFLAGS_C += -Wgcc-compat
