@@ -520,7 +520,7 @@ static void test_eddsa() {
         rng.read(message);
         
         SecureBuffer context(i%256);
-        rng.read(message);
+        rng.read(context);
         
         SecureBuffer sig = priv.sign(message,context); 
         
