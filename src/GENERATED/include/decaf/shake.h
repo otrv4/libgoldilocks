@@ -136,7 +136,7 @@ void decaf_sponge_destroy (
  * @param [in] outlen The length of the output data.
  * @param [in] params The parameters of the sponge hash.
  */  
-void decaf_sponge_hash (
+decaf_error_t decaf_sponge_hash (
     const uint8_t *in,
     size_t inlen,
     uint8_t *out,
@@ -163,6 +163,9 @@ void decaf_sponge_hash (
         decaf_sha3_output(sponge->s, out, outlen); \
         decaf_sponge_init(sponge->s, &DECAF_SHAKE##n##_params_s); \
     } \
+    static inline void  DECAF_NONNULL decaf_shake##n##_output(decaf_shake##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
+        decaf_sha3_output(sponge->s, out, outlen); \
+    } \
     static inline void  DECAF_NONNULL decaf_shake##n##_hash(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen) { \
         decaf_sponge_hash(in,inlen,out,outlen,&DECAF_SHAKE##n##_params_s); \
     } \
@@ -182,12 +185,16 @@ void decaf_sponge_hash (
     static inline void DECAF_NONNULL decaf_sha3_##n##_update(decaf_sha3_##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
         decaf_sha3_update(sponge->s, in, inlen); \
     } \
-    static inline void DECAF_NONNULL decaf_sha3_##n##_final(decaf_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
-        decaf_sha3_output(sponge->s, out, outlen); \
+    static inline decaf_error_t DECAF_NONNULL decaf_sha3_##n##_final(decaf_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
+        decaf_error_t ret = decaf_sha3_output(sponge->s, out, outlen); \
         decaf_sponge_init(sponge->s, &DECAF_SHA3_##n##_params_s); \
+        return ret; \
     } \
-    static inline void DECAF_NONNULL decaf_sha3_##n##_hash(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen) { \
-        decaf_sponge_hash(in,inlen,out,outlen,&DECAF_SHA3_##n##_params_s); \
+    static inline decaf_error_t DECAF_NONNULL decaf_sha3_##n##_output(decaf_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
+        return decaf_sha3_output(sponge->s, out, outlen); \
+    } \
+    static inline decaf_error_t DECAF_NONNULL decaf_sha3_##n##_hash(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen) { \
+        return decaf_sponge_hash(in,inlen,out,outlen,&DECAF_SHA3_##n##_params_s); \
     } \
     static inline void DECAF_NONNULL decaf_sha3_##n##_destroy(decaf_sha3_##n##_ctx_t sponge) { \
         decaf_sponge_destroy(sponge->s); \

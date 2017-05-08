@@ -187,7 +187,7 @@ void decaf_sponge_init (
     decaf_sponge->params->position = 0;
 }
 
-void decaf_sponge_hash (
+decaf_error_t decaf_sponge_hash (
     const uint8_t *in,
     size_t inlen,
     uint8_t *out,
@@ -197,8 +197,9 @@ void decaf_sponge_hash (
     decaf_keccak_sponge_t decaf_sponge;
     decaf_sponge_init(decaf_sponge, params);
     decaf_sha3_update(decaf_sponge, in, inlen);
-    decaf_sha3_output(decaf_sponge, out, outlen);
+    decaf_error_t ret = decaf_sha3_output(decaf_sponge, out, outlen);
     decaf_sponge_destroy(decaf_sponge);
+    return ret;
 }
 
 #define DEFSHAKE(n) \
