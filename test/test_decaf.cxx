@@ -12,6 +12,7 @@
 #include <decaf.hxx>
 #include <decaf/spongerng.hxx>
 #include <decaf/eddsa.hxx>
+#include <decaf/shake.hxx>
 #include <stdio.h>
 
 using namespace decaf;
@@ -598,6 +599,22 @@ static void run() {
 
 }; /* template<GroupId GROUP> struct Tests */
 
+static void test_xof() {
+    Test test("XOF");
+    
+    FixedArrayBuffer<1024> a,b;
+    
+    SHAKE<128> s1, s2;
+    unsigned i;
+    for (i=0; i<a.size(); i++) s1.output(a.slice(i,1));
+    s2.output(b);
+    
+    if (!a.contents_equal(b)) {
+        test.fail();
+        printf("    Buffers aren't equal!\n");
+    }
+}
+
 static void test_rng() {
     Test test("RNG");
     SpongeRng rng_d1(Block("test_rng"),SpongeRng::DETERMINISTIC);
@@ -649,6 +666,7 @@ static void test_rng() {
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
     test_rng();
+    test_xof();
     printf("\n");
     run_for_all_curves<Tests>();
     if (passing) printf("Passed all tests.\n");
