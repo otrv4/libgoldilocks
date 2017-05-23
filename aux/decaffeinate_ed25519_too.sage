@@ -98,7 +98,11 @@ def decaf_to_eddsa_opt(s):
     if hibit(s): raise Exception("invalid: s has high bit")
     if not is_square(s^4 + (2-4*dM)*s^2 + 1): raise Exception("invalid: not on curve")
     
-    t = sqrt(s^4 + (2-4*dM)*s^2 + 1)/s
+    curve_eqn = s^4 + (2-4*dM)*s^2 + 1
+    isr,inv = isqrt_trick(curve_eqn,s)
+    
+    t = isr * curve_eqn * inv
+    
     if hibit(t): t = -t
     y = (1-s^2)/(1+s^2)
     x = 2*magic/t
