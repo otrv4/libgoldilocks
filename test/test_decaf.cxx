@@ -600,12 +600,18 @@ static void run() {
 }; /* template<GroupId GROUP> struct Tests */
 
 static void test_xof() {
+    /* TODO: more testing of XOFs */
     Test test("XOF");
+    SpongeRng rng(Block("test_xof"),SpongeRng::DETERMINISTIC);
     
-    FixedArrayBuffer<1024> a,b;
+    FixedArrayBuffer<1024> a,b,c;
+    rng.read(c);
     
     SHAKE<128> s1, s2;
     unsigned i;
+    for (i=0; i<c.size(); i++) s1.update(c.slice(i,1));
+    s2.update(c);
+    
     for (i=0; i<a.size(); i++) s1.output(a.slice(i,1));
     s2.output(b);
     
