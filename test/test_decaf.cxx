@@ -353,7 +353,12 @@ static void test_ec() {
         rng.read(buffer);
         Point r = Point::from_hash(buffer);
         
-        point_check(test,p,q,r,0,0,p,Point(p.serialize()),"round-trip");
+        try {
+            point_check(test,p,q,r,0,0,p,Point(p.serialize()),"round-trip");
+        } catch (CryptoException) {
+            test.fail();
+            printf("    Round-trip raised CryptoException!\n");
+        }
         Point pp = p.debugging_torque().debugging_pscale(rng);
         if (!memeq(pp.serialize(),p.serialize())) {
             test.fail();
@@ -390,8 +395,13 @@ static void test_ec() {
             + Point::from_hash(Buffer(buffer).slice(Point::HASH_BYTES,Point::HASH_BYTES)),
             "unih = hash+add"
         );
-            
-        point_check(test,p,q,r,x,0,Point(x.direct_scalarmul(p.serialize())),x*p,"direct mul");
+        
+        try {
+            point_check(test,p,q,r,x,0,Point(x.direct_scalarmul(p.serialize())),x*p,"direct mul");
+        } catch (CryptoException) {
+            printf("    Direct mul raised CryptoException!\n");
+            test.fail();
+        }
         
         q=p;
         for (int j=1; j<Group::REMOVED_COFACTOR; j<<=1) q = q.times_two();
@@ -531,7 +541,6 @@ static void test_eddsa() {
             printf("    Signature validation failed on sig %d\n", i);
         }    
     }
-    
 }
 
 /* Thanks Johan Pascal */

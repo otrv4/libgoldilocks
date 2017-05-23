@@ -50,7 +50,7 @@ void API_NS(point_from_hash_nonuniform) (
     
     /* s@a = +-|N.e| */
     gf_mul(a,N,e);
-    gf_cond_neg(a,gf_hibit(a)^square); /* NB this is - what is listen in the paper */
+    gf_cond_neg(a,gf_hibit(a)^square); /* NB this is - what is listed in the paper */
     
     /* t@b = -+ cN(r-1)((a-2d)e)^2 - 1 */
     gf_mulw(c,e,1-2*EDWARDS_D); /* (a-2d)e */

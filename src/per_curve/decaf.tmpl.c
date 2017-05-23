@@ -46,9 +46,13 @@ const uint8_t decaf_x$(gf_shortname)_base_point[DECAF_X$(gf_shortname)_PUBLIC_BY
 /* End of template stuff */
 
 /* Sanity */
-#if (COFACTOR == 8) && !IMAGINE_TWIST
+#if (COFACTOR == 8) && !IMAGINE_TWIST && !UNSAFE_CURVE_HAS_POINTS_AT_INFINITY
 /* FUTURE MAGIC: Curve41417 doesn't have these properties. */
-    #error "Currently require IMAGINE_TWIST (and thus p=5 mod 8) for cofactor 8"
+#error "Currently require IMAGINE_TWIST (and thus p=5 mod 8) for cofactor 8"
+        /* OK, but why?
+         * Two reasons: #1: There are bugs when COFACTOR == && IMAGINE_TWIST
+         # #2: 
+         */
 #endif
 
 #if IMAGINE_TWIST && (P_MOD_8 != 5)
@@ -111,15 +115,6 @@ void API_NS(deisogenize) (
     mask_t toggle_hibit_s,
     mask_t toggle_hibit_t_over_s,
     mask_t toggle_rotation
-);
-    
-void API_NS(deisogenize) (
-    gf_s *__restrict__ s,
-    gf_s *__restrict__ minus_t_over_s,
-    const point_t p,
-    mask_t toggle_hibit_s,
-    mask_t toggle_hibit_t_over_s,
-    mask_t toggle_rotation
 ) {
 #if COFACTOR == 4 && !IMAGINE_TWIST
     (void) toggle_rotation;
@@ -152,7 +147,7 @@ void API_NS(deisogenize) (
 #else
     /* More complicated because of rotation */
     /* MAGIC This code is wrong for certain non-Curve25519 curves;
-     * check if it's because of Cofactor==8 or IMAGINE_ROTATION */
+     * check if it's because of Cofactor==8 or IMAGINE_TWIST */
     
     gf c, d;
     gf_s *b = s, *a = minus_t_over_s;
@@ -166,11 +161,11 @@ void API_NS(deisogenize) (
         gf_mul ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 - X^2 */
     #else
         const gf_s *x = p->x, *t = p->t;
-        /* Won't hit the gf_cond_sel below because COFACTOR==8 requires IMAGINE_TWIST for now. */
         gf_sqr ( a, p->z );
         gf_sqr ( b, p->x );
         gf_add ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 + X^2 */
     #endif
+    /* Here: c = "zx" in the SAGE code = Z^2 - aX^2 */
     
     gf_mul ( a, p->z, t ); /* "tz" = T*Z */
     gf_sqr ( b, a );
@@ -190,8 +185,9 @@ void API_NS(deisogenize) (
         /* Curve25519: cond select between zx * 1/tz or sqrt(1-d); y=-x */
         gf_mul ( a, b, c ); 
         gf_cond_sel ( a, a, SQRT_ONE_MINUS_D, rotate );
-        gf_cond_sel ( x, p->y, x, rotate );
+        gf_cond_sel ( e, p->y, x, rotate );
     #else
+        const gf_s *e = x;
         (void)toggle_rotation;
         rotate = 0;
     #endif
@@ -205,7 +201,7 @@ void API_NS(deisogenize) (
     gf_cond_neg ( minus_t_over_s, tg );
     gf_cond_neg ( c, rotate ^ tg );
     gf_add ( d, d, c );
-    gf_mul ( s, d, x ); /* here "x" = y unless rotate */
+    gf_mul ( s, d, e ); /* here "x" = y unless rotate */
     gf_cond_neg ( s, toggle_hibit_s ^ gf_hibit(s) );
 #endif
 }
@@ -225,24 +221,24 @@ decaf_error_t API_NS(point_decode) (
     mask_t succ = gf_deserialize(s, ser, 0);
     mask_t zero = gf_eq(s, ZERO);
     succ &= bool_to_mask(allow_identity) | ~zero;
-    gf_sqr ( a, s );
+    gf_sqr ( a, s ); /* s^2 */
 #if IMAGINE_TWIST
     gf_sub ( f, ONE, a ); /* f = 1-as^2 = 1-s^2*/
 #else
     gf_add ( f, ONE, a ); /* f = 1-as^2 = 1+s^2 */
 #endif
     succ &= ~ gf_eq( f, ZERO );
-    gf_sqr ( b, f ); 
+    gf_sqr ( b, f );  /* (1-as^2)^2 = 1 - 2as^2 + a^2 s^4 */
     gf_mulw ( c, a, 4*IMAGINE_TWIST-4*EDWARDS_D ); 
-    gf_add ( c, c, b ); /* t^2 */
-    gf_mul ( d, f, s ); /* s(1-as^2) for denoms */
-    gf_sqr ( e, d );
-    gf_mul ( b, c, e );
+    gf_add ( c, c, b ); /* t^2 = 1 + (2a-4d) s^2 + s^4 */
+    gf_mul ( d, f, s ); /* s * (1-as^2) for denoms */
+    gf_sqr ( e, d );    /* s^2 * (1-as^2)^2 */
+    gf_mul ( b, c, e ); /* t^2 * s^2 * (1-as^2)^2 */
     
     succ &= gf_isr(e,b) | gf_eq(b,ZERO); /* e = 1/(t s (1-as^2)) */
-    gf_mul ( b, e, d ); /* 1/t */
-    gf_mul ( d, e, c ); /* d = t / (s(1-as^2)) */
-    gf_mul ( e, d, f ); /* t/s */
+    gf_mul ( b, e, d ); /* 1 / t */
+    gf_mul ( d, e, c ); /* t / (s(1-as^2)) */
+    gf_mul ( e, d, f ); /* t / s */
     mask_t negtos = gf_hibit(e);
     gf_cond_neg(b, negtos);
     gf_cond_neg(d, negtos);
@@ -268,8 +264,23 @@ decaf_error_t API_NS(point_decode) (
 #endif
     gf_mul ( p->t, p->x, a ); /* T = 2s (1-as^2)/t */
     
-    p->y->limb[0] -= zero;
+#if UNSAFE_CURVE_HAS_POINTS_AT_INFINITY
+    /* This can't happen for any of the supported configurations.
+     *
+     * If it can happen (because s=1), it's because the curve has points
+     * at infinity, which means that there may be critical security bugs
+     * elsewhere in the library.  In that case, it's better that you hit
+     * the assertion in point_valid, which will happen in the test suite
+     * since it tests s=1.
+     *
+     * This debugging option is to allow testing of IMAGINE_TWIST = 0 on
+     * Ed25519, without hitting that assertion.  Don't use it in
+     * production.
+     */
+    succ &= ~gf_eq(p->z,ZERO);
+#endif
     
+    p->y->limb[0] -= zero;
     assert(API_NS(point_valid)(p) | ~succ);
     
     return decaf_succeed_if(mask_to_bool(succ));
@@ -811,7 +822,7 @@ void API_NS(point_debugging_torque) (
     point_t q,
     const point_t p
 ) {
-#if COFACTOR == 8
+#if COFACTOR == 8 && IMAGINE_TWIST
     gf tmp;
     gf_mul(tmp,p->x,SQRT_MINUS_ONE);
     gf_mul(q->x,p->y,SQRT_MINUS_ONE);
@@ -1389,7 +1400,13 @@ void decaf_x$(gf_shortname)_derive_public_key (
     point_t p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),the_scalar);
     
-    /* Isogenize to Montgomery curve */
+    /* Isogenize to Montgomery curve.
+     *
+     * Why isn't this just a separate function, eg decaf_encode_like_x$(gf_shortname)?
+     * Basically because in general it does the wrong thing if there is a cofactor
+     * component in the input.  In this function though, there isn't a cofactor
+     * component in the input.
+     */
     gf_invert(p->t,p->x); /* 1/x */
     gf_mul(p->z,p->t,p->y); /* y/x */
     gf_sqr(p->y,p->z); /* (y/x)^2 */
