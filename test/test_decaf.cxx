@@ -599,6 +599,7 @@ static void run() {
 
 }; /* template<GroupId GROUP> struct Tests */
 
+template<typename T>
 static void test_xof() {
     /* TODO: more testing of XOFs */
     Test test("XOF");
@@ -607,7 +608,7 @@ static void test_xof() {
     FixedArrayBuffer<1024> a,b,c;
     rng.read(c);
     
-    SHAKE<128> s1, s2;
+    T s1, s2;
     unsigned i;
     for (i=0; i<c.size(); i++) s1.update(c.slice(i,1));
     s2.update(c);
@@ -672,7 +673,8 @@ static void test_rng() {
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
     test_rng();
-    test_xof();
+    test_xof<SHAKE<128> >();
+    test_xof<SHAKE<256> >();
     printf("\n");
     run_for_all_curves<Tests>();
     if (passing) printf("Passed all tests.\n");
