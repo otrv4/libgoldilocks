@@ -85,12 +85,11 @@ void keccakf(kdomain_t state, uint8_t start_round) {
     for (i=0; i<25; i++) a[i] = htole64(a[i]);
 }
 
-void decaf_sha3_update (
+decaf_error_t decaf_sha3_update (
     struct decaf_keccak_sponge_s * __restrict__ decaf_sponge,
     const uint8_t *in,
     size_t len
 ) {
-    if (!len) return;
     assert(decaf_sponge->params->position < decaf_sponge->params->rate);
     assert(decaf_sponge->params->rate < sizeof(decaf_sponge->state));
     assert(decaf_sponge->params->flags == FLAG_ABSORBING);
@@ -100,7 +99,7 @@ void decaf_sha3_update (
         if (cando > len) {
             for (i = 0; i < len; i += 1) state[i] ^= in[i];
             decaf_sponge->params->position += len;
-            return;
+            break;
         } else {
             for (i = 0; i < cando; i += 1) state[i] ^= in[i];
             dokeccak(decaf_sponge);
@@ -108,6 +107,7 @@ void decaf_sha3_update (
             in += cando;
         }
     }
+    return (decaf_sponge->params->flags == FLAG_ABSORBING) ? DECAF_SUCCESS : DECAF_FAILURE;
 }
 
 decaf_error_t decaf_sha3_output (
@@ -136,6 +136,7 @@ decaf_error_t decaf_sha3_output (
             state[decaf_sponge->params->position] ^= decaf_sponge->params->pad;
             state[decaf_sponge->params->rate - 1] ^= decaf_sponge->params->rate_pad;
             dokeccak(decaf_sponge);
+            decaf_sponge->params->flags = FLAG_SQUEEZING;
             break;
         }
     default:
@@ -173,6 +174,7 @@ void decaf_sha3_reset (
     decaf_keccak_sponge_t decaf_sponge
 ) {
     decaf_sponge_init(decaf_sponge, decaf_sponge->params);
+    decaf_sponge->params->flags = FLAG_ABSORBING;
     decaf_sponge->params->remaining = decaf_sponge->params->max_out;
 }
 

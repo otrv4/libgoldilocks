@@ -5,12 +5,15 @@ ii = sqrt(F(-1))
 def lobit(x): return int(x) & 1
 def hibit(x): return lobit(2*x)
 
-magic = sqrt(F(-121666))
+magic = sqrt(dM-1)
 if lobit(magic): magic = -magic
 
-def eddsa_decode(y):
-    hi = int(y) & 2^255
-    y = F(y-hi)
+def eddsa_decode(y_ser):
+    """
+    Recover x,y corresponding to the eddsa standard representation.
+    """
+    hi = int(y_ser) & 2^255
+    y = F(y_ser-hi)
     
     x = sqrt((y^2-1)/(d*y^2+1))                                                               
     if int(x) & 1: x = -x
@@ -37,6 +40,11 @@ def eddsa_to_decaf(x,y):
     return s
 
 def isqrt_trick(to_isr,to_inv):
+    """
+    The "inverse square root" trick:
+    Return 1/sqrt(to_isr), 1/to_inv.
+    Also return their product because that turns out to be useful.
+    """
     to_sqrt = to_isr*to_inv^2
     
     if to_sqrt == 0: return 0,0,0 # This happens automatically in C; just to avoid problems in SAGE
@@ -58,7 +66,7 @@ def eddsa_to_decaf_opt(x,y,z=None):
     but whatever.
     """
     if z is None:
-        # Pretend that we're in projective
+        # Pretend that we're in projective coordinates
         z = F.random_element()
         x *= z
         y *= z
@@ -105,9 +113,9 @@ def decaf_to_eddsa(s):
 def decaf_to_eddsa_opt(s):
     """
     Convert a Decaf representation to an EdDSA point, in a manner compatible
-    with libdecaf.
+    with libdecaf.  Optimized to use only one invsqrt.
     
-    This function is slightly less horrible if we don't want to decode to affine.
+    This function would be slightly simpler if we didn't want to decode to affine.
     """
     if s < 0 or s >= F.modulus(): raise Exception("out of field!")
     s = F(s)
@@ -118,13 +126,13 @@ def decaf_to_eddsa_opt(s):
     isr,inv,isr_times_inv = isqrt_trick(curve_eqn,s*(1-s^2)*(1+s^2))
     if isr == 0: raise Exception("Invalid: nonstandard encoding of zero")
     
-    t = isr_times_inv * curve_eqn * (1-s^2) * (1+s^2)
     x = 2 * magic * s * isr
     y = (1-s^2)^2 * s * inv
     
-    hibit_t = hibit(t)
+    tmp = isr_times_inv * curve_eqn * (1+s^2) # = sqrt(curve_eqn) / s / (1-s^2)
+    hibit_t = hibit(tmp * (1-s^2))
     if hibit_t: x = -x
-    if lobit(t * (1+s^2)^2 * s * inv) != hibit_t: raise Exception("invalid: t/y has high bit")
+    if lobit(tmp * (1+s^2)) != hibit_t: raise Exception("invalid: bits don't match")
     
     assert y^2 - x^2 == 1+d*x^2*y^2
     return (x,y)

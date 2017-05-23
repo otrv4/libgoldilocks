@@ -53,8 +53,10 @@ void decaf_sponge_init (
  * @param [inout] sponge The context.
  * @param [in] in The input data.
  * @param [in] len The input data's length in bytes.
+ * @return DECAF_FAILURE if the sponge has already been used for output.
+ * @return DECAF_SUCCESS otherwise.
  */
-void decaf_sha3_update (
+decaf_error_t decaf_sha3_update (
     struct decaf_keccak_sponge_s * __restrict__ sponge,
     const uint8_t *in,
     size_t len
@@ -156,8 +158,8 @@ decaf_error_t decaf_sponge_hash (
     static inline void DECAF_NONNULL decaf_shake##n##_gen_init(decaf_keccak_sponge_t sponge) { \
         decaf_sponge_init(sponge, &DECAF_SHAKE##n##_params_s); \
     } \
-    static inline void DECAF_NONNULL decaf_shake##n##_update(decaf_shake##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
-        decaf_sha3_update(sponge->s, in, inlen); \
+    static inline decaf_error_t DECAF_NONNULL decaf_shake##n##_update(decaf_shake##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
+        return decaf_sha3_update(sponge->s, in, inlen); \
     } \
     static inline void  DECAF_NONNULL decaf_shake##n##_final(decaf_shake##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
         decaf_sha3_output(sponge->s, out, outlen); \
@@ -182,8 +184,8 @@ decaf_error_t decaf_sponge_hash (
     static inline void DECAF_NONNULL decaf_sha3_##n##_gen_init(decaf_keccak_sponge_t sponge) { \
         decaf_sponge_init(sponge, &DECAF_SHA3_##n##_params_s); \
     } \
-    static inline void DECAF_NONNULL decaf_sha3_##n##_update(decaf_sha3_##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
-        decaf_sha3_update(sponge->s, in, inlen); \
+    static inline decaf_error_t DECAF_NONNULL decaf_sha3_##n##_update(decaf_sha3_##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
+        return decaf_sha3_update(sponge->s, in, inlen); \
     } \
     static inline decaf_error_t DECAF_NONNULL decaf_sha3_##n##_final(decaf_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
         decaf_error_t ret = decaf_sha3_output(sponge->s, out, outlen); \
