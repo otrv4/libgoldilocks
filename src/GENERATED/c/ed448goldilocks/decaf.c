@@ -126,6 +126,15 @@ void API_NS(deisogenize) (
     mask_t toggle_hibit_s,
     mask_t toggle_hibit_t_over_s,
     mask_t toggle_rotation
+);
+
+void API_NS(deisogenize) (
+    gf_s *__restrict__ s,
+    gf_s *__restrict__ minus_t_over_s,
+    const point_t p,
+    mask_t toggle_hibit_s,
+    mask_t toggle_hibit_t_over_s,
+    mask_t toggle_rotation
 ) {
 #if COFACTOR == 4 && !IMAGINE_TWIST
     (void) toggle_rotation;
@@ -1411,7 +1420,13 @@ void decaf_x448_derive_public_key (
     point_t p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),the_scalar);
     
-    /* Isogenize to Montgomery curve */
+    /* Isogenize to Montgomery curve.
+     *
+     * Why isn't this just a separate function, eg decaf_encode_like_x448?
+     * Basically because in general it does the wrong thing if there is a cofactor
+     * component in the input.  In this function though, there isn't a cofactor
+     * component in the input.
+     */
     gf_invert(p->t,p->x); /* 1/x */
     gf_mul(p->z,p->t,p->y); /* y/x */
     gf_sqr(p->y,p->z); /* (y/x)^2 */

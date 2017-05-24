@@ -115,6 +115,15 @@ void API_NS(deisogenize) (
     mask_t toggle_hibit_s,
     mask_t toggle_hibit_t_over_s,
     mask_t toggle_rotation
+);
+
+void API_NS(deisogenize) (
+    gf_s *__restrict__ s,
+    gf_s *__restrict__ minus_t_over_s,
+    const point_t p,
+    mask_t toggle_hibit_s,
+    mask_t toggle_hibit_t_over_s,
+    mask_t toggle_rotation
 ) {
 #if COFACTOR == 4 && !IMAGINE_TWIST
     (void) toggle_rotation;
