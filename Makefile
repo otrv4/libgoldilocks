@@ -16,8 +16,6 @@ BUILD_LIB = build/lib
 BUILD_INC = src/GENERATED/include
 BUILD_BIN = build/bin
 BUILD_IBIN = build/obj/bin
-BATBASE=ed448goldilocks_decaf_bats_$(TODAY)
-BATNAME=build/$(BATBASE)
 
 ifeq ($(UNAME),Darwin)
 CC = clang
@@ -49,8 +47,7 @@ endif
 
 TODAY = $(shell date "+%Y-%m-%d")
 
-#FIXME ARCHFLAGS
-ARCHFLAGS ?= -mavx2 -mbmi2 #TODO
+ARCHFLAGS ?= -march=native
 
 ifeq ($(CC),clang)
 WARNFLAGS_C += -Wgcc-compat
@@ -264,7 +261,6 @@ else
 	$(LD) $(LDFLAGS) -shared -Wl,-soname,`basename $@` -Wl,--gc-sections -o $@ $(LIBCOMPONENTS)
 	strip --discard-all $@
 endif
-
 
 
 $(BUILD_OBJ)/%.o: src/%.c $(HEADERS)
