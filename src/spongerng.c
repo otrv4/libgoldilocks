@@ -30,7 +30,21 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
     static char tested = 0, have_rdrand = 0;
     if (!tested) {
         uint32_t a,b,c,d;
+#if defined(__i386__) && defined(__PIC__)
+        /* Don't clobber ebx.  The compiler doesn't like when when __PIC__ */
+        __asm__("mov %%ebx, %[not_ebx]\n\t"
+                "cpuid\n\t"
+                "xchg %%ebx, %[not_ebx]" : "=a"(a), [not_ebx]"=r"(b), "=c"(c), "=d"(d) : "0"(1));
+#elif defined(__x86_64__) && defined(__PIC__)
+        /* Don't clobber rbx.  The compiler doesn't like when when __PIC__ */
+        uint64_t b64;
+        __asm__("mov %%rbx, %[not_rbx]\n\t"
+                "cpuid\n\t"
+                "xchg %%rbx, %[not_rbx]" : "=a"(a), [not_rbx]"=r"(b64), "=c"(c), "=d"(d) : "0"(1));
+        b = b64;
+#else
         __asm__("cpuid" : "=a"(a), "=b"(b), "=c"(c), "=d"(d) : "0"(1));
+#endif
         have_rdrand = (c>>30)&1;
         tested = 1;
     }
