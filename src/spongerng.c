@@ -30,7 +30,7 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
     static char tested = 0, have_rdrand = 0;
     if (!tested) {
         uint32_t a,b,c,d;
-        a=1; __asm__("cpuid" : "+a"(a), "=b"(b), "=c"(c), "=d"(d));
+        __asm__("cpuid" : "=a"(a), "=b"(b), "=c"(c), "=d"(d) : "0"(1));
         have_rdrand = (c>>30)&1;
         tested = 1;
     }
@@ -80,7 +80,7 @@ void decaf_spongerng_next (
 ) {
     if (prng->sponge->params->remaining) {
         /* nondet */
-        uint8_t cpu_entropy[32];
+        uint8_t cpu_entropy[32] = {0};
         get_cpu_entropy(cpu_entropy, sizeof(cpu_entropy));
         decaf_spongerng_stir(prng,cpu_entropy,sizeof(cpu_entropy));
         decaf_bzero(cpu_entropy,sizeof(cpu_entropy));
