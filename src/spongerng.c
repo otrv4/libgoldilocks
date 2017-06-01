@@ -45,6 +45,7 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
 #else
         __asm__("cpuid" : "=a"(a), "=b"(b), "=c"(c), "=d"(d) : "0"(1));
 #endif
+        (void)a; (void)b; (void)d;
         have_rdrand = (c>>30)&1;
         tested = 1;
     }

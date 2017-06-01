@@ -194,7 +194,9 @@ API_NS(scalar_set_unsigned) (
     unsigned int i = 0;
     for (; i<sizeof(uint64_t)/sizeof(decaf_word_t); i++) {
         out->limb[i] = w;
-        w >>= (sizeof(uint64_t) > sizeof(decaf_word_t)) ? 8*sizeof(decaf_word_t) : 0;
+#if DECAF_WORD_BITS < 64
+        w >>= 8*sizeof(decaf_word_t);
+#endif
     }
 }
 
