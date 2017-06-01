@@ -1,7 +1,22 @@
+The Python bindings are Copyright 2017 John-Mark Gurney, and are provided
+under a BSD license as described in python/edgold/ed448.py
+
+Certain sections of code are public domain or CC0, as marked.
+
+Earlier versions of this project used small amounts of code which were
+  Copyright (c) 2011 Stanford University
+  Copyright (c) 2011 Mike Hamburg
+but I believe that all of this code has now been replaced.
+
+The bulk of this library is 
+  Copyright (c) 2014-2017 Cryptography Research, Inc.
+and licensed under the following MIT license.
+
+
+
 The MIT License (MIT)
 
-Copyright (c) 2011 Stanford University.
-Copyright (c) 2014 Cryptography Research, Inc.
+Copyright (c) 2014-2017 Cryptography Research, Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
