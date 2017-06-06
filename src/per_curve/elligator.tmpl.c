@@ -169,7 +169,11 @@ API_NS(invert_elligator_nonuniform) (
         gf_serialize(recovered_hash,b,1);
         #if PKP_MASK != 0
             /* Add a multiple of p to make the result either almost-onto or completely onto. */
-            succ &= plus_k_p(recovered_hash, (hint >> ((COFACTOR==8)?4:3)) & PKP_MASK);
+            #if COFACTOR == 8
+                succ &= plus_k_p(recovered_hash, (hint >> 4) & PKP_MASK);
+            #else
+                succ &= plus_k_p(recovered_hash, (hint >> 3) & PKP_MASK);
+            #endif
         #endif
     #endif
     return decaf_succeed_if(mask_to_bool(succ));
