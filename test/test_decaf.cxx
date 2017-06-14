@@ -425,6 +425,23 @@ static const uint8_t rfc7748_1000000[DhLadder::PUBLIC_BYTES];
 static void test_cfrg_crypto() {
     Test test("CFRG crypto");
     SpongeRng rng(Block("test_cfrg_crypto"),SpongeRng::DETERMINISTIC);
+    
+    {
+        FixedArrayBuffer<DhLadder::PUBLIC_BYTES> base, out;
+        FixedArrayBuffer<DhLadder::PRIVATE_BYTES> s1(rng);
+        decaf_error_t e = DhLadder::shared_secret_noexcept(out,base,s1);
+        if (e != DECAF_FAILURE) {
+            test.fail();
+            printf("    Multiply by 0 didn't give an error\n");
+        }
+        if (!out.contents_equal(base)) {
+            test.fail();
+            printf("    Multiply by 0 didn't give 0\n");
+        }
+    }
+    
+    
+    
     for (int i=0; i<NTESTS && test.passing_now; i++) {
         
         FixedArrayBuffer<DhLadder::PUBLIC_BYTES> base(rng);

@@ -98,11 +98,12 @@ const size_t API_NS(alignof_precomputed_s) = sizeof(big_register_t);
 
 /** Inverse. */
 static void
-gf_invert(gf y, const gf x) {
+gf_invert(gf y, const gf x, int assert_nonzero) {
     gf t1, t2;
     gf_sqr(t1, x); // o^2
     mask_t ret = gf_isr(t2, t1); // +-1/sqrt(o^2) = +-1/o
-    (void)ret; assert(ret);
+    (void)ret;
+    if (assert_nonzero) assert(ret);
     gf_sqr(t1, t2);
     gf_mul(t2, t1, x); // not direct to y in case of alias.
     gf_copy(y, t2);
@@ -891,7 +892,7 @@ static void gf_batch_invert (
     }
     gf_mul(out[0], out[n-1], in[n-1]);
 
-    gf_invert(out[0], out[0]);
+    gf_invert(out[0], out[0], 1);
 
     for (i=n-1; i>0; i--) {
         gf_mul(t1, out[i], out[0]);
@@ -1148,7 +1149,7 @@ void API_NS(point_mul_by_cofactor_and_encode_like_eddsa) (
     }
 #endif
     /* Affinize */
-    gf_invert(z,z);
+    gf_invert(z,z,1);
     gf_mul(t,x,z);
     gf_mul(x,y,z);
     
@@ -1322,7 +1323,7 @@ decaf_error_t decaf_x448 (
     /* Finish */
     gf_cond_swap(x2,x3,swap);
     gf_cond_swap(z2,z3,swap);
-    gf_invert(z2,z2);
+    gf_invert(z2,z2,0);
     gf_mul(x1,x2,z2);
     gf_serialize(out,x1,1);
     mask_t nz = ~gf_eq(x1,ZERO);
@@ -1361,14 +1362,14 @@ void decaf_ed448_convert_public_key_to_x448 (
         /* u = (1+y)/(1-y)*/
         gf_add(n, y, ONE); /* n = y+1 */
         gf_sub(d, ONE, y); /* d = 1-y */
-        gf_invert(d, d); /* d = 1/(1-y) */
+        gf_invert(d, d, 0); /* d = 1/(1-y) */
         gf_mul(y, n, d); /* u = (y+1)/(1-y) */
         gf_serialize(x,y,1);
 #else /* EDDSA_USE_SIGMA_ISOGENY */
         /* u = y^2 * (1-dy^2) / (1-y^2) */
         gf_sqr(n,y); /* y^2*/
         gf_sub(d,ONE,n); /* 1-y^2*/
-        gf_invert(d,d); /* 1/(1-y^2)*/
+        gf_invert(d,d,0); /* 1/(1-y^2)*/
         gf_mul(y,n,d); /* y^2 / (1-y^2) */
         gf_mulw(d,n,EDWARDS_D); /* dy^2*/
         gf_sub(d, ONE, d); /* 1-dy^2*/
@@ -1427,7 +1428,7 @@ void decaf_x448_derive_public_key (
      * component in the input.  In this function though, there isn't a cofactor
      * component in the input.
      */
-    gf_invert(p->t,p->x); /* 1/x */
+    gf_invert(p->t,p->x,0); /* 1/x */
     gf_mul(p->z,p->t,p->y); /* y/x */
     gf_sqr(p->y,p->z); /* (y/x)^2 */
 #if IMAGINE_TWIST

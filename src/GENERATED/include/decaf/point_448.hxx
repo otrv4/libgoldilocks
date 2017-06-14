@@ -223,11 +223,19 @@ public:
     inline Point operator* (const Precomputed &q) const DECAF_NOEXCEPT { return q * (*this); }
 
     /** Direct scalar multiplication. */
-    inline SecureBuffer direct_scalarmul(
-        const Block &in,
+    inline SecureBuffer direct_scalarmul (
+        const FixedBlock<SER_BYTES> &in,
         decaf_bool_t allow_identity=DECAF_FALSE,
         decaf_bool_t short_circuit=DECAF_TRUE
     ) const /*throw(CryptoException)*/;
+        
+    /** Direct scalar multiplication. */
+    inline decaf_error_t DECAF_WARN_UNUSED direct_scalarmul_noexcept(
+        FixedBuffer<SER_BYTES> &out,
+        const FixedBlock<SER_BYTES> &in,
+        decaf_bool_t allow_identity=DECAF_FALSE,
+        decaf_bool_t short_circuit=DECAF_TRUE
+    ) const DECAF_NOEXCEPT;
 };
 
 /**
@@ -719,7 +727,7 @@ public:
 
 /** @cond internal */
 inline SecureBuffer Ed448Goldilocks::Scalar::direct_scalarmul (
-    const Block &in,
+    const FixedBlock<Ed448Goldilocks::Point::SER_BYTES> &in,
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
 ) const /*throw(CryptoException)*/ {
@@ -730,6 +738,15 @@ inline SecureBuffer Ed448Goldilocks::Scalar::direct_scalarmul (
         throw CryptoException();
     }
     return out;
+}
+
+inline decaf_error_t Ed448Goldilocks::Scalar::direct_scalarmul_noexcept (
+    FixedBuffer<Ed448Goldilocks::Point::SER_BYTES> &out,
+    const FixedBlock<Ed448Goldilocks::Point::SER_BYTES> &in,
+    decaf_bool_t allow_identity,
+    decaf_bool_t short_circuit
+) const DECAF_NOEXCEPT {
+    return decaf_448_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit);
 }
 /** @endcond */
 
