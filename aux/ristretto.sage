@@ -63,9 +63,8 @@ class Ed25519Point(EdwardsPoint):
     def torque(self):
         return self.__class__(self.y*self.i, self.x*self.i)
 
-class RistrettoOption1Point(Ed25519Point):
+class RistrettoPoint(Ed25519Point):
     """Like current decaf but tweaked for simplicity"""
-    dMont = Ed25519Point.F(-121665)
     encLen = 32
     
     def __eq__(self,other):
@@ -73,23 +72,18 @@ class RistrettoOption1Point(Ed25519Point):
         X,Y = other
         return x*Y == X*y or x*X == y*Y
     
+    @staticmethod
+    def sqrt(x,negative=lobit,exn=InvalidEncodingException("Not on curve")):
+        if not is_square(x): raise exn
+        s = sqrt(x)
+        if negative(s): s=-s
+        return s
+        
     def encode(self):
         x,y = self
-        a,d = self.a,self.d
-        
-        if x*y == 0:
-            # This happens anyway with straightforward impl
-            return enc_le(0,self.encLen)
-
-        if not is_square((1-y)/(1+y)):
-            raise Exception("Unimplemented: odd point in RistrettoPoint.encode")
-        
-        # Choose representative in 4-torsion group
-        if lobit(x*y): (x,y) = (self.i*y,self.i*x)
+        if lobit(x*y) or x==0: (x,y) = (self.i*y,self.i*x)
         if lobit(x): x,y = -x,-y
-        
-        s = sqrt((1-y)/(1+y))
-        if lobit(s): s = -s
+        s = self.sqrt((1-y)/(1+y),exn=Exception("Unimplemented: point is even"))
         return enc_le(s,self.encLen)
         
     @classmethod
@@ -97,25 +91,19 @@ class RistrettoOption1Point(Ed25519Point):
         if len(s) != cls.encLen:
             raise InvalidEncodingException("wrong length %d" % len(s))
         s = dec_le(s)
-        if s == 0: return cls(0,1)
         if s < 0 or s >= cls.F.modulus() or lobit(s):
             raise InvalidEncodingException("%d out of range!" % s)
         s = cls.F(s)
         
-        magic = 4*cls.dMont-4
-        if not is_square(magic*s^2 / ((s^2-1)^2 - s^2 * magic)):
-            raise InvalidEncodingException("Not on curve")
+        x = cls.sqrt(-4*s^2 / (cls.d*(s^2-1)^2 + (s^2+1)^2))
+        y = (1-s^2) / (1+s^2)
     
-        x = sqrt(magic*s^2 / ((s^2-1)^2 - magic * s^2))
-        if lobit(x): x=-x
-        y = (1-s^2)/(1+s^2)
-    
-        if lobit(x*y):
+        if lobit(x*y) or x==0:
             raise InvalidEncodingException("x*y has high bit")
             
         return cls(x,y)
 
-class RistrettoOption2Point(Ed25519Point):
+class DecafPoint(Ed25519Point):
     """Works like current decaf"""
     dMont = Ed25519Point.F(-121665)
     magic = sqrt(dMont-1)
