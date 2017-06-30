@@ -82,7 +82,7 @@ decaf_spongerng_destroy (
 /* Implementations of inline functions */
 /***************************************/
 void decaf_spongerng_destroy (decaf_keccak_prng_t doomed) {
-    decaf_sponge_destroy(doomed->sponge);
+    decaf_sha3_destroy(doomed->sponge);
 }
 /** @endcond */ /* internal */
 

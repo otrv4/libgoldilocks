@@ -137,7 +137,7 @@ void decaf_spongerng_init_from_buffer (
     size_t len,
     int deterministic
 ) {
-    decaf_sponge_init(prng->sponge,&DECAF_SHAKE256_params_s);
+    decaf_sha3_init(prng->sponge,&DECAF_SHAKE256_params_s);
     prng->sponge->params->remaining = !deterministic; /* A bit of a hack; this param is ignored for SHAKE */
     decaf_spongerng_stir(prng, in, len);
 }
@@ -148,7 +148,7 @@ decaf_error_t decaf_spongerng_init_from_file (
     size_t len,
     int deterministic
 ) {
-    decaf_sponge_init(prng->sponge,&DECAF_SHAKE256_params_s);
+    decaf_sha3_init(prng->sponge,&DECAF_SHAKE256_params_s);
     prng->sponge->params->remaining = !deterministic; /* A bit of a hack; this param is ignored for SHAKE */
     if (!len) return DECAF_FAILURE;
 

@@ -38,7 +38,7 @@ protected:
     decaf_keccak_sponge_t wrapped;
     
     /** Initialize from parameters */
-    inline KeccakHash(const decaf_kparams_s *params) DECAF_NOEXCEPT { decaf_sponge_init(wrapped, params); }
+    inline KeccakHash(const decaf_kparams_s *params) DECAF_NOEXCEPT { decaf_sha3_init(wrapped, params); }
     /** @endcond */
     
 public:
@@ -94,12 +94,12 @@ public:
     
     /** @brief Return the sponge's default output size. */
     inline size_t default_output_size() const DECAF_NOEXCEPT {
-        return decaf_sponge_default_output_bytes(wrapped);
+        return decaf_sha3_default_output_bytes(wrapped);
     }
     
     /** @brief Return the sponge's maximum output size. */
     inline size_t max_output_size() const DECAF_NOEXCEPT {
-        return decaf_sponge_max_output_bytes(wrapped);
+        return decaf_sha3_max_output_bytes(wrapped);
     }
     
     /** Output the default number of bytes. */
@@ -116,7 +116,7 @@ public:
     inline void reset() DECAF_NOEXCEPT { decaf_sha3_reset(wrapped); }
     
     /** Destructor zeroizes state */
-    inline ~KeccakHash() DECAF_NOEXCEPT { decaf_sponge_destroy(wrapped); }
+    inline ~KeccakHash() DECAF_NOEXCEPT { decaf_sha3_destroy(wrapped); }
 };
 
 /** Fixed-output-length SHA3 */

@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
         decaf_sha512_destroy(decaf_sha512);
     } else {
         decaf_sha3_output(sponge,buf,outlen);
-        decaf_sponge_destroy(sponge);
+        decaf_sha3_destroy(sponge);
     }
     unsigned i;
     for (i=0; i<outlen; i++) {

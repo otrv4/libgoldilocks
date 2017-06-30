@@ -173,14 +173,16 @@ decaf_error_t decaf_sha3_final (
 void decaf_sha3_reset (
     decaf_keccak_sponge_t decaf_sponge
 ) {
-    decaf_sponge_init(decaf_sponge, decaf_sponge->params);
+    decaf_sha3_init(decaf_sponge, decaf_sponge->params);
     decaf_sponge->params->flags = FLAG_ABSORBING;
     decaf_sponge->params->remaining = decaf_sponge->params->max_out;
 }
 
-void decaf_sponge_destroy (decaf_keccak_sponge_t decaf_sponge) { decaf_bzero(decaf_sponge, sizeof(decaf_keccak_sponge_t)); }
+void decaf_sha3_destroy (decaf_keccak_sponge_t decaf_sponge) {
+    decaf_bzero(decaf_sponge, sizeof(decaf_keccak_sponge_t));
+}
 
-void decaf_sponge_init (
+void decaf_sha3_init (
     decaf_keccak_sponge_t decaf_sponge,
     const struct decaf_kparams_s *params
 ) {
@@ -189,18 +191,18 @@ void decaf_sponge_init (
     decaf_sponge->params->position = 0;
 }
 
-decaf_error_t decaf_sponge_hash (
-    const uint8_t *in,
-    size_t inlen,
+decaf_error_t decaf_sha3_hash (
     uint8_t *out,
     size_t outlen,
+    const uint8_t *in,
+    size_t inlen,
     const struct decaf_kparams_s *params
 ) {
     decaf_keccak_sponge_t decaf_sponge;
-    decaf_sponge_init(decaf_sponge, params);
+    decaf_sha3_init(decaf_sponge, params);
     decaf_sha3_update(decaf_sponge, in, inlen);
     decaf_error_t ret = decaf_sha3_output(decaf_sponge, out, outlen);
-    decaf_sponge_destroy(decaf_sponge);
+    decaf_sha3_destroy(decaf_sponge);
     return ret;
 }
 
@@ -212,7 +214,7 @@ decaf_error_t decaf_sponge_hash (
     const struct decaf_kparams_s DECAF_SHA3_##n##_params_s = \
         { 0, FLAG_ABSORBING, 200-n/4, 0, 0x06, 0x80, n/8, n/8 };
 
-size_t decaf_sponge_default_output_bytes (
+size_t decaf_sha3_default_output_bytes (
     const decaf_keccak_sponge_t s
 ) {
     return (s->params->max_out == 0xFF)
@@ -220,7 +222,7 @@ size_t decaf_sponge_default_output_bytes (
         : ((200-s->params->rate)/2);
 }
 
-size_t decaf_sponge_max_output_bytes (
+size_t decaf_sha3_max_output_bytes (
     const decaf_keccak_sponge_t s
 ) {
     return (s->params->max_out == 0xFF)
