@@ -19,11 +19,13 @@ def optimized_version_of(spec):
             try: opt_ans = f(self,*args,**kwargs),None
             except Exception as e: opt_ans = None,e
             if spec_ans[1] is None and opt_ans[1] is not None:
-                raise SpecException("Mismatch in %s: spec returned %s but opt threw %s"
-                    % (f.__name__,str(spec_ans[0]),str(opt_ans[1])))
+                raise
+                #raise SpecException("Mismatch in %s: spec returned %s but opt threw %s"
+                #    % (f.__name__,str(spec_ans[0]),str(opt_ans[1])))
             if spec_ans[1] is not None and opt_ans[1] is None:
-                raise SpecException("Mismatch in %s: spec threw %s but opt returned %s"
-                    % (f.__name__,str(spec_ans[1]),str(opt_ans[0])))
+                raise
+                #raise SpecException("Mismatch in %s: spec threw %s but opt returned %s"
+                #    % (f.__name__,str(spec_ans[1]),str(opt_ans[0])))
             if spec_ans[0] != opt_ans[0]:
                 raise SpecException("Mismatch in %s: %s != %s"
                     % (f.__name__,str(spec_ans[0]),str(opt_ans[0])))
@@ -262,7 +264,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         if self.cofactor==8 and negative(x*y*self.isoMagic):
             x,y = self.torque()
         
-        isr2 = isqrt(a*(y^2-1)) / self.magic
+        isr2 = isqrt(a*(y^2-1)) * sqrt(a*d-1)
         
         sr = xsqrt(1-a*x^2)
         assert sr in [isr2*x*y,-isr2*x*y]
@@ -294,7 +296,29 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
     @optimized_version_of("encodeSpec")
     def encode(self):
         """Encode, optimized version"""
-        return self.encodeSpec() # TODO
+        a,d = self.a,self.d
+        x,y,z,t = self.xyzt()
+        if x==0 or y==0: return(self.gfToBytes(0))
+        
+        num = (z+y)*(z-y)
+        den = t*z
+        tmp = isqrt(num*(a-d)*den^2)
+        
+        if self.cofactor==8 and negative(tmp^2*den*num*(a-d)*t^2*self.isoMagic):
+            den,num = num,den
+            tmp *= sqrt(a-d) # witness that cofactor is 8
+            yisr = x*sqrt(a)
+            toggle = (a==1)
+        else:
+            yisr = y*(a*d-1)
+            toggle = False
+            
+        tiisr = tmp*num
+        altx = tiisr*t*self.isoMagic
+        if negative(altx) != toggle: tiisr =- tiisr
+        s = tmp*den*yisr*(tiisr*z - 1)
+        
+        return self.gfToBytes(s,mustBePositive=True)
         
     @classmethod
     @optimized_version_of("decodeSpec")
