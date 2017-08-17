@@ -298,25 +298,32 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         """Encode, optimized version"""
         a,d = self.a,self.d
         x,y,z,t = self.xyzt()
-        if x==0 or y==0: return(self.gfToBytes(0))
         
-        num = (z+y)*(z-y)
-        den = t*z
-        tmp = isqrt(num*(a-d)*den^2)
+        if self.cofactor == 8:
+            num = (z+y)*(z-y)
+            den = x*y
+            tmp = isqrt(num*(a-d)*den^2)
         
-        if self.cofactor==8 and negative(tmp^2*den*num*(a-d)*t^2*self.isoMagic):
-            den,num = num,den
-            tmp *= sqrt(a-d) # witness that cofactor is 8
-            yisr = x*sqrt(a)
-            toggle = (a==1)
-        else:
-            yisr = y*(a*d-1)
-            toggle = False
+            if negative(tmp^2*den*num*(a-d)*t^2*self.isoMagic):
+                den,num = num,den
+                tmp *= sqrt(a-d) # witness that cofactor is 8
+                yisr = x*sqrt(a)
+                toggle = (a==1)
+            else:
+                yisr = y*(a*d-1)
+                toggle = False
             
-        tiisr = tmp*num
-        altx = tiisr*t*self.isoMagic
-        if negative(altx) != toggle: tiisr =- tiisr
-        s = tmp*den*yisr*(tiisr*z - 1)
+            tiisr = tmp*num
+            altx = tiisr*t*self.isoMagic
+            if negative(altx) != toggle: tiisr =- tiisr
+            s = tmp*den*yisr*(tiisr*z - 1)
+        
+        else:
+            num = (x+t)*(x-t)
+            tmp = isqrt(num*(a-d)*x^2)
+            ratio = tmp*num
+            if negative(ratio*self.isoMagic): ratio=-ratio
+            s = (a-d)*x*tmp*(z*ratio - t)
         
         return self.gfToBytes(s,mustBePositive=True)
         
