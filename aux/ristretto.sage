@@ -175,7 +175,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
             i2    = isr*u2
             z_inv = i1*i2*t
         
-            if self.cofactor==8 and negative(t*z_inv):
+            if negative(t*z_inv):
                 if a==-1: x,y = y*self.i,x*self.i
                 else: x,y = -y,x # TODO: test
                 den_inv = self.magic * i1
@@ -185,16 +185,10 @@ class RistrettoPoint(QuotientEdwardsPoint):
             if negative(x*z_inv): y = -y
             s = (z-y) * den_inv
         else:
-            u1    = a*(y+z)*(y-z)
-            u2    = x*y # = t*z
-            isr   = isqrt(u1*u2^2)
-            i1    = isr*u1
-            i2    = isr*u2
-            z_inv = i1*i2*t
-            den_inv = i2
-
-            if negative(x*z_inv): y = -y
-            s = (z-y) * den_inv
+            num   = a*(y+z)*(y-z)
+            isr   = isqrt(num*y^2)
+            if negative(isr^2*num*y*t): y = -y
+            s = isr*y*(z-y)
             
         
         return self.gfToBytes(s,mustBePositive=True)
@@ -334,10 +328,10 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         
         else:
             num = (x+t)*(x-t)
-            tmp = isqrt(num*(a-d)*x^2)
-            ratio = tmp*num
+            isr = isqrt(num*(a-d)*x^2)
+            ratio = isr*num
             if negative(ratio*self.isoMagic): ratio=-ratio
-            s = (a-d)*x*tmp*(z*ratio - t)
+            s = (a-d)*isr*x*(ratio*z - t)
         
         return self.gfToBytes(s,mustBePositive=True)
         
