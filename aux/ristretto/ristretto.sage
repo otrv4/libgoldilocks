@@ -14,6 +14,9 @@ def optimized_version_of(spec):
     """Decorator: This function is an optimized version of some specification"""
     def decorator(f):
         def wrapper(self,*args,**kwargs):
+            def pr(x):
+                if isinstance(x,bytearray): return binascii.hexlify(x)
+                else: return str(x)
             try: spec_ans = getattr(self,spec,spec)(*args,**kwargs),None
             except Exception as e: spec_ans = None,e
             try: opt_ans = f(self,*args,**kwargs),None
@@ -28,7 +31,7 @@ def optimized_version_of(spec):
                 #    % (f.__name__,str(spec_ans[1]),str(opt_ans[0])))
             if spec_ans[0] != opt_ans[0]:
                 raise SpecException("Mismatch in %s: %s != %s"
-                    % (f.__name__,str(spec_ans[0]),str(opt_ans[0])))
+                    % (f.__name__,pr(spec_ans[0]),pr(opt_ans[0])))
             if opt_ans[1] is not None: raise
             else: return opt_ans[0]
         wrapper.__name__ = f.__name__
@@ -144,7 +147,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
         if y == -1: y = 1 # Avoid divide by 0; doesn't affect impl
             
         if negative(x): x,y = -x,-y
-        s = xsqrt(self.a*(y-1)/(y+1),exn=Exception("Unimplemented: point is odd: " + str(self)))
+        s = xsqrt(self.mneg*(1-y)/(1+y),exn=Exception("Unimplemented: point is odd: " + str(self)))
         return self.gfToBytes(s)
         
     @classmethod
@@ -164,28 +167,32 @@ class RistrettoPoint(QuotientEdwardsPoint):
     @optimized_version_of("encodeSpec")
     def encode(self):
         """Encode, optimized version"""
-        a,d = self.a,self.d
+        a,d,mneg = self.a,self.d,self.mneg
         x,y,z,t = self.xyzt()
         
         if self.cofactor==8:
-            u1    = a*(y+z)*(y-z)
+            u1    = mneg*(z+y)*(z-y)
             u2    = x*y # = t*z
             isr   = isqrt(u1*u2^2)
-            i1    = isr*u1
-            i2    = isr*u2
-            z_inv = i1*i2*t
+            i1    = isr*u1 # sqrt(mneg*(z+y)*(z-y))/(x*y)
+            i2    = isr*u2 # 1/sqrt(a*(y+z)*(y-z))
+            z_inv = i1*i2*t # 1/z
         
             if negative(t*z_inv):
-                if a==-1: x,y = y*self.i,x*self.i
-                else: x,y = -y,x # TODO: test
-                den_inv = self.magic * i1
+                if a==-1:
+                    x,y = y*self.i,x*self.i
+                    den_inv = self.magic * i1
+                else:
+                    x,y = -y,x
+                    den_inv = self.i * self.magic * i1
+                
             else:
                 den_inv = i2
 
             if negative(x*z_inv): y = -y
             s = (z-y) * den_inv
         else:
-            num   = a*(y+z)*(y-z)
+            num   = mneg*(z+y)*(z-y)
             isr   = isqrt(num*y^2)
             if negative(isr^2*num*y*t): y = -y
             s = isr*y*(z-y)
@@ -406,6 +413,23 @@ class Ed25519Point(RistrettoPoint):
     d = F(-121665/121666)
     a = F(-1)
     i = sqrt(F(-1))
+    mneg = F(1)
+    qnr = i
+    magic = isqrt(a*d-1)
+    cofactor = 8
+    encLen = 32
+    
+    @classmethod
+    def base(cls):
+        return cls( 15112221349535400772501151409588531511454012693041857206046113283949847762202, 46316835694926478169428394003475163141307993866256225615783033603165251855960
+        )
+            
+class NegEd25519Point(RistrettoPoint):
+    F = GF(2^255-19)
+    d = F(121665/121666)
+    a = F(1)
+    i = sqrt(F(-1))
+    mneg = F(-1) # TODO checkme vs 1-ad or whatever
     qnr = i
     magic = isqrt(a*d-1)
     cofactor = 8
@@ -414,14 +438,15 @@ class Ed25519Point(RistrettoPoint):
     @classmethod
     def base(cls):
         y = cls.F(4/5)
-        x = sqrt((y^2-1)/(cls.d*y^2+1))
-        if lobit(x): x = -x
+        x = sqrt((y^2-1)/(cls.d*y^2-cls.a))
+        if negative(x): x = -x
         return cls(x,y)
 
 class IsoEd448Point(RistrettoPoint):
     F = GF(2^448-2^224-1)
     d = F(39082/39081)
     a = F(1)
+    mneg = F(-1)
     qnr = -1
     magic = isqrt(a*d-1)
     cofactor = 4
@@ -429,10 +454,10 @@ class IsoEd448Point(RistrettoPoint):
     
     @classmethod
     def base(cls):
-        # = ..., -3/2
-        return cls.decodeSpec(bytearray(binascii.unhexlify(
-            "00000000000000000000000000000000000000000000000000000000"+
-            "fdffffffffffffffffffffffffffffffffffffffffffffffffffffff")))
+        return cls(  # RFC has it wrong
+         -345397493039729516374008604150537410266655260075183290216406970281645695073672344430481787759340633221708391583424041788924124567700732,
+            -363419362147803445274661903944002267176820680343659030140745099590306164083365386343198191849338272965044442230921818680526749009182718
+        )
             
 class TwistedEd448GoldilocksPoint(Decaf_1_1_Point):
     F = GF(2^448-2^224-1)
@@ -446,9 +471,7 @@ class TwistedEd448GoldilocksPoint(Decaf_1_1_Point):
 
     @classmethod
     def base(cls):
-        return cls.decodeSpec(bytearray(binascii.unhexlify(
-            "00000000000000000000000000000000000000000000000000000000"+
-            "fdffffffffffffffffffffffffffffffffffffffffffffffffffffff")))
+        return cls.decodeSpec(Ed448GoldilocksPoint.base().encodeSpec())
 
 class Ed448GoldilocksPoint(Decaf_1_1_Point):
     F = GF(2^448-2^224-1)
@@ -462,9 +485,9 @@ class Ed448GoldilocksPoint(Decaf_1_1_Point):
     
     @classmethod
     def base(cls):
-        return cls.decodeSpec(bytearray(binascii.unhexlify(
-            "00000000000000000000000000000000000000000000000000000000"+
-            "fdffffffffffffffffffffffffffffffffffffffffffffffffffffff")))
+        return -2*cls( # FIXME: make not negative
+ 224580040295924300187604334099896036246789641632564134246125461686950415467406032909029192869357953282578032075146446173674602635247710, 298819210078481492676017930443930673437544040154080242095928241372331506189835876003536878655418784733982303233503462500531545062832660
+        )
 
 class IsoEd25519Point(Decaf_1_1_Point):
     # TODO: twisted iso too!
@@ -533,6 +556,7 @@ def test(cls,n):
         Q = Q1
 
 test(Ed25519Point,100)
+test(NegEd25519Point,100)
 test(IsoEd25519Point,100)
 test(IsoEd448Point,100)
 test(TwistedEd448GoldilocksPoint,100)
@@ -544,6 +568,7 @@ def testElligator(cls,n):
     for i in xrange(n):
         cls.elligator(randombytes(cls.encLen))
 testElligator(Ed25519Point,100)
+testElligator(NegEd25519Point,100)
 testElligator(IsoEd448Point,100)
 testElligator(Ed448GoldilocksPoint,100)
 testElligator(TwistedEd448GoldilocksPoint,100)
