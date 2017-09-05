@@ -65,7 +65,12 @@ $$(x,y) = \left(\frac{u}{v}\cdot\frac{\sqrt{a-d}}{2},\ \ \frac{u-1}{u+1}\right)$
 
 If $M = (u,v)$ is a point on the Montgomery curve, then the $u$-coordinate of $2M$ is $(u^2-1)^2 / (4v^2)$ is necessarily square.  It follows that if $(x,y)$ is a point on $E_{a,d}$, and $a-d$ is square, then $(1+y)/(1-y)$ is also square.
 
-\todo{Nega montgomery}
+Likewhise, when $d-a$ is square in \F, $E_{a,d}$ is isomorphic to the Montgomery curve
+$$v^2 = u\cdot\left(u^2 - 2\cdot\frac{a+d}{a-d}\cdot u + 1\right)$$
+by the map
+$$(u,v) = \left(\frac{y+1}{y-1},\ \ \frac{y+1}{y-1}\cdot\frac1x\cdot\frac{2}{\sqrt{d-a}}\right)$$
+with inverse
+$$(x,y) = \left(\frac{u}{v}\cdot\frac{\sqrt{d-a}}{2},\ \ \frac{1+u}{1-u}\right)$$
 
 \section{Lemmas}
 First, we characterize the 2-torsion and 4-torsion groups.\\

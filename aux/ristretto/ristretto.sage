@@ -278,15 +278,11 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         
         if self.cofactor==8 and negative(x*y*self.isoMagic):
             x,y = self.torque()
-        
-        isr2 = isqrt(a*(y^2-1)) * sqrt(a*d-1)
-        
+            
         sr = xsqrt(1-a*x^2)
-        assert sr in [isr2*x*y,-isr2*x*y]
-        
-        altx = 1/isr2*self.isoMagic
-        if negative(altx): s = (1+x*y*isr2)/(a*x)
-        else:              s = (1-x*y*isr2)/(a*x)
+        altx = x*y*self.isoMagic / sr
+        if negative(altx): s = (1+sr)/x
+        else:              s = (1-sr)/x
         
         return self.gfToBytes(s,mustBePositive=True)
         
@@ -297,11 +293,11 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         s = cls.bytesToGf(s,mustBePositive=True)
         
         if s==0: return cls()
-        isr = isqrt(s^4 + 2*(a-2*d)*s^2 + 1)
-        altx = 2*s*isr*cls.isoMagic
-        if negative(altx): isr = -isr
+        t = xsqrt(s^4 + 2*(a-2*d)*s^2 + 1)
+        altx = 2*s*cls.isoMagic/t
+        if negative(altx): t = -t
         x = 2*s / (1+a*s^2)
-        y = (1-a*s^2) * isr
+        y = (1-a*s^2) / t
         
         if cls.cofactor==8 and (negative(x*y*cls.isoMagic) or y==0):
             raise InvalidEncodingException("x*y is invalid: %d, %d" % (x,y))
@@ -455,7 +451,7 @@ class IsoEd448Point(RistrettoPoint):
     @classmethod
     def base(cls):
         return cls(  # RFC has it wrong
-         -345397493039729516374008604150537410266655260075183290216406970281645695073672344430481787759340633221708391583424041788924124567700732,
+         345397493039729516374008604150537410266655260075183290216406970281645695073672344430481787759340633221708391583424041788924124567700732,
             -363419362147803445274661903944002267176820680343659030140745099590306164083365386343198191849338272965044442230921818680526749009182718
         )
             
@@ -464,7 +460,6 @@ class TwistedEd448GoldilocksPoint(Decaf_1_1_Point):
     d = F(-39082)
     a = F(-1)
     qnr = -1
-    magic = isqrt(a*d-1)
     cofactor = 4
     encLen = 56
     isoMagic = IsoEd448Point.magic
@@ -478,14 +473,13 @@ class Ed448GoldilocksPoint(Decaf_1_1_Point):
     d = F(-39081)
     a = F(1)
     qnr = -1
-    magic = isqrt(a*d-1)
     cofactor = 4
     encLen = 56
     isoMagic = IsoEd448Point.magic
     
     @classmethod
     def base(cls):
-        return -2*cls( # FIXME: make not negative
+        return 2*cls(
  224580040295924300187604334099896036246789641632564134246125461686950415467406032909029192869357953282578032075146446173674602635247710, 298819210078481492676017930443930673437544040154080242095928241372331506189835876003536878655418784733982303233503462500531545062832660
         )
 
