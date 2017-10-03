@@ -9,9 +9,12 @@ Because this is new software, please expect it to have bugs, perhaps
 even critical security bugs.  If you are using it, please sign up for
 updates:
 
-* Security-critical announcements (very low volume, God willing): decaf-security@googlegroups.com
-* New version announcements (low volume): decaf-announce@googlegroups.com
-* Library discussion (potentially more volume): decaf-discuss@googlegroups.com
+* Security-critical announcements (very low volume, God willing):
+    decaf-security@googlegroups.com, join at https://groups.google.com/forum/#!forum/decaf-security    
+* New version announcements (low volume):
+    decaf-announce@googlegroups.com, join at https://groups.google.com/forum/#!forum/decaf-annonuce
+* Library discussion (potentially more volume):
+    decaf-discuss@googlegroups.com, join at https://groups.google.com/forum/#!forum/decaf-discuss
 
 ## General elliptic curve operations.
 
