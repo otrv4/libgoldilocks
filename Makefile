@@ -85,7 +85,7 @@ LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/sha512.o 
 
 BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o
 
-all: lib $(BUILD_IBIN)/test $(BUILD_IBIN)/bench $(BUILD_BIN)/shakesum
+all: lib $(BUILD_IBIN)/test $(BUILD_BIN)/ristretto $(BUILD_IBIN)/bench $(BUILD_BIN)/shakesum
 
 scan: clean
 	scan-build --use-analyzer=`which clang` \
@@ -95,6 +95,13 @@ scan: clean
 
 # Internal test programs, which are not part of the final build/bin directory.
 $(BUILD_IBIN)/test: $(BUILD_OBJ)/test_decaf.o lib
+ifeq ($(UNAME),Darwin)
+	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -ldecaf
+else
+	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -ldecaf
+endif
+
+$(BUILD_BIN)/ristretto: $(BUILD_OBJ)/ristretto.o lib
 ifeq ($(UNAME),Darwin)
 	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -ldecaf
 else

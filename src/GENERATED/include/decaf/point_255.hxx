@@ -58,6 +58,9 @@ struct IsoEd25519 {
 /** The name of the curve */
 static inline const char *name() { return "Iso-Ed25519"; }
 
+/** The name of the curve */
+static inline int bits() { return 255; }
+
 /** The curve's cofactor (removed, but useful for testing) */
 static const int REMOVED_COFACTOR = 8;
 

@@ -23,6 +23,7 @@ typedef struct gf_$(gf_shortname)_s {
 #define gf_s              gf_$(gf_shortname)_s
 #define gf_eq             gf_$(gf_shortname)_eq
 #define gf_hibit          gf_$(gf_shortname)_hibit
+#define gf_lobit          gf_$(gf_shortname)_lobit
 #define gf_copy           gf_$(gf_shortname)_copy
 #define gf_add            gf_$(gf_shortname)_add
 #define gf_sub            gf_$(gf_shortname)_sub
@@ -66,6 +67,7 @@ void gf_mulw_unsigned (gf_s *__restrict__ out, const gf a, uint32_t b);
 void gf_sqr (gf_s *__restrict__ out, const gf a);
 mask_t gf_isr(gf a, const gf x); /** a^2 x = 1, QNR, or 0 if x=0.  Return true if successful */
 mask_t gf_eq (const gf x, const gf y);
+mask_t gf_lobit (const gf x);
 mask_t gf_hibit (const gf x);
 
 void gf_serialize (uint8_t *serial, const gf x,int with_highbit);

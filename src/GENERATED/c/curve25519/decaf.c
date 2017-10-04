@@ -127,14 +127,6 @@ gf_invert(gf y, const gf x, int assert_nonzero) {
     gf_copy(y, t2);
 }
 
-/** Return high bit of x = low bit of 2x mod p */
-static mask_t gf_lobit(const gf x) {
-    gf y;
-    gf_copy(y,x);
-    gf_strong_reduce(y);
-    return -(y->limb[0]&1);
-}
-
 /** identity = (0,1) */
 const point_t API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 

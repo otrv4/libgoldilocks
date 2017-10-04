@@ -45,6 +45,9 @@ struct $(cxx_ns) {
 /** The name of the curve */
 static inline const char *name() { return "$(name)"; }
 
+/** The name of the curve */
+static inline int bits() { return $(gf_bits); }
+
 /** The curve's cofactor (removed, but useful for testing) */
 static const int REMOVED_COFACTOR = $(cofactor);
 

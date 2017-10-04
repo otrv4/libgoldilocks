@@ -25,10 +25,10 @@ static const int EDWARDS_D = -121665;
 
 extern void API_NS(deisogenize) (
     gf_s *__restrict__ s,
-    gf_s *__restrict__ minus_t_over_s,
+    gf_s *__restrict__ altx,
     const point_t p,
     mask_t toggle_hibit_s,
-    mask_t toggle_hibit_t_over_s,
+    mask_t toggle_altx,
     mask_t toggle_rotation
 );
 
@@ -61,7 +61,7 @@ void API_NS(point_from_hash_nonuniform) (
     
     /* s@a = +-|N.e| */
     gf_mul(a,N,e);
-    gf_cond_neg(a,gf_hibit(a)^square); /* NB this is - what is listed in the paper */
+    gf_cond_neg(a,gf_lobit(a) ^ ~square);
     
     /* t@b = -+ cN(r-1)((a-2d)e)^2 - 1 */
     gf_mulw(c,e,1-2*EDWARDS_D); /* (a-2d)e */

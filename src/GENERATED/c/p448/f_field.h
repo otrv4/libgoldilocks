@@ -38,6 +38,7 @@ typedef struct gf_448_s {
 #define gf_s              gf_448_s
 #define gf_eq             gf_448_eq
 #define gf_hibit          gf_448_hibit
+#define gf_lobit          gf_448_lobit
 #define gf_copy           gf_448_copy
 #define gf_add            gf_448_add
 #define gf_sub            gf_448_sub
@@ -81,6 +82,7 @@ void gf_mulw_unsigned (gf_s *__restrict__ out, const gf a, uint32_t b);
 void gf_sqr (gf_s *__restrict__ out, const gf a);
 mask_t gf_isr(gf a, const gf x); /** a^2 x = 1, QNR, or 0 if x=0.  Return true if successful */
 mask_t gf_eq (const gf x, const gf y);
+mask_t gf_lobit (const gf x);
 mask_t gf_hibit (const gf x);
 
 void gf_serialize (uint8_t *serial, const gf x,int with_highbit);

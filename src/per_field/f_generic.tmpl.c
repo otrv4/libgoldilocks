@@ -41,6 +41,14 @@ mask_t gf_hibit(const gf x) {
     return -(y->limb[0]&1);
 }
 
+/** Return high bit of x = low bit of 2x mod p */
+mask_t gf_lobit(const gf x) {
+    gf y;
+    gf_copy(y,x);
+    gf_strong_reduce(y);
+    return -(y->limb[0]&1);
+}
+
 /** Deserialize from wire format; return -1 on success and 0 on failure. */
 mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES], int with_hibit) {
     unsigned int j=0, fill=0;
