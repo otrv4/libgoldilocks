@@ -578,7 +578,7 @@ public:
      * initializer for points which makes this equal to the identity.
      */
     inline Precomputed (
-        const Precomputed_U &yours = *default_value()
+        const Precomputed_U &yours = *decaf_448_precomputed_base
     ) DECAF_NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>(yours) {}
 
 

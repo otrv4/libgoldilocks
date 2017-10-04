@@ -1,4 +1,5 @@
 from collections import namedtuple
+from binascii import unhexlify
 
 comb_config = namedtuple("comb_config",["n","t","s"])
 wnaf_config = namedtuple("wnaf_config",["fixed","var"])
@@ -30,6 +31,7 @@ curve_data = {
         "d": -121665,
         "trace": -0xa6f7cef517bce6b2c09318d2e7ae9f7a,
         "mont_base": 9,
+        "rist_base": "e2f2ae0a6abc4e71a884a961c500515f58e30b6aa582dd8db6a65945e08d2d76",
         
         "combs":comb_config(3,5,17),
         "wnaf":wnaf_config(5,3),
@@ -47,6 +49,7 @@ curve_data = {
         "scalar_bits" : 446,
         "d": -39081,
         "trace": 0x10cd77058eec492d944a725bf7a4cf635c8e9c2ab721cf5b5529eec34,
+        "rist_base": "6666666666666666666666666666666666666666666666666666666633333333333333333333333333333333333333333333333333333333",
         "mont_base": 5,
         
         "combs":comb_config(5,5,18),
@@ -120,6 +123,11 @@ for curve,data in curve_data.items():
     
     if "eddsa_sigma_iso" not in data:
         data["eddsa_sigma_iso"] = 0
+        
+    if "rist_base_decoded" not in data:
+        data["rist_base_decoded"] = sum(
+                ord(b)<<(8*i) for i,b in enumerate(unhexlify(data["rist_base"]))
+            )
 
     if "imagine_twist" not in data:
         # This is a HACK.  The real problem is that iso-Ed25519

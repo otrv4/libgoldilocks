@@ -48,10 +48,28 @@ static const scalar_t point_scalarmul_adjustment = {{{
 
 const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] = { 0x05 };
 
+static const gf RISTRETTO_ISOMAGIC = {{{
+    0x42ef0f45572736, 0x7bf6aa20ce5296, 0xf4fd6eded26033, 0x968c14ba839a66, 0xb8d54b64a2d780, 0x6aa0a1f1a7b8a5, 0x683bf68d722fa2, 0x22d962fbeb24f7
+}}};
+
 #if COFACTOR==8 || EDDSA_USE_SIGMA_ISOGENY
     static const gf SQRT_ONE_MINUS_D = {FIELD_LITERAL(
         /* NONE */
     )};
+#endif
+
+#if IMAGINE_TWIST
+#define TWISTED_D (-(EDWARDS_D))
+#else
+#define TWISTED_D ((EDWARDS_D)-1)
+#endif
+
+#if TWISTED_D < 0
+#define EFF_D (-(TWISTED_D))
+#define NEG_D 1
+#else
+#define EFF_D TWISTED_D
+#define NEG_D 0
 #endif
 
 /* End of template stuff */
@@ -120,117 +138,94 @@ static mask_t gf_lobit(const gf x) {
 /** identity = (0,1) */
 const point_t API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 
+/* Predeclare because not static: called by elligator */
 void API_NS(deisogenize) (
     gf_s *__restrict__ s,
-    gf_s *__restrict__ minus_t_over_s,
+    gf_s *__restrict__ altx,
     const point_t p,
     mask_t toggle_hibit_s,
-    mask_t toggle_hibit_t_over_s,
+    mask_t toggle_altx,
     mask_t toggle_rotation
 );
 
 void API_NS(deisogenize) (
     gf_s *__restrict__ s,
-    gf_s *__restrict__ minus_t_over_s,
+    gf_s *__restrict__ altx,
     const point_t p,
     mask_t toggle_hibit_s,
-    mask_t toggle_hibit_t_over_s,
+    mask_t toggle_altx,
     mask_t toggle_rotation
 ) {
-#if COFACTOR == 4 && !IMAGINE_TWIST
-    (void) toggle_rotation;
     
-    gf b, d;
-    gf_s *c = s, *a = minus_t_over_s;
-    gf_mulw(a, p->y, 1-EDWARDS_D);
-    gf_mul(c, a, p->t);     /* -dYT, with EDWARDS_D = d-1 */
-    gf_mul(a, p->x, p->z); 
-    gf_sub(d, c, a);  /* aXZ-dYT with a=-1 */
-    gf_add(a, p->z, p->y); 
-    gf_sub(b, p->z, p->y); 
-    gf_mul(c, b, a);
-    gf_mulw(b, c, -EDWARDS_D); /* (a-d)(Z+Y)(Z-Y) */
-    mask_t ok = gf_isr (a,b); /* r in the paper */
-    (void)ok; assert(ok | gf_eq(b,ZERO));
-    gf_mulw (b, a, -EDWARDS_D); /* u in the paper */
-
-    gf_mul(c,a,d); /* r(aZX-dYT) */
-    gf_mul(a,b,p->z); /* uZ */
-    gf_add(a,a,a); /* 2uZ */
+#if COFACTOR == 4
+    (void)toggle_rotation; /* Only applies to cofactor 8 */
+    gf t1,t2,t3;
     
-    mask_t tg = toggle_hibit_t_over_s ^ ~gf_hibit(minus_t_over_s);
-    gf_cond_neg(minus_t_over_s, tg); /* t/s <-? -t/s */
-    gf_cond_neg(c, tg); /* u <- -u if negative. */
+    gf_add(t1,p->x,p->t);
+    gf_sub(t2,p->x,p->t);
+    gf_mul(t3,t1,t2); /* t3 = num */
+    gf_sqr(t2,p->x);
+    gf_mul(t1,t2,t3);
+    gf_mulw(t2,t1,-1-TWISTED_D); /* -x^2 * (a-d) * num */
+    gf_isr(t1,t2);    /* t1 = isr */
+    gf_mul(t2,t1,t3); /* t2 = ratio */
+    gf_mul(altx,t2,RISTRETTO_ISOMAGIC);
+    mask_t negx = gf_lobit(altx) ^ toggle_altx;
+    gf_cond_neg(t2, negx);
+    gf_cond_neg(altx, negx);
+    gf_mul(t3,t2,p->z);
+    gf_sub(t3,t3,p->t);
+    gf_mul(t2,t3,p->x);
+    gf_mulw(t3,t2,-1-TWISTED_D);
+    gf_mul(s,t3,t1);
+    gf_cond_neg(s,gf_lobit(s)^toggle_hibit_s);
     
-    gf_add(d,c,p->y);
-    gf_mul(s,b,d);
-    gf_cond_neg(s, toggle_hibit_s ^ gf_hibit(s));
-#else
+#elif COFACTOR == 8
     /* More complicated because of rotation */
-    /* MAGIC This code is wrong for certain non-Curve25519 curves;
-     * check if it's because of Cofactor==8 or IMAGINE_TWIST */
-    
-    gf c, d;
-    gf_s *b = s, *a = minus_t_over_s;
+    gf t1,t2,t3,t4;
+    gf_add(t1,p->z,p->y);
+    gf_sub(t2,p->z,p->y);
+    gf_mul(t3,t1,t2);      /* t3 = num */
+    gf_mul(t2,p->x,p->y);  /* t2 = den */
+    gf_sqr(t1,t2);
+    gf_mul(t4,t1,t3);
+    gf_mulw(t1,t4,-1-TWISTED_D);
+    gf_isr(t4,t1);         /* isqrt(num*(a-d)*den^2) */
+    gf_mul(t1,t2,t4);
+    gf_mul(t2,t1,RISTRETTO_ISOMAGIC); /* t2 = "iden" in ristretto.sage */
+    gf_mul(t1,t3,t4);                 /* t1 = "inum" in ristretto.sage */
 
-    #if IMAGINE_TWIST
-        gf x, t;
-        gf_div_qnr(x,p->x);
-        gf_div_qnr(t,p->t);
-        gf_add ( a, p->z, x );
-        gf_sub ( b, p->z, x );
-        gf_mul ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 - X^2 */
-    #else
-        const gf_s *x = p->x, *t = p->t;
-        gf_sqr ( a, p->z );
-        gf_sqr ( b, p->x );
-        gf_add ( c, a, b ); /* "zx" = Z^2 - aX^2 = Z^2 + X^2 */
-    #endif
-    /* Here: c = "zx" in the SAGE code = Z^2 - aX^2 */
+    gf_mul(t3,t1,t2);
+    gf_mul_qnr(t4,t3);
+    gf_mul(t3,t4,p->t);
+    gf_mul(t4,t3,p->t);
+    gf_mulw(t3,t4,TWISTED_D+1);      /* iden*inum*i*t^2*(d-1) */
+    gf_mul_qnr(t4,p->x);
+    mask_t rotate = toggle_rotation ^ gf_lobit(t3);
     
-    gf_mul ( a, p->z, t ); /* "tz" = T*Z */
-    gf_sqr ( b, a );
-    gf_mul ( d, b, c ); /* (TZ)^2 * (Z^2-aX^2) */
-    mask_t ok = gf_isr(b, d);
-    (void)ok; assert(ok | gf_eq(d,ZERO));
-    gf_mul ( d, b, a ); /* "osx" = 1 / sqrt(z^2-ax^2) */
-    gf_mul ( a, b, c ); 
-    gf_mul ( b, a, d ); /* 1/tz */
-
-    mask_t rotate;
-    #if (COFACTOR == 8)
-        gf e;
-        gf_sqr(e, p->z);
-        gf_mul(a, e, b); /* z^2 / tz = z/t = 1/xy */
-        rotate = gf_hibit(a) ^ toggle_rotation;
-        /* Curve25519: cond select between zx * 1/tz or sqrt(1-d); y=-x */
-        gf_mul ( a, b, c ); 
-        gf_cond_sel ( a, a, SQRT_ONE_MINUS_D, rotate );
-        gf_cond_sel ( e, p->y, x, rotate );
-    #else
-        const gf_s *e = x;
-        (void)toggle_rotation;
-        rotate = 0;
-    #endif
-    
-    gf_mul ( c, a, d ); // new "osx"
-    gf_mul ( a, c, p->z );
-    gf_add ( minus_t_over_s, a, a ); // 2 * "osx" * Z
-    gf_mul ( d, b, p->z );
-    
-    mask_t tg = toggle_hibit_t_over_s ^~ gf_hibit(minus_t_over_s);
-    gf_cond_neg ( minus_t_over_s, tg );
-    gf_cond_neg ( c, rotate ^ tg );
-    gf_add ( d, d, c );
-    gf_mul ( s, d, e ); /* here "x" = y unless rotate */
-    gf_cond_neg ( s, toggle_hibit_s ^ gf_hibit(s) );
+    gf_cond_swap(t1,t2,rotate);
+    gf_cond_sel(t4,p->y,t4,rotate);  /* ix if rotate, else y */
+    gf_mul(t3,t2,t4);                /* "fac*iden" */
+    gf_mul_qnr(t2,RISTRETTO_ISOMAGIC);
+    gf_mul(t4,t2,t3);                /* "fac*iden*imi" */
+    gf_mul(t3,t2,p->t);
+    gf_mul(altx,t3,t1);
+    mask_t negx = rotate ^ gf_lobit(altx) ^ toggle_altx;
+    gf_cond_neg(altx,negx);
+    gf_cond_neg(t1,negx);
+    gf_mul(t2,t1,p->z);
+    gf_add(t2,t2,ONE);
+    gf_mul(s,t2,t4);
+    gf_cond_neg(s,gf_lobit(s)^toggle_hibit_s);
+#else
+#error "Cofactor must be 4 or 8"
 #endif
 }
 
 void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
     gf s, mtos;
     API_NS(deisogenize)(s,mtos,p,0,0,0);
-    gf_serialize(ser,s,0);
+    gf_serialize(ser,s,1);
 }
 
 decaf_error_t API_NS(point_decode) (
@@ -238,88 +233,53 @@ decaf_error_t API_NS(point_decode) (
     const unsigned char ser[SER_BYTES],
     decaf_bool_t allow_identity
 ) {
-    gf s, a, b, c, d, e, f;
-    mask_t succ = gf_deserialize(s, ser, 0);
-    mask_t zero = gf_eq(s, ZERO);
-    succ &= bool_to_mask(allow_identity) | ~zero;
-    gf_sqr ( a, s ); /* s^2 */
-#if IMAGINE_TWIST
-    gf_sub ( f, ONE, a ); /* f = 1-as^2 = 1-s^2*/
-#else
-    gf_add ( f, ONE, a ); /* f = 1-as^2 = 1+s^2 */
-#endif
-    succ &= ~ gf_eq( f, ZERO );
-    gf_sqr ( b, f );  /* (1-as^2)^2 = 1 - 2as^2 + a^2 s^4 */
-    gf_mulw ( c, a, 4*IMAGINE_TWIST-4*EDWARDS_D ); 
-    gf_add ( c, c, b ); /* t^2 = 1 + (2a-4d) s^2 + s^4 */
-    gf_mul ( d, f, s ); /* s * (1-as^2) for denoms */
-    gf_sqr ( e, d );    /* s^2 * (1-as^2)^2 */
-    gf_mul ( b, c, e ); /* t^2 * s^2 * (1-as^2)^2 */
+    gf s, s2, num, tmp;
+    gf_s *tmp2=s2, *ynum=p->z, *isr=p->x, *den=p->t;
     
-    succ &= gf_isr(e,b) | gf_eq(b,ZERO); /* e = 1/(t s (1-as^2)) */
-    gf_mul ( b, e, d ); /* 1 / t */
-    gf_mul ( d, e, c ); /* t / (s(1-as^2)) */
-    gf_mul ( e, d, f ); /* t / s */
-    mask_t negtos = gf_hibit(e);
-    gf_cond_neg(b, negtos);
-    gf_cond_neg(d, negtos);
+    mask_t succ = gf_deserialize(s, ser, 1);
+    succ &= bool_to_mask(allow_identity) | ~gf_eq(s, ZERO);
+    succ &= ~gf_lobit(s);
+    
+    gf_sqr(s2,s);                  /* s^2 */
+#if IMAGINE_TWIST
+    gf_sub(s2,ZERO,s2);            /* -as^2 */
+#endif
+    gf_sub(den,ONE,s2);            /* 1+as^2 */
+    gf_add(ynum,ONE,s2);           /* 1-as^2 */
+    gf_mulw(num,s2,-4*TWISTED_D);
+    gf_sqr(tmp,den);               /* tmp = den^2 */
+    gf_add(num,tmp,num);           /* num = den^2 - 4*d*s^2 */
+    gf_mul(tmp2,num,tmp);          /* tmp2 = num*den^2 */
+    succ &= gf_isr(isr,tmp2);      /* isr = 1/sqrt(num*den^2) */
+    gf_mul(tmp,isr,den);           /* isr*den */
+    gf_mul(p->y,tmp,ynum);         /* isr*den*(1-as^2) */
+    gf_mul(tmp2,tmp,s);            /* s*isr*den */
+    gf_add(tmp2,tmp2,tmp2);        /* 2*s*isr*den */
+    gf_mul(tmp,tmp2,isr);          /* 2*s*isr^2*den */
+    gf_mul(p->x,tmp,num);          /* 2*s*isr^2*den*num */
+    gf_mul(tmp,tmp2,RISTRETTO_ISOMAGIC); /* 2*s*isr*den*magic */
+    gf_cond_neg(p->x,gf_lobit(tmp)); /* flip x */
+    
+#if COFACTOR==8
+    /* Additionally check y != 0 and x*y*isomagic nonegative */
+    succ &= ~gf_eq(p->y,ZERO);
+    gf_mul(tmp,p->x,p->y);
+    gf_mul(tmp2,tmp,RISTRETTO_ISOMAGIC);
+    succ &= ~gf_lobit(tmp2);
+#endif
 
 #if IMAGINE_TWIST
-    gf_add ( p->z, ONE, a); /* Z = 1+as^2 = 1-s^2 */
-#else
-    gf_sub ( p->z, ONE, a); /* Z = 1+as^2 = 1-s^2 */
+    gf_copy(tmp,p->x);
+    gf_mul_qnr(p->x,tmp);
 #endif
 
-#if COFACTOR == 8
-    gf_mul ( a, p->z, d); /* t(1+s^2) / s(1-s^2) = 2/xy */
-    succ &= ~gf_lobit(a); /* = ~gf_hibit(a/2), since gf_hibit(x) = gf_lobit(2x) */
-#endif
+    /* Fill in z and t */
+    gf_copy(p->z,ONE);
+    gf_mul(p->t,p->x,p->y);
     
-    gf_mul ( a, f, b ); /* y = (1-s^2) / t */
-    gf_mul ( p->y, p->z, a ); /* Y = yZ */
-#if IMAGINE_TWIST
-    gf_add ( b, s, s );
-    gf_mul(p->x, b, SQRT_MINUS_ONE); /* Curve25519 */
-#else
-    gf_add ( p->x, s, s );
-#endif
-    gf_mul ( p->t, p->x, a ); /* T = 2s (1-as^2)/t */
-    
-#if UNSAFE_CURVE_HAS_POINTS_AT_INFINITY
-    /* This can't happen for any of the supported configurations.
-     *
-     * If it can happen (because s=1), it's because the curve has points
-     * at infinity, which means that there may be critical security bugs
-     * elsewhere in the library.  In that case, it's better that you hit
-     * the assertion in point_valid, which will happen in the test suite
-     * since it tests s=1.
-     *
-     * This debugging option is to allow testing of IMAGINE_TWIST = 0 on
-     * Ed25519, without hitting that assertion.  Don't use it in
-     * production.
-     */
-    succ &= ~gf_eq(p->z,ZERO);
-#endif
-    
-    p->y->limb[0] -= zero;
     assert(API_NS(point_valid)(p) | ~succ);
-    
     return decaf_succeed_if(mask_to_bool(succ));
 }
-
-#if IMAGINE_TWIST
-#define TWISTED_D (-(EDWARDS_D))
-#else
-#define TWISTED_D ((EDWARDS_D)-1)
-#endif
-
-#if TWISTED_D < 0
-#define EFF_D (-(TWISTED_D))
-#define NEG_D 1
-#else
-#define EFF_D TWISTED_D
-#define NEG_D 0
-#endif
 
 void API_NS(point_sub) (
     point_t p,

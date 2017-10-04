@@ -312,29 +312,60 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         
         if self.cofactor == 8:
             # Cofactor 8 version
+            # Simulate IMAGINE_TWIST because that's how libdecaf does it
+            x = self.i*x
+            t = self.i*t
+            a = -a
+            d = -d
+            
+            # OK, the actual libdecaf code should be here
             num = (z+y)*(z-y)
             den = x*y
-            tmp = isqrt(num*(a-d)*den^2)
-        
-            if negative(tmp^2*den*num*(a-d)*t^2*self.isoMagic):
-                den,num = num,den
-                tmp *= sqrt(a-d) # witness that cofactor is 8
-                yisr = x*sqrt(a)
-                toggle = (a==1)
+            isr = isqrt(num*(a-d)*den^2)
+    
+            iden = isr * den * self.isoMagic
+            inum = isr * num
+            
+            if negative(iden*inum*self.i*t^2*(d-a)):
+                iden,inum = inum,iden
+                fac = x*sqrt(a)
+                toggle = (-a==1)
             else:
-                yisr = y*(a*d-1)
+                fac = y
                 toggle = False
             
-            tiisr = tmp*num
-            altx = tiisr*t*self.isoMagic
-            if negative(altx) != toggle: tiisr =- tiisr
-            s = tmp*den*yisr*(tiisr*z - 1)
+            imi = self.isoMagic * self.i
+            altx = inum*t*imi
+            if negative(altx) != toggle: inum =- inum
+            s = fac*iden*(inum*z + 1)*imi
+            
+            # Version without the above IMAGINE_TWIST hack
+            # num = (z+y)*(z-y)
+            # den = x*y
+            # isr = isqrt(num*(a-d)*den^2)
+            #
+            # imi = self.isoMagic * self.i
+            # iden = isr * den * imi
+            # inum = isr * num
+            # if isr: assert iden*inum == 1/imi/den
+            #
+            # if negative(iden*inum*self.i*t^2*(d-a)):
+            #     iden,inum = inum,iden
+            #     fac = x*sqrt(a)
+            #     toggle = (a==1)
+            # else:
+            #     fac = y
+            #     toggle = False
+            #
+            # altx = inum*t*self.isoMagic
+            # if negative(altx) != toggle: inum =- inum
+            # s = fac*iden*imi*(inum*z - 1)
         
         else:
             # Much simpler cofactor 4 version
             num = (x+t)*(x-t)
             isr = isqrt(num*(a-d)*x^2)
-            ratio = isr*num
+            ratio = isr*num 
             if negative(ratio*self.isoMagic): ratio=-ratio
             s = (a-d)*isr*x*(ratio*z - t)
         
@@ -347,7 +378,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         a,d = cls.a,cls.d
         s = cls.bytesToGf(s,mustBePositive=True)
         
-        if s==0: return cls()
+        #if s==0: return cls()
         s2 = s^2
         den = 1+a*s2
         num = den^2 - 4*d*s2
