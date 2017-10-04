@@ -240,6 +240,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
         a,d = cls.a,cls.d
         r = cls.qnr * cls.bytesToGf(r0)^2
         den = (d*r-a)*(a*r-d)
+        if den == 0: return cls()
         n1 = cls.a*(r+1)*(a+d)*(d-a)/den
         n2 = r*n1
         if is_square(n1):
@@ -408,6 +409,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         r = cls.qnr * cls.bytesToGf(r0)^2
         
         den = (d*r-(d-a))*((d-a)*r-d)
+        if den == 0: return cls()
         n1 = (r+1)*(a-2*d)/den
         n2 = r*n1
         if is_square(n1):
