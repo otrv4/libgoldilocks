@@ -120,7 +120,7 @@ gf_invert(gf y, const gf x, int assert_nonzero) {
 const point_t API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 
 /* Predeclare because not static: called by elligator */
-mask_t API_NS(deisogenize) (
+void API_NS(deisogenize) (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
     gf_s *__restrict__ inv_el_m1,
@@ -130,7 +130,7 @@ mask_t API_NS(deisogenize) (
     mask_t toggle_rotation
 );
 
-mask_t API_NS(deisogenize) (
+void API_NS(deisogenize) (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
     gf_s *__restrict__ inv_el_m1,
@@ -139,7 +139,6 @@ mask_t API_NS(deisogenize) (
     mask_t toggle_altx,
     mask_t toggle_rotation
 ) {
-    
 #if COFACTOR == 4 && !IMAGINE_TWIST
     (void)toggle_rotation; /* Only applies to cofactor 8 */
     gf t1;
@@ -166,12 +165,8 @@ mask_t API_NS(deisogenize) (
     gf_copy(inv_el_m1,p->x);
     gf_cond_neg(inv_el_m1,~lobs^negx^toggle_s);
     gf_add(inv_el_m1,inv_el_m1,p->t);
-    return toggle_s;
     
 #elif COFACTOR == 8 && IMAGINE_TWIST
-    gf_s *altx = inv_el_sum; // TODO
-    (void)inv_el_m1;
-    
     /* More complicated because of rotation */
     gf t1,t2,t3,t4,t5;
     gf_add(t1,p->z,p->y);
@@ -186,35 +181,38 @@ mask_t API_NS(deisogenize) (
     gf_mul(t2,t1,RISTRETTO_ISOMAGIC); /* t2 = "iden" in ristretto.sage */
     gf_mul(t1,t3,t4);                 /* t1 = "inum" in ristretto.sage */
 
+    /* Calculate altxy = iden*inum*i*t^2*(d-a) */
     gf_mul(t3,t1,t2);
     gf_mul_qnr(t4,t3);
     gf_mul(t3,t4,p->t);
     gf_mul(t4,t3,p->t);
     gf_mulw(t3,t4,TWISTED_D+1);      /* iden*inum*i*t^2*(d-1) */
-    gf_mul_qnr(t4,p->x);
     mask_t rotate = toggle_rotation ^ gf_lobit(t3);
     
+    /* Rotate if altxy is negative */
     gf_cond_swap(t1,t2,rotate);
-    gf_cond_sel(t4,p->y,t4,rotate);  /* "fac" = ix if rotate, else y */
-    gf_mul(t3,t2,t4);                /* "fac*iden" */
-    gf_mul_qnr(t2,RISTRETTO_ISOMAGIC);
-    gf_mul(t4,t2,t3);                /* "fac*iden*imi" */
-    gf_mul(t5,t2,p->t);
-    gf_mul(altx,t5,t1);
-    mask_t negx = gf_lobit(altx) ^ toggle_altx;
+    gf_mul_qnr(t4,p->x);
+    gf_cond_sel(t4,p->y,t4,rotate);  /* t4 = "fac" = ix if rotate, else y */
+    
+    gf_mul_qnr(t5,RISTRETTO_ISOMAGIC); /* t5 = imi */
+    gf_mul(t3,t5,t2);                /* iden * imi */
+    gf_mul(t2,t5,t1);
+    gf_mul(t5,t2,p->t);              /* "altx" = iden*imi*t */
+    mask_t negx = gf_lobit(t5) ^ toggle_altx;
+    
     gf_cond_neg(t1,negx^rotate);
     gf_mul(t2,t1,p->z);
     gf_add(t2,t2,ONE);
-    gf_mul(s,t2,t4);
+    gf_mul(inv_el_sum,t2,t4);
+    gf_mul(s,inv_el_sum,t3);
+    
     mask_t negs = gf_lobit(s);
     gf_cond_neg(s,negs);
     
     mask_t negz = ~negs ^ toggle_s ^ negx;
     gf_copy(inv_el_m1,p->z);
     gf_cond_neg(inv_el_m1,negz);
-    gf_sub(inv_el_m1,inv_el_m1,t3);
-    
-    return toggle_s; 
+    gf_sub(inv_el_m1,inv_el_m1,t4);
 #else
 #error "Cofactor must be 4 (with no IMAGINE_TWIST) or 8 (with IMAGINE_TWIST)"
 #endif
@@ -222,7 +220,7 @@ mask_t API_NS(deisogenize) (
 
 void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
     gf s,ie1,ie2;
-    (void)API_NS(deisogenize)(s,ie1,ie2,p,0,0,0);
+    API_NS(deisogenize)(s,ie1,ie2,p,0,0,0);
     gf_serialize(ser,s,1);
 }
 

@@ -131,23 +131,21 @@ API_NS(invert_elligator_nonuniform) (
          */
         sgn_ed_T = -(hint>>3 & 1);
     gf a,b,c;
-    mask_t swap = API_NS(deisogenize)(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
+    API_NS(deisogenize)(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
     
     mask_t is_identity = gf_eq(p->t,ZERO);
-    (void)is_identity;
     gf_cond_sel(b,b,ONE,is_identity & sgn_altx);
     gf_cond_sel(c,c,ONE,is_identity & sgn_s &~ sgn_altx);
     
 #if IMAGINE_TWIST
-    gf_mulw(a,b,EDWARDS_D);
-    gf_sub(b,a,b);
+    gf_mulw(a,b,-EDWARDS_D);
 #else
     gf_mulw(a,b,EDWARDS_D-1);
-    gf_add(b,a,b);
 #endif
+    gf_add(b,a,b);
     gf_sub(a,a,c);
     gf_add(b,b,c);
-    gf_cond_swap(a,b,swap);
+    gf_cond_swap(a,b,sgn_s);
     gf_mul_qnr(c,b);
     gf_mul(b,c,a);
     mask_t succ = gf_isr(c,b);
@@ -155,10 +153,11 @@ API_NS(invert_elligator_nonuniform) (
     gf_mul(b,c,a);
     
 #if $(gf_bits) == 8*SER_BYTES + 1 /* p521. */
+#error "this won't work because it needs to adjust high bit, not low bit"
     sgn_r0 = 0;
 #endif
     
-    gf_cond_neg(b, sgn_r0^gf_hibit(b));
+    gf_cond_neg(b, sgn_r0^gf_lobit(b));
     succ &= ~(gf_eq(b,ZERO) & sgn_r0);
     // #if COFACTOR == 8
     //     succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */

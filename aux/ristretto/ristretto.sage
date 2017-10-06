@@ -338,6 +338,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
             altx = inum*t*imi
             neg_altx = negative(altx) != toggle_altx
             if neg_altx != toggle: inum =- inum
+            
             tmp = fac*(inum*z + 1)
             s = iden*tmp*imi
             
@@ -399,7 +400,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
                         sr *= rnum
                         if negative(sr) != toggle_r: sr = -sr
                         ret = self.gfToBytes(sr)
-                        assert self.elligator(ret) == self or self.elligator(ret) == -self
+                        #assert self.elligator(ret) == self or self.elligator(ret) == -self
                         if self.elligator(ret) == -self and self != -self: print "Negated!",[toggle_rotation,toggle_altx,toggle_s,toggle_r]
                         rets.append(bytes(ret))
         return rets
