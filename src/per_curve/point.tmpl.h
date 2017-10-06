@@ -37,6 +37,9 @@ typedef struct gf_$(gf_shortname)_s {
 /** Number of bits in the "which" field of an elligator inverse */
 #define $(C_NS)_INVERT_ELLIGATOR_WHICH_BITS $(ceil_log2(cofactor) + 7 + elligator_onto - ((gf_bits-2) % 8))
 
+/** The cofactor the curve would have, if we hadn't removed it */
+#define $(C_NS)_REMOVED_COFACTOR $(cofactor)
+
 /** Number of bytes in an x$(gf_shortname) public key */
 #define DECAF_X$(gf_shortname)_PUBLIC_BYTES $((gf_bits-1)//8 + 1)
 
@@ -381,6 +384,17 @@ decaf_error_t decaf_x$(gf_shortname) (
     const uint8_t base[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X$(gf_shortname)_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
+
+/**
+ * @brief Multiply a point by the cofactor, then encode it like RFC 7748
+ *
+ * @param [out] out The scaled and encoded point.
+ * @param [in] p The point to be scaled and encoded.
+ */
+void $(c_ns)_point_mul_by_cofactor_and_encode_like_x$(gf_shortname) (
+    uint8_t out[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
+    const $(c_ns)_point_t p
+);
 
 /** The base point for X$(gf_shortname) Diffie-Hellman */
 extern const uint8_t decaf_x$(gf_shortname)_base_point[DECAF_X$(gf_shortname)_PUBLIC_BYTES] DECAF_API_VIS;

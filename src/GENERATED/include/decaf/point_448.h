@@ -52,6 +52,9 @@ typedef struct gf_448_s {
 /** Number of bits in the "which" field of an elligator inverse */
 #define DECAF_448_INVERT_ELLIGATOR_WHICH_BITS 3
 
+/** The cofactor the curve would have, if we hadn't removed it */
+#define DECAF_448_REMOVED_COFACTOR 4
+
 /** Number of bytes in an x448 public key */
 #define DECAF_X448_PUBLIC_BYTES 56
 
@@ -396,6 +399,17 @@ decaf_error_t decaf_x448 (
     const uint8_t base[DECAF_X448_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
+
+/**
+ * @brief Multiply a point by the cofactor, then encode it like RFC 7748
+ *
+ * @param [out] out The scaled and encoded point.
+ * @param [in] p The point to be scaled and encoded.
+ */
+void decaf_448_point_mul_by_cofactor_and_encode_like_x448 (
+    uint8_t out[DECAF_X448_PUBLIC_BYTES],
+    const decaf_448_point_t p
+);
 
 /** The base point for X448 Diffie-Hellman */
 extern const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] DECAF_API_VIS;

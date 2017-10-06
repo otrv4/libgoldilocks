@@ -41,12 +41,6 @@ static const gf RISTRETTO_ISOMAGIC = {{{
     $(ser(msqrt(d-1 if imagine_twist else -d,modulus,lo_bit_clear=True),gf_lit_limb_bits))
 }}};
 
-#if COFACTOR==8 || EDDSA_USE_SIGMA_ISOGENY
-    static const gf SQRT_ONE_MINUS_D = {FIELD_LITERAL(
-        $(ser(msqrt(1-d,modulus),gf_lit_limb_bits) if cofactor == 8 else "/* NONE */")
-    )};
-#endif
-
 #if IMAGINE_TWIST
 #define TWISTED_D (-(EDWARDS_D))
 #else
@@ -1182,8 +1176,9 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_ignore_cofactor) (
         gf_sub ( p->t, a, c ); // y^2 - x^2
         gf_sqr ( p->x, p->z );
         gf_add ( p->z, p->x, p->x );
-        gf_sub ( a, p->z, p->t ); // 2z^2 - y^2 + x^2
-        gf_mul ( c, a, SQRT_ONE_MINUS_D );
+        gf_sub ( c, p->z, p->t ); // 2z^2 - y^2 + x^2
+        gf_div_qnr ( a, c );
+        gf_mul ( c, a, RISTRETTO_ISOMAGIC );
         gf_mul ( p->x, b, p->t); // (2xy)(y^2-x^2)
         gf_mul ( p->z, p->t, c ); // (y^2-x^2)sd(2z^2 - y^2 + x^2)
         gf_mul ( p->y, d, c ); // (y^2+x^2)sd(2z^2 - y^2 + x^2)
@@ -1352,6 +1347,23 @@ void decaf_x$(gf_shortname)_generate_key (
     decaf_x$(gf_shortname)_derive_public_key(out,scalar);
 }
 
+void API_NS(point_mul_by_cofactor_and_encode_like_x$(gf_shortname)) (
+    uint8_t out[X_PUBLIC_BYTES],
+    const point_t p
+) {
+    point_t q;
+    point_double_internal(q,p,1);
+    for (unsigned i=1; i<COFACTOR/4; i<<=1) point_double_internal(q,q,1);
+    gf_invert(q->t,q->x,0); /* 1/x */
+    gf_mul(q->z,q->t,q->y); /* y/x */
+    gf_sqr(q->y,q->z); /* (y/x)^2 */
+#if IMAGINE_TWIST
+    gf_sub(q->y,ZERO,q->y);
+#endif
+    gf_serialize(out,q->y,1);
+    API_NS(point_destroy(q));
+}
+
 void decaf_x$(gf_shortname)_derive_public_key (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
@@ -1379,27 +1391,12 @@ void decaf_x$(gf_shortname)_derive_public_key (
      * Jacobi -> Edwards -> Jacobi -> Montgomery,
      * we pick up only a factor of 2 over Jacobi -> Montgomery. 
      */
-    API_NS(scalar_halve)(the_scalar,the_scalar);
+    for (unsigned i=1; i<COFACTOR; i<<=1) {
+        API_NS(scalar_halve)(the_scalar,the_scalar);
+    }
     point_t p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),the_scalar);
-    
-    /* Isogenize to Montgomery curve.
-     *
-     * Why isn't this just a separate function, eg decaf_encode_like_x$(gf_shortname)?
-     * Basically because in general it does the wrong thing if there is a cofactor
-     * component in the input.  In this function though, there isn't a cofactor
-     * component in the input.
-     */
-    gf_invert(p->t,p->x,0); /* 1/x */
-    gf_mul(p->z,p->t,p->y); /* y/x */
-    gf_sqr(p->y,p->z); /* (y/x)^2 */
-#if IMAGINE_TWIST
-    gf_sub(p->y,ZERO,p->y);
-#endif
-    gf_serialize(out,p->y,1);
-        
-    decaf_bzero(scalar2,sizeof(scalar2));
-    API_NS(scalar_destroy)(the_scalar);
+    API_NS(point_mul_by_cofactor_and_encode_like_x$(gf_shortname))(out,p);
     API_NS(point_destroy)(p);
 }
 

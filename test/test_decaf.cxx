@@ -457,12 +457,15 @@ static void test_cfrg_crypto() {
             printf("    Shared secrets disagree on iteration %d.\n",i);
         }
         
-        if (!memeq(
-            DhLadder::shared_secret(DhLadder::base_point(),s1),
-            DhLadder::derive_public_key(s1)
-        )) {
+        p1 = DhLadder::shared_secret(DhLadder::base_point(),s1);
+        p2 = DhLadder::derive_public_key(s1);
+        if (!memeq(p1,p2)) {
             test.fail();
-            printf("    Public keys disagree on iteration %d.\n",i);
+            printf("    Public keys disagree on iteration %d.\n    Ladder public key: ",i);
+            for (unsigned j=0; j<s1.size(); j++) { printf("%02x",p1[j]); }
+            printf("\n    Derive public key: ");
+            for (unsigned j=0; j<s1.size(); j++) { printf("%02x",p2[j]); }
+            printf("\n");
         }
     }
 }
@@ -581,14 +584,14 @@ static void test_convert_eddsa_to_x() {
         SecureBuffer alice_pub_x_generated  = DhLadder::derive_public_key(alice_priv_x);
         if (!memeq(alice_pub_x_conversion, alice_pub_x_generated)) {
             test.fail();
-            printf("    Ed2X Public key convertion and regeneration from converted private key differs.\n");
+            printf("    Ed2X Public key conversion and regeneration from converted private key differs.\n");
         }
         SecureBuffer bob_priv_x = bob_priv.convert_to_x();
         SecureBuffer bob_pub_x_conversion = bob_pub.convert_to_x();
         SecureBuffer bob_pub_x_generated  = DhLadder::derive_public_key(bob_priv_x);
         if (!memeq(bob_pub_x_conversion, bob_pub_x_generated)) {
             test.fail();
-            printf("    Ed2X Public key convertion and regeneration from converted private key differs.\n");
+            printf("    Ed2X Public key conversion and regeneration from converted private key differs.\n");
         }
 
         /* compute shared secrets and check they match */
