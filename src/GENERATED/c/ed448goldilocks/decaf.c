@@ -247,7 +247,7 @@ decaf_error_t API_NS(point_decode) (
     succ &= bool_to_mask(allow_identity) | ~gf_eq(s, ZERO);
     succ &= ~gf_lobit(s);
     
-    gf_sqr(s2,s);                  /* s^2 */
+    gf_sqr(s2,s);                  /* s^2 = -as^2 */
 #if IMAGINE_TWIST
     gf_sub(s2,ZERO,s2);            /* -as^2 */
 #endif
@@ -1083,8 +1083,13 @@ void API_NS(point_mul_by_cofactor_and_encode_like_eddsa) (
         gf_mul ( y, u, t ); // (x^2+y^2)(2z^2-y^2+x^2)
         gf_mul ( u, z, t );
         gf_copy( z, u );
-        gf_mul ( u, x, SQRT_ONE_MINUS_D );
+        gf_mul ( u, x, RISTRETTO_ISOMAGIC );
+#if IMAGINE_TWIST
+        gf_mul_qnr( x, u );
+#else
+#error "... probably wrong"
         gf_copy( x, u );
+#endif
         decaf_bzero(u,sizeof(u));
     }
 #elif IMAGINE_TWIST
@@ -1104,7 +1109,7 @@ void API_NS(point_mul_by_cofactor_and_encode_like_eddsa) (
         gf_add( u, x, t );
         gf_add( z, q->y, q->x );
         gf_sqr ( y, z);
-        gf_sub ( y, u, y );
+        gf_sub ( y, y, u );
         gf_sub ( z, t, x );
         gf_sqr ( x, q->z );
         gf_add ( t, x, x); 
@@ -1163,7 +1168,7 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_ignore_cofactor) (
     succ &= gf_isr(p->t,p->x); /* 1/sqrt(num * denom) */
     
     gf_mul(p->x,p->t,p->z); /* sqrt(num / denom) */
-    gf_cond_neg(p->x,~gf_lobit(p->x)^low);
+    gf_cond_neg(p->x,gf_lobit(p->x)^low);
     gf_copy(p->z,ONE);
   
     #if EDDSA_USE_SIGMA_ISOGENY
@@ -1232,6 +1237,7 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_ignore_cofactor) (
     
     decaf_bzero(enc2,sizeof(enc2));
     assert(API_NS(point_valid)(p) || ~succ);
+    
     return decaf_succeed_if(mask_to_bool(succ));
 }
 

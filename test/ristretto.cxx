@@ -66,11 +66,17 @@ void usage() {
     
     fprintf(stderr,"Usage: %s [points] [operations] ...\n", me);
     fprintf(stderr,"  -b 255|448: Set which group to use (sometimes inferred from lengths)\n");
+    fprintf(stderr,"  -E: Display output as Elligator inverses\n");
+    fprintf(stderr,"  -D: Display output in EdDSA format (times clearing ratio)\n");
+    fprintf(stderr,"  -R: Display raw xyzt\n");
+    //fprintf(stderr,"  -C: Display output in X[25519|448] format\n");
+    fprintf(stderr,"  -H: ... divide by clearing ratio first\n");
     fprintf(stderr,"\n");
     fprintf(stderr,"  Ways to create points:\n");
     fprintf(stderr,"    [hex]: Point from point data as hex\n");
     fprintf(stderr,"    -e [hex]: Create point by hashing to curve using elligator\n");
     fprintf(stderr,"    base: Base point of curve\n");
+    fprintf(stderr,"    identity: Identity point of curve\n");
     fprintf(stderr,"\n");
     fprintf(stderr,"  Operations:\n");
     fprintf(stderr,"    -n [point]: negative of point\n");
@@ -91,7 +97,8 @@ public:
         uint8_t tmp[Group::Point::SER_BYTES];
         typename Group::Point a,b;
         typename Group::Scalar s;
-        bool plus=false, empty=true, elligator=false, mul=false, scalar=false, scalarempty=true, neg=false;
+        bool plus=false, empty=true, elligator=false, mul=false, scalar=false,
+            scalarempty=true, neg=false, einv=false, like_eddsa=false, decoeff=false, raw=false;
         if (done || error) return;
         for (int i=1; i<g_argc && !error; i++) {
             bool point = false;
@@ -104,6 +111,14 @@ public:
                 plus = true;
             } else if (!strcmp(g_argv[i],"-n")) {
                 neg = !neg;
+            } else if (!strcmp(g_argv[i],"-E")) {
+                einv = true;
+            } else if (!strcmp(g_argv[i],"-R")) {
+                raw = true;
+            } else if (!strcmp(g_argv[i],"-D")) {
+                like_eddsa = true;
+            } else if (!strcmp(g_argv[i],"-H")) {
+                decoeff = true;
             } else if (!strcmp(g_argv[i],"*")) {
                 if (elligator || scalar || scalarempty) usage();
                 mul = true;
@@ -116,6 +131,10 @@ public:
             } else if (!strcmp(g_argv[i],"base")) {
                 if (elligator || scalar) usage();
                 b = b.base();
+                point = true;
+            } else if (!strcmp(g_argv[i],"identity")) {
+                if (elligator || scalar) usage();
+                b = b.identity();
                 point = true;
             } else if ((strlen(g_argv[i]) == 2*sizeof(tmp)
                     || ((scalar || elligator) && strlen(g_argv[i]) <= 2*sizeof(tmp)))
@@ -143,9 +162,29 @@ public:
         }
         
         if (!error && !empty) {
-            a.serialize_into(tmp);
-            printhex(tmp,sizeof(tmp));
-            printf("\n");
+            if (decoeff) a /= (Group::EDDSA_RATIO);
+            if (einv) {
+                uint8_t buffer[Group::Point::HASH_BYTES];
+                for (int h=0; h<1<<Group::Point::INVERT_ELLIGATOR_WHICH_BITS; h++) {
+                    if (DECAF_SUCCESS == a.invert_elligator(
+                        Buffer(buffer,sizeof(buffer)), h
+                    )) {
+                        printhex(buffer,sizeof(buffer));
+                        printf("\n");
+                    }
+                }
+            } else if (raw) {
+                printhex((const uint8_t *)&a, sizeof(a));
+                printf("\n");
+            } else if (like_eddsa) {
+                SecureBuffer b = a.mul_by_cofactor_and_encode_like_eddsa();
+                printhex(b.data(),b.size());
+                printf("\n");
+            } else {
+                a.serialize_into(tmp);
+                printhex(tmp,sizeof(tmp));
+                printf("\n");
+            }
             done = true;
         }
         

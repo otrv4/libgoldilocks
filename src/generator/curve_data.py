@@ -74,7 +74,7 @@ def ser(x,bits,paren=None):
         first = False
     return out
 
-def msqrt(x,p,hi_bit_clear = True):
+def msqrt(x,p,hi_bit_clear = True, lo_bit_clear = False):
     if p % 4 == 3: ret = pow(x,(p+1)//4,p)
     elif p % 8 == 5:
         for u in range(1,1000):
@@ -86,6 +86,8 @@ def msqrt(x,p,hi_bit_clear = True):
         
     if (ret**2-x) % p != 0: raise Exception("No sqrt")
     if hi_bit_clear and ret > p//2: ret = p-ret
+    # lo_bit_clear overrides hi_bit_clear because it's not default
+    if lo_bit_clear and (ret & 1): ret = p-ret 
     return ret
         
 def ceil_log2(x):

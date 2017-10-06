@@ -49,7 +49,9 @@ def isqrt(x,exn=InvalidEncodingException("Not on curve")):
     """Return 1/sqrt(x)"""
     if x==0: return 0
     if not is_square(x): raise exn
-    return 1/sqrt(x)
+    s = sqrt(x)
+    if negative(s): s=-s
+    return 1/s
 
 def isqrt_i(x):
     """Return 1/sqrt(x) or 1/sqrt(zeta * x)"""

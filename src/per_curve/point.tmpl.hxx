@@ -51,6 +51,9 @@ static inline int bits() { return $(gf_bits); }
 /** The curve's cofactor (removed, but useful for testing) */
 static const int REMOVED_COFACTOR = $(cofactor);
 
+/** The curve's cofactor (removed, but useful for testing) */
+static const int EDDSA_RATIO = $(cofactor/2 if eddsa_sigma_iso else cofactor);
+
 /** Residue class of field modulus: p == this mod 2*(this-1) */
 static const int FIELD_MODULUS_TYPE = $(modulus &~ (modulus-3));
 
@@ -241,6 +244,9 @@ public:
 
     /** Bytes required for hash */
     static const size_t HASH_BYTES = $(C_NS)_HASH_BYTES;
+
+    /** Bytes required for EdDSA encoding */
+    static const size_t EDDSA_BYTES = DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES;
 
     /**
      * Size of a stegged element.

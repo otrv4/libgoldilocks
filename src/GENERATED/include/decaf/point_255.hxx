@@ -64,6 +64,9 @@ static inline int bits() { return 255; }
 /** The curve's cofactor (removed, but useful for testing) */
 static const int REMOVED_COFACTOR = 8;
 
+/** The curve's cofactor (removed, but useful for testing) */
+static const int EDDSA_RATIO = 4;
+
 /** Residue class of field modulus: p == this mod 2*(this-1) */
 static const int FIELD_MODULUS_TYPE = 5;
 
@@ -254,6 +257,9 @@ public:
 
     /** Bytes required for hash */
     static const size_t HASH_BYTES = DECAF_255_HASH_BYTES;
+
+    /** Bytes required for EdDSA encoding */
+    static const size_t EDDSA_BYTES = DECAF_EDDSA_25519_PUBLIC_BYTES;
 
     /**
      * Size of a stegged element.
