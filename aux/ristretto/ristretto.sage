@@ -305,9 +305,8 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         
         return cls(x,y)
 
-    @optimized_version_of("encodeSpec")
-    def encode(self):
-        """Encode, optimized version"""
+    def toJacobiQuartic(self,toggle_rotation=False,toggle_altx=False,toggle_s=False):
+        "Return s,t on jacobi curve"
         a,d = self.a,self.d
         x,y,z,t = self.xyzt()
         
@@ -327,50 +326,88 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
             iden = isr * den * self.isoMagic
             inum = isr * num
             
-            if negative(iden*inum*self.i*t^2*(d-a)):
+            if negative(iden*inum*self.i*t^2*(d-a)) != toggle_rotation:
                 iden,inum = inum,iden
                 fac = x*sqrt(a)
-                toggle = (-a==1)
+                toggle=(a==-1)
             else:
                 fac = y
-                toggle = False
+                toggle=False
             
             imi = self.isoMagic * self.i
             altx = inum*t*imi
-            if negative(altx) != toggle: inum =- inum
-            s = fac*iden*(inum*z + 1)*imi
+            neg_altx = negative(altx) != toggle_altx
+            if neg_altx != toggle: inum =- inum
+            tmp = fac*(inum*z + 1)
+            s = iden*tmp*imi
             
-            # Version without the above IMAGINE_TWIST hack
-            # num = (z+y)*(z-y)
-            # den = x*y
-            # isr = isqrt(num*(a-d)*den^2)
-            #
-            # imi = self.isoMagic * self.i
-            # iden = isr * den * imi
-            # inum = isr * num
-            # if isr: assert iden*inum == 1/imi/den
-            #
-            # if negative(iden*inum*self.i*t^2*(d-a)):
-            #     iden,inum = inum,iden
-            #     fac = x*sqrt(a)
-            #     toggle = (a==1)
-            # else:
-            #     fac = y
-            #     toggle = False
-            #
-            # altx = inum*t*self.isoMagic
-            # if negative(altx) != toggle: inum =- inum
-            # s = fac*iden*imi*(inum*z - 1)
+            negm1 = (negative(s) != toggle_s) != neg_altx
+            if negm1: m1 = a*fac + z
+            else:     m1 = a*fac - z
+            
+            swap = toggle_s
         
         else:
             # Much simpler cofactor 4 version
             num = (x+t)*(x-t)
             isr = isqrt(num*(a-d)*x^2)
             ratio = isr*num 
-            if negative(ratio*self.isoMagic): ratio=-ratio
-            s = (a-d)*isr*x*(ratio*z - t)
+            altx = ratio*self.isoMagic
+            
+            neg_altx = negative(altx) != toggle_altx
+            if neg_altx: ratio =- ratio
+                
+            tmp = ratio*z - t
+            s = (a-d)*isr*x*tmp
+            
+            negx = (negative(s) != toggle_s) != neg_altx
+            if negx: m1 = -a*t + x
+            else:    m1 = -a*t - x
+            
+            swap = toggle_s
+            
+        if negative(s): s = -s
         
-        return self.gfToBytes(s,mustBePositive=True)
+        return s,m1,a*tmp,swap
+    
+    def invertElligator(self,toggle_r=False,*args,**kwargs):
+        "Produce preimage of self under elligator, or None"
+        a,d = self.a,self.d
+        
+        rets = []
+        
+        tr = [False,True] if self.cofactor == 8 else [False]
+        for toggle_rotation in tr:
+            for toggle_altx in [False,True]:
+                for toggle_s in [False,True]:
+                    for toggle_r in [False,True]:
+                        s,m1,m12,swap = self.toJacobiQuartic(toggle_rotation,toggle_altx,toggle_s)
+                        
+                        if self == self.__class__():
+                            # Hacks for identity!
+                            if toggle_altx: m12 = 1
+                            elif toggle_s: m1 = 1
+                            elif toggle_r: continue
+                            ## BOTH???
+                        
+                        rnum = (d*a*m12-m1)
+                        rden = ((d*a-1)*m12+m1)
+                        if swap: rnum,rden = rden,rnum
+                        
+                        ok,sr = isqrt_i(rnum*rden*self.qnr)
+                        if not ok: continue
+                        sr *= rnum
+                        if negative(sr) != toggle_r: sr = -sr
+                        ret = self.gfToBytes(sr)
+                        assert self.elligator(ret) == self or self.elligator(ret) == -self
+                        if self.elligator(ret) == -self and self != -self: print "Negated!",[toggle_rotation,toggle_altx,toggle_s,toggle_r]
+                        rets.append(bytes(ret))
+        return rets
+
+    @optimized_version_of("encodeSpec")
+    def encode(self):
+        """Encode, optimized version"""    
+        return self.gfToBytes(self.toJacobiQuartic()[0])
         
     @classmethod
     @optimized_version_of("decodeSpec")
@@ -404,9 +441,10 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         return cls(x,sgn*y)
             
     @classmethod
-    def elligatorSpec(cls,r0):
+    def elligatorSpec(cls,r0,fromR=False):
         a,d = cls.a,cls.d
-        r = cls.qnr * cls.bytesToGf(r0)^2
+        if fromR: r = r0
+        else: r = cls.qnr * cls.bytesToGf(r0)^2
         
         den = (d*r-(d-a))*((d-a)*r-d)
         if den == 0: return cls()
@@ -608,9 +646,27 @@ test(Ed448GoldilocksPoint,100)
 def testElligator(cls,n):
     print "Testing elligator on %s" % cls.__name__
     for i in xrange(n):
-        cls.elligator(randombytes(cls.encLen))
+        r = randombytes(cls.encLen)
+        P = cls.elligator(r)
+        if hasattr(P,"invertElligator"):
+            iv = P.invertElligator()
+            modr = bytes(cls.gfToBytes(cls.bytesToGf(r)))
+            iv2 = P.torque().invertElligator()
+            if modr not in iv: print "Failed to invert Elligator!"
+            if len(iv) != len(set(iv)):
+                print "Elligator inverses not unique!", len(set(iv)), len(iv)
+            if iv != iv2:
+                print "Elligator is untorqueable!"
+                #print [binascii.hexlify(j) for j in iv]
+                #print [binascii.hexlify(j) for j in iv2]
+                #break
+        else:
+            pass # TODO
+        
+
 testElligator(Ed25519Point,100)
 testElligator(NegEd25519Point,100)
+testElligator(IsoEd25519Point,100)
 testElligator(IsoEd448Point,100)
 testElligator(Ed448GoldilocksPoint,100)
 testElligator(TwistedEd448GoldilocksPoint,100)

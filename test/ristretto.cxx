@@ -75,7 +75,7 @@ void usage() {
     fprintf(stderr,"  Operations:\n");
     fprintf(stderr,"    -n [point]: negative of point\n");
     fprintf(stderr,"    -s [scalar] * [point]: Hash to curve using elligator\n");
-    fprintf(stderr,"    [point] + [point]: Add two poitns\n");
+    fprintf(stderr,"    [point] + [point]: Add two points\n");
     fprintf(stderr,"\n");
     fprintf(stderr,"  NB: this is a debugging widget.  It doesn't yet have order of operations.\n");
     fprintf(stderr,"  *** DON'T USE THIS UTILITY FOR ACTUAL CRYPTO! ***\n");

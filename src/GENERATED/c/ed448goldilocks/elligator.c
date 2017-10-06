@@ -23,9 +23,10 @@
 static const int EDWARDS_D = -39081;
 /* End of template stuff */
 
-extern void API_NS(deisogenize) (
+extern mask_t API_NS(deisogenize) (
     gf_s *__restrict__ s,
-    gf_s *__restrict__ altx,
+    gf_s *__restrict__ inv_el_sum,
+    gf_s *__restrict__ inv_el_m1,
     const point_t p,
     mask_t toggle_hibit_s,
     mask_t toggle_altx,
@@ -131,48 +132,48 @@ API_NS(invert_elligator_nonuniform) (
     const point_t p,
     uint32_t hint_
 ) {
+    /* TODO: test that this can produce sqrt((d-a)/ud) etc. */
     mask_t hint = hint_;
     mask_t sgn_s = -(hint & 1),
-        sgn_t_over_s = -(hint>>1 & 1),
+        sgn_altx = -(hint>>1 & 1),
         sgn_r0 = -(hint>>2 & 1),
         /* FUTURE MAGIC: eventually if there's a curve which needs sgn_ed_T but not sgn_r0,
          * change this mask extraction.
          */
         sgn_ed_T = -(hint>>3 & 1);
-    gf a, b, c, d;
-    API_NS(deisogenize)(a,c,p,sgn_s,sgn_t_over_s,sgn_ed_T);
+    gf a,b,c;
+    mask_t swap = API_NS(deisogenize)(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
+    
+    mask_t is_identity = gf_eq(p->t,ZERO);
+    (void)is_identity;
+    gf_cond_sel(b,b,ONE,is_identity & sgn_altx);
+    gf_cond_sel(c,c,ONE,is_identity & sgn_s &~ sgn_altx);
+    
+#if IMAGINE_TWIST
+    gf_mulw(a,b,EDWARDS_D);
+    gf_sub(b,a,b);
+#else
+    gf_mulw(a,b,EDWARDS_D-1);
+    gf_add(b,a,b);
+#endif
+    gf_sub(a,a,c);
+    gf_add(b,b,c);
+    gf_cond_swap(a,b,swap);
+    gf_mul_qnr(c,b);
+    gf_mul(b,c,a);
+    mask_t succ = gf_isr(c,b);
+    succ |= gf_eq(b,ZERO);
+    gf_mul(b,c,a);
     
 #if 448 == 8*SER_BYTES + 1 /* p521. */
     sgn_r0 = 0;
 #endif
     
-    /* ok, a = s; c = -t/s */
-    gf_mul(b,c,a);
-    gf_sub(b,ONE,b); /* t+1 */
-    gf_sqr(c,a); /* s^2 */
-    mask_t is_identity = gf_eq(p->t,ZERO);
-
-    /* identity adjustments */
-    /* in case of identity, currently c=0, t=0, b=1, will encode to 1 */
-    /* if hint is 0, -> 0 */
-    /* if hint is to neg t/s, then go to infinity, effectively set s to 1 */
-    gf_cond_sel(c,c,ONE,is_identity & sgn_t_over_s);
-    gf_cond_sel(b,b,ZERO,is_identity & ~sgn_t_over_s & ~sgn_s);
-        
-    gf_mulw(d,c,2*EDWARDS_D-1); /* $d = (2d-a)s^2 */
-    gf_add(a,b,d); /* num? */
-    gf_sub(d,d,b); /* den? */
-    gf_mul(b,a,d); /* n*d */
-    gf_cond_sel(a,d,a,sgn_s);
-    gf_mul_qnr(d,b);
-    mask_t succ = gf_isr(c,d)|gf_eq(d,ZERO);
-    gf_mul(b,a,c);
     gf_cond_neg(b, sgn_r0^gf_hibit(b));
-    
     succ &= ~(gf_eq(b,ZERO) & sgn_r0);
-    #if COFACTOR == 8
-        succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
-    #endif
+    // #if COFACTOR == 8
+    //     succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
+    // #endif
     
     #if 448 == 8*SER_BYTES + 1 /* p521 */
         gf_serialize(recovered_hash,b,0);

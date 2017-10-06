@@ -483,7 +483,7 @@ static void test_cfrg_vectors() {
         SecureBuffer eddsa_pk2 = priv.pub().serialize();
         if (!memeq(SecureBuffer(eddsa_pk[t]), eddsa_pk2)) {
             test.fail();
-            printf("    EdDSA PK vectors disagree.");
+            printf("    EdDSA PK vectors #%d disagree.", t);
             printf("\n    Correct:   ");
             for (unsigned i=0; i<eddsa_pk[t].size(); i++) printf("%02x", eddsa_pk[t][i]);
             printf("\n    Incorrect: ");
