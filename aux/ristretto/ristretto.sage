@@ -385,25 +385,34 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
                 for toggle_s in [False,True]:
                     for toggle_r in [False,True]:
                         s,m1,m12,swap = self.toJacobiQuartic(toggle_rotation,toggle_altx,toggle_s)
-                        
-                        if self == self.__class__():
+
+                        print
+                        print toggle_rotation,toggle_altx,toggle_s
+                        print m1
+                        print m12
+                    
+                    
+                        if self == self.__class__() and self.cofactor == 4:
                             # Hacks for identity!
                             if toggle_altx: m12 = 1
                             elif toggle_s: m1 = 1
                             elif toggle_r: continue
                             ## BOTH???
-                        
+                    
                         rnum = (d*a*m12-m1)
                         rden = ((d*a-1)*m12+m1)
                         if swap: rnum,rden = rden,rnum
-                        
+                    
                         ok,sr = isqrt_i(rnum*rden*self.qnr)
                         if not ok: continue
                         sr *= rnum
+                        print "Works! %d %x" % (swap,sr)
+                    
                         if negative(sr) != toggle_r: sr = -sr
                         ret = self.gfToBytes(sr)
-                        #assert self.elligator(ret) == self or self.elligator(ret) == -self
-                        if self.elligator(ret) == -self and self != -self: print "Negated!",[toggle_rotation,toggle_altx,toggle_s,toggle_r]
+                        if self.elligator(ret) != self and self.elligator(ret) != -self:
+                            print "WRONG!",[toggle_rotation,toggle_altx,toggle_s]
+                        if self.elligator(ret) == -self and self != -self: print "Negated!",[toggle_rotation,toggle_altx,toggle_s]
                         rets.append(bytes(ret))
         return rets
 
@@ -477,6 +486,40 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         t = -sgn*isri*s*(r-1)*(a-2*d)^2 - 1
         if negative(s) == iss: s = -s
         return cls.fromJacobiQuartic(s,t)
+            
+    def elligatorInverseBruteForce(self):
+        """Invert Elligator using SAGE's polynomial solver"""
+        a,d = self.a,self.d
+        R.<r0> = self.F[]
+        r = self.qnr * r0^2
+        den = (d*r-(d-a))*((d-a)*r-d)
+        n1 = (r+1)*(a-2*d)/den
+        n2 = r*n1
+        ret = set()
+        for s2,t in [(n1, -(r-1)*(a-2*d)^2 / den - 1),
+                     (n2,r*(r-1)*(a-2*d)^2 / den - 1)]:
+            x2 = 4*s2/(1+a*s2)^2
+            y = (1-a*s2) / t
+
+            selfT = self
+            for i in xrange(self.cofactor/2):
+                xT,yT = selfT
+                polyX = xT^2-x2
+                polyY = yT-y
+                sx = set(r for r,_ in polyX.numerator().roots())
+                sy = set(r for r,_ in polyY.numerator().roots())
+                ret = ret.union(sx.intersection(sy))
+            
+                selfT = selfT.torque()
+
+        ret = [self.gfToBytes(r) for r in ret]
+        
+        for r in ret:
+            assert self.elligator(r) in [self,-self]
+            
+        ret = [r for r in ret if self.elligator(r) == self]
+
+        return ret
             
 class Ed25519Point(RistrettoPoint):
     F = GF(2^255-19)
