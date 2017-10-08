@@ -394,7 +394,7 @@ decaf_error_t decaf_x$(gf_shortname) (
 void $(c_ns)_point_mul_by_cofactor_and_encode_like_x$(gf_shortname) (
     uint8_t out[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
     const $(c_ns)_point_t p
-);
+) DECAF_API_VIS DECAF_NONNULL;
 
 /** The base point for X$(gf_shortname) Diffie-Hellman */
 extern const uint8_t decaf_x$(gf_shortname)_base_point[DECAF_X$(gf_shortname)_PUBLIC_BYTES] DECAF_API_VIS;

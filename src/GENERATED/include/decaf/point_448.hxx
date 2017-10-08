@@ -261,6 +261,9 @@ public:
     /** Bytes required for EdDSA encoding */
     static const size_t EDDSA_BYTES = DECAF_EDDSA_448_PUBLIC_BYTES;
 
+    /** Bytes required for EdDSA encoding */
+    static const size_t LADDER_BYTES = DECAF_X448_PUBLIC_BYTES;
+
     /**
      * Size of a stegged element.
      * 
@@ -362,6 +365,27 @@ public:
         SecureBuffer ret(DECAF_EDDSA_448_PUBLIC_BYTES);
         decaf_448_point_mul_by_cofactor_and_encode_like_eddsa(ret.data(),p);
         return ret;
+    }
+
+    /** Multiply out cofactor and encode like X25519/X448. */
+    inline SecureBuffer mul_by_cofactor_and_encode_like_ladder() const {
+        SecureBuffer ret(LADDER_BYTES);
+        decaf_448_point_mul_by_cofactor_and_encode_like_x448(ret.data(),p);
+        return ret;
+    }
+
+    /** Multiply out cofactor and encode like EdDSA. */
+    inline void mul_by_cofactor_and_encode_like_eddsa(
+        FixedBuffer<DECAF_EDDSA_448_PUBLIC_BYTES> &out
+    ) const {
+        decaf_448_point_mul_by_cofactor_and_encode_like_eddsa(out.data(),p);
+    }
+
+    /** Multiply out cofactor and encode like X25519/X448. */
+    inline void mul_by_cofactor_and_encode_like_ladder(
+        FixedBuffer<LADDER_BYTES> &out
+    ) const {
+        decaf_448_point_mul_by_cofactor_and_encode_like_x448(out.data(),p);
     }
 
     /**

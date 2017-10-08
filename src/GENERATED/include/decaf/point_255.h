@@ -409,7 +409,7 @@ decaf_error_t decaf_x25519 (
 void decaf_255_point_mul_by_cofactor_and_encode_like_x25519 (
     uint8_t out[DECAF_X25519_PUBLIC_BYTES],
     const decaf_255_point_t p
-);
+) DECAF_API_VIS DECAF_NONNULL;
 
 /** The base point for X25519 Diffie-Hellman */
 extern const uint8_t decaf_x25519_base_point[DECAF_X25519_PUBLIC_BYTES] DECAF_API_VIS;

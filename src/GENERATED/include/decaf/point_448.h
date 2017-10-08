@@ -409,7 +409,7 @@ decaf_error_t decaf_x448 (
 void decaf_448_point_mul_by_cofactor_and_encode_like_x448 (
     uint8_t out[DECAF_X448_PUBLIC_BYTES],
     const decaf_448_point_t p
-);
+) DECAF_API_VIS DECAF_NONNULL;
 
 /** The base point for X448 Diffie-Hellman */
 extern const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] DECAF_API_VIS;

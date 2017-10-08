@@ -69,7 +69,7 @@ void usage() {
     fprintf(stderr,"  -E: Display output as Elligator inverses\n");
     fprintf(stderr,"  -D: Display output in EdDSA format (times clearing ratio)\n");
     fprintf(stderr,"  -R: Display raw xyzt\n");
-    //fprintf(stderr,"  -C: Display output in X[25519|448] format\n");
+    fprintf(stderr,"  -C: Display output in X[25519|448] format\n");
     fprintf(stderr,"  -H: ... divide by clearing ratio first\n");
     fprintf(stderr,"\n");
     fprintf(stderr,"  Ways to create points:\n");
@@ -98,7 +98,7 @@ public:
         typename Group::Point a,b;
         typename Group::Scalar s;
         bool plus=false, empty=true, elligator=false, mul=false, scalar=false,
-            scalarempty=true, neg=false, einv=false, like_eddsa=false, decoeff=false, raw=false;
+            scalarempty=true, neg=false, einv=false, like_eddsa=false, like_x=false, decoeff=false, raw=false;
         if (done || error) return;
         for (int i=1; i<g_argc && !error; i++) {
             bool point = false;
@@ -117,6 +117,8 @@ public:
                 raw = true;
             } else if (!strcmp(g_argv[i],"-D")) {
                 like_eddsa = true;
+            } else if (!strcmp(g_argv[i],"-C")) {
+                like_x = true;
             } else if (!strcmp(g_argv[i],"-H")) {
                 decoeff = true;
             } else if (!strcmp(g_argv[i],"*")) {
@@ -178,6 +180,10 @@ public:
                 printf("\n");
             } else if (like_eddsa) {
                 SecureBuffer b = a.mul_by_cofactor_and_encode_like_eddsa();
+                printhex(b.data(),b.size());
+                printf("\n");
+            } else if (like_x) {
+                SecureBuffer b = a.mul_by_cofactor_and_encode_like_ladder();
                 printhex(b.data(),b.size());
                 printf("\n");
             } else {
