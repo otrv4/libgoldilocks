@@ -21,6 +21,10 @@
 #define IMAGINE_TWIST 1
 #define COFACTOR 8
 static const int EDWARDS_D = -121665;
+
+#define RISTRETTO_FACTOR DECAF_255_RISTRETTO_FACTOR
+extern const gf RISTRETTO_FACTOR;
+
 /* End of template stuff */
 
 extern mask_t API_NS(deisogenize) (
@@ -145,8 +149,23 @@ API_NS(invert_elligator_nonuniform) (
     API_NS(deisogenize)(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
     
     mask_t is_identity = gf_eq(p->t,ZERO);
+#if COFACTOR==4
     gf_cond_sel(b,b,ONE,is_identity & sgn_altx);
     gf_cond_sel(c,c,ONE,is_identity & sgn_s &~ sgn_altx);
+#elif IMAGINE_TWIST
+    /* Terrible, terrible special casing due to lots of 0/0 is deisogenize
+     * Basically we need to generate -D and +- i*RISTRETTO_FACTOR
+     */
+    gf_mul_i(a,RISTRETTO_FACTOR);
+    gf_cond_sel(b,b,ONE,is_identity);
+    gf_cond_neg(a,sgn_altx);
+    gf_cond_sel(c,c,a,is_identity & sgn_ed_T);
+    gf_cond_sel(c,c,ZERO,is_identity & ~sgn_ed_T);
+    gf_mulw(a,ONE,-EDWARDS_D);
+    gf_cond_sel(c,c,a,is_identity & ~sgn_ed_T &~ sgn_altx);
+#else
+#error "Different special-casing goes here!"
+#endif
     
 #if IMAGINE_TWIST
     gf_mulw(a,b,-EDWARDS_D);
@@ -169,7 +188,8 @@ API_NS(invert_elligator_nonuniform) (
 #endif
     
     gf_cond_neg(b, sgn_r0^gf_lobit(b));
-    succ &= ~(gf_eq(b,ZERO) & sgn_r0);
+    /* Eliminate duplicate values for identity ... */
+    succ &= ~(gf_eq(b,ZERO) & (sgn_r0 | sgn_s));
     // #if COFACTOR == 8
     //     succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
     // #endif

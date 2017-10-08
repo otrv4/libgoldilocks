@@ -53,6 +53,8 @@ def isqrt(x,exn=InvalidEncodingException("Not on curve")):
     if negative(s): s=-s
     return 1/s
 
+def inv0(x): return 1/x if x != 0 else 0
+
 def isqrt_i(x):
     """Return 1/sqrt(x) or 1/sqrt(zeta * x)"""
     if x==0: return True,0
@@ -325,8 +327,8 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
             den = x*y
             isr = isqrt(num*(a-d)*den^2)
     
-            iden = isr * den * self.isoMagic
-            inum = isr * num
+            iden = isr * den * self.isoMagic # 1/sqrt((z+y)(z-y)) = 1/sqrt(1-Y^2) / z
+            inum = isr * num # sqrt(1-Y^2) * z / xysqrt(a-d) ~ 1/sqrt(1-ax^2)/z
             
             if negative(iden*inum*self.i*t^2*(d-a)) != toggle_rotation:
                 iden,inum = inum,iden
@@ -386,18 +388,29 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
                     for toggle_r in [False,True]:
                         s,m1,m12,swap = self.toJacobiQuartic(toggle_rotation,toggle_altx,toggle_s)
 
-                        print
-                        print toggle_rotation,toggle_altx,toggle_s
-                        print m1
-                        print m12
+                        #print
+                        #print toggle_rotation,toggle_altx,toggle_s
+                        #print m1
+                        #print m12
                     
                     
-                        if self == self.__class__() and self.cofactor == 4:
-                            # Hacks for identity!
-                            if toggle_altx: m12 = 1
-                            elif toggle_s: m1 = 1
-                            elif toggle_r: continue
-                            ## BOTH???
+                        if self == self.__class__():
+                            if self.cofactor == 4:
+                                # Hacks for identity!
+                                if toggle_altx: m12 = 1
+                                elif toggle_s: m1 = 1
+                                elif toggle_r: continue
+                                ## BOTH???
+                                
+                            else:
+                                m12 = 1
+                                imi = self.isoMagic * self.i
+                                if toggle_rotation:
+                                    if toggle_altx: m1 = -imi
+                                    else:           m1 = +imi
+                                else:
+                                    if toggle_altx: m1 = 0
+                                    else: m1 = a-d
                     
                         rnum = (d*a*m12-m1)
                         rden = ((d*a-1)*m12+m1)
@@ -406,7 +419,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
                         ok,sr = isqrt_i(rnum*rden*self.qnr)
                         if not ok: continue
                         sr *= rnum
-                        print "Works! %d %x" % (swap,sr)
+                        #print "Works! %d %x" % (swap,sr)
                     
                         if negative(sr) != toggle_r: sr = -sr
                         ret = self.gfToBytes(sr)
@@ -681,12 +694,12 @@ def test(cls,n):
         if Q1 + Q0 != Q2: raise TestFailedException("Scalarmul doesn't work")
         Q = Q1
 
-test(Ed25519Point,100)
-test(NegEd25519Point,100)
-test(IsoEd25519Point,100)
-test(IsoEd448Point,100)
-test(TwistedEd448GoldilocksPoint,100)
-test(Ed448GoldilocksPoint,100)
+#test(Ed25519Point,100)
+#test(NegEd25519Point,100)
+#test(IsoEd25519Point,100)
+#test(IsoEd448Point,100)
+#test(TwistedEd448GoldilocksPoint,100)
+#test(Ed448GoldilocksPoint,100)
         
    
 def testElligator(cls,n):
@@ -710,12 +723,12 @@ def testElligator(cls,n):
             pass # TODO
         
 
-testElligator(Ed25519Point,100)
-testElligator(NegEd25519Point,100)
-testElligator(IsoEd25519Point,100)
-testElligator(IsoEd448Point,100)
-testElligator(Ed448GoldilocksPoint,100)
-testElligator(TwistedEd448GoldilocksPoint,100)
+#testElligator(Ed25519Point,100)
+#testElligator(NegEd25519Point,100)
+#testElligator(IsoEd25519Point,100)
+#testElligator(IsoEd448Point,100)
+#testElligator(Ed448GoldilocksPoint,100)
+#testElligator(TwistedEd448GoldilocksPoint,100)
 
 def gangtest(classes,n):
     print "Gang test",[cls.__name__ for cls in classes]
@@ -743,5 +756,5 @@ def gangtest(classes,n):
             for c,ret in zip(classes,rets):
                 print c,binascii.hexlify(ret)
             print
-gangtest([IsoEd448Point,TwistedEd448GoldilocksPoint,Ed448GoldilocksPoint],100)
-gangtest([Ed25519Point,IsoEd25519Point],100)
+#gangtest([IsoEd448Point,TwistedEd448GoldilocksPoint,Ed448GoldilocksPoint],100)
+#gangtest([Ed25519Point,IsoEd25519Point],100)

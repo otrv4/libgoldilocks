@@ -48,7 +48,8 @@ static const scalar_t point_scalarmul_adjustment = {{{
 
 const uint8_t decaf_x25519_base_point[DECAF_X25519_PUBLIC_BYTES] = { 0x09 };
 
-static const gf RISTRETTO_ISOMAGIC = {{{
+#define RISTRETTO_FACTOR DECAF_255_RISTRETTO_FACTOR
+const gf RISTRETTO_FACTOR = {{{
     0x0fdaa805d40ea, 0x2eb482e57d339, 0x007610274bc58, 0x6510b613dc8ff, 0x786c8905cfaff
 }}};
 
@@ -157,7 +158,7 @@ void API_NS(deisogenize) (
     gf_mulw(t2,t1,-1-TWISTED_D); /* -x^2 * (a-d) * num */
     gf_isr(t1,t2);    /* t1 = isr */
     gf_mul(t2,t1,t3); /* t2 = ratio */
-    gf_mul(t4,t2,RISTRETTO_ISOMAGIC);
+    gf_mul(t4,t2,RISTRETTO_FACTOR);
     mask_t negx = gf_lobit(t4) ^ toggle_altx;
     gf_cond_neg(t2, negx);
     gf_mul(t3,t2,p->z);
@@ -183,12 +184,12 @@ void API_NS(deisogenize) (
     gf_mulw(t1,t4,-1-TWISTED_D);
     gf_isr(t4,t1);         /* isqrt(num*(a-d)*den^2) */
     gf_mul(t1,t2,t4);
-    gf_mul(t2,t1,RISTRETTO_ISOMAGIC); /* t2 = "iden" in ristretto.sage */
+    gf_mul(t2,t1,RISTRETTO_FACTOR); /* t2 = "iden" in ristretto.sage */
     gf_mul(t1,t3,t4);                 /* t1 = "inum" in ristretto.sage */
 
     /* Calculate altxy = iden*inum*i*t^2*(d-a) */
     gf_mul(t3,t1,t2);
-    gf_mul_qnr(t4,t3);
+    gf_mul_i(t4,t3);
     gf_mul(t3,t4,p->t);
     gf_mul(t4,t3,p->t);
     gf_mulw(t3,t4,TWISTED_D+1);      /* iden*inum*i*t^2*(d-1) */
@@ -196,10 +197,10 @@ void API_NS(deisogenize) (
     
     /* Rotate if altxy is negative */
     gf_cond_swap(t1,t2,rotate);
-    gf_mul_qnr(t4,p->x);
+    gf_mul_i(t4,p->x);
     gf_cond_sel(t4,p->y,t4,rotate);  /* t4 = "fac" = ix if rotate, else y */
     
-    gf_mul_qnr(t5,RISTRETTO_ISOMAGIC); /* t5 = imi */
+    gf_mul_i(t5,RISTRETTO_FACTOR); /* t5 = imi */
     gf_mul(t3,t5,t2);                /* iden * imi */
     gf_mul(t2,t5,t1);
     gf_mul(t5,t2,p->t);              /* "altx" = iden*imi*t */
@@ -258,20 +259,20 @@ decaf_error_t API_NS(point_decode) (
     gf_add(tmp2,tmp2,tmp2);        /* 2*s*isr*den */
     gf_mul(tmp,tmp2,isr);          /* 2*s*isr^2*den */
     gf_mul(p->x,tmp,num);          /* 2*s*isr^2*den*num */
-    gf_mul(tmp,tmp2,RISTRETTO_ISOMAGIC); /* 2*s*isr*den*magic */
+    gf_mul(tmp,tmp2,RISTRETTO_FACTOR); /* 2*s*isr*den*magic */
     gf_cond_neg(p->x,gf_lobit(tmp)); /* flip x */
     
 #if COFACTOR==8
     /* Additionally check y != 0 and x*y*isomagic nonegative */
     succ &= ~gf_eq(p->y,ZERO);
     gf_mul(tmp,p->x,p->y);
-    gf_mul(tmp2,tmp,RISTRETTO_ISOMAGIC);
+    gf_mul(tmp2,tmp,RISTRETTO_FACTOR);
     succ &= ~gf_lobit(tmp2);
 #endif
 
 #if IMAGINE_TWIST
     gf_copy(tmp,p->x);
-    gf_mul_qnr(p->x,tmp);
+    gf_mul_i(p->x,tmp);
 #endif
 
     /* Fill in z and t */
@@ -1077,9 +1078,9 @@ void API_NS(point_mul_by_cofactor_and_encode_like_eddsa) (
         gf_mul ( y, u, t ); // (x^2+y^2)(2z^2-y^2+x^2)
         gf_mul ( u, z, t );
         gf_copy( z, u );
-        gf_mul ( u, x, RISTRETTO_ISOMAGIC );
+        gf_mul ( u, x, RISTRETTO_FACTOR );
 #if IMAGINE_TWIST
-        gf_mul_qnr( x, u );
+        gf_mul_i( x, u );
 #else
 #error "... probably wrong"
         gf_copy( x, u );
@@ -1090,7 +1091,7 @@ void API_NS(point_mul_by_cofactor_and_encode_like_eddsa) (
     {
         API_NS(point_double)(q,q);
         API_NS(point_double)(q,q);
-        gf_mul_qnr(x, q->x);
+        gf_mul_i(x, q->x);
         gf_copy(y, q->y);
         gf_copy(z, q->z);
     }
@@ -1188,8 +1189,8 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_ignore_cofactor) (
         gf_sqr ( p->x, p->z );
         gf_add ( p->z, p->x, p->x );
         gf_sub ( c, p->z, p->t ); // 2z^2 - y^2 + x^2
-        gf_div_qnr ( a, c );
-        gf_mul ( c, a, RISTRETTO_ISOMAGIC );
+        gf_div_i ( a, c );
+        gf_mul ( c, a, RISTRETTO_FACTOR );
         gf_mul ( p->x, b, p->t); // (2xy)(y^2-x^2)
         gf_mul ( p->z, p->t, c ); // (y^2-x^2)sd(2z^2 - y^2 + x^2)
         gf_mul ( p->y, d, c ); // (y^2+x^2)sd(2z^2 - y^2 + x^2)
