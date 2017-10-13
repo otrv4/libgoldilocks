@@ -39,7 +39,7 @@ const uint8_t decaf_x$(gf_shortname)_base_point[DECAF_X$(gf_shortname)_PUBLIC_BY
 
 #define RISTRETTO_FACTOR $(C_NS)_RISTRETTO_FACTOR
 const gf RISTRETTO_FACTOR = {{{
-    $(ser(msqrt(d-1 if imagine_twist else -d,modulus,lo_bit_clear=True),gf_lit_limb_bits))
+    $(ser(msqrt(d-1 if imagine_twist else -d,modulus,hi_bit_clear=True),gf_lit_limb_bits))
 }}};
 
 #if IMAGINE_TWIST

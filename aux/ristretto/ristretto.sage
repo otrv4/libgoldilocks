@@ -50,7 +50,7 @@ def isqrt(x,exn=InvalidEncodingException("Not on curve")):
     if x==0: return 0
     if not is_square(x): raise exn
     s = sqrt(x)
-    if negative(s): s=-s
+    #if negative(s): s=-s
     return 1/s
 
 def inv0(x): return 1/x if x != 0 else 0
