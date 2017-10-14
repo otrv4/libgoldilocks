@@ -238,7 +238,7 @@ decaf_error_t API_NS(point_decode) (
     gf s, s2, num, tmp;
     gf_s *tmp2=s2, *ynum=p->z, *isr=p->x, *den=p->t;
     
-    mask_t succ = gf_deserialize(s, ser, 1);
+    mask_t succ = gf_deserialize(s, ser, 1, 0);
     succ &= bool_to_mask(allow_identity) | ~gf_eq(s, ZERO);
     succ &= ~gf_lobit(s);
     
@@ -827,7 +827,7 @@ void API_NS(point_debugging_pscale) (
 ) {
     gf gfac,tmp;
     /* NB this means you'll never pscale by negative numbers for p521 */
-    ignore_result(gf_deserialize(gfac,factor,0));
+    ignore_result(gf_deserialize(gfac,factor,0,0));
     gf_cond_sel(gfac,gfac,ONE,gf_eq(gfac,ZERO));
     gf_mul(tmp,p->x,gfac);
     gf_copy(q->x,tmp);
@@ -1143,7 +1143,7 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_ignore_cofactor) (
     mask_t low = ~word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] & 0x80);
     enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] &= ~0x80;
     
-    mask_t succ = gf_deserialize(p->y, enc2, 1);
+    mask_t succ = gf_deserialize(p->y, enc2, 1, 0);
 #if 0 == 0
     succ &= word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1]);
 #endif
@@ -1243,7 +1243,7 @@ decaf_error_t decaf_x448 (
     const uint8_t scalar[X_PRIVATE_BYTES]
 ) {
     gf x1, x2, z2, x3, z3, t1, t2;
-    ignore_result(gf_deserialize(x1,base,1));
+    ignore_result(gf_deserialize(x1,base,1,0));
     gf_copy(x2,ONE);
     gf_copy(z2,ZERO);
     gf_copy(x3,x1);
@@ -1314,15 +1314,8 @@ void decaf_ed448_convert_public_key_to_x448 (
     const uint8_t ed[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) {
     gf y;
-    {
-        uint8_t enc2[DECAF_EDDSA_448_PUBLIC_BYTES];
-        memcpy(enc2,ed,sizeof(enc2));
-
-        /* retrieve y from the ed compressed point */
-        enc2[DECAF_EDDSA_448_PUBLIC_BYTES-1] &= ~0x80;
-        ignore_result(gf_deserialize(y, enc2, 0));
-        decaf_bzero(enc2,sizeof(enc2));
-    }
+    const uint8_t mask = (uint8_t)(0xFE<<(7));
+    ignore_result(gf_deserialize(y, ed, 1, mask));
     
     {
         gf n,d;

@@ -20,6 +20,8 @@ using namespace decaf;
 static bool passing = true;
 static const long NTESTS = 10000;
 
+#include "ristretto_vectors.inc.cxx"
+
 class Test {
 public:
     bool passing_now;
@@ -219,7 +221,6 @@ static void test_elligator() {
         if (i==4 && elli_patho.size()) b1 = elli_patho;
         len = b1.size();
         
-        
         Point s = Point::from_hash(b1), ss=s;
         for (unsigned int j=0; j<(i&3); j++) ss = ss.debugging_torque();
         
@@ -292,6 +293,14 @@ static void test_elligator() {
         
         Point t(rng);
         point_check(test,t,t,t,0,0,t,Point::from_hash(t.steg_encode(rng)),"steg round-trip");
+        
+        FixedArrayBuffer<Point::HASH_BYTES> b3(rng), b4(b3);
+        t = Point::from_hash(b3);
+        for (unsigned j=0; j<256; j+=2<<((Group::bits()-1)%8)) {
+            b4[Point::HASH_BYTES-1] = b3[Point::HASH_BYTES-1] ^ j;
+            Point u = Point::from_hash(b4);
+            point_check(test,t,t,t,0,0,t,u,"elligator twiddle high bits");
+        }
     }
 }
 
@@ -605,6 +614,23 @@ static void test_convert_eddsa_to_x() {
     }
 }
 
+static void test_dalek_vectors() {
+    Test test("Test vectors from Dalek");
+    Point p = Point::base(), q;
+    for (unsigned i=0; i<base_multiples<Group>::count; i++) {
+        if (!decaf_memeq(q.serialize().data(),base_multiples<Group>::values[i],Point::SER_BYTES)) {
+            test.fail();
+            printf("    Failed test vector for %d * base point.\n", i);
+        }
+        q += p;
+    }
+    for (unsigned i=0; i<elligator_examples<Group>::count; i++) {
+        Point r = Point::from_hash(FixedBlock<Point::HASH_BYTES>(elligator_examples<Group>::inputs[i]));
+        Point s = Point(FixedBlock<Point::SER_BYTES>(elligator_examples<Group>::outputs[i]));
+        point_check(test,r,r,r,0,0,r,s,"elligator test vector");
+    }
+}
+
 static void run() {
     printf("Testing %s:\n",Group::name());
     test_arithmetic();
@@ -614,6 +640,7 @@ static void run() {
     test_convert_eddsa_to_x();
     test_cfrg_crypto();
     test_cfrg_vectors();
+    test_dalek_vectors();
     printf("\n");
 }
 

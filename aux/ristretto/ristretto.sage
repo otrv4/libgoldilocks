@@ -124,13 +124,15 @@ class QuotientEdwardsPoint(object):
 
     # Utility functions
     @classmethod
-    def bytesToGf(cls,bytes,mustBeProper=True,mustBePositive=False):
+    def bytesToGf(cls,bytes,mustBeProper=True,mustBePositive=False,maskHiBits=False):
         """Convert little-endian bytes to field element, sanity check length"""
         if len(bytes) != cls.encLen:
             raise InvalidEncodingException("wrong length %d" % len(bytes))
         s = dec_le(bytes)
-        if mustBeProper and s >= cls.F.modulus():
+        if mustBeProper and s >= cls.F.order():
             raise InvalidEncodingException("%d out of range!" % s)
+        bitlen = int(ceil(log(cls.F.order())/log(2)))
+        if maskHiBits: s &= 2^bitlen-1
         s = cls.F(s)
         if mustBePositive and negative(s):
             raise InvalidEncodingException("%d is negative!" % s)
@@ -242,7 +244,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
     @classmethod
     def elligatorSpec(cls,r0):
         a,d = cls.a,cls.d
-        r = cls.qnr * cls.bytesToGf(r0)^2
+        r = cls.qnr * cls.bytesToGf(r0,mustBeProper=False,maskHiBits=True)^2
         den = (d*r-a)*(a*r-d)
         if den == 0: return cls()
         n1 = cls.a*(r+1)*(a+d)*(d-a)/den
@@ -258,7 +260,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
     @optimized_version_of("elligatorSpec")
     def elligator(cls,r0):
         a,d = cls.a,cls.d
-        r0 = cls.bytesToGf(r0)
+        r0 = cls.bytesToGf(r0,mustBeProper=False,maskHiBits=True)
         r = cls.qnr * r0^2
         den = (d*r-a)*(a*r-d)
         num = cls.a*(r+1)*(a+d)*(d-a)
@@ -469,7 +471,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
     def elligatorSpec(cls,r0,fromR=False):
         a,d = cls.a,cls.d
         if fromR: r = r0
-        else: r = cls.qnr * cls.bytesToGf(r0)^2
+        else: r = cls.qnr * cls.bytesToGf(r0,mustBeProper=False,maskHiBits=True)^2
         
         den = (d*r-(d-a))*((d-a)*r-d)
         if den == 0: return cls()
@@ -486,7 +488,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
     @optimized_version_of("elligatorSpec")
     def elligator(cls,r0):
         a,d = cls.a,cls.d
-        r0 = cls.bytesToGf(r0)
+        r0 = cls.bytesToGf(r0,mustBeProper=False,maskHiBits=True)
         r = cls.qnr * r0^2
         den = (d*r-(d-a))*((d-a)*r-d)
         num = (r+1)*(a-2*d)
@@ -693,13 +695,6 @@ def test(cls,n):
         Q2 = Q0*(r+1)
         if Q1 + Q0 != Q2: raise TestFailedException("Scalarmul doesn't work")
         Q = Q1
-
-#test(Ed25519Point,100)
-#test(NegEd25519Point,100)
-#test(IsoEd25519Point,100)
-#test(IsoEd448Point,100)
-#test(TwistedEd448GoldilocksPoint,100)
-#test(Ed448GoldilocksPoint,100)
         
    
 def testElligator(cls,n):
@@ -709,7 +704,7 @@ def testElligator(cls,n):
         P = cls.elligator(r)
         if hasattr(P,"invertElligator"):
             iv = P.invertElligator()
-            modr = bytes(cls.gfToBytes(cls.bytesToGf(r)))
+            modr = bytes(cls.gfToBytes(cls.bytesToGf(r,mustBeProper=False,maskHiBits=True)))
             iv2 = P.torque().invertElligator()
             if modr not in iv: print "Failed to invert Elligator!"
             if len(iv) != len(set(iv)):
@@ -723,12 +718,7 @@ def testElligator(cls,n):
             pass # TODO
         
 
-#testElligator(Ed25519Point,100)
-#testElligator(NegEd25519Point,100)
-#testElligator(IsoEd25519Point,100)
-#testElligator(IsoEd448Point,100)
-#testElligator(Ed448GoldilocksPoint,100)
-#testElligator(TwistedEd448GoldilocksPoint,100)
+
 
 def gangtest(classes,n):
     print "Gang test",[cls.__name__ for cls in classes]
@@ -756,5 +746,19 @@ def gangtest(classes,n):
             for c,ret in zip(classes,rets):
                 print c,binascii.hexlify(ret)
             print
-#gangtest([IsoEd448Point,TwistedEd448GoldilocksPoint,Ed448GoldilocksPoint],100)
-#gangtest([Ed25519Point,IsoEd25519Point],100)
+
+
+test(Ed25519Point,100)
+test(NegEd25519Point,100)
+test(IsoEd25519Point,100)
+test(IsoEd448Point,100)
+test(TwistedEd448GoldilocksPoint,100)
+test(Ed448GoldilocksPoint,100)
+testElligator(Ed25519Point,100)
+testElligator(NegEd25519Point,100)
+testElligator(IsoEd25519Point,100)
+testElligator(IsoEd448Point,100)
+testElligator(Ed448GoldilocksPoint,100)
+testElligator(TwistedEd448GoldilocksPoint,100)
+gangtest([IsoEd448Point,TwistedEd448GoldilocksPoint,Ed448GoldilocksPoint],100)
+gangtest([Ed25519Point,IsoEd25519Point],100)

@@ -15,7 +15,6 @@ static const int EDWARDS_D = $(d);
 extern const gf RISTRETTO_FACTOR;
 
 /* End of template stuff */
-
 extern mask_t API_NS(deisogenize) (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
@@ -31,7 +30,8 @@ void API_NS(point_from_hash_nonuniform) (
     const unsigned char ser[SER_BYTES]
 ) {
     gf r0,r,a,b,c,N,e;
-    ignore_result(gf_deserialize(r0,ser,0));
+    const uint8_t mask = (uint8_t)(0xFE<<($((gf_bits-1)%8)));
+    ignore_result(gf_deserialize(r0,ser,0,mask));
     gf_strong_reduce(r0);
     gf_sqr(a,r0);
     gf_mul_qnr(r,a);
@@ -101,23 +101,6 @@ void API_NS(point_from_hash_uniform) (
  * log p == 1 mod 8 brainpool curves maybe?
  */
 #define MAX(A,B) (((A)>(B)) ? (A) : (B))
-#define PKP_MASK ((1<<(MAX(8*SER_BYTES + $(elligator_onto) - $(gf_bits),0)))-1)
-#if PKP_MASK != 0
-static DECAF_INLINE mask_t plus_k_p (
-    uint8_t x[SER_BYTES],
-    uint32_t factor_
-) {
-    uint32_t carry = 0;
-    uint64_t factor = factor_;
-    const uint8_t p[SER_BYTES] = { $(ser(modulus,8)) };
-    for (unsigned int i=0; i<SER_BYTES; i++) {
-        uint64_t tmp = carry + p[i] * factor + x[i];
-        /* tmp <= 2^32-1 + (2^32-1)*(2^8-1) + (2^8-1) = 2^40-1 */
-        x[i] = tmp; carry = tmp>>8;
-    }
-    return word_is_zero(carry);
-}
-#endif
 
 decaf_error_t
 API_NS(invert_elligator_nonuniform) (
@@ -125,7 +108,6 @@ API_NS(invert_elligator_nonuniform) (
     const point_t p,
     uint32_t hint_
 ) {
-    /* TODO: test that this can produce sqrt((d-a)/ud) etc. */
     mask_t hint = hint_;
     mask_t sgn_s = -(hint & 1),
         sgn_altx = -(hint>>1 & 1),
@@ -187,15 +169,14 @@ API_NS(invert_elligator_nonuniform) (
         gf_serialize(recovered_hash,b,0);
     #else
         gf_serialize(recovered_hash,b,1);
-        #if PKP_MASK != 0
-            /* Add a multiple of p to make the result either almost-onto or completely onto. */
-            #if COFACTOR == 8
-                succ &= plus_k_p(recovered_hash, (hint >> 4) & PKP_MASK);
-            #else
-                succ &= plus_k_p(recovered_hash, (hint >> 3) & PKP_MASK);
-            #endif
-        #endif
     #endif
+#if $(gf_bits%8)
+    #if COFACTOR==8
+        recovered_hash[SER_BYTES-1] ^= (hint>>4)<<$(gf_bits%8);
+    #else
+        recovered_hash[SER_BYTES-1] ^= (hint>>3)<<$(gf_bits%8);
+    #endif
+#endif
     return decaf_succeed_if(mask_to_bool(succ));
 }
 

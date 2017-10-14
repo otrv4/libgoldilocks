@@ -670,6 +670,16 @@ void decaf_255_point_from_hash_uniform (
  * inverse sampling, this function succeeds or fails
  * independently for different "which" values.
  *
+ * This function isn't guaranteed to find every possible
+ * preimage, but it finds all except a small finite number.
+ * In particular, when the number of bits in the modulus isn't
+ * a multiple of 8 (i.e. for curve25519), it sets the high bits
+ * independently, which enables the generated data to be uniform.
+ * But it doesn't add p, so you'll never get exactly p from this
+ * function.  This might change in the future, especially if
+ * we ever support eg Brainpool curves, where this could cause
+ * real nonuniformity.
+ *
  * @param [out] recovered_hash Encoded data.
  * @param [in] pt The point to encode.
  * @param [in] which A value determining which inverse point
