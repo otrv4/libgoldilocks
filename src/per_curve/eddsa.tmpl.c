@@ -22,6 +22,7 @@
 #define NO_CONTEXT DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTLESS_SIGS
 #define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
 #define COFACTOR $(cofactor)
+#define EDDSA_PREHASH_BYTES 64
 
 #if NO_CONTEXT
 const uint8_t NO_CONTEXT_POINTS_HERE = 0;
@@ -228,7 +229,7 @@ void decaf_ed$(gf_shortname)_sign_prehash (
     const uint8_t *context,
     uint8_t context_len
 ) {
-    uint8_t hash_output[64]; /* MAGIC but true for all existing schemes */
+    uint8_t hash_output[EDDSA_PREHASH_BYTES];
     {
         decaf_ed$(gf_shortname)_prehash_ctx_t hash_too;
         memcpy(hash_too,hash,sizeof(hash_too));
@@ -303,7 +304,7 @@ decaf_error_t decaf_ed$(gf_shortname)_verify_prehash (
 ) {
     decaf_error_t ret;
     
-    uint8_t hash_output[64]; /* MAGIC but true for all existing schemes */
+    uint8_t hash_output[EDDSA_PREHASH_BYTES];
     {
         decaf_ed$(gf_shortname)_prehash_ctx_t hash_too;
         memcpy(hash_too,hash,sizeof(hash_too));
