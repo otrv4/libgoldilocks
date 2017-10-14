@@ -1,3 +1,29 @@
+October 13, 2017:
+    OK, back to preparations for 1.0, today with major changes.
+    
+    Another group (Isis Lovecruft and Henry de Valence) implemented
+    Decaf for Ed25519, whereas this code was implemented for IsoEd25519.
+    
+    These curves are isogenous, but not exactly the same, so the
+    encodings all came out differently.
+     
+    To harmonize these two so that there is only one implementation
+    for Ed25519, we've hammered out a compromise implementation called
+    Ristretto.  This is different from the old Decaf encoding in two
+    major ways:
+        * It checks the sign of x on Ed25519 instead of IsoEd25519.
+        * It considers a number "negative" if its low bit is set,
+          instead of its high bit.
+    
+    To avoid extra branches in the code, Ed448Goldilocks is also
+    getting these changes to match Ristretto.
+    
+    The C++ class is also renamed to Ristretto, but IsoEd25519 is a
+    synonym for that class.
+    
+    We might need to check the high bit again instead of low bit if
+    E-521 is ever implemented, but I'll special case it then.
+
 April 22, 2017:
     Remove STROBE in preparation for 1.0 release.  STROBE has its own
     repo now at https://strobe.sourceforge.io.  I might re-integrate
