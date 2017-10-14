@@ -43,8 +43,8 @@ namespace decaf {
 /** A public key for crypto over some Group */
 template <typename Group> struct EdDSA;
 
-/** A public key for crypto over Iso-Ed25519 */
-template<> struct EdDSA<IsoEd25519> {
+/** A public key for crypto over Ristretto */
+template<> struct EdDSA<Ristretto> {
 
 /** @cond internal */
 template<class CRTP, Prehashed> class Signing;
@@ -190,7 +190,7 @@ private:
     
 public:
     /** Underlying group */
-    typedef IsoEd25519 Group;
+    typedef Ristretto Group;
     
     /** Signature size. */
     static const size_t SIG_BYTES = DECAF_EDDSA_25519_SIGNATURE_BYTES;
@@ -364,7 +364,7 @@ public:
     /* PERF FUTURE: Pre-cached decoding? Precomputed table?? */
   
     /** Underlying group */
-    typedef IsoEd25519 Group;
+    typedef Ristretto Group;
     
     /** Signature size. */
     static const size_t SIG_BYTES = DECAF_EDDSA_25519_SIGNATURE_BYTES;
@@ -417,7 +417,7 @@ public:
     }
 }; /* class PublicKey */
 
-}; /* template<> struct EdDSA<IsoEd25519> */
+}; /* template<> struct EdDSA<Ristretto> */
 
 #undef DECAF_NOEXCEPT
 } /* namespace decaf */

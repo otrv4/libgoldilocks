@@ -23,8 +23,9 @@ field_data = {
 
 curve_data = {
     "curve25519" : {
+        "altname" : "IsoEd25519",
         "iso_to" : "Curve25519",
-        "name" : "Iso-Ed25519",
+        "name" : "Ristretto",
         "cofactor" : 8,
         "field" : "p25519",
         "scalar_bits" : 253,
@@ -43,6 +44,7 @@ curve_data = {
         "eddsa_sigma_iso": 1
     },
     "ed448goldilocks" : {
+        "altname": None,
         "name" : "Ed448-Goldilocks",
         "cofactor" : 4,
         "field" : "p448",

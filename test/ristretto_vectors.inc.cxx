@@ -1,12 +1,12 @@
 template <typename Group> struct base_multiples;
 
 /* Examples for multiples of base point */
-template <> struct base_multiples<IsoEd25519> {
+template <> struct base_multiples<Ristretto> {
     static const int count = 16;
-    static const uint8_t values[count][IsoEd25519::Point::SER_BYTES];
+    static const uint8_t values[count][Ristretto::Point::SER_BYTES];
 };
-const uint8_t base_multiples<IsoEd25519>::values
-    [base_multiples<IsoEd25519>::count][IsoEd25519::Point::SER_BYTES] = {
+const uint8_t base_multiples<Ristretto>::values
+    [base_multiples<Ristretto>::count][Ristretto::Point::SER_BYTES] = {
         /* Copy-pasted from Dalek, thanks Isis Lovecruft and Henry de Valence */
      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      {226, 242, 174, 10, 106, 188, 78, 113, 168, 132, 169, 97, 197, 0, 81, 95, 88, 227, 11, 106, 165, 130, 221, 141, 182, 166, 89, 69, 224, 141, 45, 118},
@@ -101,13 +101,13 @@ const uint8_t base_multiples<Ed448Goldilocks>::values[][Ed448Goldilocks::Point::
 template <typename Group> struct elligator_examples;
 
 /* Examples for Elligator */
-template <> struct elligator_examples<IsoEd25519> {
+template <> struct elligator_examples<Ristretto> {
     static const int count = 16;
-    static const uint8_t inputs[count][IsoEd25519::Point::HASH_BYTES];
-    static const uint8_t outputs[count][IsoEd25519::Point::SER_BYTES];
+    static const uint8_t inputs[count][Ristretto::Point::HASH_BYTES];
+    static const uint8_t outputs[count][Ristretto::Point::SER_BYTES];
 };
-const uint8_t elligator_examples<IsoEd25519>::inputs
-    [elligator_examples<IsoEd25519>::count][IsoEd25519::Point::HASH_BYTES] = {
+const uint8_t elligator_examples<Ristretto>::inputs
+    [elligator_examples<Ristretto>::count][Ristretto::Point::HASH_BYTES] = {
         /* Copy-pasted from Dalek, thanks Isis Lovecruft and Henry de Valence */
     {184, 249, 135, 49, 253, 123, 89, 113, 67, 160, 6, 239, 7, 105, 211, 41, 192, 249, 185, 57, 9, 102, 70, 198, 15, 127, 7, 26, 160, 102, 134, 71},
     {229, 14, 241, 227, 75, 9, 118, 60, 128, 153, 226, 21, 183, 217, 91, 136, 98, 0, 231, 156, 124, 77, 82, 139, 142, 134, 164, 169, 169, 62, 250, 52},
@@ -126,8 +126,8 @@ const uint8_t elligator_examples<IsoEd25519>::inputs
     {210, 207, 228, 56, 155, 116, 207, 54, 84, 195, 251, 215, 249, 199, 116, 75, 109, 239, 196, 251, 194, 246, 252, 228, 70, 146, 156, 35, 25, 39, 241, 4},
     {34, 116, 123, 9, 8, 40, 93, 189, 9, 103, 57, 103, 66, 227, 3, 2, 157, 107, 134, 219, 202, 74, 230, 154, 78, 107, 219, 195, 214, 14, 84, 80}
 };
-const uint8_t elligator_examples<IsoEd25519>::outputs
-    [elligator_examples<IsoEd25519>::count][IsoEd25519::Point::SER_BYTES] = {
+const uint8_t elligator_examples<Ristretto>::outputs
+    [elligator_examples<Ristretto>::count][Ristretto::Point::SER_BYTES] = {
         /* Copy-pasted from Dalek, thanks Isis Lovecruft and Henry de Valence */
     {176, 157, 237, 97, 66, 29, 140, 166, 168, 94, 26, 157, 212, 216, 229, 160, 195, 246, 232, 239, 169, 112, 63, 193, 64, 32, 152, 69, 11, 190, 246, 86},
     {234, 141, 77, 203, 181, 225, 250, 74, 171, 62, 15, 118, 78, 212, 150, 19, 131, 14, 188, 238, 194, 244, 141, 138, 166, 162, 83, 122, 228, 201, 19, 26},

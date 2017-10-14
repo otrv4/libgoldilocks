@@ -53,10 +53,10 @@ namespace decaf {
 /**
  * Curve25519/Decaf instantiation of group.
  */
-struct IsoEd25519 {
+struct Ristretto {
 
 /** The name of the curve */
-static inline const char *name() { return "Iso-Ed25519"; }
+static inline const char *name() { return "Ristretto"; }
 
 /** The name of the curve */
 static inline int bits() { return 255; }
@@ -756,15 +756,15 @@ public:
     }
 };
 
-}; /* struct IsoEd25519 */
+}; /* struct Ristretto */
 
 /** @cond internal */
-inline SecureBuffer IsoEd25519::Scalar::direct_scalarmul (
-    const FixedBlock<IsoEd25519::Point::SER_BYTES> &in,
+inline SecureBuffer Ristretto::Scalar::direct_scalarmul (
+    const FixedBlock<Ristretto::Point::SER_BYTES> &in,
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
 ) const /*throw(CryptoException)*/ {
-    SecureBuffer out(IsoEd25519::Point::SER_BYTES);
+    SecureBuffer out(Ristretto::Point::SER_BYTES);
     if (DECAF_SUCCESS !=
         decaf_255_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit)
     ) {
@@ -773,15 +773,18 @@ inline SecureBuffer IsoEd25519::Scalar::direct_scalarmul (
     return out;
 }
 
-inline decaf_error_t IsoEd25519::Scalar::direct_scalarmul_noexcept (
-    FixedBuffer<IsoEd25519::Point::SER_BYTES> &out,
-    const FixedBlock<IsoEd25519::Point::SER_BYTES> &in,
+inline decaf_error_t Ristretto::Scalar::direct_scalarmul_noexcept (
+    FixedBuffer<Ristretto::Point::SER_BYTES> &out,
+    const FixedBlock<Ristretto::Point::SER_BYTES> &in,
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
 ) const DECAF_NOEXCEPT {
     return decaf_255_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit);
 }
 /** @endcond */
+
+typedef Ristretto IsoEd25519;
+
 
 #undef DECAF_NOEXCEPT
 } /* namespace decaf */

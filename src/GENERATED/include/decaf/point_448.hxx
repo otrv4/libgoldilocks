@@ -783,6 +783,8 @@ inline decaf_error_t Ed448Goldilocks::Scalar::direct_scalarmul_noexcept (
 }
 /** @endcond */
 
+
+
 #undef DECAF_NOEXCEPT
 } /* namespace decaf */
 

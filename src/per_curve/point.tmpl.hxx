@@ -770,5 +770,7 @@ inline decaf_error_t $(cxx_ns)::Scalar::direct_scalarmul_noexcept (
 }
 /** @endcond */
 
+$("typedef %s %s;\n" % (cxx_ns,altname) if altname else "")
+
 #undef DECAF_NOEXCEPT
 } /* namespace decaf */

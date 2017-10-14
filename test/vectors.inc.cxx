@@ -1,18 +1,18 @@
 
 /* X25519, X448 test vectors */
-template<> const uint8_t Tests<IsoEd25519>::rfc7748_1[32] = {
+template<> const uint8_t Tests<Ristretto>::rfc7748_1[32] = {
     0x42,0x2c,0x8e,0x7a,0x62,0x27,0xd7,0xbc,
     0xa1,0x35,0x0b,0x3e,0x2b,0xb7,0x27,0x9f,
     0x78,0x97,0xb8,0x7b,0xb6,0x85,0x4b,0x78,
     0x3c,0x60,0xe8,0x03,0x11,0xae,0x30,0x79
 };
-template<> const uint8_t Tests<IsoEd25519>::rfc7748_1000[32] = {
+template<> const uint8_t Tests<Ristretto>::rfc7748_1000[32] = {
     0x68,0x4c,0xf5,0x9b,0xa8,0x33,0x09,0x55,
     0x28,0x00,0xef,0x56,0x6f,0x2f,0x4d,0x3c,
     0x1c,0x38,0x87,0xc4,0x93,0x60,0xe3,0x87,
     0x5f,0x2e,0xb9,0x4d,0x99,0x53,0x2c,0x51
 };
-template<> const uint8_t Tests<IsoEd25519>::rfc7748_1000000[32] = {
+template<> const uint8_t Tests<Ristretto>::rfc7748_1000000[32] = {
     0x7c,0x39,0x11,0xe0,0xab,0x25,0x86,0xfd,
     0x86,0x44,0x97,0x29,0x7e,0x57,0x5e,0x6f,
     0x3b,0xc6,0x01,0xc0,0x88,0x3c,0x30,0xdf,
@@ -53,7 +53,7 @@ const uint8_t sm1_25519[32] = {
     0xa7,0xd7,0xfb,0x3d,0x99,0x00,0x4d,0x2b,
     0x0b,0xdf,0xc1,0x4f,0x80,0x24,0x83,0x2b
 };
-template<> const Block Tests<IsoEd25519>::sqrt_minus_one(sm1_25519,32);
+template<> const Block Tests<Ristretto>::sqrt_minus_one(sm1_25519,32);
 
 template<> const Block Tests<Ed448Goldilocks>::minus_sqrt_minus_one(NULL,0);
 const uint8_t msm1_25519[32] = {
@@ -62,7 +62,7 @@ const uint8_t msm1_25519[32] = {
     0x58,0x28,0x04,0xc2,0x66,0xff,0xb2,0xd4,
     0xf4,0x20,0x3e,0xb0,0x7f,0xdb,0x7c,0x54
 };
-template<> const Block Tests<IsoEd25519>::minus_sqrt_minus_one(msm1_25519,32);
+template<> const Block Tests<Ristretto>::minus_sqrt_minus_one(msm1_25519,32);
 
 const uint8_t elli_patho_448[56] = {
     0x14,0xf0,0x70,0x58,0x41,0xc7,0xf9,0xa5,
@@ -74,7 +74,7 @@ const uint8_t elli_patho_448[56] = {
     0x86,0xa9,0x2e,0xc9,0x17,0x68,0x9b,0x20
 };
 template<> const Block Tests<Ed448Goldilocks>::elli_patho(elli_patho_448,56);
-template<> const Block Tests<IsoEd25519>::elli_patho(NULL,0);
+template<> const Block Tests<Ristretto>::elli_patho(NULL,0);
 
 /* EdDSA test vectors */
 const uint8_t ed448_eddsa_sk[][57] = {{
@@ -481,7 +481,7 @@ const uint8_t ed25519_eddsa_sig[][64] = {{
     0x91,0xc2,0x04,0x3d,0x4e,0xb3,0xe9,0x0d
 }};
 
-template<> const bool Tests<IsoEd25519>::eddsa_prehashed[] = {
+template<> const bool Tests<Ristretto>::eddsa_prehashed[] = {
     false,
     false,
     false,
@@ -489,7 +489,7 @@ template<> const bool Tests<IsoEd25519>::eddsa_prehashed[] = {
     false,
     false
 };
-template<> const Block Tests<IsoEd25519>::eddsa_sk[] = {
+template<> const Block Tests<Ristretto>::eddsa_sk[] = {
     Block(ed25519_eddsa_sk[0],32),
     Block(ed25519_eddsa_sk[1],32),
     Block(ed25519_eddsa_sk[2],32),
@@ -498,7 +498,7 @@ template<> const Block Tests<IsoEd25519>::eddsa_sk[] = {
     Block(ed25519_eddsa_sk[4],32),
     Block(NULL,0)
 };
-template<> const Block Tests<IsoEd25519>::eddsa_pk[] = {
+template<> const Block Tests<Ristretto>::eddsa_pk[] = {
     Block(ed25519_eddsa_pk[0],32),
     Block(ed25519_eddsa_pk[1],32),
     Block(ed25519_eddsa_pk[2],32),
@@ -506,15 +506,15 @@ template<> const Block Tests<IsoEd25519>::eddsa_pk[] = {
     Block(ed25519_eddsa_pk[4],32),
     Block(ed25519_eddsa_pk[4],32)
 };
-template<> const Block Tests<IsoEd25519>::eddsa_context[] = {
-    EdDSA<IsoEd25519>::NO_CONTEXT(),
-    EdDSA<IsoEd25519>::NO_CONTEXT(),
-    EdDSA<IsoEd25519>::NO_CONTEXT(),
+template<> const Block Tests<Ristretto>::eddsa_context[] = {
+    EdDSA<Ristretto>::NO_CONTEXT(),
+    EdDSA<Ristretto>::NO_CONTEXT(),
+    EdDSA<Ristretto>::NO_CONTEXT(),
     Block(NULL,0),
     Block(ed25519_eddsa_context[0],3),
     Block(ed25519_eddsa_context[1],3)
 };
-template<> const Block Tests<IsoEd25519>::eddsa_message[] = {
+template<> const Block Tests<Ristretto>::eddsa_message[] = {
     Block(ed25519_eddsa_message[0],0),
     Block(ed25519_eddsa_message[1],1),
     Block(ed25519_eddsa_message[2],2),
@@ -522,7 +522,7 @@ template<> const Block Tests<IsoEd25519>::eddsa_message[] = {
     Block(ed25519_eddsa_message[4],16),
     Block(ed25519_eddsa_message[4],16)
 };
-template<> const Block Tests<IsoEd25519>::eddsa_sig[] = {
+template<> const Block Tests<Ristretto>::eddsa_sig[] = {
     Block(ed25519_eddsa_sig[0],64),
     Block(ed25519_eddsa_sig[1],64),
     Block(ed25519_eddsa_sig[2],64),
