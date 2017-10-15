@@ -21,14 +21,18 @@
 #define IMAGINE_TWIST 1
 #define COFACTOR 8
 static const int EDWARDS_D = -121665;
-/* End of template stuff */
 
-extern void API_NS(deisogenize) (
+#define RISTRETTO_FACTOR DECAF_255_RISTRETTO_FACTOR
+extern const gf RISTRETTO_FACTOR;
+
+/* End of template stuff */
+extern mask_t API_NS(deisogenize) (
     gf_s *__restrict__ s,
-    gf_s *__restrict__ minus_t_over_s,
+    gf_s *__restrict__ inv_el_sum,
+    gf_s *__restrict__ inv_el_m1,
     const point_t p,
     mask_t toggle_hibit_s,
-    mask_t toggle_hibit_t_over_s,
+    mask_t toggle_altx,
     mask_t toggle_rotation
 );
 
@@ -37,7 +41,8 @@ void API_NS(point_from_hash_nonuniform) (
     const unsigned char ser[SER_BYTES]
 ) {
     gf r0,r,a,b,c,N,e;
-    ignore_result(gf_deserialize(r0,ser,0));
+    const uint8_t mask = (uint8_t)(0xFE<<(6));
+    ignore_result(gf_deserialize(r0,ser,0,mask));
     gf_strong_reduce(r0);
     gf_sqr(a,r0);
     gf_mul_qnr(r,a);
@@ -61,7 +66,7 @@ void API_NS(point_from_hash_nonuniform) (
     
     /* s@a = +-|N.e| */
     gf_mul(a,N,e);
-    gf_cond_neg(a,gf_hibit(a)^square); /* NB this is - what is listed in the paper */
+    gf_cond_neg(a,gf_lobit(a) ^ ~square);
     
     /* t@b = -+ cN(r-1)((a-2d)e)^2 - 1 */
     gf_mulw(c,e,1-2*EDWARDS_D); /* (a-2d)e */
@@ -107,23 +112,6 @@ void API_NS(point_from_hash_uniform) (
  * log p == 1 mod 8 brainpool curves maybe?
  */
 #define MAX(A,B) (((A)>(B)) ? (A) : (B))
-#define PKP_MASK ((1<<(MAX(8*SER_BYTES + 0 - 255,0)))-1)
-#if PKP_MASK != 0
-static DECAF_INLINE mask_t plus_k_p (
-    uint8_t x[SER_BYTES],
-    uint32_t factor_
-) {
-    uint32_t carry = 0;
-    uint64_t factor = factor_;
-    const uint8_t p[SER_BYTES] = { 0xed, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f };
-    for (unsigned int i=0; i<SER_BYTES; i++) {
-        uint64_t tmp = carry + p[i] * factor + x[i];
-        /* tmp <= 2^32-1 + (2^32-1)*(2^8-1) + (2^8-1) = 2^40-1 */
-        x[i] = tmp; carry = tmp>>8;
-    }
-    return word_is_zero(carry);
-}
-#endif
 
 decaf_error_t
 API_NS(invert_elligator_nonuniform) (
@@ -133,60 +121,73 @@ API_NS(invert_elligator_nonuniform) (
 ) {
     mask_t hint = hint_;
     mask_t sgn_s = -(hint & 1),
-        sgn_t_over_s = -(hint>>1 & 1),
+        sgn_altx = -(hint>>1 & 1),
         sgn_r0 = -(hint>>2 & 1),
         /* FUTURE MAGIC: eventually if there's a curve which needs sgn_ed_T but not sgn_r0,
          * change this mask extraction.
          */
         sgn_ed_T = -(hint>>3 & 1);
-    gf a, b, c, d;
-    API_NS(deisogenize)(a,c,p,sgn_s,sgn_t_over_s,sgn_ed_T);
+    gf a,b,c;
+    API_NS(deisogenize)(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
+    
+    mask_t is_identity = gf_eq(p->t,ZERO);
+#if COFACTOR==4
+    gf_cond_sel(b,b,ONE,is_identity & sgn_altx);
+    gf_cond_sel(c,c,ONE,is_identity & sgn_s &~ sgn_altx);
+#elif IMAGINE_TWIST
+    /* Terrible, terrible special casing due to lots of 0/0 is deisogenize
+     * Basically we need to generate -D and +- i*RISTRETTO_FACTOR
+     */
+    gf_mul_i(a,RISTRETTO_FACTOR);
+    gf_cond_sel(b,b,ONE,is_identity);
+    gf_cond_neg(a,sgn_altx);
+    gf_cond_sel(c,c,a,is_identity & sgn_ed_T);
+    gf_cond_sel(c,c,ZERO,is_identity & ~sgn_ed_T);
+    gf_mulw(a,ONE,-EDWARDS_D);
+    gf_cond_sel(c,c,a,is_identity & ~sgn_ed_T &~ sgn_altx);
+#else
+#error "Different special-casing goes here!"
+#endif
+    
+#if IMAGINE_TWIST
+    gf_mulw(a,b,-EDWARDS_D);
+#else
+    gf_mulw(a,b,EDWARDS_D-1);
+#endif
+    gf_add(b,a,b);
+    gf_sub(a,a,c);
+    gf_add(b,b,c);
+    gf_cond_swap(a,b,sgn_s);
+    gf_mul_qnr(c,b);
+    gf_mul(b,c,a);
+    mask_t succ = gf_isr(c,b);
+    succ |= gf_eq(b,ZERO);
+    gf_mul(b,c,a);
     
 #if 255 == 8*SER_BYTES + 1 /* p521. */
+#error "this won't work because it needs to adjust high bit, not low bit"
     sgn_r0 = 0;
 #endif
     
-    /* ok, a = s; c = -t/s */
-    gf_mul(b,c,a);
-    gf_sub(b,ONE,b); /* t+1 */
-    gf_sqr(c,a); /* s^2 */
-    mask_t is_identity = gf_eq(p->t,ZERO);
-
-    /* identity adjustments */
-    /* in case of identity, currently c=0, t=0, b=1, will encode to 1 */
-    /* if hint is 0, -> 0 */
-    /* if hint is to neg t/s, then go to infinity, effectively set s to 1 */
-    gf_cond_sel(c,c,ONE,is_identity & sgn_t_over_s);
-    gf_cond_sel(b,b,ZERO,is_identity & ~sgn_t_over_s & ~sgn_s);
-        
-    gf_mulw(d,c,2*EDWARDS_D-1); /* $d = (2d-a)s^2 */
-    gf_add(a,b,d); /* num? */
-    gf_sub(d,d,b); /* den? */
-    gf_mul(b,a,d); /* n*d */
-    gf_cond_sel(a,d,a,sgn_s);
-    gf_mul_qnr(d,b);
-    mask_t succ = gf_isr(c,d)|gf_eq(d,ZERO);
-    gf_mul(b,a,c);
-    gf_cond_neg(b, sgn_r0^gf_hibit(b));
-    
-    succ &= ~(gf_eq(b,ZERO) & sgn_r0);
-    #if COFACTOR == 8
-        succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
-    #endif
+    gf_cond_neg(b, sgn_r0^gf_lobit(b));
+    /* Eliminate duplicate values for identity ... */
+    succ &= ~(gf_eq(b,ZERO) & (sgn_r0 | sgn_s));
+    // #if COFACTOR == 8
+    //     succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
+    // #endif
     
     #if 255 == 8*SER_BYTES + 1 /* p521 */
         gf_serialize(recovered_hash,b,0);
     #else
         gf_serialize(recovered_hash,b,1);
-        #if PKP_MASK != 0
-            /* Add a multiple of p to make the result either almost-onto or completely onto. */
-            #if COFACTOR == 8
-                succ &= plus_k_p(recovered_hash, (hint >> 4) & PKP_MASK);
-            #else
-                succ &= plus_k_p(recovered_hash, (hint >> 3) & PKP_MASK);
-            #endif
-        #endif
     #endif
+#if 7
+    #if COFACTOR==8
+        recovered_hash[SER_BYTES-1] ^= (hint>>4)<<7;
+    #else
+        recovered_hash[SER_BYTES-1] ^= (hint>>3)<<7;
+    #endif
+#endif
     return decaf_succeed_if(mask_to_bool(succ));
 }
 

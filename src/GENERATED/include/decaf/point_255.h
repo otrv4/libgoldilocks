@@ -52,6 +52,12 @@ typedef struct gf_25519_s {
 /** Number of bits in the "which" field of an elligator inverse */
 #define DECAF_255_INVERT_ELLIGATOR_WHICH_BITS 5
 
+/** The cofactor the curve would have, if we hadn't removed it */
+#define DECAF_255_REMOVED_COFACTOR 8
+
+/** X25519 encoding ratio. */
+#define DECAF_X25519_ENCODE_RATIO 4
+
 /** Number of bytes in an x25519 public key */
 #define DECAF_X25519_PUBLIC_BYTES 32
 
@@ -397,6 +403,31 @@ decaf_error_t decaf_x25519 (
     const uint8_t scalar[DECAF_X25519_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
 
+/**
+ * @brief Multiply a point by DECAF_X25519_ENCODE_RATIO,
+ * then encode it like RFC 7748.
+ *
+ * This function is mainly used internally, but is exported in case
+ * it will be useful.
+ *
+ * The ratio is necessary because the internal representation doesn't
+ * track the cofactor information, so on output we must clear the cofactor.
+ * This would multiply by the cofactor, but in fact internally libdecaf's
+ * points are always even, so it multiplies by half the cofactor instead.
+ *
+ * As it happens, this aligns with the base point definitions; that is,
+ * if you pass the Decaf/Ristretto base point to this function, the result
+ * will be DECAF_X25519_ENCODE_RATIO times the X25519
+ * base point.
+ *
+ * @param [out] out The scaled and encoded point.
+ * @param [in] p The point to be scaled and encoded.
+ */
+void decaf_255_point_mul_by_ratio_and_encode_like_x25519 (
+    uint8_t out[DECAF_X25519_PUBLIC_BYTES],
+    const decaf_255_point_t p
+) DECAF_API_VIS DECAF_NONNULL;
+
 /** The base point for X25519 Diffie-Hellman */
 extern const uint8_t decaf_x25519_base_point[DECAF_X25519_PUBLIC_BYTES] DECAF_API_VIS;
 
@@ -655,6 +686,16 @@ void decaf_255_point_from_hash_uniform (
  * "which" parameter chooses between them.  To ensure uniform
  * inverse sampling, this function succeeds or fails
  * independently for different "which" values.
+ *
+ * This function isn't guaranteed to find every possible
+ * preimage, but it finds all except a small finite number.
+ * In particular, when the number of bits in the modulus isn't
+ * a multiple of 8 (i.e. for curve25519), it sets the high bits
+ * independently, which enables the generated data to be uniform.
+ * But it doesn't add p, so you'll never get exactly p from this
+ * function.  This might change in the future, especially if
+ * we ever support eg Brainpool curves, where this could cause
+ * real nonuniformity.
  *
  * @param [out] recovered_hash Encoded data.
  * @param [in] pt The point to encode.

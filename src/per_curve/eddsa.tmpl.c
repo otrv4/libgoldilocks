@@ -22,17 +22,12 @@
 #define NO_CONTEXT DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTLESS_SIGS
 #define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
 #define COFACTOR $(cofactor)
+#define EDDSA_PREHASH_BYTES 64
 
 #if NO_CONTEXT
 const uint8_t NO_CONTEXT_POINTS_HERE = 0;
 const uint8_t * const DECAF_ED$(gf_shortname)_NO_CONTEXT = &NO_CONTEXT_POINTS_HERE;
 #endif
-
-/* EDDSA_BASE_POINT_RATIO = 1 or 2
- * Because EdDSA25519 is not on E_d but on the isogenous E_sigma_d,
- * its base point is twice ours.
- */
-#define EDDSA_BASE_POINT_RATIO (1+EDDSA_USE_SIGMA_ISOGENY)
 
 static void clamp (
     uint8_t secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
@@ -119,14 +114,14 @@ void decaf_ed$(gf_shortname)_derive_public_key (
      * the decaf base point is on Etwist_d, and when converted it effectively
      * picks up a factor of 2 from the isogenies.  So we might start at 2 instead of 1. 
      */
-    for (unsigned int c = EDDSA_BASE_POINT_RATIO; c < COFACTOR; c <<= 1) {
+    for (unsigned int c=1; c<$(C_NS)_EDDSA_ENCODE_RATIO; c <<= 1) {
         API_NS(scalar_halve)(secret_scalar,secret_scalar);
     }
     
     API_NS(point_t) p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),secret_scalar);
     
-    API_NS(point_mul_by_cofactor_and_encode_like_eddsa)(pubkey, p);
+    API_NS(point_mul_by_ratio_and_encode_like_eddsa)(pubkey, p);
         
     /* Cleanup */
     API_NS(scalar_destroy)(secret_scalar);
@@ -182,13 +177,13 @@ void decaf_ed$(gf_shortname)_sign (
         /* Scalarmul to create the nonce-point */
         API_NS(scalar_t) nonce_scalar_2;
         API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar);
-        for (unsigned int c = 2*EDDSA_BASE_POINT_RATIO; c < COFACTOR; c <<= 1) {
+        for (unsigned int c = 2; c < $(C_NS)_EDDSA_ENCODE_RATIO; c <<= 1) {
             API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar_2);
         }
         
         API_NS(point_t) p;
         API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),nonce_scalar_2);
-        API_NS(point_mul_by_cofactor_and_encode_like_eddsa)(nonce_point, p);
+        API_NS(point_mul_by_ratio_and_encode_like_eddsa)(nonce_point, p);
         API_NS(point_destroy)(p);
         API_NS(scalar_destroy)(nonce_scalar_2);
     }
@@ -228,7 +223,7 @@ void decaf_ed$(gf_shortname)_sign_prehash (
     const uint8_t *context,
     uint8_t context_len
 ) {
-    uint8_t hash_output[64]; /* MAGIC but true for all existing schemes */
+    uint8_t hash_output[EDDSA_PREHASH_BYTES];
     {
         decaf_ed$(gf_shortname)_prehash_ctx_t hash_too;
         memcpy(hash_too,hash,sizeof(hash_too));
@@ -250,10 +245,10 @@ decaf_error_t decaf_ed$(gf_shortname)_verify (
     uint8_t context_len
 ) { 
     API_NS(point_t) pk_point, r_point;
-    decaf_error_t error = API_NS(point_decode_like_eddsa_and_ignore_cofactor)(pk_point,pubkey);
+    decaf_error_t error = API_NS(point_decode_like_eddsa_and_mul_by_ratio)(pk_point,pubkey);
     if (DECAF_SUCCESS != error) { return error; }
     
-    error = API_NS(point_decode_like_eddsa_and_ignore_cofactor)(r_point,signature);
+    error = API_NS(point_decode_like_eddsa_and_mul_by_ratio)(r_point,signature);
     if (DECAF_SUCCESS != error) { return error; }
     
     API_NS(scalar_t) challenge_scalar;
@@ -278,9 +273,10 @@ decaf_error_t decaf_ed$(gf_shortname)_verify (
         &signature[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
         DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES
     );
-#if EDDSA_BASE_POINT_RATIO == 2
-    API_NS(scalar_add)(response_scalar,response_scalar,response_scalar);
-#endif
+    
+    for (unsigned c=1; c<$(C_NS)_EDDSA_DECODE_RATIO; c<<=1) {
+        API_NS(scalar_add)(response_scalar,response_scalar,response_scalar);
+    }
     
     
     /* pk_point = -c(x(P)) + (cx + k)G = kG */
@@ -303,7 +299,7 @@ decaf_error_t decaf_ed$(gf_shortname)_verify_prehash (
 ) {
     decaf_error_t ret;
     
-    uint8_t hash_output[64]; /* MAGIC but true for all existing schemes */
+    uint8_t hash_output[EDDSA_PREHASH_BYTES];
     {
         decaf_ed$(gf_shortname)_prehash_ctx_t hash_too;
         memcpy(hash_too,hash,sizeof(hash_too));

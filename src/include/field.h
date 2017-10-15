@@ -103,5 +103,10 @@ static DECAF_INLINE void gf_div_qnr(gf_s *__restrict__ out, const gf x) {
 #endif
 }
 
+#if P_MOD_8 == 5
+#define gf_mul_i gf_mul_qnr
+#define gf_div_i gf_div_qnr
+#endif
+
 
 #endif // __GF_H__

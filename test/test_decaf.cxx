@@ -20,6 +20,8 @@ using namespace decaf;
 static bool passing = true;
 static const long NTESTS = 10000;
 
+#include "ristretto_vectors.inc.cxx"
+
 class Test {
 public:
     bool passing_now;
@@ -219,7 +221,6 @@ static void test_elligator() {
         if (i==4 && elli_patho.size()) b1 = elli_patho;
         len = b1.size();
         
-        
         Point s = Point::from_hash(b1), ss=s;
         for (unsigned int j=0; j<(i&3); j++) ss = ss.debugging_torque();
         
@@ -292,6 +293,14 @@ static void test_elligator() {
         
         Point t(rng);
         point_check(test,t,t,t,0,0,t,Point::from_hash(t.steg_encode(rng)),"steg round-trip");
+        
+        FixedArrayBuffer<Point::HASH_BYTES> b3(rng), b4(b3);
+        t = Point::from_hash(b3);
+        for (unsigned j=0; j<256; j+=2<<((Group::bits()-1)%8)) {
+            b4[Point::HASH_BYTES-1] = b3[Point::HASH_BYTES-1] ^ j;
+            Point u = Point::from_hash(b4);
+            point_check(test,t,t,t,0,0,t,u,"elligator twiddle high bits");
+        }
     }
 }
 
@@ -406,8 +415,8 @@ static void test_ec() {
         
         q=p;
         for (int j=1; j<Group::REMOVED_COFACTOR; j<<=1) q = q.times_two();
-        decaf_error_t error = r.decode_like_eddsa_and_ignore_cofactor_noexcept(
-            p.mul_by_cofactor_and_encode_like_eddsa()
+        decaf_error_t error = r.decode_like_eddsa_and_mul_by_ratio_noexcept(
+            p.mul_by_ratio_and_encode_like_eddsa()
         );
         if (error != DECAF_SUCCESS) {
             test.fail();
@@ -457,12 +466,15 @@ static void test_cfrg_crypto() {
             printf("    Shared secrets disagree on iteration %d.\n",i);
         }
         
-        if (!memeq(
-            DhLadder::shared_secret(DhLadder::base_point(),s1),
-            DhLadder::derive_public_key(s1)
-        )) {
+        p1 = DhLadder::shared_secret(DhLadder::base_point(),s1);
+        p2 = DhLadder::derive_public_key(s1);
+        if (!memeq(p1,p2)) {
             test.fail();
-            printf("    Public keys disagree on iteration %d.\n",i);
+            printf("    Public keys disagree on iteration %d.\n    Ladder public key: ",i);
+            for (unsigned j=0; j<s1.size(); j++) { printf("%02x",p1[j]); }
+            printf("\n    Derive public key: ");
+            for (unsigned j=0; j<s1.size(); j++) { printf("%02x",p2[j]); }
+            printf("\n");
         }
     }
 }
@@ -483,7 +495,7 @@ static void test_cfrg_vectors() {
         SecureBuffer eddsa_pk2 = priv.pub().serialize();
         if (!memeq(SecureBuffer(eddsa_pk[t]), eddsa_pk2)) {
             test.fail();
-            printf("    EdDSA PK vectors disagree.");
+            printf("    EdDSA PK vectors #%d disagree.", t);
             printf("\n    Correct:   ");
             for (unsigned i=0; i<eddsa_pk[t].size(); i++) printf("%02x", eddsa_pk[t][i]);
             printf("\n    Incorrect: ");
@@ -540,7 +552,6 @@ static void test_eddsa() {
     SpongeRng rng(Block("test_eddsa"),SpongeRng::DETERMINISTIC);
     
     for (int i=0; i<NTESTS && test.passing_now; i++) {
-        
         typename EdDSA<Group>::PrivateKey priv(rng);
         typename EdDSA<Group>::PublicKey pub(priv);
         
@@ -557,7 +568,22 @@ static void test_eddsa() {
         } catch(CryptoException) {
             test.fail();
             printf("    Signature validation failed on sig %d\n", i);
-        }    
+        }
+        
+        /* Test encode_like and torque */
+        Point p(rng);
+        SecureBuffer p1 = p.mul_by_ratio_and_encode_like_eddsa();
+        SecureBuffer p2 = p.debugging_torque().mul_by_ratio_and_encode_like_eddsa();
+        if (!memeq(p1,p2)) {
+            test.fail();
+            printf("    Torque and encode like EdDSA failed\n");
+        }
+        SecureBuffer p3 = p.mul_by_ratio_and_encode_like_ladder();
+        SecureBuffer p4 = p.debugging_torque().mul_by_ratio_and_encode_like_ladder();
+        if (!memeq(p3,p4)) {
+            test.fail();
+            printf("    Torque and encode like ladder failed\n");
+        }
     }
 }
 
@@ -581,14 +607,14 @@ static void test_convert_eddsa_to_x() {
         SecureBuffer alice_pub_x_generated  = DhLadder::derive_public_key(alice_priv_x);
         if (!memeq(alice_pub_x_conversion, alice_pub_x_generated)) {
             test.fail();
-            printf("    Ed2X Public key convertion and regeneration from converted private key differs.\n");
+            printf("    Ed2X Public key conversion and regeneration from converted private key differs.\n");
         }
         SecureBuffer bob_priv_x = bob_priv.convert_to_x();
         SecureBuffer bob_pub_x_conversion = bob_pub.convert_to_x();
         SecureBuffer bob_pub_x_generated  = DhLadder::derive_public_key(bob_priv_x);
         if (!memeq(bob_pub_x_conversion, bob_pub_x_generated)) {
             test.fail();
-            printf("    Ed2X Public key convertion and regeneration from converted private key differs.\n");
+            printf("    Ed2X Public key conversion and regeneration from converted private key differs.\n");
         }
 
         /* compute shared secrets and check they match */
@@ -602,6 +628,23 @@ static void test_convert_eddsa_to_x() {
     }
 }
 
+static void test_dalek_vectors() {
+    Test test("Test vectors from Dalek");
+    Point p = Point::base(), q;
+    for (unsigned i=0; i<base_multiples<Group>::count; i++) {
+        if (!decaf_memeq(q.serialize().data(),base_multiples<Group>::values[i],Point::SER_BYTES)) {
+            test.fail();
+            printf("    Failed test vector for %d * base point.\n", i);
+        }
+        q += p;
+    }
+    for (unsigned i=0; i<elligator_examples<Group>::count; i++) {
+        Point r = Point::from_hash(FixedBlock<Point::HASH_BYTES>(elligator_examples<Group>::inputs[i]));
+        Point s = Point(FixedBlock<Point::SER_BYTES>(elligator_examples<Group>::outputs[i]));
+        point_check(test,r,r,r,0,0,r,s,"elligator test vector");
+    }
+}
+
 static void run() {
     printf("Testing %s:\n",Group::name());
     test_arithmetic();
@@ -611,6 +654,7 @@ static void run() {
     test_convert_eddsa_to_x();
     test_cfrg_crypto();
     test_cfrg_vectors();
+    test_dalek_vectors();
     printf("\n");
 }
 

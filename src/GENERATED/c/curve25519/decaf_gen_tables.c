@@ -21,7 +21,7 @@
 
 #define API_NS(_id) decaf_255_##_id
 static const unsigned char base_point_ser_for_pregen[SER_BYTES] = {
-    0x03
+    0xe2, 0xf2, 0xae, 0x0a, 0x6a, 0xbc, 0x4e, 0x71, 0xa8, 0x84, 0xa9, 0x61, 0xc5, 0x00, 0x51, 0x5f, 0x58, 0xe3, 0x0b, 0x6a, 0xa5, 0x82, 0xdd, 0x8d, 0xb6, 0xa6, 0x59, 0x45, 0xe0, 0x8d, 0x2d, 0x76
 };
 
  /* To satisfy linker. */
@@ -63,16 +63,25 @@ int main(int argc, char **argv) {
     
     API_NS(point_t) real_point_base;
     int ret = API_NS(point_decode)(real_point_base,base_point_ser_for_pregen,0);
-    if (ret != DECAF_SUCCESS) return 1;
+    if (ret != DECAF_SUCCESS) {
+        fprintf(stderr, "Can't decode base point!\n");
+        return 1;
+    }
     
     API_NS(precomputed_s) *pre;
     ret = posix_memalign((void**)&pre, API_NS(alignof_precomputed_s), API_NS(sizeof_precomputed_s));
-    if (ret || !pre) return 1;
+    if (ret || !pre) {
+        fprintf(stderr, "Can't allocate space for precomputed table\n");
+        return 1;
+    }
     API_NS(precompute)(pre, real_point_base);
     
     struct niels_s *pre_wnaf;
     ret = posix_memalign((void**)&pre_wnaf, API_NS(alignof_precomputed_s), API_NS(sizeof_precomputed_wnafs));
-    if (ret || !pre_wnaf) return 1;
+    if (ret || !pre_wnaf) {
+        fprintf(stderr, "Can't allocate space for precomputed WNAF table\n");
+        return 1;
+    }
     API_NS(precompute_wnafs)(pre_wnaf, real_point_base);
 
     const gf_s *output;

@@ -10,7 +10,7 @@
 
 #define API_NS(_id) $(c_ns)_##_id
 static const unsigned char base_point_ser_for_pregen[SER_BYTES] = {
-    $(ser(msqrt(mont_base,modulus),8))
+    $(ser(rist_base_decoded,8))
 };
 
  /* To satisfy linker. */
@@ -52,16 +52,25 @@ int main(int argc, char **argv) {
     
     API_NS(point_t) real_point_base;
     int ret = API_NS(point_decode)(real_point_base,base_point_ser_for_pregen,0);
-    if (ret != DECAF_SUCCESS) return 1;
+    if (ret != DECAF_SUCCESS) {
+        fprintf(stderr, "Can't decode base point!\n");
+        return 1;
+    }
     
     API_NS(precomputed_s) *pre;
     ret = posix_memalign((void**)&pre, API_NS(alignof_precomputed_s), API_NS(sizeof_precomputed_s));
-    if (ret || !pre) return 1;
+    if (ret || !pre) {
+        fprintf(stderr, "Can't allocate space for precomputed table\n");
+        return 1;
+    }
     API_NS(precompute)(pre, real_point_base);
     
     struct niels_s *pre_wnaf;
     ret = posix_memalign((void**)&pre_wnaf, API_NS(alignof_precomputed_s), API_NS(sizeof_precomputed_wnafs));
-    if (ret || !pre_wnaf) return 1;
+    if (ret || !pre_wnaf) {
+        fprintf(stderr, "Can't allocate space for precomputed WNAF table\n");
+        return 1;
+    }
     API_NS(precompute_wnafs)(pre_wnaf, real_point_base);
 
     const gf_s *output;

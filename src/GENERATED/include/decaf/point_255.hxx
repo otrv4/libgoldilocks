@@ -53,10 +53,13 @@ namespace decaf {
 /**
  * Curve25519/Decaf instantiation of group.
  */
-struct IsoEd25519 {
+struct Ristretto {
 
 /** The name of the curve */
-static inline const char *name() { return "Iso-Ed25519"; }
+static inline const char *name() { return "Ristretto"; }
+
+/** The name of the curve */
+static inline int bits() { return 255; }
 
 /** The curve's cofactor (removed, but useful for testing) */
 static const int REMOVED_COFACTOR = 8;
@@ -252,6 +255,21 @@ public:
     /** Bytes required for hash */
     static const size_t HASH_BYTES = DECAF_255_HASH_BYTES;
 
+    /** Bytes required for EdDSA encoding */
+    static const size_t EDDSA_BYTES = DECAF_EDDSA_25519_PUBLIC_BYTES;
+
+    /** Bytes required for EdDSA encoding */
+    static const size_t LADDER_BYTES = DECAF_X25519_PUBLIC_BYTES;
+    
+    /** Ratio due to EdDSA encoding */
+    static const int EDDSA_ENCODE_RATIO = DECAF_255_EDDSA_ENCODE_RATIO;
+    
+    /** Ratio due to EdDSA decoding */
+    static const int EDDSA_DECODE_RATIO = DECAF_255_EDDSA_DECODE_RATIO;
+    
+    /** Ratio due to ladder decoding */
+    static const int LADDER_ENCODE_RATIO = DECAF_X25519_ENCODE_RATIO;
+
     /**
      * Size of a stegged element.
      * 
@@ -336,23 +354,49 @@ public:
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point.
      * Contents of the point are undefined.
      */
-    inline decaf_error_t DECAF_WARN_UNUSED decode_like_eddsa_and_ignore_cofactor_noexcept (
+    inline decaf_error_t DECAF_WARN_UNUSED decode_like_eddsa_and_mul_by_ratio_noexcept (
         const FixedBlock<DECAF_EDDSA_25519_PUBLIC_BYTES> &buffer
     ) DECAF_NOEXCEPT {
-        return decaf_255_point_decode_like_eddsa_and_ignore_cofactor(p,buffer.data());
+        return decaf_255_point_decode_like_eddsa_and_mul_by_ratio(p,buffer.data());
     }
-
-    inline void decode_like_eddsa_and_ignore_cofactor (
+    
+    /**
+     * Decode from EDDSA, multiply by EDDSA_DECODE_RATIO, and ignore any
+     * remaining cofactor information.
+     * @throw CryptoException if the input point was invalid.
+     */
+    inline void decode_like_eddsa_and_mul_by_ratio(
         const FixedBlock<DECAF_EDDSA_25519_PUBLIC_BYTES> &buffer
     ) /*throw(CryptoException)*/ {
-        if (DECAF_SUCCESS != decode_like_eddsa_and_ignore_cofactor_noexcept(buffer)) throw(CryptoException());
+        if (DECAF_SUCCESS != decode_like_eddsa_and_mul_by_ratio_noexcept(buffer)) throw(CryptoException());
     }
 
-    /** Multiply out cofactor and encode like EdDSA. */
-    inline SecureBuffer mul_by_cofactor_and_encode_like_eddsa() const {
+    /** Multiply by EDDSA_ENCODE_RATIO and encode like EdDSA. */
+    inline SecureBuffer mul_by_ratio_and_encode_like_eddsa() const {
         SecureBuffer ret(DECAF_EDDSA_25519_PUBLIC_BYTES);
-        decaf_255_point_mul_by_cofactor_and_encode_like_eddsa(ret.data(),p);
+        decaf_255_point_mul_by_ratio_and_encode_like_eddsa(ret.data(),p);
         return ret;
+    }
+
+    /** Multiply by EDDSA_ENCODE_RATIO and encode like EdDSA. */
+    inline void mul_by_ratio_and_encode_like_eddsa(
+        FixedBuffer<DECAF_EDDSA_25519_PUBLIC_BYTES> &out
+    ) const {
+        decaf_255_point_mul_by_ratio_and_encode_like_eddsa(out.data(),p);
+    }
+
+    /** Multiply by LADDER_ENCODE_RATIO and encode like X25519/X448. */
+    inline SecureBuffer mul_by_ratio_and_encode_like_ladder() const {
+        SecureBuffer ret(LADDER_BYTES);
+        decaf_255_point_mul_by_ratio_and_encode_like_x25519(ret.data(),p);
+        return ret;
+    }
+
+    /** Multiply by LADDER_ENCODE_RATIO and encode like X25519/X448. */
+    inline void mul_by_ratio_and_encode_like_ladder(
+        FixedBuffer<LADDER_BYTES> &out
+    ) const {
+        decaf_255_point_mul_by_ratio_and_encode_like_x25519(out.data(),p);
     }
 
     /**
@@ -578,7 +622,7 @@ public:
      * initializer for points which makes this equal to the identity.
      */
     inline Precomputed (
-        const Precomputed_U &yours = *default_value()
+        const Precomputed_U &yours = *decaf_255_precomputed_base
     ) DECAF_NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>(yours) {}
 
 
@@ -723,15 +767,15 @@ public:
     }
 };
 
-}; /* struct IsoEd25519 */
+}; /* struct Ristretto */
 
 /** @cond internal */
-inline SecureBuffer IsoEd25519::Scalar::direct_scalarmul (
-    const FixedBlock<IsoEd25519::Point::SER_BYTES> &in,
+inline SecureBuffer Ristretto::Scalar::direct_scalarmul (
+    const FixedBlock<Ristretto::Point::SER_BYTES> &in,
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
 ) const /*throw(CryptoException)*/ {
-    SecureBuffer out(IsoEd25519::Point::SER_BYTES);
+    SecureBuffer out(Ristretto::Point::SER_BYTES);
     if (DECAF_SUCCESS !=
         decaf_255_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit)
     ) {
@@ -740,15 +784,18 @@ inline SecureBuffer IsoEd25519::Scalar::direct_scalarmul (
     return out;
 }
 
-inline decaf_error_t IsoEd25519::Scalar::direct_scalarmul_noexcept (
-    FixedBuffer<IsoEd25519::Point::SER_BYTES> &out,
-    const FixedBlock<IsoEd25519::Point::SER_BYTES> &in,
+inline decaf_error_t Ristretto::Scalar::direct_scalarmul_noexcept (
+    FixedBuffer<Ristretto::Point::SER_BYTES> &out,
+    const FixedBlock<Ristretto::Point::SER_BYTES> &in,
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
 ) const DECAF_NOEXCEPT {
     return decaf_255_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit);
 }
 /** @endcond */
+
+typedef Ristretto IsoEd25519;
+
 
 #undef DECAF_NOEXCEPT
 } /* namespace decaf */

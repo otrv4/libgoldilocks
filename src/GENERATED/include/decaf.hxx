@@ -21,7 +21,7 @@
 namespace decaf {
     template <template<typename Group> class Run>
     void run_for_all_curves() {
-        Run<IsoEd25519>::run();
+        Run<Ristretto>::run();
         Run<Ed448Goldilocks>::run();
     }
 }

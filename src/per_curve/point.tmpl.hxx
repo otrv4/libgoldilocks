@@ -45,6 +45,9 @@ struct $(cxx_ns) {
 /** The name of the curve */
 static inline const char *name() { return "$(name)"; }
 
+/** The name of the curve */
+static inline int bits() { return $(gf_bits); }
+
 /** The curve's cofactor (removed, but useful for testing) */
 static const int REMOVED_COFACTOR = $(cofactor);
 
@@ -239,6 +242,21 @@ public:
     /** Bytes required for hash */
     static const size_t HASH_BYTES = $(C_NS)_HASH_BYTES;
 
+    /** Bytes required for EdDSA encoding */
+    static const size_t EDDSA_BYTES = DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES;
+
+    /** Bytes required for EdDSA encoding */
+    static const size_t LADDER_BYTES = DECAF_X$(gf_shortname)_PUBLIC_BYTES;
+    
+    /** Ratio due to EdDSA encoding */
+    static const int EDDSA_ENCODE_RATIO = $(C_NS)_EDDSA_ENCODE_RATIO;
+    
+    /** Ratio due to EdDSA decoding */
+    static const int EDDSA_DECODE_RATIO = $(C_NS)_EDDSA_DECODE_RATIO;
+    
+    /** Ratio due to ladder decoding */
+    static const int LADDER_ENCODE_RATIO = DECAF_X$(gf_shortname)_ENCODE_RATIO;
+
     /**
      * Size of a stegged element.
      * 
@@ -323,23 +341,49 @@ public:
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point.
      * Contents of the point are undefined.
      */
-    inline decaf_error_t DECAF_WARN_UNUSED decode_like_eddsa_and_ignore_cofactor_noexcept (
+    inline decaf_error_t DECAF_WARN_UNUSED decode_like_eddsa_and_mul_by_ratio_noexcept (
         const FixedBlock<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &buffer
     ) DECAF_NOEXCEPT {
-        return $(c_ns)_point_decode_like_eddsa_and_ignore_cofactor(p,buffer.data());
+        return $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio(p,buffer.data());
     }
-
-    inline void decode_like_eddsa_and_ignore_cofactor (
+    
+    /**
+     * Decode from EDDSA, multiply by EDDSA_DECODE_RATIO, and ignore any
+     * remaining cofactor information.
+     * @throw CryptoException if the input point was invalid.
+     */
+    inline void decode_like_eddsa_and_mul_by_ratio(
         const FixedBlock<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &buffer
     ) /*throw(CryptoException)*/ {
-        if (DECAF_SUCCESS != decode_like_eddsa_and_ignore_cofactor_noexcept(buffer)) throw(CryptoException());
+        if (DECAF_SUCCESS != decode_like_eddsa_and_mul_by_ratio_noexcept(buffer)) throw(CryptoException());
     }
 
-    /** Multiply out cofactor and encode like EdDSA. */
-    inline SecureBuffer mul_by_cofactor_and_encode_like_eddsa() const {
+    /** Multiply by EDDSA_ENCODE_RATIO and encode like EdDSA. */
+    inline SecureBuffer mul_by_ratio_and_encode_like_eddsa() const {
         SecureBuffer ret(DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
-        $(c_ns)_point_mul_by_cofactor_and_encode_like_eddsa(ret.data(),p);
+        $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa(ret.data(),p);
         return ret;
+    }
+
+    /** Multiply by EDDSA_ENCODE_RATIO and encode like EdDSA. */
+    inline void mul_by_ratio_and_encode_like_eddsa(
+        FixedBuffer<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &out
+    ) const {
+        $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa(out.data(),p);
+    }
+
+    /** Multiply by LADDER_ENCODE_RATIO and encode like X25519/X448. */
+    inline SecureBuffer mul_by_ratio_and_encode_like_ladder() const {
+        SecureBuffer ret(LADDER_BYTES);
+        $(c_ns)_point_mul_by_ratio_and_encode_like_x$(gf_shortname)(ret.data(),p);
+        return ret;
+    }
+
+    /** Multiply by LADDER_ENCODE_RATIO and encode like X25519/X448. */
+    inline void mul_by_ratio_and_encode_like_ladder(
+        FixedBuffer<LADDER_BYTES> &out
+    ) const {
+        $(c_ns)_point_mul_by_ratio_and_encode_like_x$(gf_shortname)(out.data(),p);
     }
 
     /**
@@ -565,7 +609,7 @@ public:
      * initializer for points which makes this equal to the identity.
      */
     inline Precomputed (
-        const Precomputed_U &yours = *default_value()
+        const Precomputed_U &yours = *$(c_ns)_precomputed_base
     ) DECAF_NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>(yours) {}
 
 
@@ -736,6 +780,8 @@ inline decaf_error_t $(cxx_ns)::Scalar::direct_scalarmul_noexcept (
     return $(c_ns)_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit);
 }
 /** @endcond */
+
+$("typedef %s %s;\n" % (cxx_ns,altname) if altname else "")
 
 #undef DECAF_NOEXCEPT
 } /* namespace decaf */
