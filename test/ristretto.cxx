@@ -70,7 +70,7 @@ void usage() {
     fprintf(stderr,"  -D: Display output in EdDSA format (times clearing ratio)\n");
     fprintf(stderr,"  -R: Display raw xyzt\n");
     fprintf(stderr,"  -C: Display output in X[25519|448] format\n");
-    fprintf(stderr,"  -H: ... divide by clearing ratio first\n");
+    fprintf(stderr,"  -H: ... divide by encoding ratio first\n");
     fprintf(stderr,"\n");
     fprintf(stderr,"  Ways to create points:\n");
     fprintf(stderr,"    [hex]: Point from point data as hex\n");
@@ -97,7 +97,7 @@ public:
         uint8_t tmp[Group::Point::SER_BYTES];
         typename Group::Point a,b;
         typename Group::Scalar s;
-        bool plus=false, empty=true, elligator=false, mul=false, scalar=false,
+        bool plus=false, empty=true, elligator=false, mul=false, scalar=false, div=false, torque=false,
             scalarempty=true, neg=false, einv=false, like_eddsa=false, like_x=false, decoeff=false, raw=false;
         if (done || error) return;
         for (int i=1; i<g_argc && !error; i++) {
@@ -121,9 +121,14 @@ public:
                 like_x = true;
             } else if (!strcmp(g_argv[i],"-H")) {
                 decoeff = true;
+            } else if (!strcmp(g_argv[i],"-T")) {
+                torque = true;
             } else if (!strcmp(g_argv[i],"*")) {
-                if (elligator || scalar || scalarempty) usage();
+                if (elligator || scalar || scalarempty || div) usage();
                 mul = true;
+            } else if (!strcmp(g_argv[i],"/")) {
+                if (elligator || scalar || scalarempty || mul) usage();
+                div = true;
             } else if (!strcmp(g_argv[i],"-s")) {
                 if (elligator || scalar || !scalarempty) usage();
                 scalar = true;
@@ -156,6 +161,8 @@ public:
 
             if (point) {
                 if (neg) { b = -b; neg = false; }
+                if (div) { b /= s; div=false; }
+                if (torque) { b = b.debugging_torque(); torque=false; }
                 if (mul) { b *= s; mul=false; }
                 if (empty) { a = b; empty=false; }
                 else if (plus) { a += b; plus=false; }
@@ -164,7 +171,6 @@ public:
         }
         
         if (!error && !empty) {
-            if (decoeff) a /= (Group::EDDSA_RATIO);
             if (einv) {
                 uint8_t buffer[Group::Point::HASH_BYTES];
                 for (int h=0; h<1<<Group::Point::INVERT_ELLIGATOR_WHICH_BITS; h++) {
@@ -179,11 +185,13 @@ public:
                 printhex((const uint8_t *)&a, sizeof(a));
                 printf("\n");
             } else if (like_eddsa) {
-                SecureBuffer b = a.mul_by_cofactor_and_encode_like_eddsa();
+                if (decoeff) a /= (Group::Point::EDDSA_ENCODE_RATIO);
+                SecureBuffer b = a.mul_by_ratio_and_encode_like_eddsa();
                 printhex(b.data(),b.size());
                 printf("\n");
             } else if (like_x) {
-                SecureBuffer b = a.mul_by_cofactor_and_encode_like_ladder();
+                if (decoeff) a /= (Group::Point::LADDER_ENCODE_RATIO);
+                SecureBuffer b = a.mul_by_ratio_and_encode_like_ladder();
                 printhex(b.data(),b.size());
                 printf("\n");
             } else {

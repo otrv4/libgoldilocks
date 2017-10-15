@@ -55,6 +55,9 @@ typedef struct gf_25519_s {
 /** The cofactor the curve would have, if we hadn't removed it */
 #define DECAF_255_REMOVED_COFACTOR 8
 
+/** X25519 encoding ratio. */
+#define DECAF_X25519_ENCODE_RATIO 4
+
 /** Number of bytes in an x25519 public key */
 #define DECAF_X25519_PUBLIC_BYTES 32
 
@@ -401,12 +404,26 @@ decaf_error_t decaf_x25519 (
 ) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
 
 /**
- * @brief Multiply a point by the cofactor, then encode it like RFC 7748
+ * @brief Multiply a point by DECAF_X25519_ENCODE_RATIO,
+ * then encode it like RFC 7748.
+ *
+ * This function is mainly used internally, but is exported in case
+ * it will be useful.
+ *
+ * The ratio is necessary because the internal representation doesn't
+ * track the cofactor information, so on output we must clear the cofactor.
+ * This would multiply by the cofactor, but in fact internally libdecaf's
+ * points are always even, so it multiplies by half the cofactor instead.
+ *
+ * As it happens, this aligns with the base point definitions; that is,
+ * if you pass the Decaf/Ristretto base point to this function, the result
+ * will be DECAF_X25519_ENCODE_RATIO times the X25519
+ * base point.
  *
  * @param [out] out The scaled and encoded point.
  * @param [in] p The point to be scaled and encoded.
  */
-void decaf_255_point_mul_by_cofactor_and_encode_like_x25519 (
+void decaf_255_point_mul_by_ratio_and_encode_like_x25519 (
     uint8_t out[DECAF_X25519_PUBLIC_BYTES],
     const decaf_255_point_t p
 ) DECAF_API_VIS DECAF_NONNULL;

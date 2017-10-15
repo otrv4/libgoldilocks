@@ -1040,7 +1040,7 @@ decaf_error_t API_NS(direct_scalarmul) (
     return succ;
 }
 
-void API_NS(point_mul_by_cofactor_and_encode_like_eddsa) (
+void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
     const point_t p
 ) {
@@ -1133,7 +1133,7 @@ void API_NS(point_mul_by_cofactor_and_encode_like_eddsa) (
 }
 
 
-decaf_error_t API_NS(point_decode_like_eddsa_and_ignore_cofactor) (
+decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     point_t p,
     const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) {
@@ -1352,13 +1352,16 @@ void decaf_x448_generate_key (
     decaf_x448_derive_public_key(out,scalar);
 }
 
-void API_NS(point_mul_by_cofactor_and_encode_like_x448) (
+void API_NS(point_mul_by_ratio_and_encode_like_x448) (
     uint8_t out[X_PUBLIC_BYTES],
     const point_t p
 ) {
     point_t q;
+#if COFACTOR == 8
     point_double_internal(q,p,1);
-    for (unsigned i=1; i<COFACTOR/4; i<<=1) point_double_internal(q,q,1);
+#else
+    API_NS(point_copy)(q,p);
+#endif
     gf_invert(q->t,q->x,0); /* 1/x */
     gf_mul(q->z,q->t,q->y); /* y/x */
     gf_sqr(q->y,q->z); /* (y/x)^2 */
@@ -1384,24 +1387,13 @@ void decaf_x448_derive_public_key (
     scalar_t the_scalar;
     API_NS(scalar_decode_long)(the_scalar,scalar2,sizeof(scalar2));
     
-    /* We're gonna isogenize by 2, so divide by 2.
-     *
-     * Why by 2, even though it's a 4-isogeny?
-     *
-     * The isogeny map looks like
-     * Montgomery <-2-> Jacobi <-2-> Edwards
-     *
-     * Since the Jacobi base point is the PREimage of the iso to
-     * the Montgomery curve, and we're going
-     * Jacobi -> Edwards -> Jacobi -> Montgomery,
-     * we pick up only a factor of 2 over Jacobi -> Montgomery. 
-     */
-    for (unsigned i=1; i<COFACTOR; i<<=1) {
+    /* Compensate for the encoding ratio */
+    for (unsigned i=1; i<DECAF_X448_ENCODE_RATIO; i<<=1) {
         API_NS(scalar_halve)(the_scalar,the_scalar);
     }
     point_t p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),the_scalar);
-    API_NS(point_mul_by_cofactor_and_encode_like_x448)(out,p);
+    API_NS(point_mul_by_ratio_and_encode_like_x448)(out,p);
     API_NS(point_destroy)(p);
 }
 

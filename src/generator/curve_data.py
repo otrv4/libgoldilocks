@@ -33,6 +33,8 @@ curve_data = {
         "trace": -0xa6f7cef517bce6b2c09318d2e7ae9f7a,
         "mont_base": 9,
         "rist_base": "e2f2ae0a6abc4e71a884a961c500515f58e30b6aa582dd8db6a65945e08d2d76",
+        "eddsa_encode_ratio": 4,
+        "x_encode_ratio": 4,
         
         "combs":comb_config(3,5,17),
         "wnaf":wnaf_config(5,3),
@@ -44,6 +46,8 @@ curve_data = {
         "eddsa_sigma_iso": 1
     },
     "ed448goldilocks" : {
+        "eddsa_encode_ratio": 4,
+        "x_encode_ratio": 2,
         "altname": None,
         "name" : "Ed448-Goldilocks",
         "cofactor" : 4,

@@ -64,9 +64,6 @@ static inline int bits() { return 255; }
 /** The curve's cofactor (removed, but useful for testing) */
 static const int REMOVED_COFACTOR = 8;
 
-/** The curve's cofactor (removed, but useful for testing) */
-static const int EDDSA_RATIO = 4;
-
 /** Residue class of field modulus: p == this mod 2*(this-1) */
 static const int FIELD_MODULUS_TYPE = 5;
 
@@ -263,6 +260,15 @@ public:
 
     /** Bytes required for EdDSA encoding */
     static const size_t LADDER_BYTES = DECAF_X25519_PUBLIC_BYTES;
+    
+    /** Ratio due to EdDSA encoding */
+    static const int EDDSA_ENCODE_RATIO = DECAF_255_EDDSA_ENCODE_RATIO;
+    
+    /** Ratio due to EdDSA decoding */
+    static const int EDDSA_DECODE_RATIO = DECAF_255_EDDSA_DECODE_RATIO;
+    
+    /** Ratio due to ladder decoding */
+    static const int LADDER_ENCODE_RATIO = DECAF_X25519_ENCODE_RATIO;
 
     /**
      * Size of a stegged element.
@@ -348,44 +354,49 @@ public:
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point.
      * Contents of the point are undefined.
      */
-    inline decaf_error_t DECAF_WARN_UNUSED decode_like_eddsa_and_ignore_cofactor_noexcept (
+    inline decaf_error_t DECAF_WARN_UNUSED decode_like_eddsa_and_mul_by_ratio_noexcept (
         const FixedBlock<DECAF_EDDSA_25519_PUBLIC_BYTES> &buffer
     ) DECAF_NOEXCEPT {
-        return decaf_255_point_decode_like_eddsa_and_ignore_cofactor(p,buffer.data());
+        return decaf_255_point_decode_like_eddsa_and_mul_by_ratio(p,buffer.data());
     }
-
-    inline void decode_like_eddsa_and_ignore_cofactor (
+    
+    /**
+     * Decode from EDDSA, multiply by EDDSA_DECODE_RATIO, and ignore any
+     * remaining cofactor information.
+     * @throw CryptoException if the input point was invalid.
+     */
+    inline void decode_like_eddsa_and_mul_by_ratio(
         const FixedBlock<DECAF_EDDSA_25519_PUBLIC_BYTES> &buffer
     ) /*throw(CryptoException)*/ {
-        if (DECAF_SUCCESS != decode_like_eddsa_and_ignore_cofactor_noexcept(buffer)) throw(CryptoException());
+        if (DECAF_SUCCESS != decode_like_eddsa_and_mul_by_ratio_noexcept(buffer)) throw(CryptoException());
     }
 
-    /** Multiply out cofactor and encode like EdDSA. */
-    inline SecureBuffer mul_by_cofactor_and_encode_like_eddsa() const {
+    /** Multiply by EDDSA_ENCODE_RATIO and encode like EdDSA. */
+    inline SecureBuffer mul_by_ratio_and_encode_like_eddsa() const {
         SecureBuffer ret(DECAF_EDDSA_25519_PUBLIC_BYTES);
-        decaf_255_point_mul_by_cofactor_and_encode_like_eddsa(ret.data(),p);
+        decaf_255_point_mul_by_ratio_and_encode_like_eddsa(ret.data(),p);
         return ret;
     }
 
-    /** Multiply out cofactor and encode like X25519/X448. */
-    inline SecureBuffer mul_by_cofactor_and_encode_like_ladder() const {
-        SecureBuffer ret(LADDER_BYTES);
-        decaf_255_point_mul_by_cofactor_and_encode_like_x25519(ret.data(),p);
-        return ret;
-    }
-
-    /** Multiply out cofactor and encode like EdDSA. */
-    inline void mul_by_cofactor_and_encode_like_eddsa(
+    /** Multiply by EDDSA_ENCODE_RATIO and encode like EdDSA. */
+    inline void mul_by_ratio_and_encode_like_eddsa(
         FixedBuffer<DECAF_EDDSA_25519_PUBLIC_BYTES> &out
     ) const {
-        decaf_255_point_mul_by_cofactor_and_encode_like_eddsa(out.data(),p);
+        decaf_255_point_mul_by_ratio_and_encode_like_eddsa(out.data(),p);
     }
 
-    /** Multiply out cofactor and encode like X25519/X448. */
-    inline void mul_by_cofactor_and_encode_like_ladder(
+    /** Multiply by LADDER_ENCODE_RATIO and encode like X25519/X448. */
+    inline SecureBuffer mul_by_ratio_and_encode_like_ladder() const {
+        SecureBuffer ret(LADDER_BYTES);
+        decaf_255_point_mul_by_ratio_and_encode_like_x25519(ret.data(),p);
+        return ret;
+    }
+
+    /** Multiply by LADDER_ENCODE_RATIO and encode like X25519/X448. */
+    inline void mul_by_ratio_and_encode_like_ladder(
         FixedBuffer<LADDER_BYTES> &out
     ) const {
-        decaf_255_point_mul_by_cofactor_and_encode_like_x25519(out.data(),p);
+        decaf_255_point_mul_by_ratio_and_encode_like_x25519(out.data(),p);
     }
 
     /**

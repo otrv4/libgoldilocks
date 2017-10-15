@@ -415,8 +415,8 @@ static void test_ec() {
         
         q=p;
         for (int j=1; j<Group::REMOVED_COFACTOR; j<<=1) q = q.times_two();
-        decaf_error_t error = r.decode_like_eddsa_and_ignore_cofactor_noexcept(
-            p.mul_by_cofactor_and_encode_like_eddsa()
+        decaf_error_t error = r.decode_like_eddsa_and_mul_by_ratio_noexcept(
+            p.mul_by_ratio_and_encode_like_eddsa()
         );
         if (error != DECAF_SUCCESS) {
             test.fail();
@@ -552,7 +552,6 @@ static void test_eddsa() {
     SpongeRng rng(Block("test_eddsa"),SpongeRng::DETERMINISTIC);
     
     for (int i=0; i<NTESTS && test.passing_now; i++) {
-        
         typename EdDSA<Group>::PrivateKey priv(rng);
         typename EdDSA<Group>::PublicKey pub(priv);
         
@@ -569,7 +568,22 @@ static void test_eddsa() {
         } catch(CryptoException) {
             test.fail();
             printf("    Signature validation failed on sig %d\n", i);
-        }    
+        }
+        
+        /* Test encode_like and torque */
+        Point p(rng);
+        SecureBuffer p1 = p.mul_by_ratio_and_encode_like_eddsa();
+        SecureBuffer p2 = p.debugging_torque().mul_by_ratio_and_encode_like_eddsa();
+        if (!memeq(p1,p2)) {
+            test.fail();
+            printf("    Torque and encode like EdDSA failed\n");
+        }
+        SecureBuffer p3 = p.mul_by_ratio_and_encode_like_ladder();
+        SecureBuffer p4 = p.debugging_torque().mul_by_ratio_and_encode_like_ladder();
+        if (!memeq(p3,p4)) {
+            test.fail();
+            printf("    Torque and encode like ladder failed\n");
+        }
     }
 }
 

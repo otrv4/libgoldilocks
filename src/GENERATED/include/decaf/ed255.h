@@ -42,6 +42,12 @@ extern const uint8_t * const DECAF_ED25519_NO_CONTEXT DECAF_API_VIS;
 #define decaf_ed25519_prehash_update  decaf_sha512_update
 #define decaf_ed25519_prehash_destroy decaf_sha512_destroy
 
+/** EdDSA encoding ratio. */
+#define DECAF_255_EDDSA_ENCODE_RATIO 4
+
+/** EdDSA decoding ratio. */
+#define DECAF_255_EDDSA_DECODE_RATIO (8 / 4)
+
 /**
  * @brief EdDSA key generation.  This function uses a different (non-Decaf)
  * encoding.
@@ -169,25 +175,43 @@ decaf_error_t decaf_ed25519_verify_prehash (
 
 /**
  * @brief EdDSA point encoding.  Used internally, exposed externally.
- * Multiplies the point by the current cofactor first.
+ * Multiplies by DECAF_255_EDDSA_ENCODE_RATIO first.
+ *
+ * The multiplication is required because the EdDSA encoding represents
+ * the cofactor information, but the Decaf encoding ignores it (which
+ * is the whole point).  So if you decode from EdDSA and re-encode to
+ * EdDSA, the cofactor info must get cleared, because the intermediate
+ * representation doesn't track it.
+ *
+ * The way libdecaf handles this is to multiply by
+ * DECAF_255_EDDSA_DECODE_RATIO when decoding, and by
+ * DECAF_255_EDDSA_ENCODE_RATIO when encoding.  The product of these
+ * ratios is always exactly the cofactor 8, so the cofactor
+ * ends up cleared one way or another.  But exactly how that shakes
+ * out depends on the base points specified in RFC 8032.
+ *
+ * The upshot is that if you pass the Decaf/Ristretto base point to
+ * this function, you will get DECAF_255_EDDSA_ENCODE_RATIO times the
+ * EdDSA base point.
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
  */       
-void decaf_255_point_mul_by_cofactor_and_encode_like_eddsa (
+void decaf_255_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[DECAF_EDDSA_25519_PUBLIC_BYTES],
     const decaf_255_point_t p
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
- * @brief EdDSA point decoding.  Remember that while points on the
- * EdDSA curves have cofactor information, Decaf ignores (quotients
- * out) all cofactor information.
+ * @brief EdDSA point decoding.  Multiplies by DECAF_255_EDDSA_DECODE_RATIO,
+ * and ignores cofactor information.
+ *
+ * See notes on decaf_255_point_mul_by_ratio_and_encode_like_eddsa
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
  */       
-decaf_error_t decaf_255_point_decode_like_eddsa_and_ignore_cofactor (
+decaf_error_t decaf_255_point_decode_like_eddsa_and_mul_by_ratio (
     decaf_255_point_t p,
     const uint8_t enc[DECAF_EDDSA_25519_PUBLIC_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
