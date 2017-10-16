@@ -1,7 +1,18 @@
 # Decaf elliptic curve library
 
-This library is for elliptic curve research and practical application.
+The libdecaf library is for elliptic curve research and practical application.
 It currently supports Ed448-Goldilocks and Curve25519.
+
+The goals of this library are:
+
+* Implementing the X25519, X448 key exchange protocols (RFC 7748).
+* Implementing the Ed25519 and EdDSA-Ed448 signature schemes (RFC 8032).
+* Providing a platform for research and development of advanced cryptographic schemes using twisted Edwards curves.
+
+This library is intended for developers who have experience with
+cryptography.  It doesn't (yet?) include documentation on how to use
+digital signatures or key exchange securely.  Consult your local
+cryptographer for advice.
 
 ## Mailing lists
 
@@ -30,15 +41,14 @@ supported curves:
 * Point multiplication by scalars.  Accelerated double- and dual-scalar multiply.
 * Scalar addition, subtraction, multiplication, division, and equality.
 * Construction of precomputed tables from points.  Precomputed scalarmul.
-* Hashing to the curve with an Elligator variant.  Inverse of elligator
-   for steganography.  These are useful eg for PAKE.
+* Hashing to the curve with an Elligator variant.  Inverse of elligator for steganography.  These are useful for advanced protocols such as password-authenticated key exchange (PAKE) and verifiable random functions (VRFs).
 
 Internally, the library uses twisted Edwards curves with the "decaf"
-technique to remove the curve's cofactor of 4 or 8.  More about that
-later.  The upshot is that systems using the "decaf" interface will
-be using a prime-order group, which mitigates one of the few
-disadvantages of Edwards curves.  However, this means that it is not
-able to implement systems which care about cofactor information.
+and "ristretto" technique to remove the curve's cofactor of 4 or 8. 
+The upshot is that systems using the "decaf" interface will be using
+a prime-order group, which mitigates one of the few disadvantages of
+Edwards curves.  However, this means that it is not able to implement
+systems which care about cofactor information.
 
 The goal of this library is not only to follow best practices, but to
 make it easier for clients of the library to follow best practices.
@@ -52,10 +62,9 @@ sensitive data, and has interfaces designed to prevent certain mistakes.
 
 The library additionally supports two cryptosystems defined by the
 Crypto Forum Research Group (CFRG): the X448/X25519 Diffie-Hellman
-functions, and the EdDSA signature scheme.  Future versions might
-support additional operations on these curves, such as precomputed
-signature verification or conversion of Ed25519 keys to Curve25519
-keys.  (Or they might not.  We'll see.)
+functions (RFC 7748), and the EdDSA signature scheme (RFC 8032).
+Future versions might support additional operations on these curves,
+such as precomputed signature verification.
 
 ## Symmetric crypto and hashing
 
@@ -83,20 +92,20 @@ this point is written out.  The y-coordinate is not written out, but the
 decoder knows which of the two possible y-coordinates is correct because
 of the distinguishing rules.  See the paper for more details.
 
+As of v0.9.4, libdecaf uses the "Ristretto" variant of this encoding.
+See https://www.ristretto.group for details, once that site is up.
+
 ## Licensing
 
 Most of the source files here are by Mike Hamburg.  Those files are (c)
-2014-2016 Cryptography Research, Inc (a division of Rambus). All of these
+2014-2017 Cryptography Research, Inc (a division of Rambus). All of these
 files are usable under the MIT license contained in LICENSE.txt.
 
 ## Caveats
 
 As mentioned in the license, there is absolutely NO WARRANTY on any of this
-code.  This is an early release, and is likely to have security-critical
-bugs despite my best efforts.
+code.  This code might well have security-critical bugs despite my best efforts.
 
 I've attempted to protect against timing attacks and invalid point attacks,
 but as of yet I've made no attempt to protect against power analysis.
 
-Cheers,
--- Mike Hamburg
