@@ -14,7 +14,6 @@
 
 #ifndef __DECAF_ED255_HXX__
 #define __DECAF_ED255_HXX__ 1
-
 /*
  * Example Decaf cyrpto routines, C++ wrapper.
  * @warning These are merely examples, though they ought to be secure.  But real
@@ -38,6 +37,7 @@
 #endif
 /** @endcond */
 
+/** Namespace for all libdecaf C++ objects. */
 namespace decaf {
 
 /** A public key for crypto over some Group */
@@ -55,7 +55,14 @@ typedef class PrivateKeyBase PrivateKey, PrivateKeyPure, PrivateKeyPh;
 typedef class PublicKeyBase PublicKey, PublicKeyPure, PublicKeyPh;
 /** @endcond */
 
-
+/**
+ * Signatures support a "context" block, which allows you to domain separate them if
+ * (for some reason) it's annoying to domain separate the message itself.  The default
+ * is no context.  For Ed25519, the spec defining contexts is an extension, and the
+ * default is not to use that extension.  This makes "no context" different from
+ * the empty string.  For Ed448, contexts are built-in and mandatory, so "no context"
+ * is the same as the empty string.
+ */
 #if DECAF_EDDSA_25519_SUPPORTS_CONTEXTLESS_SIGS
 static inline const Block NO_CONTEXT() { return Block(DECAF_ED25519_NO_CONTEXT,0); }
 #else
@@ -65,6 +72,7 @@ static inline const Block NO_CONTEXT() { return Block(NULL,0); }
 /** Prehash context for EdDSA. */
 class Prehash : public SHA512 {
 private:
+    /** @cond internal */
     typedef SHA512 Super;
     SecureBuffer context_;
     template<class T, Prehashed Ph> friend class Signing;
@@ -79,6 +87,7 @@ private:
 
         decaf_ed25519_prehash_init((decaf_sha512_ctx_s *)wrapped);
     }
+    /** @endcond */
     
 public:
     /** Number of output bytes in prehash */
@@ -108,35 +117,10 @@ public:
     }
 };
 
+/** Signing (i.e. private) key class template */
 template<class CRTP, Prehashed ph> class Signing;
 
-template<class CRTP> class Signing<CRTP,PREHASHED> {
-public:
-    /* Sign a prehash context, and reset the context */
-    inline SecureBuffer sign_prehashed ( const Prehash &ph ) const /*throw(std::bad_alloc)*/ {
-        SecureBuffer out(CRTP::SIG_BYTES);
-        decaf_ed25519_sign_prehash (
-            out.data(),
-            ((const CRTP*)this)->priv_.data(),
-            ((const CRTP*)this)->pub_.data(),
-            (const decaf_ed25519_prehash_ctx_s*)ph.wrapped,
-            ph.context_.data(),
-            ph.context_.size()
-        );
-        return out;
-    }
-    
-    /* Sign a message using the prehasher */
-    inline SecureBuffer sign_with_prehash (
-        const Block &message,
-        const Block &context = NO_CONTEXT()
-    ) const /*throw(LengthException,CryptoException)*/ {
-        Prehash ph(context);
-        ph += message;
-        return sign_prehashed(ph);
-    }
-};
-
+/** Signing (i.e. private) key class, PureEdDSA version */
 template<class CRTP> class Signing<CRTP,PURE>  {
 public:
     /**
@@ -169,12 +153,42 @@ public:
     }
 };
 
+/** Signing (i.e. private) key class, prehashed version */
+template<class CRTP> class Signing<CRTP,PREHASHED> {
+public:
+    /** Sign a prehash context, and reset the context */
+    inline SecureBuffer sign_prehashed ( const Prehash &ph ) const /*throw(std::bad_alloc)*/ {
+        SecureBuffer out(CRTP::SIG_BYTES);
+        decaf_ed25519_sign_prehash (
+            out.data(),
+            ((const CRTP*)this)->priv_.data(),
+            ((const CRTP*)this)->pub_.data(),
+            (const decaf_ed25519_prehash_ctx_s*)ph.wrapped,
+            ph.context_.data(),
+            ph.context_.size()
+        );
+        return out;
+    }
+    
+    /** Sign a message using the prehasher */
+    inline SecureBuffer sign_with_prehash (
+        const Block &message,
+        const Block &context = NO_CONTEXT()
+    ) const /*throw(LengthException,CryptoException)*/ {
+        Prehash ph(context);
+        ph += message;
+        return sign_prehashed(ph);
+    }
+};
+
+/** Signing (i.e. private) key base class */
 class PrivateKeyBase
     : public Serializable<PrivateKeyBase>
     , public Signing<PrivateKeyBase,PURE>
     , public Signing<PrivateKeyBase,PREHASHED> {
 public:
-    typedef class PublicKeyBase MyPublicKey;
+    /** Type of public key corresponding to this private key */
+    typedef class PublicKeyBase PublicKey;
 private:
 /** @cond internal */
     friend class PublicKeyBase;
@@ -243,14 +257,13 @@ public:
     }
     
     /** Return the corresponding public key */
-    inline MyPublicKey pub() const DECAF_NOEXCEPT {
-        MyPublicKey pub(*this);
+    inline PublicKey pub() const DECAF_NOEXCEPT {
+        PublicKey pub(*this);
         return pub;
     }
 }; /* class PrivateKey */
 
-
-
+/** Verification (i.e. public) EdDSA key, PureEdDSA version. */
 template<class CRTP> class Verification<CRTP,PURE> {
 public:
     /** Verify a signature, returning DECAF_FAILURE if verification fails */
@@ -296,10 +309,10 @@ public:
     }
 };
 
-
+/** Verification (i.e. public) EdDSA key, prehashed version. */
 template<class CRTP> class Verification<CRTP,PREHASHED> {
 public:
-    /* Verify a prehash context. */
+    /** Verify that a signature is valid for a given prehashed message, given the context. */
     inline decaf_error_t DECAF_WARN_UNUSED verify_prehashed_noexcept (
         const FixedBlock<DECAF_EDDSA_25519_SIGNATURE_BYTES> &sig,
         const Prehash &ph
@@ -312,8 +325,8 @@ public:
             ph.context_.size()
         );
     }
-    
-    /* Verify a prehash context. */
+
+    /** Verify that a signature is valid for a given prehashed message, given the context. */
     inline void verify_prehashed (
         const FixedBlock<DECAF_EDDSA_25519_SIGNATURE_BYTES> &sig,
         const Prehash &ph
@@ -329,7 +342,7 @@ public:
         }
     }
     
-    /* Verify a message using the prehasher */
+    /** Hash and verify a message, using the prehashed verification mode. */
     inline void verify_with_prehash (
         const FixedBlock<DECAF_EDDSA_25519_SIGNATURE_BYTES> &sig,
         const Block &message,
@@ -341,24 +354,25 @@ public:
     }
 };
 
-
+/** EdDSA Public key base class. */
 class PublicKeyBase
     : public Serializable<PublicKeyBase>
     , public Verification<PublicKeyBase,PURE>
     , public Verification<PublicKeyBase,PREHASHED> {
 public:
-    typedef class PrivateKeyBase MyPrivateKey;
+    /** Private key corresponding to this type of public key */
+    typedef class PrivateKeyBase PrivateKey;
     
 private:
 /** @cond internal */
     friend class PrivateKeyBase;
     friend class Verification<PublicKey,PURE>;
     friend class Verification<PublicKey,PREHASHED>;
-/** @endcond */
 
 private:
     /** The pre-expansion form of the signature */
     FixedArrayBuffer<DECAF_EDDSA_25519_PUBLIC_BYTES> pub_;
+/** @endcond */
     
 public:
     /* PERF FUTURE: Pre-cached decoding? Precomputed table?? */
@@ -372,7 +386,6 @@ public:
     /** Serialization size. */
     static const size_t SER_BYTES = DECAF_EDDSA_25519_PRIVATE_BYTES;
     
-    
     /** Create but don't initialize */
     inline explicit PublicKeyBase(const NOINIT&) DECAF_NOEXCEPT : pub_((NOINIT())) { }
     
@@ -383,7 +396,7 @@ public:
     inline PublicKeyBase(const PublicKeyBase &k) DECAF_NOEXCEPT { *this = k; }
     
     /** Copy constructor */
-    inline explicit PublicKeyBase(const MyPrivateKey &k) DECAF_NOEXCEPT { *this = k; }
+    inline explicit PublicKeyBase(const PrivateKey &k) DECAF_NOEXCEPT { *this = k; }
 
     /** Assignment from string */
     inline PublicKey &operator=(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT {
@@ -397,7 +410,7 @@ public:
     }
 
     /** Assignment from private key */
-    inline PublicKey &operator=(const MyPrivateKey &p) DECAF_NOEXCEPT {
+    inline PublicKey &operator=(const PrivateKey &p) DECAF_NOEXCEPT {
         return *this = p.pub_;
     }
 

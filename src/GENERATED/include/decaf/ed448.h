@@ -35,10 +35,17 @@ extern "C" {
 /** Does EdDSA support non-contextual signatures? */
 #define DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS 0
 
-/** Prehash context renaming macros. */
+
+/** Prehash context (raw), because each EdDSA instance has a different prehash. */
 #define decaf_ed448_prehash_ctx_s   decaf_shake256_ctx_s
+
+/** Prehash context, array[1] form. */
 #define decaf_ed448_prehash_ctx_t   decaf_shake256_ctx_t
+    
+/** Prehash update. */
 #define decaf_ed448_prehash_update  decaf_shake256_update
+    
+/** Prehash destroy. */
 #define decaf_ed448_prehash_destroy decaf_shake256_destroy
 
 /** EdDSA encoding ratio. */

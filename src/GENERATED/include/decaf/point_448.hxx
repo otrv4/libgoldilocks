@@ -6,18 +6,17 @@
  *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
- * A group of prime order p, C++ wrapper.
+ * A group of prime order, C++ wrapper.
  *
  * The Decaf library implements cryptographic operations on a an elliptic curve
- * group of prime order p. It accomplishes this by using a twisted Edwards
+ * group of prime order. It accomplishes this by using a twisted Edwards
  * curve (isogenous to Ed448-Goldilocks) and wiping out the cofactor.
  *
- * The formulas are all complete and have no special cases, except that
- * decaf_448_decode can fail because not every sequence of bytes is a valid group
- * element.
- *
- * The formulas contain no data-dependent branches, timing or memory accesses,
- * except for decaf_448_base_double_scalarmul_non_secret.
+ * Most of the functions in this file run in constant time, can't fail
+ * except for ubiquitous reasons like memory exhaustion, and contain no
+ * data-dependend branches, timing or memory accesses.  There are some
+ * exceptions, which should be noted.  Typically, decoding functions can
+ * fail.
  *
  * @warning This file was automatically generated in Python.
  * Please do not edit it.
@@ -187,8 +186,9 @@ public:
     /** Negate */
     inline Scalar operator- () const DECAF_NOEXCEPT { Scalar r((NOINIT())); decaf_448_scalar_sub(r.s,decaf_448_scalar_zero,s); return r; }
 
-    /** Invert with Fermat's Little Theorem (slow!). If *this == 0,
-     * throw CryptoException. */
+    /** Return 1/this.
+     * @throw CryptoException if this is 0.
+     */
     inline Scalar inverse() const /*throw(CryptoException)*/ {
         Scalar r;
         if (DECAF_SUCCESS != decaf_448_scalar_invert(r.s,s)) {
@@ -204,10 +204,10 @@ public:
         return decaf_448_scalar_invert(r.s,s);
     }
 
-    /** Divide by inverting q. If q == 0, return 0. */
+    /** Return this/q. @throw CryptoException if q == 0. */
     inline Scalar operator/ (const Scalar &q) const /*throw(CryptoException)*/ { return *this * q.inverse(); }
 
-    /** Divide by inverting q. If q == 0, return 0. */
+    /** Set this to this/q. @throw CryptoException if q == 0. */
     inline Scalar &operator/=(const Scalar &q) /*throw(CryptoException)*/ { return *this *= q.inverse(); }
 
     /** Return half this scalar.  Much faster than /2. */
@@ -225,7 +225,9 @@ public:
     /** Scalarmul-precomputed with scalar on left. */
     inline Point operator* (const Precomputed &q) const DECAF_NOEXCEPT { return q * (*this); }
 
-    /** Direct scalar multiplication. */
+    /** Direct scalar multiplication.
+     * @throw CryptoException if the input didn't decode.
+     */
     inline SecureBuffer direct_scalarmul (
         const FixedBlock<SER_BYTES> &in,
         decaf_bool_t allow_identity=DECAF_FALSE,
@@ -241,12 +243,10 @@ public:
     ) const DECAF_NOEXCEPT;
 };
 
-/**
- * Element of prime-order group.
- */
+/** Element of prime-order elliptic curve group. */
 class Point : public Serializable<Point> {
 public:
-    /** wrapped C type */
+    /** Wrapped C type */
     typedef decaf_448_point_t Wrapped;
     
     /** Size of a serialized element */
@@ -270,17 +270,8 @@ public:
     /** Ratio due to ladder decoding */
     static const int LADDER_ENCODE_RATIO = DECAF_X448_ENCODE_RATIO;
 
-    /**
-     * Size of a stegged element.
-     * 
-     * FUTURE: You can use HASH_BYTES * 3/2 (or more likely much less, eg HASH_BYTES + 8)
-     * with a random oracle hash function, by hash-expanding everything past the first
-     * HASH_BYTES of the element.  However, since the internal C invert_elligator is not
-     * tied to a hash function, I didn't want to tie the C++ wrapper to a hash function
-     * either.  But it might be a good idea to do this in the future, either with STROBE
-     * or something else.
-     *
-     * Then again, calling invert_elligator at all is super niche, so maybe who cares?
+    /** Size of a steganographically-encoded curve element.  If the point is random, the encoding
+     * should look statistically close to a uniformly-random sequnece of STEG_BYTES bytes.
      */
     static const size_t STEG_BYTES = HASH_BYTES * 2;
     
@@ -325,9 +316,9 @@ public:
     * @throw CryptoException the string was the wrong length, or wasn't the encoding of a point,
     * or was the identity and allow_identity was DECAF_FALSE.
     */
-    inline explicit Point(const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE)
+    inline explicit Point(const FixedBlock<SER_BYTES> &buffer, bool allow_identity=true)
         /*throw(CryptoException)*/ {
-        if (DECAF_SUCCESS != decode(buffer,allow_identity)) {
+        if (DECAF_SUCCESS != decode(buffer,allow_identity ? DECAF_TRUE : DECAF_FALSE)) {
             throw CryptoException();
         }
     }
@@ -341,9 +332,9 @@ public:
      * or was the identity and allow_identity was DECAF_FALSE. Contents of the buffer are undefined.
      */
     inline decaf_error_t DECAF_WARN_UNUSED decode (
-        const FixedBlock<SER_BYTES> &buffer, decaf_bool_t allow_identity=DECAF_TRUE
+        const FixedBlock<SER_BYTES> &buffer, bool allow_identity=true
     ) DECAF_NOEXCEPT {
-        return decaf_448_point_decode(p,buffer.data(),allow_identity);
+        return decaf_448_point_decode(p,buffer.data(),allow_identity ? DECAF_TRUE : DECAF_FALSE);
     }
 
     /**
@@ -393,9 +384,7 @@ public:
     }
 
     /** Multiply by LADDER_ENCODE_RATIO and encode like X25519/X448. */
-    inline void mul_by_ratio_and_encode_like_ladder(
-        FixedBuffer<LADDER_BYTES> &out
-    ) const {
+    inline void mul_by_ratio_and_encode_like_ladder(FixedBuffer<LADDER_BYTES> &out) const {
         decaf_448_point_mul_by_ratio_and_encode_like_x448(out.data(),p);
     }
 
@@ -431,9 +420,7 @@ public:
         }
     }
 
-    /**
-     * Encode to string. The identity encodes to the all-zero string.
-     */
+    /** Encode to string. The identity encodes to the all-zero string. */
     inline operator SecureBuffer() const {
         SecureBuffer buffer(SER_BYTES);
         decaf_448_point_encode(buffer.data(), p);
@@ -583,10 +570,10 @@ public:
         return out;
     }
 
-    /** Return the base point */
+    /** Return the base point of the curve. */
     static inline const Point base() DECAF_NOEXCEPT { return Point(decaf_448_point_base); }
 
-    /** Return the identity point */
+    /** Return the identity point of the curve. */
     static inline const Point identity() DECAF_NOEXCEPT { return Point(decaf_448_point_identity); }
 };
 
@@ -684,6 +671,7 @@ public:
     /** @endcond */
 };
 
+/** X-only Diffie-Hellman ladder functions */
 struct DhLadder {
 public:
     /** Bytes in an X448 public key. */
@@ -758,7 +746,8 @@ public:
      * equivalent to shared_secret(base_point(),scalar) but possibly faster.
      * @deprecated Renamed to derive_public_key_noexcept.
      */
-    static inline void DECAF_DEPRECATED("Renamed to derive_public_key_noexcept")
+    static inline void
+    DECAF_DEPRECATED("Renamed to derive_public_key_noexcept")
     generate_key_noexcept (
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PRIVATE_BYTES> &scalar

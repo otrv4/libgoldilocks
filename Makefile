@@ -17,6 +17,8 @@ BUILD_INC = src/GENERATED/include
 BUILD_BIN = build/bin
 BUILD_IBIN = build/obj/bin
 
+DOXYGEN ?= doxygen
+
 ifeq ($(UNAME),Darwin)
 CC = clang
 CXX = clang++
@@ -300,8 +302,8 @@ $(BUILD_DOC)/timestamp:
 	mkdir -p `dirname $@`
 	touch $@
 #
-doc: Doxyfile $(BUILD_OBJ)/timestamp $(HEADERS)
-	doxygen > /dev/null
+doc: Doxyfile $(BUILD_OBJ)/timestamp gen_code_static
+	$(DOXYGEN) > /dev/null
 
 gen_code_static: $(GEN_CODE)
 gen_code: gen_code_static $(GEN_CODE_P2)

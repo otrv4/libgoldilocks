@@ -64,10 +64,10 @@ typedef struct gf_448_s {
 /** Number of bytes in an x448 private key */
 #define DECAF_X448_PRIVATE_BYTES 56
 
-/** Twisted Edwards extended homogeneous coordinates */
+/** Representation of a point on the elliptic curve. */
 typedef struct decaf_448_point_s {
     /** @cond internal */
-    gf_448_t x,y,z,t;
+    gf_448_t x,y,z,t; /* Twisted extended homogeneous coordinates */
     /** @endcond */
 } decaf_448_point_t[1];
 
@@ -80,26 +80,26 @@ typedef struct decaf_448_precomputed_s decaf_448_precomputed_s;
 /** Size and alignment of precomputed point tables. */
 extern const size_t decaf_448_sizeof_precomputed_s DECAF_API_VIS, decaf_448_alignof_precomputed_s DECAF_API_VIS;
 
-/** Scalar is stored packed, because we don't need the speed. */
+/** Representation of an element of the scalar field. */
 typedef struct decaf_448_scalar_s {
     /** @cond internal */
     decaf_word_t limb[DECAF_448_SCALAR_LIMBS];
     /** @endcond */
 } decaf_448_scalar_t[1];
 
-/** A scalar equal to 1. */
+/** The scalar 1. */
 extern const decaf_448_scalar_t decaf_448_scalar_one DECAF_API_VIS;
 
-/** A scalar equal to 0. */
+/** The scalar 0. */
 extern const decaf_448_scalar_t decaf_448_scalar_zero DECAF_API_VIS;
 
-/** The identity point on the curve. */
+/** The identity (zero) point on the curve. */
 extern const decaf_448_point_t decaf_448_point_identity DECAF_API_VIS;
 
-/** An arbitrarily chosen base point on the curve. */
+/** An arbitrarily-chosen base point on the curve. */
 extern const decaf_448_point_t decaf_448_point_base DECAF_API_VIS;
 
-/** Precomputed table for the base point on the curve. */
+/** Precomputed table of multiples of the base point on the curve. */
 extern const struct decaf_448_precomputed_s *decaf_448_precomputed_base DECAF_API_VIS;
 
 /**
@@ -386,19 +386,19 @@ decaf_error_t decaf_448_direct_scalarmul (
 ) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
 
 /**
- * @brief RFC 7748 Diffie-Hellman scalarmul.  This function uses a different
- * (non-Decaf) encoding.
+ * @brief RFC 7748 Diffie-Hellman scalarmul, used to compute shared secrets.
+ * This function uses a different (non-Decaf) encoding.
  *
- * @param [out] scaled The scaled point base*scalar
- * @param [in] base The point to be scaled.
- * @param [in] scalar The scalar to multiply by.
+ * @param [out] shared The shared secret base*scalar
+ * @param [in] base The other party's public key, used as the base of the scalarmul.
+ * @param [in] scalar The private scalar to multiply by.
  *
  * @retval DECAF_SUCCESS The scalarmul succeeded.
  * @retval DECAF_FAILURE The scalarmul didn't succeed, because the base
  * point is in a small subgroup.
  */
 decaf_error_t decaf_x448 (
-    uint8_t out[DECAF_X448_PUBLIC_BYTES],
+    uint8_t shared[DECAF_X448_PUBLIC_BYTES],
     const uint8_t base[DECAF_X448_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
@@ -429,7 +429,13 @@ void decaf_448_point_mul_by_ratio_and_encode_like_x448 (
 ) DECAF_API_VIS DECAF_NONNULL;
 
 /** The base point for X448 Diffie-Hellman */
-extern const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] DECAF_API_VIS;
+extern const uint8_t
+    decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES]
+#ifndef DOXYGEN
+    /* For some reason Doxygen chokes on this despite the defense in common.h... */
+    DECAF_API_VIS
+#endif
+;
 
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
@@ -438,8 +444,8 @@ extern const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] DECAF_API_VI
  * @deprecated Renamed to decaf_x448_derive_public_key.
  * I have no particular timeline for removing this name.
  *
- * @param [out] scaled The scaled point base*scalar
- * @param [in] scalar The scalar to multiply by.
+ * @param [out] out The public key base*scalar.
+ * @param [in] scalar The private scalar.
  */
 void decaf_x448_generate_key (
     uint8_t out[DECAF_X448_PUBLIC_BYTES],
@@ -453,8 +459,8 @@ void decaf_x448_generate_key (
  * Does exactly the same thing as decaf_x448_generate_key,
  * but has a better name.
  *
- * @param [out] scaled The scaled point base*scalar
- * @param [in] scalar The scalar to multiply by.
+ * @param [out] out The public key base*scalar
+ * @param [in] scalar The private scalar.
  */
 void decaf_x448_derive_public_key (
     uint8_t out[DECAF_X448_PUBLIC_BYTES],
@@ -737,22 +743,20 @@ decaf_448_invert_elligator_uniform (
     uint32_t which
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_WARN_UNUSED;
 
-/**
- * @brief Overwrite scalar with zeros.
- */
+/** Securely erase a scalar. */
 void decaf_448_scalar_destroy (
     decaf_448_scalar_t scalar
 ) DECAF_NONNULL DECAF_API_VIS;
 
-/**
- * @brief Overwrite point with zeros.
+/** Securely erase a point by overwriting it with zeros.
+ * @warning This causes the point object to become invalid.
  */
 void decaf_448_point_destroy (
     decaf_448_point_t point
 ) DECAF_NONNULL DECAF_API_VIS;
 
-/**
- * @brief Overwrite precomputed table with zeros.
+/** Securely erase a precomputed table by overwriting it with zeros.
+ * @warning This causes the table object to become invalid.
  */
 void decaf_448_precomputed_destroy (
     decaf_448_precomputed_s *pre

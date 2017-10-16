@@ -31,9 +31,9 @@ protected:
     /** @cond internal */
     /** The C-wrapper sponge state */
     decaf_sha512_ctx_t wrapped;
+    /** @endcond */
 
 public:
-    
     /** Number of bytes ouf output */
     static const size_t OUTPUT_BYTES = 64;
     

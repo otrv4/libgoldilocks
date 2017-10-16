@@ -21,8 +21,9 @@ extern "C" {
 
 /* Goldilocks' build flags default to hidden and stripping executables. */
 /** @cond internal */
-#if defined(DOXYGEN) && !defined(__attribute__)
-#define __attribute__((x))
+#if DOXYGEN || defined(__attribute__)
+#define __attribute__(x)
+#define NOINLINE
 #endif
 #define DECAF_API_VIS __attribute__((visibility("default")))
 #define DECAF_NOINLINE  __attribute__((noinline))

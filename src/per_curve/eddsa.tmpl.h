@@ -20,10 +20,17 @@ extern "C" {
 /** Does EdDSA support non-contextual signatures? */
 #define DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTLESS_SIGS $(eddsa_no_context)
 $("extern const uint8_t * const DECAF_ED" + gf_shortname + "_NO_CONTEXT DECAF_API_VIS;\n" if eddsa_no_context else "")
-/** Prehash context renaming macros. */
+
+/** Prehash context (raw), because each EdDSA instance has a different prehash. */
 #define decaf_ed$(gf_shortname)_prehash_ctx_s   decaf_$(eddsa_hash)_ctx_s
+
+/** Prehash context, array[1] form. */
 #define decaf_ed$(gf_shortname)_prehash_ctx_t   decaf_$(eddsa_hash)_ctx_t
+    
+/** Prehash update. */
 #define decaf_ed$(gf_shortname)_prehash_update  decaf_$(eddsa_hash)_update
+    
+/** Prehash destroy. */
 #define decaf_ed$(gf_shortname)_prehash_destroy decaf_$(eddsa_hash)_destroy
 
 /** EdDSA encoding ratio. */
