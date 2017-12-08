@@ -3,8 +3,8 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libdecaf
-Description: Decaf elliptic curve library
+Name: lib-little-ed448
+Description: Pure ed448 implementation
 Version: @PACKAGE_VERSION@
 Libs: -L${libdir} -ldecaf
 Cflags: -I${includedir}
