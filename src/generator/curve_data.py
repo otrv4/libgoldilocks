@@ -35,12 +35,12 @@ curve_data = {
         "rist_base": "e2f2ae0a6abc4e71a884a961c500515f58e30b6aa582dd8db6a65945e08d2d76",
         "eddsa_encode_ratio": 4,
         "x_encode_ratio": 4,
-        
+
         "combs":comb_config(3,5,17),
         "wnaf":wnaf_config(5,3),
         "window_bits":4,
-        
-        "eddsa_hash": "sha512",
+
+        "eddsa_hash": "shake256", #although this uses on the rfc sha.. remove later
         "eddsa_no_context": 1,
         "eddsa_dom": "SigEd25519 no Ed25519 collisions",
         "eddsa_sigma_iso": 1
@@ -57,11 +57,11 @@ curve_data = {
         "trace": 0x10cd77058eec492d944a725bf7a4cf635c8e9c2ab721cf5b5529eec34,
         "rist_base": "6666666666666666666666666666666666666666666666666666666633333333333333333333333333333333333333333333333333333333",
         "mont_base": 5,
-        
+
         "combs":comb_config(5,5,18),
         "wnaf":wnaf_config(5,3),
         "window_bits":5,
-        
+
         "eddsa_dom":"SigEd448"
     }
 }
@@ -89,13 +89,13 @@ def msqrt(x,p,hi_bit_clear = True, lo_bit_clear = False):
         ret = pow(x,(p+3)//8,p)
         if pow(ret,2,p) != (x % p): ret = (ret * u) % p
     else: raise Exception("sqrt only for 3-mod-4 or 5-mod-8")
-        
+
     if (ret**2-x) % p != 0: raise Exception("No sqrt")
     if hi_bit_clear and ret > p//2: ret = p-ret
     # lo_bit_clear overrides hi_bit_clear because it's not default
-    if lo_bit_clear and (ret & 1): ret = p-ret 
+    if lo_bit_clear and (ret & 1): ret = p-ret
     return ret
-        
+
 def ceil_log2(x):
     out = 0
     cmp = 1
@@ -107,7 +107,7 @@ def ceil_log2(x):
 for field,data in field_data.items():
     if "modulus" not in data:
         data["modulus"] = eval(data["gf_desc"].replace("^","**"))
-    
+
     if "gf_bits" not in data:
         data["gf_bits"] = ceil_log2(data["modulus"])
 
@@ -116,22 +116,22 @@ for curve,data in curve_data.items():
         if key not in data:
             data[key] = field_data[data["field"]][key]
 
-        
+
     if "iso_to" not in data:
         data["iso_to"] = data["name"]
-        
+
     if "eddsa_hash" not in data:
         data["eddsa_hash"] = "shake256"
-        
+
     if "eddsa_no_context" not in data:
         data["eddsa_no_context"] = 0
-    
+
     if "cxx_ns" not in data:
         data["cxx_ns"] = data["name"].replace("-","")
-    
+
     if "eddsa_sigma_iso" not in data:
         data["eddsa_sigma_iso"] = 0
-        
+
     if "rist_base_decoded" not in data:
         data["rist_base_decoded"] = sum(
                 ord(b)<<(8*i) for i,b in enumerate(unhexlify(data["rist_base"]))
@@ -149,9 +149,9 @@ for curve,data in curve_data.items():
 
     data["q"] = (data["modulus"]+1-data["trace"]) // data["cofactor"]
     data["bits"] = ceil_log2(data["modulus"])
-    
+
     if "c_ns" not in data:
         data["c_ns"] = "decaf_" + str(data["bits"])
         data["C_NS"] = data["c_ns"].upper()
 
-    
+

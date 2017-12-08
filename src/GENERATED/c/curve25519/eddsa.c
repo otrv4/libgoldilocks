@@ -15,18 +15,17 @@
 #include "word.h"
 #include <decaf/ed255.h>
 #include <decaf/shake.h>
-#include <decaf/sha512.h>
 #include <string.h>
 
 #define API_NAME "decaf_255"
 #define API_NS(_id) decaf_255_##_id
 
-#define hash_ctx_t   decaf_sha512_ctx_t
-#define hash_init    decaf_sha512_init
-#define hash_update  decaf_sha512_update
-#define hash_final   decaf_sha512_final
-#define hash_destroy decaf_sha512_destroy
-#define hash_hash    decaf_sha512_hash
+#define hash_ctx_t   decaf_shake256_ctx_t
+#define hash_init    decaf_shake256_init
+#define hash_update  decaf_shake256_update
+#define hash_final   decaf_shake256_final
+#define hash_destroy decaf_shake256_destroy
+#define hash_hash    decaf_shake256_hash
 
 #define NO_CONTEXT DECAF_EDDSA_25519_SUPPORTS_CONTEXTLESS_SIGS
 #define EDDSA_USE_SIGMA_ISOGENY 1

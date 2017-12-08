@@ -82,7 +82,7 @@ GEN_CODE= $(GEN_CODE_1:%.tmpl.hxx=%.hxx)
 HEADERS= Makefile.original $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_CODE)
 
 # components needed by the lib
-LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/sha512.o $(BUILD_OBJ)/spongerng.o
+LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/spongerng.o
 # and per-field components
 
 BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o
@@ -249,7 +249,7 @@ $(eval $(call define_field,p448,arch_x86_64))
 $(eval $(call define_curve,ed448goldilocks,p448,448))
 
 # The shakesum utility is in the public bin directory.
-$(BUILD_BIN)/shakesum: $(BUILD_OBJ)/shakesum.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/sha512.o $(BUILD_OBJ)/utils.o
+$(BUILD_BIN)/shakesum: $(BUILD_OBJ)/shakesum.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/utils.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 # The main decaf library, and its symlinks.

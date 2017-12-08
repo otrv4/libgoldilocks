@@ -2,7 +2,6 @@
 
 #include <decaf/point_$(gf_bits).h>
 #include <decaf/shake.h>
-#include <decaf/sha512.h>
 
 #ifdef __cplusplus
 extern "C" {

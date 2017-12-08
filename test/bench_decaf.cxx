@@ -11,7 +11,6 @@
 
 #include <decaf.hxx>
 #include <decaf/shake.hxx>
-#include <decaf/sha512.hxx>
 #include <decaf/spongerng.hxx>
 #include <decaf/eddsa.hxx>
 #include <stdio.h>
@@ -58,13 +57,13 @@ static void printSI(double x, const char *unit, const char *spacer = " ") {
     const char *big[] = {" ","k","M","G","T"};
     if (x < 1) {
         unsigned di=0;
-        for (di=0; di<sizeof(small)/sizeof(*small)-1 && x && x < 1; di++) { 
+        for (di=0; di<sizeof(small)/sizeof(*small)-1 && x && x < 1; di++) {
             x *= 1000.0;
         }
         printf("%6.2f%s%s%s", x, spacer, small[di], unit);
     } else {
         unsigned di=0;
-        for (di=0; di<sizeof(big)/sizeof(*big)-1 && x && x >= 1000; di++) { 
+        for (di=0; di<sizeof(big)/sizeof(*big)-1 && x && x >= 1000; di++) {
             x /= 1000.0;
         }
         printf("%6.2f%s%s%s", x, spacer, big[di], unit);
@@ -95,21 +94,21 @@ public:
     ~Benchmark() {
         double tsc = 0;
         double t = 0;
-        
+
         std::sort(times.begin(), times.end());
         std::sort(cycles.begin(), cycles.end());
-        
+
         for (int k=DISCARD; k<nsamples-DISCARD; k++) {
             tsc += cycles[k];
             t += times[k];
         }
-        
+
         totalCy += tsc;
         totalS += t;
-        
+
         t /= ntests*(nsamples-2*DISCARD);
         tsc /= ntests*(nsamples-2*DISCARD);
-        
+
         printSI(t,"s");
         printf("    ");
         printSI(1/t,"/s");
@@ -126,7 +125,7 @@ public:
             assert(j >= 0 && j < nsamples);
             cycles[j] = tsc;
             times[j] = t;
-            
+
             j++;
             i = 0;
         }
@@ -181,7 +180,7 @@ static void micro() {
     Point p,q;
     Scalar s(1),t(2);
     SecureBuffer ep, ep2(Point::SER_BYTES*2);
-    
+
     printf("\nMicro-benchmarks for %s:\n", Group::name());
     for (Benchmark b("Scalar add", 1000); b.iter(); ) { s+=t; }
     for (Benchmark b("Scalar times", 100); b.iter(); ) { s*=t; }
@@ -213,7 +212,7 @@ template <typename Group> struct Macro { static void run() { Benches<Group>::mac
 template <typename Group> struct Micro { static void run() { Benches<Group>::micro(); } };
 
 int main(int argc, char **argv) {
-    
+
     bool micro = false;
     if (argc >= 2 && !strcmp(argv[1], "--micro"))
         micro = true;
@@ -224,21 +223,19 @@ int main(int argc, char **argv) {
         SHAKE<128> shake1;
         SHAKE<256> shake2;
         SHA3<512> sha5;
-        SHA512 sha2;
         unsigned char b1024[1024] = {1};
         for (Benchmark b("SHAKE128 1kiB", 30); b.iter(); ) { shake1 += Buffer(b1024,1024); }
         for (Benchmark b("SHAKE256 1kiB", 30); b.iter(); ) { shake2 += Buffer(b1024,1024); }
         for (Benchmark b("SHA3-512 1kiB", 30); b.iter(); ) { sha5 += Buffer(b1024,1024); }
-        for (Benchmark b("SHA512 1kiB", 30); b.iter(); ) { sha2 += Buffer(b1024,1024); }
-        
+
         run_for_all_curves<Micro>();
     }
-    
+
     run_for_all_curves<Macro>();
-    
+
     printf("\n");
     Benchmark::calib();
     printf("\n");
-    
+
     return 0;
 }

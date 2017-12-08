@@ -17,7 +17,6 @@
 
 #include <decaf/point_255.h>
 #include <decaf/shake.h>
-#include <decaf/sha512.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,16 +37,16 @@ extern const uint8_t * const DECAF_ED25519_NO_CONTEXT DECAF_API_VIS;
 
 
 /** Prehash context (raw), because each EdDSA instance has a different prehash. */
-#define decaf_ed25519_prehash_ctx_s   decaf_sha512_ctx_s
+#define decaf_ed25519_prehash_ctx_s   decaf_shake256_ctx_s
 
 /** Prehash context, array[1] form. */
-#define decaf_ed25519_prehash_ctx_t   decaf_sha512_ctx_t
+#define decaf_ed25519_prehash_ctx_t   decaf_shake256_ctx_t
 
 /** Prehash update. */
-#define decaf_ed25519_prehash_update  decaf_sha512_update
+#define decaf_ed25519_prehash_update  decaf_shake256_update
 
 /** Prehash destroy. */
-#define decaf_ed25519_prehash_destroy decaf_sha512_destroy
+#define decaf_ed25519_prehash_destroy decaf_shake256_destroy
 
 /** EdDSA encoding ratio. */
 #define DECAF_255_EDDSA_ENCODE_RATIO 4

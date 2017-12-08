@@ -27,7 +27,6 @@
 #include <decaf/ed255.h>
 
 #include <decaf/shake.hxx>
-#include <decaf/sha512.hxx>
 
 /** @cond internal */
 #if __cplusplus >= 201103L
@@ -70,29 +69,29 @@ static inline const Block NO_CONTEXT() { return Block(NULL,0); }
 #endif
 
 /** Prehash context for EdDSA. */
-class Prehash : public SHA512 {
+class Prehash : public SHAKE<256> {
 private:
     /** @cond internal */
-    typedef SHA512 Super;
+    typedef SHAKE<256> Super;
     SecureBuffer context_;
     template<class T, Prehashed Ph> friend class Signing;
     template<class T, Prehashed Ph> friend class Verification;
-    
+
     void init() /*throw(LengthException)*/ {
         Super::reset();
-        
+
         if (context_.size() > 255) {
             throw LengthException();
         }
 
-        decaf_ed25519_prehash_init((decaf_sha512_ctx_s *)wrapped);
+        decaf_ed25519_prehash_init((decaf_shake256_ctx_s *)wrapped);
     }
     /** @endcond */
-    
+
 public:
     /** Number of output bytes in prehash */
     static const size_t OUTPUT_BYTES = Super::DEFAULT_OUTPUT_BYTES;
-    
+
     /** Create the prehash */
     Prehash(const Block &context = NO_CONTEXT()) /*throw(LengthException)*/ {
         context_ = context;
@@ -101,14 +100,14 @@ public:
 
     /** Reset this hash */
     void reset() DECAF_NOEXCEPT { init(); }
-    
+
     /** Output from this hash */
     SecureBuffer final() /*throw(std::bad_alloc)*/ {
         SecureBuffer ret = Super::final(OUTPUT_BYTES);
         reset();
         return ret;
     }
-    
+
     /** Output from this hash */
     void final(Buffer &b) /*throw(LengthException)*/ {
         if (b.size() != OUTPUT_BYTES) throw LengthException();
@@ -137,7 +136,7 @@ public:
         if (context.size() > 255) {
             throw LengthException();
         }
-        
+
         SecureBuffer out(CRTP::SIG_BYTES);
         decaf_ed25519_sign (
             out.data(),
@@ -169,7 +168,7 @@ public:
         );
         return out;
     }
-    
+
     /** Sign a message using the prehasher */
     inline SecureBuffer sign_with_prehash (
         const Block &message,
@@ -195,67 +194,67 @@ private:
     friend class Signing<PrivateKey,PURE>;
     friend class Signing<PrivateKey,PREHASHED>;
 /** @endcond */
-    
+
     /** The pre-expansion form of the signing key. */
     FixedArrayBuffer<DECAF_EDDSA_25519_PRIVATE_BYTES> priv_;
-    
+
     /** The post-expansion public key. */
     FixedArrayBuffer<DECAF_EDDSA_25519_PUBLIC_BYTES> pub_;
-    
+
 public:
     /** Underlying group */
     typedef Ristretto Group;
-    
+
     /** Signature size. */
     static const size_t SIG_BYTES = DECAF_EDDSA_25519_SIGNATURE_BYTES;
-    
+
     /** Serialization size. */
     static const size_t SER_BYTES = DECAF_EDDSA_25519_PRIVATE_BYTES;
-    
-    
+
+
     /** Create but don't initialize */
     inline explicit PrivateKeyBase(const NOINIT&) DECAF_NOEXCEPT : priv_((NOINIT())), pub_((NOINIT())) { }
-    
+
     /** Read a private key from a string */
     inline explicit PrivateKeyBase(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT { *this = b; }
-    
+
     /** Copy constructor */
     inline PrivateKeyBase(const PrivateKey &k) DECAF_NOEXCEPT { *this = k; }
-    
+
     /** Create at random */
     inline explicit PrivateKeyBase(Rng &r) DECAF_NOEXCEPT : priv_(r) {
         decaf_ed25519_derive_public_key(pub_.data(), priv_.data());
     }
-    
+
     /** Assignment from string */
     inline PrivateKeyBase &operator=(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT {
         memcpy(priv_.data(),b.data(),b.size());
         decaf_ed25519_derive_public_key(pub_.data(), priv_.data());
         return *this;
     }
-    
+
     /** Copy assignment */
     inline PrivateKeyBase &operator=(const PrivateKey &k) DECAF_NOEXCEPT {
         memcpy(priv_.data(),k.priv_.data(), priv_.size());
         memcpy(pub_.data(),k.pub_.data(), pub_.size());
         return *this;
     }
-    
+
     /** Serialization size. */
     inline size_t ser_size() const DECAF_NOEXCEPT { return SER_BYTES; }
-    
+
     /** Serialize into a buffer. */
     inline void serialize_into(unsigned char *x) const DECAF_NOEXCEPT {
         memcpy(x,priv_.data(), priv_.size());
     }
-    
+
     /** Convert to X format (to be used for key exchange) */
     inline SecureBuffer convert_to_x() const {
         SecureBuffer out(DECAF_X25519_PRIVATE_BYTES);
         decaf_ed25519_convert_private_key_to_x25519(out.data(), priv_.data());
         return out;
     }
-    
+
     /** Return the corresponding public key */
     inline PublicKey pub() const DECAF_NOEXCEPT {
         PublicKey pub(*this);
@@ -275,7 +274,7 @@ public:
         if (context.size() > 255) {
             return DECAF_FAILURE;
         }
-        
+
         return decaf_ed25519_verify (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
@@ -286,7 +285,7 @@ public:
             context.size()
         );
     }
-    
+
     /** Verify a signature, throwing an exception if verification fails
      * @param [in] sig The signature.
      * @param [in] message The signed message.
@@ -302,7 +301,7 @@ public:
         if (context.size() > 255) {
             throw LengthException();
         }
-        
+
         if (DECAF_SUCCESS != verify_noexcept( sig, message, context )) {
             throw CryptoException();
         }
@@ -341,7 +340,7 @@ public:
             throw CryptoException();
         }
     }
-    
+
     /** Hash and verify a message, using the prehashed verification mode. */
     inline void verify_with_prehash (
         const FixedBlock<DECAF_EDDSA_25519_SIGNATURE_BYTES> &sig,
@@ -362,7 +361,7 @@ class PublicKeyBase
 public:
     /** Private key corresponding to this type of public key */
     typedef class PrivateKeyBase PrivateKey;
-    
+
 private:
 /** @cond internal */
     friend class PrivateKeyBase;
@@ -373,28 +372,28 @@ private:
     /** The pre-expansion form of the signature */
     FixedArrayBuffer<DECAF_EDDSA_25519_PUBLIC_BYTES> pub_;
 /** @endcond */
-    
+
 public:
     /* PERF FUTURE: Pre-cached decoding? Precomputed table?? */
-  
+
     /** Underlying group */
     typedef Ristretto Group;
-    
+
     /** Signature size. */
     static const size_t SIG_BYTES = DECAF_EDDSA_25519_SIGNATURE_BYTES;
-    
+
     /** Serialization size. */
     static const size_t SER_BYTES = DECAF_EDDSA_25519_PRIVATE_BYTES;
-    
+
     /** Create but don't initialize */
     inline explicit PublicKeyBase(const NOINIT&) DECAF_NOEXCEPT : pub_((NOINIT())) { }
-    
+
     /** Read a private key from a string */
     inline explicit PublicKeyBase(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT { *this = b; }
-    
+
     /** Copy constructor */
     inline PublicKeyBase(const PublicKeyBase &k) DECAF_NOEXCEPT { *this = k; }
-    
+
     /** Copy constructor */
     inline explicit PublicKeyBase(const PrivateKey &k) DECAF_NOEXCEPT { *this = k; }
 
@@ -416,12 +415,12 @@ public:
 
     /** Serialization size. */
     inline size_t ser_size() const DECAF_NOEXCEPT { return SER_BYTES; }
-    
+
     /** Serialize into a buffer. */
     inline void serialize_into(unsigned char *x) const DECAF_NOEXCEPT {
         memcpy(x,pub_.data(), pub_.size());
     }
-    
+
     /** Convert to X format (to be used for key exchange) */
     inline SecureBuffer convert_to_x() const {
         SecureBuffer out(DECAF_X25519_PRIVATE_BYTES);

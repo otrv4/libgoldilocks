@@ -36,7 +36,6 @@ lib_LTLIBRARIES = libdecaf.la
 
 libdecaf_la_SOURCES = utils.c \
 		      shake.c \
-		      sha512.c \
 		      spongerng.c
 
 libdecaf_la_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
@@ -80,8 +79,6 @@ incsub_HEADERS = GENERATED/include/decaf/common.h \
 		 GENERATED/include/decaf/point_448.h \
 		 GENERATED/include/decaf/point_448.hxx \
 		 GENERATED/include/decaf/secure_buffer.hxx \
-		 GENERATED/include/decaf/sha512.h \
-		 GENERATED/include/decaf/sha512.hxx \
 		 GENERATED/include/decaf/shake.h \
 		 GENERATED/include/decaf/shake.hxx \
 		 GENERATED/include/decaf/spongerng.h \

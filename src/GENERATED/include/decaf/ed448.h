@@ -17,7 +17,6 @@
 
 #include <decaf/point_448.h>
 #include <decaf/shake.h>
-#include <decaf/sha512.h>
 
 #ifdef __cplusplus
 extern "C" {

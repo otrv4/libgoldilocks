@@ -12,12 +12,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <decaf/shake.h>
-#include <decaf/sha512.h>
 
 static void usage() {
     fprintf(
         stderr,
-        "decaf_shakesum [shake256|shake128|sha3-224|sha3-384|sha3-512|sha512] < infile > outfile\n"
+        "decaf_shakesum [shake256|shake128|sha3-224|sha3-384|sha3-512] < infile > outfile\n"
     );
 }
 
@@ -25,12 +24,11 @@ int main(int argc, char **argv) {
     (void)argc; (void)argv;
 
     decaf_keccak_sponge_t sponge;
-    decaf_sha512_ctx_t decaf_sha512;
     unsigned char buf[1024];
-    
+
     unsigned int outlen = 512;
     decaf_shake256_gen_init(sponge);
-    
+
     int use_sha512 = 0;
 
     /* Sloppy.  Real utility would parse --algo, --size ... */
@@ -53,10 +51,6 @@ int main(int argc, char **argv) {
         } else if (!strcmp(argv[1], "sha3-512") || !strcmp(argv[1], "SHA3-512")) {
             outlen = 512/8;
             decaf_sha3_512_gen_init(sponge);
-        } else if (!strcmp(argv[1], "sha512") || !strcmp(argv[1], "SHA512")) {
-            outlen = 512/8;
-            use_sha512 = 1;
-            decaf_sha512_init(decaf_sha512);
         } else {
             usage();
             return 2;
@@ -67,18 +61,13 @@ int main(int argc, char **argv) {
     do {
         red = read(0, buf, sizeof(buf));
         if (red>0) {
-            if (use_sha512) decaf_sha512_update(decaf_sha512,buf,red);
-            else decaf_sha3_update(sponge,buf,red);
+            decaf_sha3_update(sponge,buf,red);
         }
     } while (red>0);
 
-    if (use_sha512) {
-        decaf_sha512_final(decaf_sha512,buf,outlen);
-        decaf_sha512_destroy(decaf_sha512);
-    } else {
-        decaf_sha3_output(sponge,buf,outlen);
-        decaf_sha3_destroy(sponge);
-    }
+    decaf_sha3_output(sponge,buf,outlen);
+    decaf_sha3_destroy(sponge);
+
     unsigned i;
     for (i=0; i<outlen; i++) {
         printf("%02x", buf[i]);

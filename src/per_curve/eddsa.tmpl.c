@@ -6,7 +6,6 @@
 #include "word.h"
 #include <decaf/ed$(gf_bits).h>
 #include <decaf/shake.h>
-#include <decaf/sha512.h>
 #include <string.h>
 
 #define API_NAME "$(c_ns)"
