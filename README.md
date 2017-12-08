@@ -1,5 +1,6 @@
 # Decaf elliptic curve library
 
+
 The libdecaf library is for elliptic curve research and practical application.
 It currently supports Ed448-Goldilocks and Curve25519.
 
@@ -21,7 +22,7 @@ even critical security bugs.  If you are using it, please sign up for
 updates:
 
 * Security-critical announcements (very low volume, God willing):
-    decaf-security@googlegroups.com, join at https://groups.google.com/forum/#!forum/decaf-security    
+    decaf-security@googlegroups.com, join at https://groups.google.com/forum/#!forum/decaf-security
 * New version announcements (low volume):
     decaf-announce@googlegroups.com, join at https://groups.google.com/forum/#!forum/decaf-annonuce
 * Library discussion (potentially more volume):
@@ -44,7 +45,7 @@ supported curves:
 * Hashing to the curve with an Elligator variant.  Inverse of elligator for steganography.  These are useful for advanced protocols such as password-authenticated key exchange (PAKE) and verifiable random functions (VRFs).
 
 Internally, the library uses twisted Edwards curves with the "decaf"
-and "ristretto" technique to remove the curve's cofactor of 4 or 8. 
+and "ristretto" technique to remove the curve's cofactor of 4 or 8.
 The upshot is that systems using the "decaf" interface will be using
 a prime-order group, which mitigates one of the few disadvantages of
 Edwards curves.  However, this means that it is not able to implement
