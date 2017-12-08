@@ -1,14 +1,12 @@
 # Decaf elliptic curve library
 
-
-The libdecaf library is for elliptic curve research and practical application.
-It currently supports Ed448-Goldilocks and Curve25519.
+The little-ed448 library is for ed448-Goldilocks elliptic curve research and
+practical application. It is based upon Mike Hamburg's libdecaf library:
+[ed448goldilocks](https://sourceforge.net/p/ed448goldilocks/code/ci/master/tree/).
 
 The goals of this library are:
 
-* Implementing the X25519, X448 key exchange protocols (RFC 7748).
-* Implementing the Ed25519 and EdDSA-Ed448 signature schemes (RFC 8032).
-* Providing a platform for research and development of advanced cryptographic schemes using twisted Edwards curves.
+* Creating a pure implementation of ed448-Goldilocks.
 
 This library is intended for developers who have experience with
 cryptography.  It doesn't (yet?) include documentation on how to use
@@ -109,4 +107,3 @@ code.  This code might well have security-critical bugs despite my best efforts.
 
 I've attempted to protect against timing attacks and invalid point attacks,
 but as of yet I've made no attempt to protect against power analysis.
-
