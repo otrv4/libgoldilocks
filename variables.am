@@ -1,0 +1,35 @@
+FIELD_NAME_448 = p448
+CURVE_NAME_448 = ed448goldilocks
+FIELD_NAME_25519 = p25519
+CURVE_NAME_25519 = curve25519
+ARCH_NAME = arch_x86_64
+
+BUILD_H   = $(top_srcdir)/src/GENERATED/c
+BUILD_INC = $(top_srcdir)/src/GENERATED/include
+
+LANGFLAGS = -std=c99 -fno-strict-aliasing
+
+WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
+	 -Wmissing-declarations -Wunused-function -Wno-overlength-strings $(EXWARN)
+
+#ifeq ($(CC),clang)
+#WARNFLAGS += -Wgcc-compat
+#endif
+
+INCFLAGS = -I$(top_srcdir)/src/include -I$(BUILD_INC) -I$(BUILD_H)
+INCFLAGS += -I$(top_srcdir)/src/$(ARCH_NAME)
+INCFLAGS += -I$(top_srcdir)/src/include/$(ARCH_NAME)
+INCFLAGS_448 = -I$(top_srcdir)/src/$(FIELD_NAME_448)/$(ARCH_NAME)
+INCFLAGS_448 += -I$(top_srcdir)/src/GENERATED/c/$(FIELD_NAME_448)
+INCFLAGS_448 += -I$(top_srcdir)/src/GENERATED/c/$(FIELD_NAME_448)/$(ARCH_NAME)
+INCFLAGS_25519 = -I$(top_srcdir)/src/$(FIELD_NAME_25519)/$(ARCH_NAME)
+INCFLAGS_25519 += -I$(top_srcdir)/src/GENERATED/c/$(FIELD_NAME_25519)
+INCFLAGS_25519 += -I$(top_srcdir)/src/GENERATED/c/$(FIELD_NAME_25519)/$(ARCH_NAME)
+
+OFLAGS ?= -O2
+
+ARCHFLAGS = -maes # -mavx2 -mbmi2 #TODO
+ARCHFLAGS += $(XARCHFLAGS)
+GENFLAGS = -ffunction-sections -fdata-sections -fvisibility=hidden -fomit-frame-pointer -fPIC
+
+LANGXXFLAGS = -fno-strict-aliasing
