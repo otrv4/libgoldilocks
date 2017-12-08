@@ -26,10 +26,10 @@ $("extern const uint8_t * const DECAF_ED" + gf_shortname + "_NO_CONTEXT DECAF_AP
 
 /** Prehash context, array[1] form. */
 #define decaf_ed$(gf_shortname)_prehash_ctx_t   decaf_$(eddsa_hash)_ctx_t
-    
+
 /** Prehash update. */
 #define decaf_ed$(gf_shortname)_prehash_update  decaf_$(eddsa_hash)_update
-    
+
 /** Prehash destroy. */
 #define decaf_ed$(gf_shortname)_prehash_destroy decaf_$(eddsa_hash)_destroy
 
@@ -40,12 +40,24 @@ $("extern const uint8_t * const DECAF_ED" + gf_shortname + "_NO_CONTEXT DECAF_AP
 #define $(C_NS)_EDDSA_DECODE_RATIO ($(cofactor) / $(eddsa_encode_ratio))
 
 /**
+ * @brief EdDSA key secret key generation.  This function uses a different (non-Decaf)
+ * encoding. It is used for libotrv4.
+ *
+ * @param [out] secret The secret key.
+ * @param [in] privkey The private key.
+ */
+void decaf_ed$(gf_shortname)_derive_secret_scalar (
+    $(c_ns)_scalar_t secret,
+    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+
+/**
  * @brief EdDSA key generation.  This function uses a different (non-Decaf)
  * encoding.
  *
  * @param [out] pubkey The public key.
  * @param [in] privkey The private key.
- */    
+ */
 void decaf_ed$(gf_shortname)_derive_public_key (
     uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
@@ -67,7 +79,7 @@ void decaf_ed$(gf_shortname)_derive_public_key (
  * messages, at least without some very careful protocol-level disambiguation.  For Ed448 it is
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
- */  
+ */
 void decaf_ed$(gf_shortname)_sign (
     uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES],
@@ -93,7 +105,7 @@ void decaf_ed$(gf_shortname)_sign (
  * messages, at least without some very careful protocol-level disambiguation.  For Ed448 it is
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
- */  
+ */
 void decaf_ed$(gf_shortname)_sign_prehash (
     uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES],
@@ -102,7 +114,7 @@ void decaf_ed$(gf_shortname)_sign_prehash (
     const uint8_t *context,
     uint8_t context_len
 ) DECAF_API_VIS __attribute__((nonnull(1,2,3,4))) DECAF_NOINLINE;
-    
+
 /**
  * @brief Prehash initialization, with contexts if supported.
  *
@@ -187,7 +199,7 @@ decaf_error_t decaf_ed$(gf_shortname)_verify_prehash (
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
- */       
+ */
 void $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
     const $(c_ns)_point_t p
@@ -201,7 +213,7 @@ void $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa (
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
- */       
+ */
 decaf_error_t $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio (
     $(c_ns)_point_t p,
     const uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]

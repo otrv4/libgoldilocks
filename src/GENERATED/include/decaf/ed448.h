@@ -41,10 +41,10 @@ extern "C" {
 
 /** Prehash context, array[1] form. */
 #define decaf_ed448_prehash_ctx_t   decaf_shake256_ctx_t
-    
+
 /** Prehash update. */
 #define decaf_ed448_prehash_update  decaf_shake256_update
-    
+
 /** Prehash destroy. */
 #define decaf_ed448_prehash_destroy decaf_shake256_destroy
 
@@ -55,12 +55,24 @@ extern "C" {
 #define DECAF_448_EDDSA_DECODE_RATIO (4 / 4)
 
 /**
+ * @brief EdDSA key secret key generation.  This function uses a different (non-Decaf)
+ * encoding. It is used for libotrv4.
+ *
+ * @param [out] secret The secret key.
+ * @param [in] privkey The private key.
+ */
+void decaf_ed448_derive_secret_scalar (
+    decaf_448_scalar_t secret,
+    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+
+/**
  * @brief EdDSA key generation.  This function uses a different (non-Decaf)
  * encoding.
  *
  * @param [out] pubkey The public key.
  * @param [in] privkey The private key.
- */    
+ */
 void decaf_ed448_derive_public_key (
     uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
@@ -82,7 +94,7 @@ void decaf_ed448_derive_public_key (
  * messages, at least without some very careful protocol-level disambiguation.  For Ed448 it is
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
- */  
+ */
 void decaf_ed448_sign (
     uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
@@ -108,7 +120,7 @@ void decaf_ed448_sign (
  * messages, at least without some very careful protocol-level disambiguation.  For Ed448 it is
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
- */  
+ */
 void decaf_ed448_sign_prehash (
     uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
@@ -117,7 +129,7 @@ void decaf_ed448_sign_prehash (
     const uint8_t *context,
     uint8_t context_len
 ) DECAF_API_VIS __attribute__((nonnull(1,2,3,4))) DECAF_NOINLINE;
-    
+
 /**
  * @brief Prehash initialization, with contexts if supported.
  *
@@ -202,7 +214,7 @@ decaf_error_t decaf_ed448_verify_prehash (
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
- */       
+ */
 void decaf_448_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
     const decaf_448_point_t p
@@ -216,7 +228,7 @@ void decaf_448_point_mul_by_ratio_and_encode_like_eddsa (
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
- */       
+ */
 decaf_error_t decaf_448_point_decode_like_eddsa_and_mul_by_ratio (
     decaf_448_point_t p,
     const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
