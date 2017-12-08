@@ -52,9 +52,9 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
 
     if (have_rdrand) {
         # if defined(__x86_64__)
-            uint64_t out, a=0, *eo = (uint64_t *)entropy;
+            uint64_t out=0, a=0, *eo = (uint64_t *)entropy;
         # elif defined(__i386__)
-            uint32_t out, a=0, *eo = (uint32_t *)entropy;
+            uint32_t out=0, a=0, *eo = (uint32_t *)entropy;
         #endif
         len /= sizeof(out);
 
@@ -100,7 +100,7 @@ void decaf_spongerng_next (
         decaf_spongerng_stir(prng,cpu_entropy,sizeof(cpu_entropy));
         decaf_bzero(cpu_entropy,sizeof(cpu_entropy));
     }
-    
+
     uint8_t lenx[8];
     size_t len1 = len;
     for (unsigned i=0; i<sizeof(lenx); i++) {
@@ -109,7 +109,7 @@ void decaf_spongerng_next (
     }
     decaf_sha3_update(prng->sponge,lenx,sizeof(lenx));
     decaf_sha3_output(prng->sponge,out,len);
-    
+
     const uint8_t nope;
     decaf_spongerng_stir(prng,&nope,0);
 }
@@ -122,11 +122,11 @@ void decaf_spongerng_stir (
     uint8_t seed[32];
     decaf_sha3_output(prng->sponge,seed,sizeof(seed));
     uint8_t nondet = prng->sponge->params->remaining;
-    
+
     decaf_sha3_reset(prng->sponge);
     decaf_sha3_update(prng->sponge,seed,sizeof(seed));
     decaf_sha3_update(prng->sponge,in,len);
-    
+
     prng->sponge->params->remaining = nondet;
     decaf_bzero(seed,sizeof(seed));
 }
@@ -154,7 +154,7 @@ decaf_error_t decaf_spongerng_init_from_file (
 
     int fd = open(file, O_RDONLY);
     if (fd < 0) return DECAF_FAILURE;
-    
+
     uint8_t buffer[128];
     while (len) {
         ssize_t red = read(fd, buffer, (len > sizeof(buffer)) ? sizeof(buffer) : len);
@@ -168,7 +168,7 @@ decaf_error_t decaf_spongerng_init_from_file (
     close(fd);
     const uint8_t nope;
     decaf_spongerng_stir(prng,&nope,0);
-    
+
     return DECAF_SUCCESS;
 }
 
