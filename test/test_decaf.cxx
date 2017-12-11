@@ -125,7 +125,7 @@ static bool point_check(
     if (!r.validate()) { good = false; printf("  r invalid\n"); }
     if (!l.validate()) { good = false; printf("  l invalid\n"); }
     if (good) return true;
-    
+
     test.fail();
     printf("  %s", name);
     print("x", x);
@@ -140,17 +140,17 @@ static bool point_check(
 
 static void test_arithmetic() {
     SpongeRng rng(Block("test_arithmetic"),SpongeRng::DETERMINISTIC);
-    
+
     Test test("Arithmetic");
     Scalar x(0),y(0),z(0);
     arith_check(test,x,y,z,INT_MAX,(decaf_word_t)INT_MAX,"cast from max");
     arith_check(test,x,y,z,INT_MIN,-Scalar(1+(decaf_word_t)INT_MAX),"cast from min");
-        
+
     for (int i=0; i<NTESTS*10 && test.passing_now; i++) {
         size_t sob = i % (2*Group::Scalar::SER_BYTES);
-        
+
         SecureBuffer xx = rng.read(sob), yy = rng.read(sob), zz = rng.read(sob);
-        
+
         Scalar x(xx);
         Scalar y(yy);
         Scalar z(zz);
@@ -175,14 +175,14 @@ static void test_arithmetic() {
         arith_check(test,x,y,z,-(x+y),(-x)+(-y),"neg prop add");
         arith_check(test,x,y,z,x-y,(x)+(-y),"add neg sub");
         arith_check(test,x,y,z,(-x)-y,-(x+y),"neg add");
-        
+
         if (sob <= 4) {
             uint64_t xi = leint(xx), yi = leint(yy);
             arith_check(test,x,y,z,x,xi,"parse consistency");
             arith_check(test,x,y,z,x+y,xi+yi,"add consistency");
             arith_check(test,x,y,z,x*y,xi*yi,"mul consistency");
         }
-        
+
         if (i%20) continue;
         if (y!=0) arith_check(test,x,y,z,x*y/y,x,"invert");
         try {
@@ -202,7 +202,7 @@ static const Block elli_patho; /* sqrt(1/(u(1-d))) */
 static void test_elligator() {
     SpongeRng rng(Block("test_elligator"),SpongeRng::DETERMINISTIC);
     Test test("Elligator");
-    
+
     const int NHINTS = 1<<Point::INVERT_ELLIGATOR_WHICH_BITS;
     SecureBuffer *alts[NHINTS];
     bool successes[NHINTS];
@@ -213,19 +213,19 @@ static void test_elligator() {
         size_t len =  (i % (2*Point::HASH_BYTES + 3));
         SecureBuffer b1(len);
         if (i!=Point::HASH_BYTES) rng.read(b1); /* special test case */
-        
+
         /* Pathological cases */
         if (i==1) b1[0] = 1;
         if (i==2 && sqrt_minus_one.size()) b1 = sqrt_minus_one;
         if (i==3 && minus_sqrt_minus_one.size()) b1 = minus_sqrt_minus_one;
         if (i==4 && elli_patho.size()) b1 = elli_patho;
         len = b1.size();
-        
+
         Point s = Point::from_hash(b1), ss=s;
         for (unsigned int j=0; j<(i&3); j++) ss = ss.debugging_torque();
-        
+
         ss = ss.debugging_pscale(rng);
-        
+
         bool good = false;
         for (int j=0; j<NHINTS; j++) {
             alts[j] = new SecureBuffer(len);
@@ -233,13 +233,13 @@ static void test_elligator() {
 
             if (len > Point::HASH_BYTES)
                 memcpy(&(*alts[j])[Point::HASH_BYTES], &b1[Point::HASH_BYTES], len-Point::HASH_BYTES);
-            
+
             if (len > Point::HASH_BYTES)
                 memcpy(&(*alts2[j])[Point::HASH_BYTES], &b1[Point::HASH_BYTES], len-Point::HASH_BYTES);
-            
+
             successes[j]  = decaf_successful( s.invert_elligator(*alts[j], j));
             successes2[j] = decaf_successful(ss.invert_elligator(*alts2[j],j));
-            
+
             if (successes[j] != successes2[j]
                 || (successes[j] && successes2[j] && *alts[j] != *alts2[j])
             ) {
@@ -250,7 +250,7 @@ static void test_elligator() {
                 hexprint("X",*alts[j]);
                 hexprint("X",*alts2[j]);
             }
-           
+
             if (successes[j]) {
                 good = good || (b1 == *alts[j]);
                 for (int k=0; k<j; k++) {
@@ -270,7 +270,7 @@ static void test_elligator() {
                 }
             }
         }
-        
+
         if (!good) {
             test.fail();
             printf("   %s Elligator inversion: i=%d\n",good ? "Passed" : "Failed", i);
@@ -283,17 +283,17 @@ static void test_elligator() {
             }
             printf("\n");
         }
-        
+
         for (int j=0; j<NHINTS; j++) {
             delete alts[j];
             alts[j] = NULL;
             delete alts2[j];
             alts2[j] = NULL;
         }
-        
+
         Point t(rng);
         point_check(test,t,t,t,0,0,t,Point::from_hash(t.steg_encode(rng)),"steg round-trip");
-        
+
         FixedArrayBuffer<Point::HASH_BYTES> b3(rng), b4(b3);
         t = Point::from_hash(b3);
         for (unsigned j=0; j<256; j+=2<<((Group::bits()-1)%8)) {
@@ -306,21 +306,21 @@ static void test_elligator() {
 
 static void test_ec() {
     SpongeRng rng(Block("test_ec"),SpongeRng::DETERMINISTIC);
-    
+
     Test test("EC");
 
     Point id = Point::identity(), base = Point::base();
     point_check(test,id,id,id,0,0,Point::from_hash(""),id,"fh0");
-    
+
     unsigned char enc[Point::SER_BYTES] = {0};
-    
+
     if (Group::FIELD_MODULUS_TYPE == 3) {
         /* When p == 3 mod 4, the QNR is -1, so u*1^2 = -1 also produces the
          * identity.
          */
         point_check(test,id,id,id,0,0,Point::from_hash("\x01"),id,"fh1");
     }
-    
+
     point_check(test,id,id,id,0,0,Point(FixedBlock<sizeof(enc)>(enc)),id,"decode [0]");
     try {
         enc[0] = 1;
@@ -330,7 +330,7 @@ static void test_ec() {
     } catch (CryptoException) {
         /* ok */
     }
-    
+
     if (sqrt_minus_one.size()) {
         try {
             Point f(sqrt_minus_one);
@@ -340,7 +340,7 @@ static void test_ec() {
             /* ok */
         }
     }
-    
+
     if (minus_sqrt_minus_one.size()) {
         try {
             Point f(minus_sqrt_minus_one);
@@ -350,19 +350,19 @@ static void test_ec() {
             /* ok */
         }
     }
-    
+
     for (int i=0; i<NTESTS && test.passing_now; i++) {
         Scalar x(rng);
         Scalar y(rng);
         Point p(rng);
         Point q(rng);
-        
+
         Point d1, d2;
-        
+
         SecureBuffer buffer(2*Point::HASH_BYTES);
         rng.read(buffer);
         Point r = Point::from_hash(buffer);
-        
+
         try {
             point_check(test,p,q,r,0,0,p,Point(p.serialize()),"round-trip");
         } catch (CryptoException) {
@@ -387,17 +387,17 @@ static void test_ec() {
         point_check(test,p,q,r,0,0,(p-q)+q,p,"correct sub");
         point_check(test,p,q,r,0,0,p+(q+r),(p+q)+r,"assoc add");
         point_check(test,p,q,r,0,0,p.times_two(),p+p,"dbl add");
-        
+
         if (i%10) continue;
         point_check(test,p,q,r,0,0,p.times_two(),p*Scalar(2),"add times two");
         point_check(test,p,q,r,x,0,x*(p+q),x*p+x*q,"distr mul");
         point_check(test,p,q,r,x,y,(x*y)*p,x*(y*p),"assoc mul");
         point_check(test,p,q,r,x,y,x*p+y*q,Point::double_scalarmul(x,p,y,q),"double mul");
-        
+
         p.dual_scalarmul(d1,d2,x,y);
         point_check(test,p,q,r,x,y,x*p,d1,"dual mul 1");
         point_check(test,p,q,r,x,y,y*p,d2,"dual mul 2");
-        
+
         point_check(test,base,q,r,x,y,x*base+y*q,q.non_secret_combo_with_base(y,x),"ds vt mul");
         point_check(test,p,q,r,x,0,Precomputed(p)*x,p*x,"precomp mul");
         point_check(test,p,q,r,0,0,r,
@@ -405,14 +405,14 @@ static void test_ec() {
             + Point::from_hash(Buffer(buffer).slice(Point::HASH_BYTES,Point::HASH_BYTES)),
             "unih = hash+add"
         );
-        
+
         try {
             point_check(test,p,q,r,x,0,Point(x.direct_scalarmul(p.serialize())),x*p,"direct mul");
         } catch (CryptoException) {
             printf("    Direct mul raised CryptoException!\n");
             test.fail();
         }
-        
+
         q=p;
         for (int j=1; j<Group::REMOVED_COFACTOR; j<<=1) q = q.times_two();
         decaf_error_t error = r.decode_like_eddsa_and_mul_by_ratio_noexcept(
@@ -423,7 +423,7 @@ static void test_ec() {
             printf("    Decode like EdDSA failed.");
         }
         point_check(test,-q,q,r,i,0,q,r,"Encode like EdDSA round-trip");
-        
+
     }
 }
 
@@ -434,7 +434,7 @@ static const uint8_t rfc7748_1000000[DhLadder::PUBLIC_BYTES];
 static void test_cfrg_crypto() {
     Test test("CFRG crypto");
     SpongeRng rng(Block("test_cfrg_crypto"),SpongeRng::DETERMINISTIC);
-    
+
     {
         FixedArrayBuffer<DhLadder::PUBLIC_BYTES> base, out;
         FixedArrayBuffer<DhLadder::PRIVATE_BYTES> s1(rng);
@@ -448,14 +448,14 @@ static void test_cfrg_crypto() {
             printf("    Multiply by 0 didn't give 0\n");
         }
     }
-    
-    
-    
+
+
+
     for (int i=0; i<NTESTS && test.passing_now; i++) {
-        
+
         FixedArrayBuffer<DhLadder::PUBLIC_BYTES> base(rng);
         FixedArrayBuffer<DhLadder::PRIVATE_BYTES> s1(rng), s2(rng);
-        
+
         SecureBuffer p1  = DhLadder::shared_secret(base,s1);
         SecureBuffer p2  = DhLadder::shared_secret(base,s2);
         SecureBuffer ss1 = DhLadder::shared_secret(p2,s1);
@@ -465,7 +465,7 @@ static void test_cfrg_crypto() {
             test.fail();
             printf("    Shared secrets disagree on iteration %d.\n",i);
         }
-        
+
         p1 = DhLadder::shared_secret(DhLadder::base_point(),s1);
         p2 = DhLadder::derive_public_key(s1);
         if (!memeq(p1,p2)) {
@@ -486,9 +486,9 @@ static void test_cfrg_vectors() {
     Test test("CFRG test vectors");
     SecureBuffer k = DhLadder::base_point();
     SecureBuffer u = DhLadder::base_point();
-    
+
     int the_ntests = (NTESTS < 1000000) ? 1000 : 1000000;
-    
+
     /* EdDSA */
     for (unsigned int t=0; eddsa_sk[t].size(); t++) {
         typename EdDSA<Group>::PrivateKey priv(eddsa_sk[t]);
@@ -504,9 +504,9 @@ static void test_cfrg_vectors() {
             printf("\n");
         }
         SecureBuffer sig;
-        
+
         if (eddsa_prehashed[t]) {
-            typename EdDSA<Group>::PrivateKeyPh priv2(eddsa_sk[t]); 
+            typename EdDSA<Group>::PrivateKeyPh priv2(eddsa_sk[t]);
             sig = priv2.sign_with_prehash(eddsa_message[t],eddsa_context[t]);
         } else {
             sig = priv.sign(eddsa_message[t],eddsa_context[t]);
@@ -523,8 +523,8 @@ static void test_cfrg_vectors() {
             printf("\n");
         }
     }
-    
-    /* X25519/X448 */
+
+    /* X448 */
     for (int i=0; i<the_ntests && test.passing_now; i++) {
         SecureBuffer n = DhLadder::shared_secret(u,k);
         u = k; k = n;
@@ -550,26 +550,26 @@ static void test_cfrg_vectors() {
 static void test_eddsa() {
     Test test("EdDSA");
     SpongeRng rng(Block("test_eddsa"),SpongeRng::DETERMINISTIC);
-    
+
     for (int i=0; i<NTESTS && test.passing_now; i++) {
         typename EdDSA<Group>::PrivateKey priv(rng);
         typename EdDSA<Group>::PublicKey pub(priv);
-        
+
         SecureBuffer message(i);
         rng.read(message);
-        
+
         SecureBuffer context(i%256);
         rng.read(context);
-        
-        SecureBuffer sig = priv.sign(message,context); 
-        
+
+        SecureBuffer sig = priv.sign(message,context);
+
         try {
-            pub.verify(sig,message,context); 
+            pub.verify(sig,message,context);
         } catch(CryptoException) {
             test.fail();
             printf("    Signature validation failed on sig %d\n", i);
         }
-        
+
         /* Test encode_like and torque */
         Point p(rng);
         SecureBuffer p1 = p.mul_by_ratio_and_encode_like_eddsa();
@@ -665,18 +665,18 @@ static void test_xof() {
     /* TODO: more testing of XOFs */
     Test test("XOF");
     SpongeRng rng(Block("test_xof"),SpongeRng::DETERMINISTIC);
-    
+
     FixedArrayBuffer<1024> a,b,c;
     rng.read(c);
-    
+
     T s1, s2;
     unsigned i;
     for (i=0; i<c.size(); i++) s1.update(c.slice(i,1));
     s2.update(c);
-    
+
     for (i=0; i<a.size(); i++) s1.output(a.slice(i,1));
     s2.output(b);
-    
+
     if (!a.contents_equal(b)) {
         test.fail();
         printf("    Buffers aren't equal!\n");
@@ -691,7 +691,7 @@ static void test_rng() {
     SpongeRng rng_n1;
     SpongeRng rng_n2;
     SecureBuffer s1,s2,s3;
-    
+
     for (int i=0; i<5; i++) {
         s1 = rng_d1.read(16<<i);
         s2 = rng_d2.read(16<<i);
@@ -704,12 +704,12 @@ static void test_rng() {
             test.fail();
             printf("  Deterministic matched with different data!\n");
         }
-        
+
         rng_d1.stir("hello");
         rng_d2.stir("hello");
         rng_d3.stir("hello");
-        
-        
+
+
         s1 = rng_n1.read(16<<i);
         s2 = rng_n2.read(16<<i);
         if (s1 == s2) {
@@ -717,8 +717,8 @@ static void test_rng() {
             printf("  Nondeterministic RNG matched!\n");
         }
     }
-    
-    
+
+
     rng_d1.stir("hello");
     rng_d2.stir("jello");
     s1 = rng_d1.read(16);

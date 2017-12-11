@@ -37,13 +37,13 @@ def optimized_version_of(spec):
         wrapper.__name__ = f.__name__
         return wrapper
     return decorator
-    
+
 def xsqrt(x,exn=InvalidEncodingException("Not on curve")):
     """Return sqrt(x)"""
     if not is_square(x): raise exn
     s = sqrt(x)
     if negative(s): s=-s
-    return s        
+    return s
 
 def isqrt(x,exn=InvalidEncodingException("Not on curve")):
     """Return 1/sqrt(x)"""
@@ -83,10 +83,10 @@ class QuotientEdwardsPoint(object):
         X,Y = other
         a,d = self.a,self.d
         return self.__class__(
-            (x*Y+y*X)/(1+d*x*y*X*Y), 
+            (x*Y+y*X)/(1+d*x*y*X*Y),
             (y*Y-a*x*X)/(1-d*x*y*X*Y)
         )
-    
+
     def __neg__(self): return self.__class__(-self.x,self.y)
     def __sub__(self,other): return self + (-other)
     def __rmul__(self,other): return self*other
@@ -96,7 +96,7 @@ class QuotientEdwardsPoint(object):
         X,Y = other
         return x*Y == X*y or (self.cofactor==8 and -self.a*x*X == y*Y)
     def __ne__(self,other): return not (self==other)
-    
+
     def __mul__(self,exp):
         exp = int(exp)
         if exp < 0: exp,self = -exp,-self
@@ -107,12 +107,12 @@ class QuotientEdwardsPoint(object):
             work += work
             exp >>= 1
         return total
-    
+
     def xyzt(self):
         x,y = self
         z = self.F.random_element()
         return x*z,y*z,z,x*y*z
-        
+
     def torque(self):
         """Apply cofactor group, except keeping the point even"""
         if self.cofactor == 8:
@@ -120,7 +120,7 @@ class QuotientEdwardsPoint(object):
             if self.a ==  1: return self.__class__(-self.y, self.x)
         else:
             return self.__class__(-self.x, -self.y)
-    
+
 
     # Utility functions
     @classmethod
@@ -137,7 +137,7 @@ class QuotientEdwardsPoint(object):
         if mustBePositive and negative(s):
             raise InvalidEncodingException("%d is negative!" % s)
         return s
-        
+
     @classmethod
     def gfToBytes(cls,x,mustBePositive=False):
         """Convert little-endian bytes to field element, sanity check length"""
@@ -151,23 +151,23 @@ class RistrettoPoint(QuotientEdwardsPoint):
         x,y = self
         if self.cofactor==8 and (negative(x*y) or y==0): (x,y) = self.torque()
         if y == -1: y = 1 # Avoid divide by 0; doesn't affect impl
-            
+
         if negative(x): x,y = -x,-y
         s = xsqrt(self.mneg*(1-y)/(1+y),exn=Exception("Unimplemented: point is odd: " + str(self)))
         return self.gfToBytes(s)
-        
+
     @classmethod
     def decodeSpec(cls,s):
         """Unoptimized specification for decoding"""
         s = cls.bytesToGf(s,mustBePositive=True)
-        
+
         a,d = cls.a,cls.d
         x = xsqrt(4*s^2 / (a*d*(1+a*s^2)^2 - (1-a*s^2)^2))
         y = (1+a*s^2) / (1-a*s^2)
-    
+
         if cls.cofactor==8 and (negative(x*y) or y==0):
             raise InvalidEncodingException("x*y has high bit")
-                
+
         return cls(x,y)
 
     @optimized_version_of("encodeSpec")
@@ -175,7 +175,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
         """Encode, optimized version"""
         a,d,mneg = self.a,self.d,self.mneg
         x,y,z,t = self.xyzt()
-        
+
         if self.cofactor==8:
             u1    = mneg*(z+y)*(z-y)
             u2    = x*y # = t*z
@@ -183,7 +183,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
             i1    = isr*u1 # sqrt(mneg*(z+y)*(z-y))/(x*y)
             i2    = isr*u2 # 1/sqrt(a*(y+z)*(y-z))
             z_inv = i1*i2*t # 1/z
-        
+
             if negative(t*z_inv):
                 if a==-1:
                     x,y = y*self.i,x*self.i
@@ -191,7 +191,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
                 else:
                     x,y = -y,x
                     den_inv = self.i * self.magic * i1
-                
+
             else:
                 den_inv = i2
 
@@ -202,37 +202,37 @@ class RistrettoPoint(QuotientEdwardsPoint):
             isr   = isqrt(num*y^2)
             if negative(isr^2*num*y*t): y = -y
             s = isr*y*(z-y)
-            
-        
+
+
         return self.gfToBytes(s,mustBePositive=True)
-        
+
     @classmethod
     @optimized_version_of("decodeSpec")
     def decode(cls,s):
         """Decode, optimized version"""
         s = cls.bytesToGf(s,mustBePositive=True)
-        
+
         a,d = cls.a,cls.d
         yden     = 1-a*s^2
         ynum     = 1+a*s^2
         yden_sqr = yden^2
         xden_sqr = a*d*ynum^2 - yden_sqr
-        
+
         isr = isqrt(xden_sqr * yden_sqr)
-        
+
         xden_inv = isr * yden
         yden_inv = xden_inv * isr * xden_sqr
-        
+
         x = 2*s*xden_inv
         if negative(x): x = -x
         y = ynum * yden_inv
-    
+
         if cls.cofactor==8 and (negative(x*y) or y==0):
             raise InvalidEncodingException("x*y is invalid: %d, %d" % (x,y))
-            
+
         return cls(x,y)
-       
-    @classmethod     
+
+    @classmethod
     def fromJacobiQuartic(cls,s,t,sgn=1):
         """Convert point from its Jacobi Quartic representation"""
         a,d = cls.a,cls.d
@@ -240,7 +240,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
         x = 2*s*cls.magic / t
         y = (1+a*s^2) / (1-a*s^2)
         return cls(sgn*x,y)
-            
+
     @classmethod
     def elligatorSpec(cls,r0):
         a,d = cls.a,cls.d
@@ -253,9 +253,9 @@ class RistrettoPoint(QuotientEdwardsPoint):
             sgn,s,t =  1, xsqrt(n1), -(r-1)*(a+d)^2 / den - 1
         else:
             sgn,s,t = -1,-xsqrt(n2), r*(r-1)*(a+d)^2 / den - 1
-        
+
         return cls.fromJacobiQuartic(s,t)
-            
+
     @classmethod
     @optimized_version_of("elligatorSpec")
     def elligator(cls,r0):
@@ -264,7 +264,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
         r = cls.qnr * r0^2
         den = (d*r-a)*(a*r-d)
         num = cls.a*(r+1)*(a+d)*(d-a)
-        
+
         iss,isri = isqrt_i(num*den)
         if iss: sgn,twiddle =  1,1
         else:   sgn,twiddle = -1,r0*cls.qnr
@@ -282,40 +282,40 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         a,d = self.a,self.d
         x,y = self
         if x==0 or y==0: return(self.gfToBytes(0))
-        
+
         if self.cofactor==8 and negative(x*y*self.isoMagic):
             x,y = self.torque()
-            
+
         sr = xsqrt(1-a*x^2)
         altx = x*y*self.isoMagic / sr
         if negative(altx): s = (1+sr)/x
         else:              s = (1-sr)/x
-        
+
         return self.gfToBytes(s,mustBePositive=True)
-        
+
     @classmethod
     def decodeSpec(cls,s):
         """Unoptimized specification for decoding"""
         a,d = cls.a,cls.d
         s = cls.bytesToGf(s,mustBePositive=True)
-        
+
         if s==0: return cls()
         t = xsqrt(s^4 + 2*(a-2*d)*s^2 + 1)
         altx = 2*s*cls.isoMagic/t
         if negative(altx): t = -t
         x = 2*s / (1+a*s^2)
         y = (1-a*s^2) / t
-        
+
         if cls.cofactor==8 and (negative(x*y*cls.isoMagic) or y==0):
             raise InvalidEncodingException("x*y is invalid: %d, %d" % (x,y))
-        
+
         return cls(x,y)
 
     def toJacobiQuartic(self,toggle_rotation=False,toggle_altx=False,toggle_s=False):
         "Return s,t on jacobi curve"
         a,d = self.a,self.d
         x,y,z,t = self.xyzt()
-        
+
         if self.cofactor == 8:
             # Cofactor 8 version
             # Simulate IMAGINE_TWIST because that's how libdecaf does it
@@ -323,15 +323,15 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
             t = self.i*t
             a = -a
             d = -d
-            
+
             # OK, the actual libdecaf code should be here
             num = (z+y)*(z-y)
             den = x*y
             isr = isqrt(num*(a-d)*den^2)
-    
+
             iden = isr * den * self.isoMagic # 1/sqrt((z+y)(z-y)) = 1/sqrt(1-Y^2) / z
             inum = isr * num # sqrt(1-Y^2) * z / xysqrt(a-d) ~ 1/sqrt(1-ax^2)/z
-            
+
             if negative(iden*inum*self.i*t^2*(d-a)) != toggle_rotation:
                 iden,inum = inum,iden
                 fac = x*sqrt(a)
@@ -339,50 +339,50 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
             else:
                 fac = y
                 toggle=False
-            
+
             imi = self.isoMagic * self.i
             altx = inum*t*imi
             neg_altx = negative(altx) != toggle_altx
             if neg_altx != toggle: inum =- inum
-            
+
             tmp = fac*(inum*z + 1)
             s = iden*tmp*imi
-            
+
             negm1 = (negative(s) != toggle_s) != neg_altx
             if negm1: m1 = a*fac + z
             else:     m1 = a*fac - z
-            
+
             swap = toggle_s
-        
+
         else:
             # Much simpler cofactor 4 version
             num = (x+t)*(x-t)
             isr = isqrt(num*(a-d)*x^2)
-            ratio = isr*num 
+            ratio = isr*num
             altx = ratio*self.isoMagic
-            
+
             neg_altx = negative(altx) != toggle_altx
             if neg_altx: ratio =- ratio
-                
+
             tmp = ratio*z - t
             s = (a-d)*isr*x*tmp
-            
+
             negx = (negative(s) != toggle_s) != neg_altx
             if negx: m1 = -a*t + x
             else:    m1 = -a*t - x
-            
+
             swap = toggle_s
-            
+
         if negative(s): s = -s
-        
+
         return s,m1,a*tmp,swap
-    
+
     def invertElligator(self,toggle_r=False,*args,**kwargs):
         "Produce preimage of self under elligator, or None"
         a,d = self.a,self.d
-        
+
         rets = []
-        
+
         tr = [False,True] if self.cofactor == 8 else [False]
         for toggle_rotation in tr:
             for toggle_altx in [False,True]:
@@ -394,8 +394,8 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
                         #print toggle_rotation,toggle_altx,toggle_s
                         #print m1
                         #print m12
-                    
-                    
+
+
                         if self == self.__class__():
                             if self.cofactor == 4:
                                 # Hacks for identity!
@@ -403,7 +403,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
                                 elif toggle_s: m1 = 1
                                 elif toggle_r: continue
                                 ## BOTH???
-                                
+
                             else:
                                 m12 = 1
                                 imi = self.isoMagic * self.i
@@ -413,16 +413,16 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
                                 else:
                                     if toggle_altx: m1 = 0
                                     else: m1 = a-d
-                    
+
                         rnum = (d*a*m12-m1)
                         rden = ((d*a-1)*m12+m1)
                         if swap: rnum,rden = rden,rnum
-                    
+
                         ok,sr = isqrt_i(rnum*rden*self.qnr)
                         if not ok: continue
                         sr *= rnum
                         #print "Works! %d %x" % (swap,sr)
-                    
+
                         if negative(sr) != toggle_r: sr = -sr
                         ret = self.gfToBytes(sr)
                         if self.elligator(ret) != self and self.elligator(ret) != -self:
@@ -433,16 +433,16 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
 
     @optimized_version_of("encodeSpec")
     def encode(self):
-        """Encode, optimized version"""    
+        """Encode, optimized version"""
         return self.gfToBytes(self.toJacobiQuartic()[0])
-        
+
     @classmethod
     @optimized_version_of("decodeSpec")
     def decode(cls,s):
         """Decode, optimized version"""
         a,d = cls.a,cls.d
         s = cls.bytesToGf(s,mustBePositive=True)
-        
+
         #if s==0: return cls()
         s2 = s^2
         den = 1+a*s2
@@ -452,13 +452,13 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         if negative(altx): isr = -isr
         x = 2*s *isr^2*den*num
         y = (1-a*s^2) * isr*den
-        
+
         if cls.cofactor==8 and (negative(x*y*cls.isoMagic) or y==0):
             raise InvalidEncodingException("x*y is invalid: %d, %d" % (x,y))
-        
+
         return cls(x,y)
 
-    @classmethod     
+    @classmethod
     def fromJacobiQuartic(cls,s,t,sgn=1):
         """Convert point from its Jacobi Quartic representation"""
         a,d = cls.a,cls.d
@@ -466,13 +466,13 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         x = 2*s / (1+a*s^2)
         y = (1-a*s^2) / t
         return cls(x,sgn*y)
-            
+
     @classmethod
     def elligatorSpec(cls,r0,fromR=False):
         a,d = cls.a,cls.d
         if fromR: r = r0
         else: r = cls.qnr * cls.bytesToGf(r0,mustBeProper=False,maskHiBits=True)^2
-        
+
         den = (d*r-(d-a))*((d-a)*r-d)
         if den == 0: return cls()
         n1 = (r+1)*(a-2*d)/den
@@ -481,9 +481,9 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
             sgn,s,t = 1,   xsqrt(n1),  -(r-1)*(a-2*d)^2 / den - 1
         else:
             sgn,s,t = -1, -xsqrt(n2), r*(r-1)*(a-2*d)^2 / den - 1
-        
+
         return cls.fromJacobiQuartic(s,t)
-            
+
     @classmethod
     @optimized_version_of("elligatorSpec")
     def elligator(cls,r0):
@@ -492,7 +492,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         r = cls.qnr * r0^2
         den = (d*r-(d-a))*((d-a)*r-d)
         num = (r+1)*(a-2*d)
-        
+
         iss,isri = isqrt_i(num*den)
         if iss: sgn,twiddle =  1,1
         else:   sgn,twiddle = -1,r0*cls.qnr
@@ -501,7 +501,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         t = -sgn*isri*s*(r-1)*(a-2*d)^2 - 1
         if negative(s) == iss: s = -s
         return cls.fromJacobiQuartic(s,t)
-            
+
     def elligatorInverseBruteForce(self):
         """Invert Elligator using SAGE's polynomial solver"""
         a,d = self.a,self.d
@@ -524,51 +524,17 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
                 sx = set(r for r,_ in polyX.numerator().roots())
                 sy = set(r for r,_ in polyY.numerator().roots())
                 ret = ret.union(sx.intersection(sy))
-            
+
                 selfT = selfT.torque()
 
         ret = [self.gfToBytes(r) for r in ret]
-        
+
         for r in ret:
             assert self.elligator(r) in [self,-self]
-            
+
         ret = [r for r in ret if self.elligator(r) == self]
 
         return ret
-            
-class Ed25519Point(RistrettoPoint):
-    F = GF(2^255-19)
-    d = F(-121665/121666)
-    a = F(-1)
-    i = sqrt(F(-1))
-    mneg = F(1)
-    qnr = i
-    magic = isqrt(a*d-1)
-    cofactor = 8
-    encLen = 32
-    
-    @classmethod
-    def base(cls):
-        return cls( 15112221349535400772501151409588531511454012693041857206046113283949847762202, 46316835694926478169428394003475163141307993866256225615783033603165251855960
-        )
-            
-class NegEd25519Point(RistrettoPoint):
-    F = GF(2^255-19)
-    d = F(121665/121666)
-    a = F(1)
-    i = sqrt(F(-1))
-    mneg = F(-1) # TODO checkme vs 1-ad or whatever
-    qnr = i
-    magic = isqrt(a*d-1)
-    cofactor = 8
-    encLen = 32
-    
-    @classmethod
-    def base(cls):
-        y = cls.F(4/5)
-        x = sqrt((y^2-1)/(cls.d*y^2-cls.a))
-        if negative(x): x = -x
-        return cls(x,y)
 
 class IsoEd448Point(RistrettoPoint):
     F = GF(2^448-2^224-1)
@@ -579,14 +545,14 @@ class IsoEd448Point(RistrettoPoint):
     magic = isqrt(a*d-1)
     cofactor = 4
     encLen = 56
-    
+
     @classmethod
     def base(cls):
         return cls(  # RFC has it wrong
          345397493039729516374008604150537410266655260075183290216406970281645695073672344430481787759340633221708391583424041788924124567700732,
             -363419362147803445274661903944002267176820680343659030140745099590306164083365386343198191849338272965044442230921818680526749009182718
         )
-            
+
 class TwistedEd448GoldilocksPoint(Decaf_1_1_Point):
     F = GF(2^448-2^224-1)
     d = F(-39082)
@@ -608,36 +574,18 @@ class Ed448GoldilocksPoint(Decaf_1_1_Point):
     cofactor = 4
     encLen = 56
     isoMagic = IsoEd448Point.magic
-    
+
     @classmethod
     def base(cls):
         return 2*cls(
  224580040295924300187604334099896036246789641632564134246125461686950415467406032909029192869357953282578032075146446173674602635247710, 298819210078481492676017930443930673437544040154080242095928241372331506189835876003536878655418784733982303233503462500531545062832660
         )
 
-class IsoEd25519Point(Decaf_1_1_Point):
-    # TODO: twisted iso too!
-    # TODO: twisted iso might have to IMAGINE_TWIST or whatever
-    F = GF(2^255-19)
-    d = F(-121665)
-    a = F(1)
-    i = sqrt(F(-1))
-    qnr = i
-    magic = isqrt(a*d-1)
-    cofactor = 8
-    encLen = 32
-    isoMagic = Ed25519Point.magic
-    isoA = Ed25519Point.a
-    
-    @classmethod
-    def base(cls):
-        return cls.decodeSpec(Ed25519Point.base().encode())
-
 class TestFailedException(Exception): pass
 
 def test(cls,n):
     print "Testing curve %s" % cls.__name__
-    
+
     specials = [1]
     ii = cls.F(-1)
     while is_square(ii):
@@ -655,8 +603,8 @@ def test(cls,n):
                      (binascii.hexlify(QE),binascii.hexlify(i)))
         except NotOnCurveException: pass
         except InvalidEncodingException: pass
-        
-    
+
+
     P = cls.base()
     Q = cls()
     for i in xrange(n):
@@ -664,8 +612,8 @@ def test(cls,n):
         QE = Q.encode()
         QQ = cls.decode(QE)
         if QQ != Q: raise TestFailedException("Round trip %s != %s" % (str(QQ),str(Q)))
-    
-        # Testing s -> 1/s: encodes -point on cofactor 
+
+        # Testing s -> 1/s: encodes -point on cofactor
         s = cls.bytesToGf(QE)
         if s != 0:
             ss = cls.gfToBytes(1/s,mustBePositive=True)
@@ -679,24 +627,24 @@ def test(cls,n):
                 # Should be raised iff cofactor==8
                 if cls.cofactor == 4:
                     raise TestFailedException("s -> 1/s should work for cofactor 4")
-        
+
         QT = Q
         for h in xrange(cls.cofactor):
             QT = QT.torque()
             if QT.encode() != QE:
                 raise TestFailedException("Can't torque %s,%d" % (str(Q),h+1))
-            
+
         Q0 = Q + P
         if Q0 == Q: raise TestFailedException("Addition doesn't work")
         if Q0-P != Q: raise TestFailedException("Subtraction doesn't work")
-        
+
         r = randint(1,1000)
         Q1 = Q0*r
         Q2 = Q0*(r+1)
         if Q1 + Q0 != Q2: raise TestFailedException("Scalarmul doesn't work")
         Q = Q1
-        
-   
+
+
 def testElligator(cls,n):
     print "Testing elligator on %s" % cls.__name__
     for i in xrange(n):
@@ -716,7 +664,7 @@ def testElligator(cls,n):
                 #break
         else:
             pass # TODO
-        
+
 
 
 
@@ -728,7 +676,7 @@ def gangtest(classes,n):
         specials.append(ii)
         ii = sqrt(ii)
     specials.append(ii)
-    
+
     for i in xrange(n):
         rets = [bytes((cls.base()*i).encode()) for cls in classes]
         if len(set(rets)) != 1:
@@ -736,10 +684,10 @@ def gangtest(classes,n):
             for c,ret in zip(classes,rets):
                 print c,binascii.hexlify(ret)
             print
-        
+
         if i < len(specials): r0 = enc_le(specials[i],classes[0].encLen)
         else: r0 = randombytes(classes[0].encLen)
-        
+
         rets = [bytes((cls.elligator(r0)*i).encode()) for cls in classes]
         if len(set(rets)) != 1:
             print "Divergence in elligator at %d" % i
@@ -748,17 +696,10 @@ def gangtest(classes,n):
             print
 
 
-test(Ed25519Point,100)
-test(NegEd25519Point,100)
-test(IsoEd25519Point,100)
 test(IsoEd448Point,100)
 test(TwistedEd448GoldilocksPoint,100)
 test(Ed448GoldilocksPoint,100)
-testElligator(Ed25519Point,100)
-testElligator(NegEd25519Point,100)
-testElligator(IsoEd25519Point,100)
 testElligator(IsoEd448Point,100)
 testElligator(Ed448GoldilocksPoint,100)
 testElligator(TwistedEd448GoldilocksPoint,100)
 gangtest([IsoEd448Point,TwistedEd448GoldilocksPoint,Ed448GoldilocksPoint],100)
-gangtest([Ed25519Point,IsoEd25519Point],100)
