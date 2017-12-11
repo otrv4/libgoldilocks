@@ -8,4 +8,4 @@ before_install:
   - sudo apt-get install valgrind --quiet --assume-yes
 
 before_script: ./autogen.sh
-script: ./configure && make
+script: ./configure && make && make test

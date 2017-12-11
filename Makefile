@@ -836,7 +836,7 @@ uninstall-am:
 OFLAGS ?= -O2
 
 .PHONY: gen_code
-gen_code:
+gen-code:
 	$(MAKE) gen_code -f $(top_srcdir)/Makefile.original
 
 test: check
