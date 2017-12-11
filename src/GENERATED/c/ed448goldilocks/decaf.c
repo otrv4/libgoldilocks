@@ -75,7 +75,7 @@ const gf RISTRETTO_FACTOR = {{{
 #error "Currently require IMAGINE_TWIST (and thus p=5 mod 8) for cofactor 8"
         /* OK, but why?
          * Two reasons: #1: There are bugs when COFACTOR == && IMAGINE_TWIST
-         # #2: 
+         # #2:
          */
 #endif
 
@@ -86,7 +86,7 @@ const gf RISTRETTO_FACTOR = {{{
 #if (COFACTOR != 8) && (COFACTOR != 4)
     #error "COFACTOR must be 4 or 8"
 #endif
- 
+
 #if IMAGINE_TWIST
     extern const gf SQRT_MINUS_ONE;
 #endif
@@ -149,7 +149,7 @@ void API_NS(deisogenize) (
     (void)toggle_rotation; /* Only applies to cofactor 8 */
     gf t1;
     gf_s *t2 = s, *t3=inv_el_sum, *t4=inv_el_m1;
-    
+
     gf_add(t1,p->x,p->t);
     gf_sub(t2,p->x,p->t);
     gf_mul(t3,t1,t2); /* t3 = num */
@@ -171,7 +171,7 @@ void API_NS(deisogenize) (
     gf_copy(inv_el_m1,p->x);
     gf_cond_neg(inv_el_m1,~lobs^negx^toggle_s);
     gf_add(inv_el_m1,inv_el_m1,p->t);
-    
+
 #elif COFACTOR == 8 && IMAGINE_TWIST
     /* More complicated because of rotation */
     gf t1,t2,t3,t4,t5;
@@ -194,27 +194,27 @@ void API_NS(deisogenize) (
     gf_mul(t4,t3,p->t);
     gf_mulw(t3,t4,TWISTED_D+1);      /* iden*inum*i*t^2*(d-1) */
     mask_t rotate = toggle_rotation ^ gf_lobit(t3);
-    
+
     /* Rotate if altxy is negative */
     gf_cond_swap(t1,t2,rotate);
     gf_mul_i(t4,p->x);
     gf_cond_sel(t4,p->y,t4,rotate);  /* t4 = "fac" = ix if rotate, else y */
-    
+
     gf_mul_i(t5,RISTRETTO_FACTOR); /* t5 = imi */
     gf_mul(t3,t5,t2);                /* iden * imi */
     gf_mul(t2,t5,t1);
     gf_mul(t5,t2,p->t);              /* "altx" = iden*imi*t */
     mask_t negx = gf_lobit(t5) ^ toggle_altx;
-    
+
     gf_cond_neg(t1,negx^rotate);
     gf_mul(t2,t1,p->z);
     gf_add(t2,t2,ONE);
     gf_mul(inv_el_sum,t2,t4);
     gf_mul(s,inv_el_sum,t3);
-    
+
     mask_t negs = gf_lobit(s);
     gf_cond_neg(s,negs);
-    
+
     mask_t negz = ~negs ^ toggle_s ^ negx;
     gf_copy(inv_el_m1,p->z);
     gf_cond_neg(inv_el_m1,negz);
@@ -237,11 +237,11 @@ decaf_error_t API_NS(point_decode) (
 ) {
     gf s, s2, num, tmp;
     gf_s *tmp2=s2, *ynum=p->z, *isr=p->x, *den=p->t;
-    
+
     mask_t succ = gf_deserialize(s, ser, 1, 0);
     succ &= bool_to_mask(allow_identity) | ~gf_eq(s, ZERO);
     succ &= ~gf_lobit(s);
-    
+
     gf_sqr(s2,s);                  /* s^2 = -as^2 */
 #if IMAGINE_TWIST
     gf_sub(s2,ZERO,s2);            /* -as^2 */
@@ -261,7 +261,7 @@ decaf_error_t API_NS(point_decode) (
     gf_mul(p->x,tmp,num);          /* 2*s*isr^2*den*num */
     gf_mul(tmp,tmp2,RISTRETTO_FACTOR); /* 2*s*isr*den*magic */
     gf_cond_neg(p->x,gf_lobit(tmp)); /* flip x */
-    
+
 #if COFACTOR==8
     /* Additionally check y != 0 and x*y*isomagic nonegative */
     succ &= ~gf_eq(p->y,ZERO);
@@ -278,7 +278,7 @@ decaf_error_t API_NS(point_decode) (
     /* Fill in z and t */
     gf_copy(p->z,ONE);
     gf_mul(p->t,p->x,p->y);
-    
+
     assert(API_NS(point_valid)(p) | ~succ);
     return decaf_succeed_if(mask_to_bool(succ));
 }
@@ -314,7 +314,7 @@ void API_NS(point_sub) (
     gf_mul ( p->y, a, b );
     gf_mul ( p->t, b, c );
 }
-    
+
 void API_NS(point_add) (
     point_t p,
     const point_t q,
@@ -506,7 +506,7 @@ prepare_fixed_window(
     point_t tmp;
     pniels_t pn;
     int i;
-    
+
     point_double_internal(tmp, b, 0);
     pt_to_pniels(pn, tmp);
     pt_to_pniels(multiples[0], b);
@@ -515,7 +515,7 @@ prepare_fixed_window(
         add_pniels_to_pt(tmp, pn, 0);
         pt_to_pniels(multiples[i], tmp);
     }
-    
+
     decaf_bzero(pn,sizeof(pn));
     decaf_bzero(tmp,sizeof(tmp));
 }
@@ -529,11 +529,11 @@ void API_NS(point_scalarmul) (
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
-        
+
     scalar_t scalar1x;
     API_NS(scalar_add)(scalar1x, scalar, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
-    
+
     /* Set up a precomputed table with odd multiples of b. */
     pniels_t pn, multiples[NTABLE];
     point_t tmp;
@@ -552,7 +552,7 @@ void API_NS(point_scalarmul) (
         bits &= WINDOW_MASK;
         mask_t inv = (bits>>(WINDOW-1))-1;
         bits ^= inv;
-    
+
         /* Add in from table.  Compute t only on last iteration. */
         constant_time_lookup(pn, multiples, sizeof(pn), NTABLE, bits & WINDOW_T_MASK);
         cond_neg_niels(pn->n, inv);
@@ -570,10 +570,10 @@ void API_NS(point_scalarmul) (
             add_pniels_to_pt(tmp, pn, i ? -1 : 0);
         }
     }
-    
+
     /* Write out the answer */
     API_NS(point_copy)(a,tmp);
-    
+
     decaf_bzero(scalar1x,sizeof(scalar1x));
     decaf_bzero(pn,sizeof(pn));
     decaf_bzero(multiples,sizeof(multiples));
@@ -591,13 +591,13 @@ void API_NS(point_double_scalarmul) (
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
-        
+
     scalar_t scalar1x, scalar2x;
     API_NS(scalar_add)(scalar1x, scalarb, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
     API_NS(scalar_add)(scalar2x, scalarc, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar2x,scalar2x);
-    
+
     /* Set up a precomputed table with odd multiples of b. */
     pniels_t pn, multiples1[NTABLE], multiples2[NTABLE];
     point_t tmp;
@@ -622,7 +622,7 @@ void API_NS(point_double_scalarmul) (
         mask_t inv2 = (bits2>>(WINDOW-1))-1;
         bits1 ^= inv1;
         bits2 ^= inv2;
-    
+
         /* Add in from table.  Compute t only on last iteration. */
         constant_time_lookup(pn, multiples1, sizeof(pn), NTABLE, bits1 & WINDOW_T_MASK);
         cond_neg_niels(pn->n, inv1);
@@ -643,10 +643,10 @@ void API_NS(point_double_scalarmul) (
         cond_neg_niels(pn->n, inv2);
         add_pniels_to_pt(tmp, pn, i?-1:0);
     }
-    
+
     /* Write out the answer */
     API_NS(point_copy)(a,tmp);
-    
+
 
     decaf_bzero(scalar1x,sizeof(scalar1x));
     decaf_bzero(scalar2x,sizeof(scalar2x));
@@ -667,34 +667,34 @@ void API_NS(point_dual_scalarmul) (
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
-        
+
     scalar_t scalar1x, scalar2x;
     API_NS(scalar_add)(scalar1x, scalar1, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
     API_NS(scalar_add)(scalar2x, scalar2, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar2x,scalar2x);
-    
+
     /* Set up a precomputed table with odd multiples of b. */
     point_t multiples1[NTABLE], multiples2[NTABLE], working, tmp;
     pniels_t pn;
-    
+
     API_NS(point_copy)(working, b);
 
     /* Initialize. */
     int i,j;
-    
+
     for (i=0; i<NTABLE; i++) {
         API_NS(point_copy)(multiples1[i], API_NS(point_identity));
         API_NS(point_copy)(multiples2[i], API_NS(point_identity));
     }
 
-    for (i=0; i<SCALAR_BITS; i+=WINDOW) {   
+    for (i=0; i<SCALAR_BITS; i+=WINDOW) {
         if (i) {
             for (j=0; j<WINDOW-1; j++)
                 point_double_internal(working, working, -1);
             point_double_internal(working, working, 0);
         }
-        
+
         /* Fetch another block of bits */
         word_t bits1 = scalar1x->limb[i/WBITS] >> (i%WBITS),
                bits2 = scalar2x->limb[i/WBITS] >> (i%WBITS);
@@ -708,7 +708,7 @@ void API_NS(point_dual_scalarmul) (
         mask_t inv2 = (bits2>>(WINDOW-1))-1;
         bits1 ^= inv1;
         bits2 ^= inv2;
-        
+
         pt_to_pniels(pn, working);
 
         constant_time_lookup(tmp, multiples1, sizeof(tmp), NTABLE, bits1 & WINDOW_T_MASK);
@@ -716,26 +716,26 @@ void API_NS(point_dual_scalarmul) (
         /* add_pniels_to_pt(multiples1[bits1 & WINDOW_T_MASK], pn, 0); */
         add_pniels_to_pt(tmp, pn, 0);
         constant_time_insert(multiples1, tmp, sizeof(tmp), NTABLE, bits1 & WINDOW_T_MASK);
-        
-        
+
+
         constant_time_lookup(tmp, multiples2, sizeof(tmp), NTABLE, bits2 & WINDOW_T_MASK);
         cond_neg_niels(pn->n, inv1^inv2);
         /* add_pniels_to_pt(multiples2[bits2 & WINDOW_T_MASK], pn, 0); */
         add_pniels_to_pt(tmp, pn, 0);
         constant_time_insert(multiples2, tmp, sizeof(tmp), NTABLE, bits2 & WINDOW_T_MASK);
     }
-    
+
     if (NTABLE > 1) {
         API_NS(point_copy)(working, multiples1[NTABLE-1]);
         API_NS(point_copy)(tmp    , multiples2[NTABLE-1]);
-    
+
         for (i=NTABLE-1; i>1; i--) {
             API_NS(point_add)(multiples1[i-1], multiples1[i-1], multiples1[i]);
             API_NS(point_add)(multiples2[i-1], multiples2[i-1], multiples2[i]);
             API_NS(point_add)(working, working, multiples1[i-1]);
             API_NS(point_add)(tmp,     tmp,     multiples2[i-1]);
         }
-    
+
         API_NS(point_add)(multiples1[0], multiples1[0], multiples1[1]);
         API_NS(point_add)(multiples2[0], multiples2[0], multiples2[1]);
         point_double_internal(working, working, 0);
@@ -762,7 +762,7 @@ decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     gf_mul ( a, p->y, q->x );
     gf_mul ( b, q->y, p->x );
     mask_t succ = gf_eq(a,b);
-    
+
     #if (COFACTOR == 8) && IMAGINE_TWIST
         gf_mul ( a, p->y, q->y );
         gf_mul ( b, q->x, p->x );
@@ -773,12 +773,12 @@ decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
             * But because of the *i twist, it's actually
             * (x,y) <-> (iy,ix)
             */
-    
+
            /* No code, just a comment. */
         #endif
         succ |= gf_eq(a,b);
     #endif
-    
+
     return mask_to_bool(succ);
 }
 
@@ -846,7 +846,7 @@ static void gf_batch_invert (
 ) {
     gf t1;
     assert(n>1);
-  
+
     gf_copy(out[1], in[0]);
     int i;
     for (i=1; i<(int) (n-1); i++) {
@@ -878,34 +878,34 @@ static void batch_normalize_niels (
         gf_mul(product, table[i]->a, zis[i]);
         gf_strong_reduce(product);
         gf_copy(table[i]->a, product);
-        
+
         gf_mul(product, table[i]->b, zis[i]);
         gf_strong_reduce(product);
         gf_copy(table[i]->b, product);
-        
+
         gf_mul(product, table[i]->c, zis[i]);
         gf_strong_reduce(product);
         gf_copy(table[i]->c, product);
     }
-    
+
     decaf_bzero(product,sizeof(product));
 }
 
 void API_NS(precompute) (
     precomputed_s *table,
     const point_t base
-) { 
+) {
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
     assert(n*t*s >= SCALAR_BITS);
-  
+
     point_t working, start, doubles[t-1];
     API_NS(point_copy)(working, base);
     pniels_t pn_tmp;
-  
+
     gf zs[n<<(t-1)], zis[n<<(t-1)];
-  
+
     unsigned int i,j,k;
-    
+
     /* Compute n tables */
     for (i=0; i<n; i++) {
 
@@ -931,13 +931,13 @@ void API_NS(precompute) (
             pt_to_pniels(pn_tmp, start);
             memcpy(table->table[idx], pn_tmp->n, sizeof(pn_tmp->n));
             gf_copy(zs[idx], pn_tmp->z);
-			
+
             if (j >= (1u<<(t-1)) - 1) break;
             int delta = (j+1) ^ ((j+1)>>1) ^ gray;
 
             for (k=0; delta>1; k++)
                 delta >>=1;
-            
+
             if (gray & (1<<k)) {
                 API_NS(point_add)(start, start, doubles[k]);
             } else {
@@ -945,9 +945,9 @@ void API_NS(precompute) (
             }
         }
     }
-    
+
     batch_normalize_niels(table->table,(const gf *)zs,zis,n<<(t-1));
-    
+
     decaf_bzero(zs,sizeof(zs));
     decaf_bzero(zis,sizeof(zis));
     decaf_bzero(pn_tmp,sizeof(pn_tmp));
@@ -974,26 +974,26 @@ void API_NS(precomputed_scalarmul) (
     int i;
     unsigned j,k;
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
-    
+
     scalar_t scalar1x;
     API_NS(scalar_add)(scalar1x, scalar, precomputed_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
-    
+
     niels_t ni;
-    
+
     for (i=s-1; i>=0; i--) {
         if (i != (int)s-1) point_double_internal(out,out,0);
-        
+
         for (j=0; j<n; j++) {
             int tab = 0;
-         
+
             for (k=0; k<t; k++) {
                 unsigned int bit = i + s*(k + j*t);
                 if (bit < SCALAR_BITS) {
                     tab |= (scalar1x->limb[bit/WBITS] >> (bit%WBITS) & 1) << k;
                 }
             }
-            
+
             mask_t invert = (tab>>(t-1))-1;
             tab ^= invert;
             tab &= (1<<(t-1)) - 1;
@@ -1008,7 +1008,7 @@ void API_NS(precomputed_scalarmul) (
             }
         }
     }
-    
+
     decaf_bzero(ni,sizeof(ni));
     decaf_bzero(scalar1x,sizeof(scalar1x));
 }
@@ -1022,7 +1022,6 @@ void API_NS(point_cond_sel) (
     constant_time_select(out,a,b,sizeof(point_t),bool_to_mask(pick_b),0);
 }
 
-/* FUTURE: restore Curve25519 Montgomery ladder? */
 decaf_error_t API_NS(direct_scalarmul) (
     uint8_t scaled[SER_BYTES],
     const uint8_t base[SER_BYTES],
@@ -1044,7 +1043,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
     const point_t p
 ) {
-    
+
     /* The point is now on the twisted curve.  Move it to untwisted. */
     gf x, y, z, t;
     point_t q;
@@ -1053,7 +1052,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
 #else
     API_NS(point_copy)(q,p);
 #endif
-    
+
 #if EDDSA_USE_SIGMA_ISOGENY
     {
         /* Use 4-isogeny like ed25519:
@@ -1107,7 +1106,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
         gf_sub ( y, y, u );
         gf_sub ( z, t, x );
         gf_sqr ( x, q->z );
-        gf_add ( t, x, x); 
+        gf_add ( t, x, x);
         gf_sub ( t, t, z);
         gf_mul ( x, t, y );
         gf_mul ( y, z, u );
@@ -1119,7 +1118,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     gf_invert(z,z,1);
     gf_mul(t,x,z);
     gf_mul(x,y,z);
-    
+
     /* Encode */
     enc[DECAF_EDDSA_448_PRIVATE_BYTES-1] = 0;
     gf_serialize(enc, x, 1);
@@ -1142,7 +1141,7 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
 
     mask_t low = ~word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] & 0x80);
     enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] &= ~0x80;
-    
+
     mask_t succ = gf_deserialize(p->y, enc2, 1, 0);
 #if 0 == 0
     succ &= word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1]);
@@ -1158,14 +1157,14 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
         gf_mulw(p->t,p->x,EDWARDS_D); /* dy^2 */
     #endif
     gf_sub(p->t,ONE,p->t); /* denom = 1-dy^2 or 1-d + dy^2 */
-    
+
     gf_mul(p->x,p->z,p->t);
     succ &= gf_isr(p->t,p->x); /* 1/sqrt(num * denom) */
-    
+
     gf_mul(p->x,p->t,p->z); /* sqrt(num / denom) */
     gf_cond_neg(p->x,gf_lobit(p->x)^low);
     gf_copy(p->z,ONE);
-  
+
     #if EDDSA_USE_SIGMA_ISOGENY
     {
        /* Use 4-isogeny like ed25519:
@@ -1199,7 +1198,7 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
         decaf_bzero(b,sizeof(b));
         decaf_bzero(c,sizeof(c));
         decaf_bzero(d,sizeof(d));
-    } 
+    }
     #elif IMAGINE_TWIST
     {
         gf_mul(p->t,p->x,SQRT_MINUS_ONE);
@@ -1230,10 +1229,10 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
         decaf_bzero(d,sizeof(d));
     }
     #endif
-    
+
     decaf_bzero(enc2,sizeof(enc2));
     assert(API_NS(point_valid)(p) || ~succ);
-    
+
     return decaf_succeed_if(mask_to_bool(succ));
 }
 
@@ -1248,25 +1247,25 @@ decaf_error_t decaf_x448 (
     gf_copy(z2,ZERO);
     gf_copy(x3,x1);
     gf_copy(z3,ONE);
-    
+
     int t;
     mask_t swap = 0;
-    
+
     for (t = X_PRIVATE_BITS-1; t>=0; t--) {
         uint8_t sb = scalar[t/8];
-        
+
         /* Scalar conditioning */
         if (t/8==0) sb &= -(uint8_t)COFACTOR;
         else if (t == X_PRIVATE_BITS-1) sb = -1;
-        
+
         mask_t k_t = (sb>>(t%8)) & 1;
         k_t = -k_t; /* set to all 0s or all 1s */
-        
+
         swap ^= k_t;
         gf_cond_swap(x2,x3,swap);
         gf_cond_swap(z2,z3,swap);
         swap = k_t;
-        
+
         gf_add_nr(t1,x2,z2); /* A = x2 + z2 */        /* 2+e */
         gf_sub_nr(t2,x2,z2); /* B = x2 - z2 */        /* 3+e */
         gf_sub_nr(z2,x3,z3); /* D = x3 - z3 */        /* 3+e */
@@ -1278,17 +1277,17 @@ decaf_error_t decaf_x448 (
         gf_mul(z3,x1,z2);    /* z3 = x1(DA-CB)^2 */
         gf_add_nr(z2,x2,x3); /* (DA+CB) */            /* 2+e */
         gf_sqr(x3,z2);       /* x3 = (DA+CB)^2 */
-        
+
         gf_sqr(z2,t1);       /* AA = A^2 */
         gf_sqr(t1,t2);       /* BB = B^2 */
         gf_mul(x2,z2,t1);    /* x2 = AA*BB */
         gf_sub_nr(t2,z2,t1); /* E = AA-BB */          /* 3+e */
-        
+
         gf_mulw(t1,t2,-EDWARDS_D); /* E*-d = a24*E */
         gf_add_nr(t1,t1,z2); /* AA + a24*E */         /* 2+e */
         gf_mul(z2,t2,t1); /* z2 = E(AA+a24*E) */
     }
-    
+
     /* Finish */
     gf_cond_swap(x2,x3,swap);
     gf_cond_swap(z2,z3,swap);
@@ -1296,7 +1295,7 @@ decaf_error_t decaf_x448 (
     gf_mul(x1,x2,z2);
     gf_serialize(out,x1,1);
     mask_t nz = ~gf_eq(x1,ZERO);
-    
+
     decaf_bzero(x1,sizeof(x1));
     decaf_bzero(x2,sizeof(x2));
     decaf_bzero(z2,sizeof(z2));
@@ -1304,7 +1303,7 @@ decaf_error_t decaf_x448 (
     decaf_bzero(z3,sizeof(z3));
     decaf_bzero(t1,sizeof(t1));
     decaf_bzero(t2,sizeof(t2));
-    
+
     return decaf_succeed_if(mask_to_bool(nz));
 }
 
@@ -1316,10 +1315,10 @@ void decaf_ed448_convert_public_key_to_x448 (
     gf y;
     const uint8_t mask = (uint8_t)(0xFE<<(7));
     ignore_result(gf_deserialize(y, ed, 1, mask));
-    
+
     {
         gf n,d;
-        
+
 #if EDDSA_USE_SIGMA_ISOGENY
         /* u = (1+y)/(1-y)*/
         gf_add(n, y, ONE); /* n = y+1 */
@@ -1338,7 +1337,7 @@ void decaf_ed448_convert_public_key_to_x448 (
         gf_mul(n, y, d); /* y^2 * (1-dy^2) / (1-y^2) */
         gf_serialize(x,n,1);
 #endif /* EDDSA_USE_SIGMA_ISOGENY */
-        
+
         decaf_bzero(y,sizeof(y));
         decaf_bzero(n,sizeof(n));
         decaf_bzero(d,sizeof(d));
@@ -1380,13 +1379,13 @@ void decaf_x448_derive_public_key (
     uint8_t scalar2[X_PRIVATE_BYTES];
     memcpy(scalar2,scalar,sizeof(scalar2));
     scalar2[0] &= -(uint8_t)COFACTOR;
-    
+
     scalar2[X_PRIVATE_BYTES-1] &= ~(-1u<<((X_PRIVATE_BITS+7)%8));
     scalar2[X_PRIVATE_BYTES-1] |= 1<<((X_PRIVATE_BITS+7)%8);
-    
+
     scalar_t the_scalar;
     API_NS(scalar_decode_long)(the_scalar,scalar2,sizeof(scalar2));
-    
+
     /* Compensate for the encoding ratio */
     for (unsigned i=1; i<DECAF_X448_ENCODE_RATIO; i<<=1) {
         API_NS(scalar_halve)(the_scalar,the_scalar);
@@ -1412,7 +1411,7 @@ static int recode_wnaf (
 ) {
     unsigned int table_size = SCALAR_BITS/(table_bits+1) + 3;
     int position = table_size - 1; /* at the end */
-    
+
     /* place the end marker */
     control[position].power = -1;
     control[position].addend = 0;
@@ -1422,7 +1421,7 @@ static int recode_wnaf (
      * in the actual code that uses it, all for an expected reduction of like 1/5 op.
      * Probably not worth it.
      */
-    
+
     uint64_t current = scalar->limb[0] & 0xFFFF;
     uint32_t mask = (1<<(table_bits+1))-1;
 
@@ -1433,7 +1432,7 @@ static int recode_wnaf (
             /* Refill the 16 high bits of current */
             current += (uint32_t)((scalar->limb[w/B_OVER_16]>>(16*(w%B_OVER_16)))<<16);
         }
-        
+
         while (current & 0xFFFF) {
             assert(position >= 0);
             uint32_t pos = __builtin_ctz((uint32_t)current), odd = (uint32_t)current >> pos;
@@ -1447,7 +1446,7 @@ static int recode_wnaf (
         current >>= 16;
     }
     assert(current==0);
-    
+
     position++;
     unsigned int n = table_size - position;
     unsigned int i;
@@ -1480,7 +1479,7 @@ prepare_wnaf_table(
         add_pniels_to_pt(tmp, twop,0);
         pt_to_pniels(output[i], tmp);
     }
-    
+
     API_NS(point_destroy)(tmp);
     decaf_bzero(twop,sizeof(twop));
 }
@@ -1508,7 +1507,7 @@ void API_NS(precompute_wnafs) (
         gf_copy(zs[i], tmp[i]->z);
     }
     batch_normalize_niels(out, (const gf *)zs, zis, 1<<DECAF_WNAF_FIXED_TABLE_BITS);
-    
+
     decaf_bzero(tmp,sizeof(tmp));
     decaf_bzero(zs,sizeof(zs));
     decaf_bzero(zis,sizeof(zis));
@@ -1524,13 +1523,13 @@ void API_NS(base_double_scalarmul_non_secret) (
         table_bits_pre = DECAF_WNAF_FIXED_TABLE_BITS;
     struct smvt_control control_var[SCALAR_BITS/(table_bits_var+1)+3];
     struct smvt_control control_pre[SCALAR_BITS/(table_bits_pre+1)+3];
-    
+
     int ncb_pre = recode_wnaf(control_pre, scalar1, table_bits_pre);
     int ncb_var = recode_wnaf(control_var, scalar2, table_bits_var);
-  
+
     pniels_t precmp_var[1<<table_bits_var];
     prepare_wnaf_table(precmp_var, base2, table_bits_var);
-  
+
     int contp=0, contv=0, i = control_var[0].power;
 
     if (i < 0) {
@@ -1548,7 +1547,7 @@ void API_NS(base_double_scalarmul_non_secret) (
         niels_to_pt(combo, API_NS(wnaf_base)[control_pre[0].addend >> 1]);
         contp++;
     }
-    
+
     for (i--; i >= 0; i--) {
         int cv = (i==control_var[contv].power), cp = (i==control_pre[contp].power);
         point_double_internal(combo,combo,i && !(cv||cp));
@@ -1575,7 +1574,7 @@ void API_NS(base_double_scalarmul_non_secret) (
             contp++;
         }
     }
-    
+
     /* This function is non-secret, but whatever this is cheap. */
     decaf_bzero(control_var,sizeof(control_var));
     decaf_bzero(control_pre,sizeof(control_pre));

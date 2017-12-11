@@ -75,7 +75,7 @@ typedef struct decaf_448_point_s {
 struct decaf_448_precomputed_s;
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
-typedef struct decaf_448_precomputed_s decaf_448_precomputed_s; 
+typedef struct decaf_448_precomputed_s decaf_448_precomputed_s;
 
 /** Size and alignment of precomputed point tables. */
 extern const size_t decaf_448_sizeof_precomputed_s DECAF_API_VIS, decaf_448_alignof_precomputed_s DECAF_API_VIS;
@@ -130,7 +130,7 @@ void decaf_448_scalar_decode_long (
     const unsigned char *ser,
     size_t ser_len
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-    
+
 /**
  * @brief Serialize a scalar to wire format.
  *
@@ -141,7 +141,7 @@ void decaf_448_scalar_encode (
     unsigned char ser[DECAF_448_SCALAR_BYTES],
     const decaf_448_scalar_t s
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_NOINLINE;
-        
+
 /**
  * @brief Add two scalars.  The scalars may use the same memory.
  * @param [in] a One scalar.
@@ -160,7 +160,7 @@ void decaf_448_scalar_add (
  * @param [in] b Another scalar.
  * @retval DECAF_TRUE The scalars are equal.
  * @retval DECAF_FALSE The scalars are not equal.
- */    
+ */
 decaf_bool_t decaf_448_scalar_eq (
     const decaf_448_scalar_t a,
     const decaf_448_scalar_t b
@@ -171,7 +171,7 @@ decaf_bool_t decaf_448_scalar_eq (
  * @param [in] a One scalar.
  * @param [in] b Another scalar.
  * @param [out] out a-b.
- */  
+ */
 void decaf_448_scalar_sub (
     decaf_448_scalar_t out,
     const decaf_448_scalar_t a,
@@ -183,13 +183,13 @@ void decaf_448_scalar_sub (
  * @param [in] a One scalar.
  * @param [in] b Another scalar.
  * @param [out] out a*b.
- */  
+ */
 void decaf_448_scalar_mul (
     decaf_448_scalar_t out,
     const decaf_448_scalar_t a,
     const decaf_448_scalar_t b
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-        
+
 /**
 * @brief Halve a scalar.  The scalars may use the same memory.
 * @param [in] a A scalar.
@@ -205,7 +205,7 @@ void decaf_448_scalar_halve (
  * @param [in] a A scalar.
  * @param [out] out 1/a.
  * @return DECAF_SUCCESS The input is nonzero.
- */  
+ */
 decaf_error_t decaf_448_scalar_invert (
     decaf_448_scalar_t out,
     const decaf_448_scalar_t a
@@ -228,7 +228,7 @@ static inline void DECAF_NONNULL decaf_448_scalar_copy (
  * @brief Set a scalar to an unsigned 64-bit integer.
  * @param [in] a An integer.
  * @param [out] out Will become equal to a.
- */  
+ */
 void decaf_448_scalar_set_unsigned (
     decaf_448_scalar_t out,
     uint64_t a
@@ -334,7 +334,7 @@ void decaf_448_point_sub (
     const decaf_448_point_t a,
     const decaf_448_point_t b
 ) DECAF_API_VIS DECAF_NONNULL;
-    
+
 /**
  * @brief Negate a point to produce another point.  The input
  * and output points can use the same memory.
@@ -451,7 +451,7 @@ void decaf_x448_generate_key (
     uint8_t out[DECAF_X448_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_DEPRECATED("Renamed to decaf_x448_derive_public_key");
-    
+
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
  * a different (non-Decaf) encoding.
@@ -520,7 +520,7 @@ void decaf_448_point_double_scalarmul (
     const decaf_448_point_t base2,
     const decaf_448_scalar_t scalar2
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-    
+
 /**
  * Multiply one base point by two scalars:
  *
@@ -657,7 +657,7 @@ void decaf_448_point_debugging_pscale (
  * (mod q) results in the negative point.  This is the same as Elligator.
  *
  * This function isn't quite indifferentiable from a random oracle.
- * However, it is suitable for many protocols, including SPEKE and SPAKE2 EE. 
+ * However, it is suitable for many protocols, including SPEKE and SPAKE2 EE.
  * Furthermore, calling it twice with independent seeds and adding the results
  * is indifferentiable from a random oracle.
  *
@@ -677,7 +677,7 @@ decaf_448_point_from_hash_nonuniform (
  *
  * @param [in] hashed_data Output of some hash function.
  * @param [out] pt The data hashed to the curve.
- */ 
+ */
 void decaf_448_point_from_hash_uniform (
     decaf_448_point_t pt,
     const unsigned char hashed_data[2*DECAF_448_HASH_BYTES]

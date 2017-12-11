@@ -60,7 +60,7 @@ typedef struct $(c_ns)_point_s {
 struct $(c_ns)_precomputed_s;
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
-typedef struct $(c_ns)_precomputed_s $(c_ns)_precomputed_s; 
+typedef struct $(c_ns)_precomputed_s $(c_ns)_precomputed_s;
 
 /** Size and alignment of precomputed point tables. */
 extern const size_t $(c_ns)_sizeof_precomputed_s DECAF_API_VIS, $(c_ns)_alignof_precomputed_s DECAF_API_VIS;
@@ -115,7 +115,7 @@ void $(c_ns)_scalar_decode_long (
     const unsigned char *ser,
     size_t ser_len
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-    
+
 /**
  * @brief Serialize a scalar to wire format.
  *
@@ -126,7 +126,7 @@ void $(c_ns)_scalar_encode (
     unsigned char ser[$(C_NS)_SCALAR_BYTES],
     const $(c_ns)_scalar_t s
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_NOINLINE;
-        
+
 /**
  * @brief Add two scalars.  The scalars may use the same memory.
  * @param [in] a One scalar.
@@ -145,7 +145,7 @@ void $(c_ns)_scalar_add (
  * @param [in] b Another scalar.
  * @retval DECAF_TRUE The scalars are equal.
  * @retval DECAF_FALSE The scalars are not equal.
- */    
+ */
 decaf_bool_t $(c_ns)_scalar_eq (
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b
@@ -156,7 +156,7 @@ decaf_bool_t $(c_ns)_scalar_eq (
  * @param [in] a One scalar.
  * @param [in] b Another scalar.
  * @param [out] out a-b.
- */  
+ */
 void $(c_ns)_scalar_sub (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a,
@@ -168,13 +168,13 @@ void $(c_ns)_scalar_sub (
  * @param [in] a One scalar.
  * @param [in] b Another scalar.
  * @param [out] out a*b.
- */  
+ */
 void $(c_ns)_scalar_mul (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-        
+
 /**
 * @brief Halve a scalar.  The scalars may use the same memory.
 * @param [in] a A scalar.
@@ -190,7 +190,7 @@ void $(c_ns)_scalar_halve (
  * @param [in] a A scalar.
  * @param [out] out 1/a.
  * @return DECAF_SUCCESS The input is nonzero.
- */  
+ */
 decaf_error_t $(c_ns)_scalar_invert (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a
@@ -213,7 +213,7 @@ static inline void DECAF_NONNULL $(c_ns)_scalar_copy (
  * @brief Set a scalar to an unsigned 64-bit integer.
  * @param [in] a An integer.
  * @param [out] out Will become equal to a.
- */  
+ */
 void $(c_ns)_scalar_set_unsigned (
     $(c_ns)_scalar_t out,
     uint64_t a
@@ -319,7 +319,7 @@ void $(c_ns)_point_sub (
     const $(c_ns)_point_t a,
     const $(c_ns)_point_t b
 ) DECAF_API_VIS DECAF_NONNULL;
-    
+
 /**
  * @brief Negate a point to produce another point.  The input
  * and output points can use the same memory.
@@ -436,7 +436,7 @@ void decaf_x$(gf_shortname)_generate_key (
     uint8_t out[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X$(gf_shortname)_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_DEPRECATED("Renamed to decaf_x$(gf_shortname)_derive_public_key");
-    
+
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
  * a different (non-Decaf) encoding.
@@ -505,7 +505,7 @@ void $(c_ns)_point_double_scalarmul (
     const $(c_ns)_point_t base2,
     const $(c_ns)_scalar_t scalar2
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-    
+
 /**
  * Multiply one base point by two scalars:
  *
@@ -642,7 +642,7 @@ void $(c_ns)_point_debugging_pscale (
  * (mod q) results in the negative point.  This is the same as Elligator.
  *
  * This function isn't quite indifferentiable from a random oracle.
- * However, it is suitable for many protocols, including SPEKE and SPAKE2 EE. 
+ * However, it is suitable for many protocols, including SPEKE and SPAKE2 EE.
  * Furthermore, calling it twice with independent seeds and adding the results
  * is indifferentiable from a random oracle.
  *
@@ -662,7 +662,7 @@ $(c_ns)_point_from_hash_nonuniform (
  *
  * @param [in] hashed_data Output of some hash function.
  * @param [out] pt The data hashed to the curve.
- */ 
+ */
 void $(c_ns)_point_from_hash_uniform (
     $(c_ns)_point_t pt,
     const unsigned char hashed_data[2*$(C_NS)_HASH_BYTES]

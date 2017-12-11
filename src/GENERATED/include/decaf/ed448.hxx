@@ -57,9 +57,7 @@ typedef class PublicKeyBase PublicKey, PublicKeyPure, PublicKeyPh;
 /**
  * Signatures support a "context" block, which allows you to domain separate them if
  * (for some reason) it's annoying to domain separate the message itself.  The default
- * is no context.  For Ed25519, the spec defining contexts is an extension, and the
- * default is not to use that extension.  This makes "no context" different from
- * the empty string.  For Ed448, contexts are built-in and mandatory, so "no context"
+ * is no context.  For Ed448, contexts are built-in and mandatory, so "no context"
  * is the same as the empty string.
  */
 #if DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS
@@ -127,7 +125,6 @@ public:
      * @param [in] message The message to be signed.
      * @param [in] context A context for the signature; must be at most 255 bytes.
      *
-     * @warning It is generally unsafe to use Ed25519 with both prehashed and non-prehashed messages.
      */
     inline SecureBuffer sign (
         const Block &message,
@@ -291,7 +288,6 @@ public:
      * @param [in] message The signed message.
      * @param [in] context A context for the signature; must be at most 255 bytes.
      *
-     * @warning It is generally unsafe to use Ed25519 with both prehashed and non-prehashed messages.
      */
     inline void verify (
         const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,

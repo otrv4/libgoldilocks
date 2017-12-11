@@ -1,10 +1,10 @@
 /**
  * A group of prime order, C++ wrapper.
- * 
+ *
  * The Decaf library implements cryptographic operations on a an elliptic curve
  * group of prime order. It accomplishes this by using a twisted Edwards
  * curve (isogenous to $(iso_to)) and wiping out the cofactor.
- * 
+ *
  * Most of the functions in this file run in constant time, can't fail
  * except for ubiquitous reasons like memory exhaustion, and contain no
  * data-dependend branches, timing or memory accesses.  There are some
@@ -66,7 +66,7 @@ class Scalar : public Serializable<Scalar> {
 public:
     /** wrapped C type */
     typedef $(c_ns)_scalar_t Wrapped;
-    
+
     /** Size of a serialized element */
     static const size_t SER_BYTES = $(C_NS)_SCALAR_BYTES;
 
@@ -220,7 +220,7 @@ public:
         decaf_bool_t allow_identity=DECAF_FALSE,
         decaf_bool_t short_circuit=DECAF_TRUE
     ) const /*throw(CryptoException)*/;
-        
+
     /** Direct scalar multiplication. */
     inline decaf_error_t DECAF_WARN_UNUSED direct_scalarmul_noexcept(
         FixedBuffer<SER_BYTES> &out,
@@ -235,7 +235,7 @@ class Point : public Serializable<Point> {
 public:
     /** Wrapped C type */
     typedef $(c_ns)_point_t Wrapped;
-    
+
     /** Size of a serialized element */
     static const size_t SER_BYTES = $(C_NS)_SER_BYTES;
 
@@ -247,13 +247,13 @@ public:
 
     /** Bytes required for EdDSA encoding */
     static const size_t LADDER_BYTES = DECAF_X$(gf_shortname)_PUBLIC_BYTES;
-    
+
     /** Ratio due to EdDSA encoding */
     static const int EDDSA_ENCODE_RATIO = $(C_NS)_EDDSA_ENCODE_RATIO;
-    
+
     /** Ratio due to EdDSA decoding */
     static const int EDDSA_DECODE_RATIO = $(C_NS)_EDDSA_DECODE_RATIO;
-    
+
     /** Ratio due to ladder decoding */
     static const int LADDER_ENCODE_RATIO = DECAF_X$(gf_shortname)_ENCODE_RATIO;
 
@@ -261,7 +261,7 @@ public:
      * should look statistically close to a uniformly-random sequnece of STEG_BYTES bytes.
      */
     static const size_t STEG_BYTES = HASH_BYTES * 2;
-    
+
     /** Number of bits in invert_elligator which are actually used. */
     static const unsigned int INVERT_ELLIGATOR_WHICH_BITS = $(C_NS)_INVERT_ELLIGATOR_WHICH_BITS;
 
@@ -337,7 +337,7 @@ public:
     ) DECAF_NOEXCEPT {
         return $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio(p,buffer.data());
     }
-    
+
     /**
      * Decode from EDDSA, multiply by EDDSA_DECODE_RATIO, and ignore any
      * remaining cofactor information.
@@ -363,14 +363,14 @@ public:
         $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa(out.data(),p);
     }
 
-    /** Multiply by LADDER_ENCODE_RATIO and encode like X25519/X448. */
+    /** Multiply by LADDER_ENCODE_RATIO and encode like X448. */
     inline SecureBuffer mul_by_ratio_and_encode_like_ladder() const {
         SecureBuffer ret(LADDER_BYTES);
         $(c_ns)_point_mul_by_ratio_and_encode_like_x$(gf_shortname)(ret.data(),p);
         return ret;
     }
 
-    /** Multiply by LADDER_ENCODE_RATIO and encode like X25519/X448. */
+    /** Multiply by LADDER_ENCODE_RATIO and encode like X448. */
     inline void mul_by_ratio_and_encode_like_ladder(FixedBuffer<LADDER_BYTES> &out) const {
         $(c_ns)_point_mul_by_ratio_and_encode_like_x$(gf_shortname)(out.data(),p);
     }
