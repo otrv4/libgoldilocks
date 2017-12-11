@@ -17,7 +17,7 @@ cryptographer for advice.
 
 Because this is new software, please expect it to have bugs, perhaps
 even critical security bugs.  If you are using it, please sign up for
-updates:
+updates on Mike Hamburg's library:
 
 * Security-critical announcements (very low volume, God willing):
     decaf-security@googlegroups.com, join at https://groups.google.com/forum/#!forum/decaf-security
@@ -40,7 +40,10 @@ supported curves:
 * Point multiplication by scalars.  Accelerated double- and dual-scalar multiply.
 * Scalar addition, subtraction, multiplication, division, and equality.
 * Construction of precomputed tables from points.  Precomputed scalarmul.
-* Hashing to the curve with an Elligator variant.  Inverse of elligator for steganography.  These are useful for advanced protocols such as password-authenticated key exchange (PAKE) and verifiable random functions (VRFs).
+* Hashing to the curve with an Elligator variant.  Inverse of elligator for
+  steganography.  These are useful for advanced protocols such as
+  password-authenticated key exchange (PAKE) and verifiable random functions
+  (VRFs).
 
 Internally, the library uses twisted Edwards curves with the "decaf"
 and "ristretto" technique to remove the curve's cofactor of 4 or 8.
@@ -59,8 +62,8 @@ sensitive data, and has interfaces designed to prevent certain mistakes.
 
 ## CFRG cryptosystems.
 
-The library additionally supports two cryptosystems defined by the
-Crypto Forum Research Group (CFRG): the X448/X25519 Diffie-Hellman
+The library additionally supports the two cryptosystem defined by the
+Crypto Forum Research Group (CFRG): the X448 Diffie-Hellman
 functions (RFC 7748), and the EdDSA signature scheme (RFC 8032).
 Future versions might support additional operations on these curves,
 such as precomputed signature verification.
@@ -68,8 +71,7 @@ such as precomputed signature verification.
 ## Symmetric crypto and hashing
 
 The Decaf library doesn't implement much symmetric crypto, but it does
-contain the hash functions required by the CFRG cryptosystems: SHA512,
-SHA-3 and SHAKE.
+contain the hash functions required by the CFRG cryptosystems: SHA-3 and SHAKE.
 
 ## Internals
 
