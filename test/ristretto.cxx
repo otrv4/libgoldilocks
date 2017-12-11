@@ -29,7 +29,7 @@ int parsehex(uint8_t *out, size_t sizeof_out, const char *hex) {
         fprintf(stderr,"Argument is too long: %s\n", hex);
         return -1;
     }
-    
+
     memset(out,0,sizeof_out);
     int ret1,ret2;
     for (size_t i=0; i<l/2; i++) {
@@ -63,7 +63,7 @@ void usage() {
             me = &g_argv[0][i];
         }
     }
-    
+
     fprintf(stderr,"Usage: %s [points] [operations] ...\n", me);
     fprintf(stderr,"  -b 255|448: Set which group to use (sometimes inferred from lengths)\n");
     fprintf(stderr,"  -E: Display output as Elligator inverses\n");
@@ -87,7 +87,7 @@ void usage() {
     fprintf(stderr,"  *** DON'T USE THIS UTILITY FOR ACTUAL CRYPTO! ***\n");
     fprintf(stderr,"  It's only for debugging!\n");
     fprintf(stderr,"\n");
-    
+
     exit(-2);
 }
 
@@ -102,7 +102,7 @@ public:
         if (done || error) return;
         for (int i=1; i<g_argc && !error; i++) {
             bool point = false;
-            
+
             if (!strcmp(g_argv[i],"-b") && ++i<g_argc) {
                 if (atoi(g_argv[i]) == Group::bits()) continue;
                 else return;
@@ -169,7 +169,7 @@ public:
                 else usage();
             }
         }
-        
+
         if (!error && !empty) {
             if (einv) {
                 uint8_t buffer[Group::Point::HASH_BYTES];
@@ -201,7 +201,7 @@ public:
             }
             done = true;
         }
-        
+
     }
 };
 

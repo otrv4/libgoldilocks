@@ -28,16 +28,11 @@ stamp-h1
 **/.libs
 pkgconfig/libdecaf.pc
 
-src/decaf_gen_tables_curve25519
 src/decaf_gen_tables_ed448goldilocks
 test/test
 test/test_bench
 
-src/GENERATED/c/curve25519/.dirstamp
 src/GENERATED/c/ed448goldilocks/.dirstamp
-src/GENERATED/c/p25519/.dirstamp
 src/GENERATED/c/p448/.dirstamp
-src/p25519/.dirstamp
-src/p25519/arch_x86_64/.dirstamp
 src/p448/.dirstamp
 src/p448/arch_x86_64/.dirstamp

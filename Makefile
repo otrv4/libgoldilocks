@@ -327,8 +327,6 @@ top_builddir = .
 top_srcdir = .
 FIELD_NAME_448 = p448
 CURVE_NAME_448 = ed448goldilocks
-FIELD_NAME_25519 = p25519
-CURVE_NAME_25519 = curve25519
 ARCH_NAME = arch_x86_64
 BUILD_H = $(top_srcdir)/src/GENERATED/c
 BUILD_INC = $(top_srcdir)/src/GENERATED/include
@@ -346,9 +344,6 @@ INCFLAGS = -I$(top_srcdir)/src/include -I$(BUILD_INC) -I$(BUILD_H) \
 INCFLAGS_448 = -I$(top_srcdir)/src/$(FIELD_NAME_448)/$(ARCH_NAME) \
 	-I$(top_srcdir)/src/GENERATED/c/$(FIELD_NAME_448) \
 	-I$(top_srcdir)/src/GENERATED/c/$(FIELD_NAME_448)/$(ARCH_NAME)
-INCFLAGS_25519 = -I$(top_srcdir)/src/$(FIELD_NAME_25519)/$(ARCH_NAME) \
-	-I$(top_srcdir)/src/GENERATED/c/$(FIELD_NAME_25519) \
-	-I$(top_srcdir)/src/GENERATED/c/$(FIELD_NAME_25519)/$(ARCH_NAME)
 ARCHFLAGS = -maes $(XARCHFLAGS)
 GENFLAGS = -ffunction-sections -fdata-sections -fvisibility=hidden -fomit-frame-pointer -fPIC
 LANGXXFLAGS = -fno-strict-aliasing

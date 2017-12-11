@@ -15,7 +15,6 @@
 #ifndef __DECAF_HXX__
 #define __DECAF_HXX__ 1
 
-#include <decaf/point_255.hxx>
 #include <decaf/point_448.hxx>
 
 /** Namespace for all C++ decaf objects. */
@@ -23,7 +22,6 @@ namespace decaf {
     /** Given a template with a "run" function, run it for all curves */
     template <template<typename Group> class Run>
     void run_for_all_curves() {
-        Run<Ristretto>::run();
         Run<Ed448Goldilocks>::run();
     }
 }

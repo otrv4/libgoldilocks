@@ -5,13 +5,6 @@ comb_config = namedtuple("comb_config",["n","t","s"])
 wnaf_config = namedtuple("wnaf_config",["fixed","var"])
 
 field_data = {
-    "p25519" : {
-        "gf_desc" : "2^255 - 19",
-        "gf_shortname" : "25519",
-        "gf_impl_bits" : 320,
-        "gf_lit_limb_bits" : 51,
-        "elligator_onto" : 0
-    },
     "p448" : {
         "gf_desc" : "2^448 - 2^224 - 1",
         "gf_shortname" : "448",
@@ -22,29 +15,6 @@ field_data = {
 }
 
 curve_data = {
-    "curve25519" : {
-        "altname" : "IsoEd25519",
-        "iso_to" : "Curve25519",
-        "name" : "Ristretto",
-        "cofactor" : 8,
-        "field" : "p25519",
-        "scalar_bits" : 253,
-        "d": -121665,
-        "trace": -0xa6f7cef517bce6b2c09318d2e7ae9f7a,
-        "mont_base": 9,
-        "rist_base": "e2f2ae0a6abc4e71a884a961c500515f58e30b6aa582dd8db6a65945e08d2d76",
-        "eddsa_encode_ratio": 4,
-        "x_encode_ratio": 4,
-
-        "combs":comb_config(3,5,17),
-        "wnaf":wnaf_config(5,3),
-        "window_bits":4,
-
-        "eddsa_hash": "shake256", #although this uses on the rfc sha.. remove later
-        "eddsa_no_context": 1,
-        "eddsa_dom": "SigEd25519 no Ed25519 collisions",
-        "eddsa_sigma_iso": 1
-    },
     "ed448goldilocks" : {
         "eddsa_encode_ratio": 4,
         "x_encode_ratio": 2,
