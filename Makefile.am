@@ -3,9 +3,27 @@ include $(top_srcdir)/variables.am
 SUBDIRS = src test pkgconfig
 ACLOCAL_AMFLAGS = -I m4
 
-.PHONY: gen_code
+.PHONY: gen_code gen_code_static test_ct todo lib sage sagetest
 gen-code:
 	$(MAKE) gen_code -f $(top_srcdir)/Makefile.original
+
+gen-code-static:
+	$(MAKE) gen_code_static -f $(top_srcdir)/Makefile.original
+
+test-ct:
+	$(MAKE) test_ct -f $(top_srcdir)/Makefile.original
+
+todo:
+	$(MAKE) todo -f $(top_srcdir)/Makefile.original
+
+sage:
+	$(MAKE) sage -f $(top_srcdir)/Makefile.original
+
+sagetest:
+	$(MAKE) sagetest -f $(top_srcdir)/Makefile.original
+
+lib:
+	$(MAKE) lib -f $(top_srcdir)/Makefile.original
 
 test: check
 	$(top_srcdir)/test/test

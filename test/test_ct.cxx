@@ -11,7 +11,6 @@
 
 #include <decaf.hxx>
 #include <decaf/spongerng.hxx>
-#include <decaf/crypto.h>
 #include <decaf/crypto.hxx>
 #include <stdio.h>
 #include <valgrind/memcheck.h>
@@ -37,10 +36,10 @@ typedef typename Group::Precomputed Precomputed;
 static void test_arithmetic() {
     SpongeRng rng(Block("test_arithmetic"),SpongeRng::DETERMINISTIC);
     rng.stir(undef_block);
-    
+
     Scalar x(rng),y(rng),z;
     uint8_t ser[Group::Scalar::SER_BYTES];
-        
+
     for (int i=0; i<NTESTS; i++) {
         (void)(x+y);
         (void)(x-y);
@@ -56,12 +55,12 @@ static void test_arithmetic() {
 static void test_elligator() {
     SpongeRng rng(Block("test_elligator"),SpongeRng::DETERMINISTIC);
     rng.stir(undef_block);
-    
+
     FixedArrayBuffer<Group::Point::HASH_BYTES> inv;
-        
+
     for (int i=0; i<NTESTS; i++) {
         Point x(rng), y(rng,false);
-        
+
         ignore_result((x+y).invert_elligator(inv,i));
     }
 }
@@ -89,18 +88,18 @@ static void test_ec() {
         (void)(Precomputed(p)*y);
         p.dual_scalarmul(q,r,y,z);
         Group::Point::double_scalarmul(p,y,q,z);
-        
+
     }
 }
 
 static void test_cfrg() {
     SpongeRng rng(Block("test_cfrg"),SpongeRng::DETERMINISTIC);
     rng.stir(undef_block);
-    
+
     for (int i=0; i<NTESTS; i++) {
         FixedArrayBuffer<Group::DhLadder::PUBLIC_BYTES> pub(rng);
         FixedArrayBuffer<Group::DhLadder::PRIVATE_BYTES> priv(rng);
-        
+
         Group::DhLadder::derive_public_key(priv);
         ignore_result(Group::DhLadder::shared_secret_noexcept(pub,pub,priv));
     }
@@ -118,9 +117,9 @@ static void test_crypto() {
 #if DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
     SpongeRng defrng(Block("test_crypto_defined"));
 #endif
-    
+
     FixedArrayBuffer<Group::Point::SER_BYTES> shared;
-    
+
     for (int i=0; i<NTESTS; i++) {
         PrivateKey<Group> sk1(rng);
         SecureBuffer sig = sk1.sign(undef_block);
@@ -150,6 +149,6 @@ static void run() {
 int main(int argc, char **argv) {
     (void) argc; (void) argv;
     VALGRIND_MAKE_MEM_UNDEFINED(undef_str, strlen(undef_str));
-    run_for_all_curves<Tests>();    
+    run_for_all_curves<Tests>();
     return 0;
 }
