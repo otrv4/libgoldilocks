@@ -52,6 +52,7 @@ static void clamp (
     }
 }
 
+/* is ed448 by default with no context? */
 static void hash_init_with_dom(
     hash_ctx_t hash,
     uint8_t prehashed,

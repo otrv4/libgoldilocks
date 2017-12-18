@@ -18,31 +18,32 @@
 #define hash_destroy decaf_$(eddsa_hash)_destroy
 #define hash_hash    decaf_$(eddsa_hash)_hash
 
-#define NO_CONTEXT DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTLESS_SIGS
+#define NO_CONTEXT DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS
 #define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
 #define COFACTOR $(cofactor)
 #define EDDSA_PREHASH_BYTES 64
 
 #if NO_CONTEXT
 const uint8_t NO_CONTEXT_POINTS_HERE = 0;
-const uint8_t * const DECAF_ED$(gf_shortname)_NO_CONTEXT = &NO_CONTEXT_POINTS_HERE;
+const uint8_t * const DECAF_ED448_NO_CONTEXT = &NO_CONTEXT_POINTS_HERE;
 #endif
 
 static void clamp (
-    uint8_t secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
+    uint8_t secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES]
 ) {
     /* Blarg */
     secret_scalar_ser[0] &= -COFACTOR;
     uint8_t hibit = (1<<$(gf_bits % 8))>>1;
     if (hibit == 0) {
-        secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES - 1] = 0;
-        secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES - 2] |= 0x80;
+        secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES - 1] = 0;
+        secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES - 2] |= 0x80;
     } else {
-        secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES - 1] &= hibit-1;
-        secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES - 1] |= hibit;
+        secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES - 1] &= hibit-1;
+        secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES - 1] |= hibit;
     }
 }
 
+/* is ed448 by default with no context? */
 static void hash_init_with_dom(
     hash_ctx_t hash,
     uint8_t prehashed,
@@ -53,7 +54,7 @@ static void hash_init_with_dom(
     hash_init(hash);
 
 #if NO_CONTEXT
-    if (context_len == 0 && context == DECAF_ED$(gf_shortname)_NO_CONTEXT) {
+    if (context_len == 0 && context == DECAF_ED448_NO_CONTEXT) {
         (void)prehashed;
         (void)for_prehash;
         (void)context;
@@ -68,40 +69,40 @@ static void hash_init_with_dom(
     hash_update(hash,context,context_len);
 }
 
-void decaf_ed$(gf_shortname)_prehash_init (
+void decaf_ed448_prehash_init (
     hash_ctx_t hash
 ) {
     hash_init(hash);
 }
 
 /* In this file because it uses the hash */
-void decaf_ed$(gf_shortname)_convert_private_key_to_x$(gf_shortname) (
-    uint8_t x[DECAF_X$(gf_shortname)_PRIVATE_BYTES],
-    const uint8_t ed[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
+void decaf_ed448_convert_private_key_to_x448 (
+    uint8_t x[DECAF_X448_PRIVATE_BYTES],
+    const uint8_t ed[DECAF_EDDSA_448_PRIVATE_BYTES]
 ) {
     /* pass the private key through hash_hash function */
-    /* and keep the first DECAF_X$(gf_shortname)_PRIVATE_BYTES bytes */
+    /* and keep the first DECAF_X448_PRIVATE_BYTES bytes */
     hash_hash(
         x,
-        DECAF_X$(gf_shortname)_PRIVATE_BYTES,
+        DECAF_X448_PRIVATE_BYTES,
         ed,
-        DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES
+        DECAF_EDDSA_448_PRIVATE_BYTES
     );
 }
 
 /* Specially for libotrv4 */
-void decaf_ed$(gf_shortname)_derive_secret_scalar (
+void decaf_ed448_derive_secret_scalar (
     API_NS(scalar_t) secret,
-    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
+    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
 ) {
     /* only this much used for keygen */
-    uint8_t secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
+    uint8_t secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES];
 
     hash_hash(
         secret_scalar_ser,
         sizeof(secret_scalar_ser),
         privkey,
-        DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES
+        DECAF_EDDSA_448_PRIVATE_BYTES
     );
     clamp(secret_scalar_ser);
 
@@ -120,12 +121,12 @@ void decaf_ed$(gf_shortname)_derive_secret_scalar (
     decaf_bzero(secret_scalar_ser, sizeof(secret_scalar_ser));
 }
 
-void decaf_ed$(gf_shortname)_derive_public_key (
-    uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
+void decaf_ed448_derive_public_key (
+    uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
 ) {
     API_NS(scalar_t) secret_scalar;
-    decaf_ed$(gf_shortname)_derive_secret_scalar(secret_scalar, privkey);
+    decaf_ed448_derive_secret_scalar(secret_scalar, privkey);
 
     API_NS(point_t) p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),secret_scalar);
@@ -137,10 +138,10 @@ void decaf_ed$(gf_shortname)_derive_public_key (
     API_NS(point_destroy)(p);
 }
 
-void decaf_ed$(gf_shortname)_sign (
-    uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
+void decaf_ed448_sign (
+    uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
     uint8_t prehashed,
@@ -152,14 +153,14 @@ void decaf_ed$(gf_shortname)_sign (
     {
         /* Schedule the secret key */
         struct {
-            uint8_t secret_scalar_ser[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
-            uint8_t seed[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
+            uint8_t secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES];
+            uint8_t seed[DECAF_EDDSA_448_PRIVATE_BYTES];
         } __attribute__((packed)) expanded;
         hash_hash(
             (uint8_t *)&expanded,
             sizeof(expanded),
             privkey,
-            DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES
+            DECAF_EDDSA_448_PRIVATE_BYTES
         );
         clamp(expanded.secret_scalar_ser);
         API_NS(scalar_decode_long)(secret_scalar, expanded.secret_scalar_ser, sizeof(expanded.secret_scalar_ser));
@@ -174,13 +175,13 @@ void decaf_ed$(gf_shortname)_sign (
     /* Decode the nonce */
     API_NS(scalar_t) nonce_scalar;
     {
-        uint8_t nonce[2*DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
+        uint8_t nonce[2*DECAF_EDDSA_448_PRIVATE_BYTES];
         hash_final(hash,nonce,sizeof(nonce));
         API_NS(scalar_decode_long)(nonce_scalar, nonce, sizeof(nonce));
         decaf_bzero(nonce, sizeof(nonce));
     }
 
-    uint8_t nonce_point[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES] = {0};
+    uint8_t nonce_point[DECAF_EDDSA_448_PUBLIC_BYTES] = {0};
     {
         /* Scalarmul to create the nonce-point */
         API_NS(scalar_t) nonce_scalar_2;
@@ -201,9 +202,9 @@ void decaf_ed$(gf_shortname)_sign (
         /* Compute the challenge */
         hash_init_with_dom(hash,prehashed,0,context,context_len);
         hash_update(hash,nonce_point,sizeof(nonce_point));
-        hash_update(hash,pubkey,DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
+        hash_update(hash,pubkey,DECAF_EDDSA_448_PUBLIC_BYTES);
         hash_update(hash,message,message_len);
-        uint8_t challenge[2*DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
+        uint8_t challenge[2*DECAF_EDDSA_448_PRIVATE_BYTES];
         hash_final(hash,challenge,sizeof(challenge));
         hash_destroy(hash);
         API_NS(scalar_decode_long)(challenge_scalar,challenge,sizeof(challenge));
@@ -213,9 +214,9 @@ void decaf_ed$(gf_shortname)_sign (
     API_NS(scalar_mul)(challenge_scalar,challenge_scalar,secret_scalar);
     API_NS(scalar_add)(challenge_scalar,challenge_scalar,nonce_scalar);
 
-    decaf_bzero(signature,DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES);
+    decaf_bzero(signature,DECAF_EDDSA_448_SIGNATURE_BYTES);
     memcpy(signature,nonce_point,sizeof(nonce_point));
-    API_NS(scalar_encode)(&signature[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],challenge_scalar);
+    API_NS(scalar_encode)(&signature[DECAF_EDDSA_448_PUBLIC_BYTES],challenge_scalar);
 
     API_NS(scalar_destroy)(secret_scalar);
     API_NS(scalar_destroy)(nonce_scalar);
@@ -223,29 +224,29 @@ void decaf_ed$(gf_shortname)_sign (
 }
 
 
-void decaf_ed$(gf_shortname)_sign_prehash (
-    uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
-    const decaf_ed$(gf_shortname)_prehash_ctx_t hash,
+void decaf_ed448_sign_prehash (
+    uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+    const decaf_ed448_prehash_ctx_t hash,
     const uint8_t *context,
     uint8_t context_len
 ) {
     uint8_t hash_output[EDDSA_PREHASH_BYTES];
     {
-        decaf_ed$(gf_shortname)_prehash_ctx_t hash_too;
+        decaf_ed448_prehash_ctx_t hash_too;
         memcpy(hash_too,hash,sizeof(hash_too));
         hash_final(hash_too,hash_output,sizeof(hash_output));
         hash_destroy(hash_too);
     }
 
-    decaf_ed$(gf_shortname)_sign(signature,privkey,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
+    decaf_ed448_sign(signature,privkey,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
     decaf_bzero(hash_output,sizeof(hash_output));
 }
 
-decaf_error_t decaf_ed$(gf_shortname)_verify (
-    const uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
+decaf_error_t decaf_ed448_verify (
+    const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
     uint8_t prehashed,
@@ -264,10 +265,10 @@ decaf_error_t decaf_ed$(gf_shortname)_verify (
         /* Compute the challenge */
         hash_ctx_t hash;
         hash_init_with_dom(hash,prehashed,0,context,context_len);
-        hash_update(hash,signature,DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
-        hash_update(hash,pubkey,DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
+        hash_update(hash,signature,DECAF_EDDSA_448_PUBLIC_BYTES);
+        hash_update(hash,pubkey,DECAF_EDDSA_448_PUBLIC_BYTES);
         hash_update(hash,message,message_len);
-        uint8_t challenge[2*DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES];
+        uint8_t challenge[2*DECAF_EDDSA_448_PRIVATE_BYTES];
         hash_final(hash,challenge,sizeof(challenge));
         hash_destroy(hash);
         API_NS(scalar_decode_long)(challenge_scalar,challenge,sizeof(challenge));
@@ -278,8 +279,8 @@ decaf_error_t decaf_ed$(gf_shortname)_verify (
     API_NS(scalar_t) response_scalar;
     API_NS(scalar_decode_long)(
         response_scalar,
-        &signature[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
-        DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES
+        &signature[DECAF_EDDSA_448_PUBLIC_BYTES],
+        DECAF_EDDSA_448_PRIVATE_BYTES
     );
 
     for (unsigned c=1; c<$(C_NS)_EDDSA_DECODE_RATIO; c<<=1) {
@@ -298,10 +299,10 @@ decaf_error_t decaf_ed$(gf_shortname)_verify (
 }
 
 
-decaf_error_t decaf_ed$(gf_shortname)_verify_prehash (
-    const uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
-    const decaf_ed$(gf_shortname)_prehash_ctx_t hash,
+decaf_error_t decaf_ed448_verify_prehash (
+    const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+    const decaf_ed448_prehash_ctx_t hash,
     const uint8_t *context,
     uint8_t context_len
 ) {
@@ -309,13 +310,13 @@ decaf_error_t decaf_ed$(gf_shortname)_verify_prehash (
 
     uint8_t hash_output[EDDSA_PREHASH_BYTES];
     {
-        decaf_ed$(gf_shortname)_prehash_ctx_t hash_too;
+        decaf_ed448_prehash_ctx_t hash_too;
         memcpy(hash_too,hash,sizeof(hash_too));
         hash_final(hash_too,hash_output,sizeof(hash_output));
         hash_destroy(hash_too);
     }
 
-    ret = decaf_ed$(gf_shortname)_verify(signature,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
+    ret = decaf_ed448_verify(signature,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
 
     return ret;
 }
