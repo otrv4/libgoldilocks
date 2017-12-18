@@ -53,6 +53,7 @@ const gf RISTRETTO_FACTOR = {{{
     0x42ef0f45572736, 0x7bf6aa20ce5296, 0xf4fd6eded26033, 0x968c14ba839a66, 0xb8d54b64a2d780, 0x6aa0a1f1a7b8a5, 0x683bf68d722fa2, 0x22d962fbeb24f7
 }}};
 
+/* probably the imagine twist is also not needed */
 #if IMAGINE_TWIST
 #define TWISTED_D (-(EDWARDS_D))
 #else
@@ -172,6 +173,7 @@ void API_NS(deisogenize) (
     gf_cond_neg(inv_el_m1,~lobs^negx^toggle_s);
     gf_add(inv_el_m1,inv_el_m1,p->t);
 
+/* not needed */
 #elif COFACTOR == 8 && IMAGINE_TWIST
     /* More complicated because of rotation */
     gf t1,t2,t3,t4,t5;
@@ -646,7 +648,6 @@ void API_NS(point_double_scalarmul) (
 
     /* Write out the answer */
     API_NS(point_copy)(a,tmp);
-
 
     decaf_bzero(scalar1x,sizeof(scalar1x));
     decaf_bzero(scalar2x,sizeof(scalar2x));

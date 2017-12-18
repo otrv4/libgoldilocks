@@ -14,13 +14,13 @@ extern "C" {
 #define $(C_NS)_SCALAR_BITS $(scalar_bits)
 
 /** @cond internal */
-#ifndef __DECAF_$(gf_shortname)_GF_DEFINED__
-#define __DECAF_$(gf_shortname)_GF_DEFINED__ 1
+#ifndef __DECAF_448_GF_DEFINED__
+#define __DECAF_448_GF_DEFINED__ 1
 /** @brief Galois field element internal structure */
-typedef struct gf_$(gf_shortname)_s {
+typedef struct gf_448_s {
     decaf_word_t limb[$(gf_impl_bits)/DECAF_WORD_BITS];
-} __attribute__((aligned(32))) gf_$(gf_shortname)_s, gf_$(gf_shortname)_t[1];
-#endif /* __DECAF_$(gf_shortname)_GF_DEFINED__ */
+} __attribute__((aligned(32))) gf_448_s, gf_448_t[1];
+#endif /* __DECAF_448_GF_DEFINED__ */
 /** @endcond */
 
 /** Number of bytes in a serialized point. */
@@ -40,19 +40,19 @@ typedef struct gf_$(gf_shortname)_s {
 /** The cofactor the curve would have, if we hadn't removed it */
 #define $(C_NS)_REMOVED_COFACTOR $(cofactor)
 
-/** X$(gf_shortname) encoding ratio. */
-#define DECAF_X$(gf_shortname)_ENCODE_RATIO $(x_encode_ratio)
+/** X448 encoding ratio. */
+#define DECAF_X448_ENCODE_RATIO $(x_encode_ratio)
 
-/** Number of bytes in an x$(gf_shortname) public key */
-#define DECAF_X$(gf_shortname)_PUBLIC_BYTES $((gf_bits-1)//8 + 1)
+/** Number of bytes in an x448 public key */
+#define DECAF_X448_PUBLIC_BYTES $((gf_bits-1)//8 + 1)
 
-/** Number of bytes in an x$(gf_shortname) private key */
-#define DECAF_X$(gf_shortname)_PRIVATE_BYTES $((gf_bits-1)//8 + 1)
+/** Number of bytes in an x448 private key */
+#define DECAF_X448_PRIVATE_BYTES $((gf_bits-1)//8 + 1)
 
 /** Representation of a point on the elliptic curve. */
 typedef struct $(c_ns)_point_s {
     /** @cond internal */
-    gf_$(gf_shortname)_t x,y,z,t; /* Twisted extended homogeneous coordinates */
+    gf_448_t x,y,z,t; /* Twisted extended homogeneous coordinates */
     /** @endcond */
 } $(c_ns)_point_t[1];
 
@@ -382,14 +382,14 @@ decaf_error_t $(c_ns)_direct_scalarmul (
  * @retval DECAF_FAILURE The scalarmul didn't succeed, because the base
  * point is in a small subgroup.
  */
-decaf_error_t decaf_x$(gf_shortname) (
-    uint8_t shared[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
-    const uint8_t base[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
-    const uint8_t scalar[DECAF_X$(gf_shortname)_PRIVATE_BYTES]
+decaf_error_t decaf_x448 (
+    uint8_t shared[DECAF_X448_PUBLIC_BYTES],
+    const uint8_t base[DECAF_X448_PUBLIC_BYTES],
+    const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
 
 /**
- * @brief Multiply a point by DECAF_X$(gf_shortname)_ENCODE_RATIO,
+ * @brief Multiply a point by DECAF_X448_ENCODE_RATIO,
  * then encode it like RFC 7748.
  *
  * This function is mainly used internally, but is exported in case
@@ -402,20 +402,20 @@ decaf_error_t decaf_x$(gf_shortname) (
  *
  * As it happens, this aligns with the base point definitions; that is,
  * if you pass the Decaf/Ristretto base point to this function, the result
- * will be DECAF_X$(gf_shortname)_ENCODE_RATIO times the X$(gf_shortname)
+ * will be DECAF_X448_ENCODE_RATIO times the X448
  * base point.
  *
  * @param [out] out The scaled and encoded point.
  * @param [in] p The point to be scaled and encoded.
  */
-void $(c_ns)_point_mul_by_ratio_and_encode_like_x$(gf_shortname) (
-    uint8_t out[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
+void $(c_ns)_point_mul_by_ratio_and_encode_like_x448 (
+    uint8_t out[DECAF_X448_PUBLIC_BYTES],
     const $(c_ns)_point_t p
 ) DECAF_API_VIS DECAF_NONNULL;
 
-/** The base point for X$(gf_shortname) Diffie-Hellman */
+/** The base point for X448 Diffie-Hellman */
 extern const uint8_t
-    decaf_x$(gf_shortname)_base_point[DECAF_X$(gf_shortname)_PUBLIC_BYTES]
+    decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES]
 #ifndef DOXYGEN
     /* For some reason Doxygen chokes on this despite the defense in common.h... */
     DECAF_API_VIS
@@ -426,33 +426,33 @@ extern const uint8_t
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
  * a different (non-Decaf) encoding.
  *
- * @deprecated Renamed to decaf_x$(gf_shortname)_derive_public_key.
+ * @deprecated Renamed to decaf_x448_derive_public_key.
  * I have no particular timeline for removing this name.
  *
  * @param [out] out The public key base*scalar.
  * @param [in] scalar The private scalar.
  */
-void decaf_x$(gf_shortname)_generate_key (
-    uint8_t out[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
-    const uint8_t scalar[DECAF_X$(gf_shortname)_PRIVATE_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_DEPRECATED("Renamed to decaf_x$(gf_shortname)_derive_public_key");
+void decaf_x448_generate_key (
+    uint8_t out[DECAF_X448_PUBLIC_BYTES],
+    const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_DEPRECATED("Renamed to decaf_x448_derive_public_key");
 
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
  * a different (non-Decaf) encoding.
  *
- * Does exactly the same thing as decaf_x$(gf_shortname)_generate_key,
+ * Does exactly the same thing as decaf_x448_generate_key,
  * but has a better name.
  *
  * @param [out] out The public key base*scalar
  * @param [in] scalar The private scalar.
  */
-void decaf_x$(gf_shortname)_derive_public_key (
-    uint8_t out[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
-    const uint8_t scalar[DECAF_X$(gf_shortname)_PRIVATE_BYTES]
+void decaf_x448_derive_public_key (
+    uint8_t out[DECAF_X448_PUBLIC_BYTES],
+    const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
-/* FUTURE: uint8_t $(c_ns)_encode_like_curve$(gf_shortname)) */
+/* FUTURE: uint8_t $(c_ns)_encode_like_curve448) */
 
 /**
  * @brief Precompute a table for fast scalar multiplication.

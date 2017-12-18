@@ -35,13 +35,14 @@ static const scalar_t point_scalarmul_adjustment = {{{
     $(ser((2**(combs.n*combs.t*combs.s) - 1) % q,64,"SC_LIMB"))
 }}};
 
-const uint8_t decaf_x$(gf_shortname)_base_point[DECAF_X$(gf_shortname)_PUBLIC_BYTES] = { $(ser(mont_base,8)) };
+const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] = { $(ser(mont_base,8)) };
 
 #define RISTRETTO_FACTOR $(C_NS)_RISTRETTO_FACTOR
 const gf RISTRETTO_FACTOR = {{{
     $(ser(msqrt(d-1 if imagine_twist else -d,modulus,hi_bit_clear=True),gf_lit_limb_bits))
 }}};
 
+/* probably the imagine twist is also not needed */
 #if IMAGINE_TWIST
 #define TWISTED_D (-(EDWARDS_D))
 #else
@@ -161,6 +162,7 @@ void API_NS(deisogenize) (
     gf_cond_neg(inv_el_m1,~lobs^negx^toggle_s);
     gf_add(inv_el_m1,inv_el_m1,p->t);
 
+/* not needed */
 #elif COFACTOR == 8 && IMAGINE_TWIST
     /* More complicated because of rotation */
     gf t1,t2,t3,t4,t5;
@@ -636,7 +638,6 @@ void API_NS(point_double_scalarmul) (
     /* Write out the answer */
     API_NS(point_copy)(a,tmp);
 
-
     decaf_bzero(scalar1x,sizeof(scalar1x));
     decaf_bzero(scalar2x,sizeof(scalar2x));
     decaf_bzero(pn,sizeof(pn));
@@ -1029,7 +1030,7 @@ decaf_error_t API_NS(direct_scalarmul) (
 }
 
 void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
-    uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
+    uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
     const point_t p
 ) {
 
@@ -1109,9 +1110,9 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     gf_mul(x,y,z);
 
     /* Encode */
-    enc[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] = 0;
+    enc[DECAF_EDDSA_448_PRIVATE_BYTES-1] = 0;
     gf_serialize(enc, x, 1);
-    enc[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
+    enc[DECAF_EDDSA_448_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
 
     decaf_bzero(x,sizeof(x));
     decaf_bzero(y,sizeof(y));
@@ -1123,17 +1124,17 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
 
 decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     point_t p,
-    const uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
+    const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) {
-    uint8_t enc2[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES];
+    uint8_t enc2[DECAF_EDDSA_448_PUBLIC_BYTES];
     memcpy(enc2,enc,sizeof(enc2));
 
-    mask_t low = ~word_is_zero(enc2[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] & 0x80);
-    enc2[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1] &= ~0x80;
+    mask_t low = ~word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] & 0x80);
+    enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] &= ~0x80;
 
     mask_t succ = gf_deserialize(p->y, enc2, 1, 0);
 #if $(gf_bits % 8) == 0
-    succ &= word_is_zero(enc2[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES-1]);
+    succ &= word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1]);
 #endif
 
     gf_sqr(p->x,p->y);
@@ -1225,7 +1226,7 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     return decaf_succeed_if(mask_to_bool(succ));
 }
 
-decaf_error_t decaf_x$(gf_shortname) (
+decaf_error_t decaf_x448 (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t base[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
@@ -1297,9 +1298,9 @@ decaf_error_t decaf_x$(gf_shortname) (
 }
 
 /* Thanks Johan Pascal */
-void decaf_ed$(gf_shortname)_convert_public_key_to_x$(gf_shortname) (
-    uint8_t x[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
-    const uint8_t ed[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
+void decaf_ed448_convert_public_key_to_x448 (
+    uint8_t x[DECAF_X448_PUBLIC_BYTES],
+    const uint8_t ed[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) {
     gf y;
     const uint8_t mask = (uint8_t)(0xFE<<($((gf_bits-1)%8)));
@@ -1333,14 +1334,14 @@ void decaf_ed$(gf_shortname)_convert_public_key_to_x$(gf_shortname) (
     }
 }
 
-void decaf_x$(gf_shortname)_generate_key (
+void decaf_x448_generate_key (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
 ) {
-    decaf_x$(gf_shortname)_derive_public_key(out,scalar);
+    decaf_x448_derive_public_key(out,scalar);
 }
 
-void API_NS(point_mul_by_ratio_and_encode_like_x$(gf_shortname)) (
+void API_NS(point_mul_by_ratio_and_encode_like_x448) (
     uint8_t out[X_PUBLIC_BYTES],
     const point_t p
 ) {
@@ -1360,7 +1361,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_x$(gf_shortname)) (
     API_NS(point_destroy(q));
 }
 
-void decaf_x$(gf_shortname)_derive_public_key (
+void decaf_x448_derive_public_key (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
 ) {
@@ -1376,12 +1377,12 @@ void decaf_x$(gf_shortname)_derive_public_key (
     API_NS(scalar_decode_long)(the_scalar,scalar2,sizeof(scalar2));
 
     /* Compensate for the encoding ratio */
-    for (unsigned i=1; i<DECAF_X$(gf_shortname)_ENCODE_RATIO; i<<=1) {
+    for (unsigned i=1; i<DECAF_X448_ENCODE_RATIO; i<<=1) {
         API_NS(scalar_halve)(the_scalar,the_scalar);
     }
     point_t p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),the_scalar);
-    API_NS(point_mul_by_ratio_and_encode_like_x$(gf_shortname))(out,p);
+    API_NS(point_mul_by_ratio_and_encode_like_x448)(out,p);
     API_NS(point_destroy)(p);
 }
 

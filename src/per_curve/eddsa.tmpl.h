@@ -8,17 +8,17 @@ extern "C" {
 #endif
 
 /** Number of bytes in an EdDSA public key. */
-#define DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES $((gf_bits)//8 + 1)
+#define DECAF_EDDSA_448_PUBLIC_BYTES $((gf_bits)//8 + 1)
 
 /** Number of bytes in an EdDSA private key. */
-#define DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES
+#define DECAF_EDDSA_448_PRIVATE_BYTES DECAF_EDDSA_448_PUBLIC_BYTES
 
 /** Number of bytes in an EdDSA private key. */
-#define DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES (DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES + DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES)
+#define DECAF_EDDSA_448_SIGNATURE_BYTES (DECAF_EDDSA_448_PUBLIC_BYTES + DECAF_EDDSA_448_PRIVATE_BYTES)
 
 /** Does EdDSA support non-contextual signatures? */
-#define DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTLESS_SIGS $(eddsa_no_context)
-$("extern const uint8_t * const DECAF_ED" + gf_shortname + "_NO_CONTEXT DECAF_API_VIS;\n" if eddsa_no_context else "")
+#define DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS $(eddsa_no_context)
+$("extern const uint8_t * const DECAF_ED" + 448 + "_NO_CONTEXT DECAF_API_VIS;\n" if eddsa_no_context else "")
 
 /** Prehash context (raw), because each EdDSA instance has a different prehash. */
 #define decaf_ed$(gf_shortname)_prehash_ctx_s   decaf_$(eddsa_hash)_ctx_s
