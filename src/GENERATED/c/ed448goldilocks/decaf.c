@@ -172,57 +172,8 @@ void API_NS(deisogenize) (
     gf_copy(inv_el_m1,p->x);
     gf_cond_neg(inv_el_m1,~lobs^negx^toggle_s);
     gf_add(inv_el_m1,inv_el_m1,p->t);
-
-/* not needed */
-#elif COFACTOR == 8 && IMAGINE_TWIST
-    /* More complicated because of rotation */
-    gf t1,t2,t3,t4,t5;
-    gf_add(t1,p->z,p->y);
-    gf_sub(t2,p->z,p->y);
-    gf_mul(t3,t1,t2);      /* t3 = num */
-    gf_mul(t2,p->x,p->y);  /* t2 = den */
-    gf_sqr(t1,t2);
-    gf_mul(t4,t1,t3);
-    gf_mulw(t1,t4,-1-TWISTED_D);
-    gf_isr(t4,t1);         /* isqrt(num*(a-d)*den^2) */
-    gf_mul(t1,t2,t4);
-    gf_mul(t2,t1,RISTRETTO_FACTOR); /* t2 = "iden" in ristretto.sage */
-    gf_mul(t1,t3,t4);                 /* t1 = "inum" in ristretto.sage */
-
-    /* Calculate altxy = iden*inum*i*t^2*(d-a) */
-    gf_mul(t3,t1,t2);
-    gf_mul_i(t4,t3);
-    gf_mul(t3,t4,p->t);
-    gf_mul(t4,t3,p->t);
-    gf_mulw(t3,t4,TWISTED_D+1);      /* iden*inum*i*t^2*(d-1) */
-    mask_t rotate = toggle_rotation ^ gf_lobit(t3);
-
-    /* Rotate if altxy is negative */
-    gf_cond_swap(t1,t2,rotate);
-    gf_mul_i(t4,p->x);
-    gf_cond_sel(t4,p->y,t4,rotate);  /* t4 = "fac" = ix if rotate, else y */
-
-    gf_mul_i(t5,RISTRETTO_FACTOR); /* t5 = imi */
-    gf_mul(t3,t5,t2);                /* iden * imi */
-    gf_mul(t2,t5,t1);
-    gf_mul(t5,t2,p->t);              /* "altx" = iden*imi*t */
-    mask_t negx = gf_lobit(t5) ^ toggle_altx;
-
-    gf_cond_neg(t1,negx^rotate);
-    gf_mul(t2,t1,p->z);
-    gf_add(t2,t2,ONE);
-    gf_mul(inv_el_sum,t2,t4);
-    gf_mul(s,inv_el_sum,t3);
-
-    mask_t negs = gf_lobit(s);
-    gf_cond_neg(s,negs);
-
-    mask_t negz = ~negs ^ toggle_s ^ negx;
-    gf_copy(inv_el_m1,p->z);
-    gf_cond_neg(inv_el_m1,negz);
-    gf_sub(inv_el_m1,inv_el_m1,t4);
 #else
-#error "Cofactor must be 4 (with no IMAGINE_TWIST) or 8 (with IMAGINE_TWIST)"
+#error "Cofactor must be 4 (with no IMAGINE_TWIST)"
 #endif
 }
 
@@ -263,14 +214,6 @@ decaf_error_t API_NS(point_decode) (
     gf_mul(p->x,tmp,num);          /* 2*s*isr^2*den*num */
     gf_mul(tmp,tmp2,RISTRETTO_FACTOR); /* 2*s*isr*den*magic */
     gf_cond_neg(p->x,gf_lobit(tmp)); /* flip x */
-
-#if COFACTOR==8
-    /* Additionally check y != 0 and x*y*isomagic nonegative */
-    succ &= ~gf_eq(p->y,ZERO);
-    gf_mul(tmp,p->x,p->y);
-    gf_mul(tmp2,tmp,RISTRETTO_FACTOR);
-    succ &= ~gf_lobit(tmp2);
-#endif
 
 #if IMAGINE_TWIST
     gf_copy(tmp,p->x);
@@ -806,19 +749,10 @@ void API_NS(point_debugging_torque) (
     point_t q,
     const point_t p
 ) {
-#if COFACTOR == 8 && IMAGINE_TWIST
-    gf tmp;
-    gf_mul(tmp,p->x,SQRT_MINUS_ONE);
-    gf_mul(q->x,p->y,SQRT_MINUS_ONE);
-    gf_copy(q->y,tmp);
-    gf_copy(q->z,p->z);
-    gf_sub(q->t,ZERO,p->t);
-#else
     gf_sub(q->x,ZERO,p->x);
     gf_sub(q->y,ZERO,p->y);
     gf_copy(q->z,p->z);
     gf_copy(q->t,p->t);
-#endif
 }
 
 void API_NS(point_debugging_pscale) (
@@ -1048,11 +982,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     /* The point is now on the twisted curve.  Move it to untwisted. */
     gf x, y, z, t;
     point_t q;
-#if COFACTOR == 8
-    API_NS(point_double)(q,p);
-#else
     API_NS(point_copy)(q,p);
-#endif
 
 #if EDDSA_USE_SIGMA_ISOGENY
     {
@@ -1357,11 +1287,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_x448) (
     const point_t p
 ) {
     point_t q;
-#if COFACTOR == 8
-    point_double_internal(q,p,1);
-#else
     API_NS(point_copy)(q,p);
-#endif
     gf_invert(q->t,q->x,0); /* 1/x */
     gf_mul(q->z,q->t,q->y); /* y/x */
     gf_sqr(q->y,q->z); /* (y/x)^2 */
