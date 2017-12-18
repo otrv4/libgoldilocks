@@ -73,8 +73,8 @@ const gf RISTRETTO_FACTOR = {{{
     #error "Cannot use IMAGINE_TWIST except for p == 5 mod 8"
 #endif
 
-#if (COFACTOR != 8) && (COFACTOR != 4)
-    #error "COFACTOR must be 4 or 8"
+#if (COFACTOR != 4)
+    #error "COFACTOR must be 4"
 #endif
 
 #if IMAGINE_TWIST
