@@ -243,10 +243,10 @@ public:
     static const size_t HASH_BYTES = $(C_NS)_HASH_BYTES;
 
     /** Bytes required for EdDSA encoding */
-    static const size_t EDDSA_BYTES = DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES;
+    static const size_t EDDSA_BYTES = DECAF_EDDSA_448_PUBLIC_BYTES;
 
     /** Bytes required for EdDSA encoding */
-    static const size_t LADDER_BYTES = DECAF_X$(gf_shortname)_PUBLIC_BYTES;
+    static const size_t LADDER_BYTES = DECAF_X448_PUBLIC_BYTES;
 
     /** Ratio due to EdDSA encoding */
     static const int EDDSA_ENCODE_RATIO = $(C_NS)_EDDSA_ENCODE_RATIO;
@@ -255,7 +255,7 @@ public:
     static const int EDDSA_DECODE_RATIO = $(C_NS)_EDDSA_DECODE_RATIO;
 
     /** Ratio due to ladder decoding */
-    static const int LADDER_ENCODE_RATIO = DECAF_X$(gf_shortname)_ENCODE_RATIO;
+    static const int LADDER_ENCODE_RATIO = DECAF_X448_ENCODE_RATIO;
 
     /** Size of a steganographically-encoded curve element.  If the point is random, the encoding
      * should look statistically close to a uniformly-random sequnece of STEG_BYTES bytes.
@@ -333,7 +333,7 @@ public:
      * Contents of the point are undefined.
      */
     inline decaf_error_t DECAF_WARN_UNUSED decode_like_eddsa_and_mul_by_ratio_noexcept (
-        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &buffer
+        const FixedBlock<DECAF_EDDSA_448_PUBLIC_BYTES> &buffer
     ) DECAF_NOEXCEPT {
         return $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio(p,buffer.data());
     }
@@ -344,21 +344,21 @@ public:
      * @throw CryptoException if the input point was invalid.
      */
     inline void decode_like_eddsa_and_mul_by_ratio(
-        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &buffer
+        const FixedBlock<DECAF_EDDSA_448_PUBLIC_BYTES> &buffer
     ) /*throw(CryptoException)*/ {
         if (DECAF_SUCCESS != decode_like_eddsa_and_mul_by_ratio_noexcept(buffer)) throw(CryptoException());
     }
 
     /** Multiply by EDDSA_ENCODE_RATIO and encode like EdDSA. */
     inline SecureBuffer mul_by_ratio_and_encode_like_eddsa() const {
-        SecureBuffer ret(DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES);
+        SecureBuffer ret(DECAF_EDDSA_448_PUBLIC_BYTES);
         $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa(ret.data(),p);
         return ret;
     }
 
     /** Multiply by EDDSA_ENCODE_RATIO and encode like EdDSA. */
     inline void mul_by_ratio_and_encode_like_eddsa(
-        FixedBuffer<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> &out
+        FixedBuffer<DECAF_EDDSA_448_PUBLIC_BYTES> &out
     ) const {
         $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa(out.data(),p);
     }
@@ -366,13 +366,13 @@ public:
     /** Multiply by LADDER_ENCODE_RATIO and encode like X448. */
     inline SecureBuffer mul_by_ratio_and_encode_like_ladder() const {
         SecureBuffer ret(LADDER_BYTES);
-        $(c_ns)_point_mul_by_ratio_and_encode_like_x$(gf_shortname)(ret.data(),p);
+        $(c_ns)_point_mul_by_ratio_and_encode_like_x448(ret.data(),p);
         return ret;
     }
 
     /** Multiply by LADDER_ENCODE_RATIO and encode like X448. */
     inline void mul_by_ratio_and_encode_like_ladder(FixedBuffer<LADDER_BYTES> &out) const {
-        $(c_ns)_point_mul_by_ratio_and_encode_like_x$(gf_shortname)(out.data(),p);
+        $(c_ns)_point_mul_by_ratio_and_encode_like_x448(out.data(),p);
     }
 
     /**
@@ -661,15 +661,15 @@ public:
 /** X-only Diffie-Hellman ladder functions */
 struct DhLadder {
 public:
-    /** Bytes in an X$(gf_shortname) public key. */
-    static const size_t PUBLIC_BYTES = DECAF_X$(gf_shortname)_PUBLIC_BYTES;
+    /** Bytes in an X448 public key. */
+    static const size_t PUBLIC_BYTES = DECAF_X448_PUBLIC_BYTES;
 
-    /** Bytes in an X$(gf_shortname) private key. */
-    static const size_t PRIVATE_BYTES = DECAF_X$(gf_shortname)_PRIVATE_BYTES;
+    /** Bytes in an X448 private key. */
+    static const size_t PRIVATE_BYTES = DECAF_X448_PRIVATE_BYTES;
 
     /** Base point for a scalar multiplication. */
     static const FixedBlock<PUBLIC_BYTES> base_point() DECAF_NOEXCEPT {
-        return FixedBlock<PUBLIC_BYTES>(decaf_x$(gf_shortname)_base_point);
+        return FixedBlock<PUBLIC_BYTES>(decaf_x448_base_point);
     }
 
     /** Calculate and return a shared secret with public key.  */
@@ -678,7 +678,7 @@ public:
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) /*throw(std::bad_alloc,CryptoException)*/ {
         SecureBuffer out(PUBLIC_BYTES);
-        if (DECAF_SUCCESS != decaf_x$(gf_shortname)(out.data(), pk.data(), scalar.data())) {
+        if (DECAF_SUCCESS != decaf_x448(out.data(), pk.data(), scalar.data())) {
             throw CryptoException();
         }
         return out;
@@ -691,7 +691,7 @@ public:
         const FixedBlock<PUBLIC_BYTES> &pk,
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) DECAF_NOEXCEPT {
-       return decaf_x$(gf_shortname)(out.data(), pk.data(), scalar.data());
+       return decaf_x448(out.data(), pk.data(), scalar.data());
     }
 
     /** Calculate and return a public key; equivalent to shared_secret(base_point(),scalar)
@@ -703,7 +703,7 @@ public:
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) /*throw(std::bad_alloc)*/ {
         SecureBuffer out(PUBLIC_BYTES);
-        decaf_x$(gf_shortname)_derive_public_key(out.data(), scalar.data());
+        decaf_x448_derive_public_key(out.data(), scalar.data());
         return out;
     }
 
@@ -714,7 +714,7 @@ public:
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) /*throw(std::bad_alloc)*/ {
         SecureBuffer out(PUBLIC_BYTES);
-        decaf_x$(gf_shortname)_derive_public_key(out.data(), scalar.data());
+        decaf_x448_derive_public_key(out.data(), scalar.data());
         return out;
     }
 
@@ -726,7 +726,7 @@ public:
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) DECAF_NOEXCEPT {
-        decaf_x$(gf_shortname)_derive_public_key(out.data(), scalar.data());
+        decaf_x448_derive_public_key(out.data(), scalar.data());
     }
 
     /** Calculate and return a public key into a fixed buffer;
@@ -739,7 +739,7 @@ public:
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) DECAF_NOEXCEPT {
-        decaf_x$(gf_shortname)_derive_public_key(out.data(), scalar.data());
+        decaf_x448_derive_public_key(out.data(), scalar.data());
     }
 };
 

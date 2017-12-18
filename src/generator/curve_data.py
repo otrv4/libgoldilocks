@@ -7,7 +7,6 @@ wnaf_config = namedtuple("wnaf_config",["fixed","var"])
 field_data = {
     "p448" : {
         "gf_desc" : "2^448 - 2^224 - 1",
-        "gf_shortname" : "448",
         "gf_impl_bits" : 512,
         "gf_lit_limb_bits" : 56,
         "elligator_onto" : 0

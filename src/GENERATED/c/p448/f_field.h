@@ -74,7 +74,7 @@ static INLINE_UNUSED void gf_sub_RAW (gf out, const gf a, const gf b);
 static INLINE_UNUSED void gf_bias (gf inout, int amount);
 static INLINE_UNUSED void gf_weak_reduce (gf inout);
 
-void gf_strong_reduce (gf inout);   
+void gf_strong_reduce (gf inout);
 void gf_add (gf out, const gf a, const gf b);
 void gf_sub (gf out, const gf a, const gf b);
 void gf_mul (gf_s *__restrict__ out, const gf a, const gf b);

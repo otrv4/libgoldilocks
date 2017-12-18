@@ -44,8 +44,8 @@ typedef class PublicKeyBase PublicKey, PublicKeyPure, PublicKeyPh;
  * is no context.  For Ed448, contexts are built-in and mandatory, so "no context"
  * is the same as the empty string.
  */
-#if DECAF_EDDSA_$(gf_shortname)_SUPPORTS_CONTEXTLESS_SIGS
-static inline const Block NO_CONTEXT() { return Block(DECAF_ED$(gf_shortname)_NO_CONTEXT,0); }
+#if DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS
+static inline const Block NO_CONTEXT() { return Block(DECAF_ED448_NO_CONTEXT,0); }
 #else
 static inline const Block NO_CONTEXT() { return Block(NULL,0); }
 #endif
@@ -66,7 +66,7 @@ private:
             throw LengthException();
         }
 
-        decaf_ed$(gf_shortname)_prehash_init((decaf_$(eddsa_hash)_ctx_s *)wrapped);
+        decaf_ed448_prehash_init((decaf_$(eddsa_hash)_ctx_s *)wrapped);
     }
     /** @endcond */
 
@@ -119,7 +119,7 @@ public:
         }
 
         SecureBuffer out(CRTP::SIG_BYTES);
-        decaf_ed$(gf_shortname)_sign (
+        decaf_ed448_sign (
             out.data(),
             ((const CRTP*)this)->priv_.data(),
             ((const CRTP*)this)->pub_.data(),
@@ -139,11 +139,11 @@ public:
     /** Sign a prehash context, and reset the context */
     inline SecureBuffer sign_prehashed ( const Prehash &ph ) const /*throw(std::bad_alloc)*/ {
         SecureBuffer out(CRTP::SIG_BYTES);
-        decaf_ed$(gf_shortname)_sign_prehash (
+        decaf_ed448_sign_prehash (
             out.data(),
             ((const CRTP*)this)->priv_.data(),
             ((const CRTP*)this)->pub_.data(),
-            (const decaf_ed$(gf_shortname)_prehash_ctx_s*)ph.wrapped,
+            (const decaf_ed448_prehash_ctx_s*)ph.wrapped,
             ph.context_.data(),
             ph.context_.size()
         );
@@ -177,20 +177,20 @@ private:
 /** @endcond */
 
     /** The pre-expansion form of the signing key. */
-    FixedArrayBuffer<DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES> priv_;
+    FixedArrayBuffer<DECAF_EDDSA_448_PRIVATE_BYTES> priv_;
 
     /** The post-expansion public key. */
-    FixedArrayBuffer<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> pub_;
+    FixedArrayBuffer<DECAF_EDDSA_448_PUBLIC_BYTES> pub_;
 
 public:
     /** Underlying group */
     typedef $(cxx_ns) Group;
 
     /** Signature size. */
-    static const size_t SIG_BYTES = DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES;
+    static const size_t SIG_BYTES = DECAF_EDDSA_448_SIGNATURE_BYTES;
 
     /** Serialization size. */
-    static const size_t SER_BYTES = DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES;
+    static const size_t SER_BYTES = DECAF_EDDSA_448_PRIVATE_BYTES;
 
 
     /** Create but don't initialize */
@@ -204,13 +204,13 @@ public:
 
     /** Create at random */
     inline explicit PrivateKeyBase(Rng &r) DECAF_NOEXCEPT : priv_(r) {
-        decaf_ed$(gf_shortname)_derive_public_key(pub_.data(), priv_.data());
+        decaf_ed448_derive_public_key(pub_.data(), priv_.data());
     }
 
     /** Assignment from string */
     inline PrivateKeyBase &operator=(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT {
         memcpy(priv_.data(),b.data(),b.size());
-        decaf_ed$(gf_shortname)_derive_public_key(pub_.data(), priv_.data());
+        decaf_ed448_derive_public_key(pub_.data(), priv_.data());
         return *this;
     }
 
@@ -231,8 +231,8 @@ public:
 
     /** Convert to X format (to be used for key exchange) */
     inline SecureBuffer convert_to_x() const {
-        SecureBuffer out(DECAF_X$(gf_shortname)_PRIVATE_BYTES);
-        decaf_ed$(gf_shortname)_convert_private_key_to_x$(gf_shortname)(out.data(), priv_.data());
+        SecureBuffer out(DECAF_X448_PRIVATE_BYTES);
+        decaf_ed448_convert_private_key_to_x448(out.data(), priv_.data());
         return out;
     }
 
@@ -248,7 +248,7 @@ template<class CRTP> class Verification<CRTP,PURE> {
 public:
     /** Verify a signature, returning DECAF_FAILURE if verification fails */
     inline decaf_error_t DECAF_WARN_UNUSED verify_noexcept (
-        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
+        const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Block &message,
         const Block &context = NO_CONTEXT()
     ) const /*DECAF_NOEXCEPT*/ {
@@ -256,7 +256,7 @@ public:
             return DECAF_FAILURE;
         }
 
-        return decaf_ed$(gf_shortname)_verify (
+        return decaf_ed448_verify (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
             message.data(),
@@ -274,7 +274,7 @@ public:
      *
      */
     inline void verify (
-        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
+        const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Block &message,
         const Block &context = NO_CONTEXT()
     ) const /*throw(LengthException,CryptoException)*/ {
@@ -293,13 +293,13 @@ template<class CRTP> class Verification<CRTP,PREHASHED> {
 public:
     /** Verify that a signature is valid for a given prehashed message, given the context. */
     inline decaf_error_t DECAF_WARN_UNUSED verify_prehashed_noexcept (
-        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
+        const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Prehash &ph
     ) const /*DECAF_NOEXCEPT*/ {
-        return decaf_ed$(gf_shortname)_verify_prehash (
+        return decaf_ed448_verify_prehash (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
-            (const decaf_ed$(gf_shortname)_prehash_ctx_s*)ph.wrapped,
+            (const decaf_ed448_prehash_ctx_s*)ph.wrapped,
             ph.context_.data(),
             ph.context_.size()
         );
@@ -307,13 +307,13 @@ public:
 
     /** Verify that a signature is valid for a given prehashed message, given the context. */
     inline void verify_prehashed (
-        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
+        const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Prehash &ph
     ) const /*throw(CryptoException)*/ {
-        if (DECAF_SUCCESS != decaf_ed$(gf_shortname)_verify_prehash (
+        if (DECAF_SUCCESS != decaf_ed448_verify_prehash (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
-            (const decaf_ed$(gf_shortname)_prehash_ctx_s*)ph.wrapped,
+            (const decaf_ed448_prehash_ctx_s*)ph.wrapped,
             ph.context_.data(),
             ph.context_.size()
         )) {
@@ -323,7 +323,7 @@ public:
 
     /** Hash and verify a message, using the prehashed verification mode. */
     inline void verify_with_prehash (
-        const FixedBlock<DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES> &sig,
+        const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Block &message,
         const Block &context = NO_CONTEXT()
     ) const /*throw(LengthException,CryptoException)*/ {
@@ -350,7 +350,7 @@ private:
 
 private:
     /** The pre-expansion form of the signature */
-    FixedArrayBuffer<DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES> pub_;
+    FixedArrayBuffer<DECAF_EDDSA_448_PUBLIC_BYTES> pub_;
 /** @endcond */
 
 public:
@@ -360,10 +360,10 @@ public:
     typedef $(cxx_ns) Group;
 
     /** Signature size. */
-    static const size_t SIG_BYTES = DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES;
+    static const size_t SIG_BYTES = DECAF_EDDSA_448_SIGNATURE_BYTES;
 
     /** Serialization size. */
-    static const size_t SER_BYTES = DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES;
+    static const size_t SER_BYTES = DECAF_EDDSA_448_PRIVATE_BYTES;
 
     /** Create but don't initialize */
     inline explicit PublicKeyBase(const NOINIT&) DECAF_NOEXCEPT : pub_((NOINIT())) { }
@@ -403,8 +403,8 @@ public:
 
     /** Convert to X format (to be used for key exchange) */
     inline SecureBuffer convert_to_x() const {
-        SecureBuffer out(DECAF_X$(gf_shortname)_PRIVATE_BYTES);
-        decaf_ed$(gf_shortname)_convert_public_key_to_x$(gf_shortname)(out.data(), pub_.data());
+        SecureBuffer out(DECAF_X448_PRIVATE_BYTES);
+        decaf_ed448_convert_public_key_to_x448(out.data(), pub_.data());
         return out;
     }
 }; /* class PublicKey */

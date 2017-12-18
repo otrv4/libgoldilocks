@@ -21,16 +21,16 @@ extern "C" {
 $("extern const uint8_t * const DECAF_ED" + 448 + "_NO_CONTEXT DECAF_API_VIS;\n" if eddsa_no_context else "")
 
 /** Prehash context (raw), because each EdDSA instance has a different prehash. */
-#define decaf_ed$(gf_shortname)_prehash_ctx_s   decaf_$(eddsa_hash)_ctx_s
+#define decaf_ed448_prehash_ctx_s   decaf_$(eddsa_hash)_ctx_s
 
 /** Prehash context, array[1] form. */
-#define decaf_ed$(gf_shortname)_prehash_ctx_t   decaf_$(eddsa_hash)_ctx_t
+#define decaf_ed448_prehash_ctx_t   decaf_$(eddsa_hash)_ctx_t
 
 /** Prehash update. */
-#define decaf_ed$(gf_shortname)_prehash_update  decaf_$(eddsa_hash)_update
+#define decaf_ed448_prehash_update  decaf_$(eddsa_hash)_update
 
 /** Prehash destroy. */
-#define decaf_ed$(gf_shortname)_prehash_destroy decaf_$(eddsa_hash)_destroy
+#define decaf_ed448_prehash_destroy decaf_$(eddsa_hash)_destroy
 
 /** EdDSA encoding ratio. */
 #define $(C_NS)_EDDSA_ENCODE_RATIO $(eddsa_encode_ratio)
@@ -45,9 +45,9 @@ $("extern const uint8_t * const DECAF_ED" + 448 + "_NO_CONTEXT DECAF_API_VIS;\n"
  * @param [out] secret The secret key.
  * @param [in] privkey The private key.
  */
-void decaf_ed$(gf_shortname)_derive_secret_scalar (
+void decaf_ed448_derive_secret_scalar (
     $(c_ns)_scalar_t secret,
-    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
+    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -57,9 +57,9 @@ void decaf_ed$(gf_shortname)_derive_secret_scalar (
  * @param [out] pubkey The public key.
  * @param [in] privkey The private key.
  */
-void decaf_ed$(gf_shortname)_derive_public_key (
-    uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
+void decaf_ed448_derive_public_key (
+    uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -79,10 +79,10 @@ void decaf_ed$(gf_shortname)_derive_public_key (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-void decaf_ed$(gf_shortname)_sign (
-    uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
+void decaf_ed448_sign (
+    uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
     uint8_t prehashed,
@@ -105,11 +105,11 @@ void decaf_ed$(gf_shortname)_sign (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-void decaf_ed$(gf_shortname)_sign_prehash (
-    uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
-    const decaf_ed$(gf_shortname)_prehash_ctx_t hash,
+void decaf_ed448_sign_prehash (
+    uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+    const decaf_ed448_prehash_ctx_t hash,
     const uint8_t *context,
     uint8_t context_len
 ) DECAF_API_VIS __attribute__((nonnull(1,2,3,4))) DECAF_NOINLINE;
@@ -119,8 +119,8 @@ void decaf_ed$(gf_shortname)_sign_prehash (
  *
  * @param [out] hash The hash object to be initialized.
  */
-void decaf_ed$(gf_shortname)_prehash_init (
-    decaf_ed$(gf_shortname)_prehash_ctx_t hash
+void decaf_ed448_prehash_init (
+    decaf_ed448_prehash_ctx_t hash
 ) DECAF_API_VIS __attribute__((nonnull(1))) DECAF_NOINLINE;
 
 /**
@@ -141,9 +141,9 @@ void decaf_ed$(gf_shortname)_prehash_init (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-decaf_error_t decaf_ed$(gf_shortname)_verify (
-    const uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
+decaf_error_t decaf_ed448_verify (
+    const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
     uint8_t prehashed,
@@ -167,10 +167,10 @@ decaf_error_t decaf_ed$(gf_shortname)_verify (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-decaf_error_t decaf_ed$(gf_shortname)_verify_prehash (
-    const uint8_t signature[DECAF_EDDSA_$(gf_shortname)_SIGNATURE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
-    const decaf_ed$(gf_shortname)_prehash_ctx_t hash,
+decaf_error_t decaf_ed448_verify_prehash (
+    const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+    const decaf_ed448_prehash_ctx_t hash,
     const uint8_t *context,
     uint8_t context_len
 ) DECAF_API_VIS __attribute__((nonnull(1,2))) DECAF_NOINLINE;
@@ -200,7 +200,7 @@ decaf_error_t decaf_ed$(gf_shortname)_verify_prehash (
  * @param [in] p The point.
  */
 void $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa (
-    uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES],
+    uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
     const $(c_ns)_point_t p
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
@@ -215,7 +215,7 @@ void $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa (
  */
 decaf_error_t $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio (
     $(c_ns)_point_t p,
-    const uint8_t enc[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
+    const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -229,9 +229,9 @@ decaf_error_t $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio (
  * @param[out] x The ECDH public key as in RFC7748(point on Montgomery curve)
  * @param[in] ed The EdDSA public key(point on Edwards curve)
  */
-void decaf_ed$(gf_shortname)_convert_public_key_to_x$(gf_shortname) (
-    uint8_t x[DECAF_X$(gf_shortname)_PUBLIC_BYTES],
-    const uint8_t ed[DECAF_EDDSA_$(gf_shortname)_PUBLIC_BYTES]
+void decaf_ed448_convert_public_key_to_x448 (
+    uint8_t x[DECAF_X448_PUBLIC_BYTES],
+    const uint8_t ed[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -242,9 +242,9 @@ void decaf_ed$(gf_shortname)_convert_public_key_to_x$(gf_shortname) (
  * @param[out] x The ECDH private key as in RFC7748
  * @param[in] ed The EdDSA private key
  */
-void decaf_ed$(gf_shortname)_convert_private_key_to_x$(gf_shortname) (
-    uint8_t x[DECAF_X$(gf_shortname)_PRIVATE_BYTES],
-    const uint8_t ed[DECAF_EDDSA_$(gf_shortname)_PRIVATE_BYTES]
+void decaf_ed448_convert_private_key_to_x448 (
+    uint8_t x[DECAF_X448_PRIVATE_BYTES],
+    const uint8_t ed[DECAF_EDDSA_448_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 #ifdef __cplusplus
