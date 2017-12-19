@@ -13,6 +13,15 @@ cryptography.  It doesn't (yet?) include documentation on how to use
 digital signatures or key exchange securely.  Consult your local
 cryptographer for advice.
 
+## Using the library
+
+* To run the python wrapper: `python setup.py install --user`
+* To generate the code based on the curve data, per field and the decaf tables: `make gen-code`
+* To generate the code based on the curve data and per field: `make gen-code-static`
+* To test the internal test programs: `make test-ct`
+* To test the internal test programs: `make test`
+* To generate the main decaf library, and its symlinks: `make lib`
+
 ## Mailing lists
 
 Because this is new software, please expect it to have bugs, perhaps
@@ -105,7 +114,7 @@ files are usable under the MIT license contained in LICENSE.txt.
 ## Caveats
 
 As mentioned in the license, there is absolutely NO WARRANTY on any of this
-code.  This code might well have security-critical bugs despite my best efforts.
+code.  This code might well have security-critical bugs despite best efforts.
 
-I've attempted to protect against timing attacks and invalid point attacks,
-but as of yet I've made no attempt to protect against power analysis.
+It has been attempted to protect against timing attacks and invalid point
+attacks, but as of yet there is no attempt to protect against power analysis.
