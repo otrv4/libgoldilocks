@@ -40,7 +40,7 @@ PUB_INCFLAGS = -I$(BUILD_INC)
 LANGFLAGS = -std=c99 -fno-strict-aliasing
 LANGXXFLAGS = -fno-strict-aliasing
 GENFLAGS = -ffunction-sections -fdata-sections -fvisibility=hidden -fomit-frame-pointer -fPIC
-OFLAGS ?= -O2
+OFLAGS ?= -Os
 
 MACOSX_VERSION_MIN ?= 10.9
 ifeq ($(UNAME),Darwin)

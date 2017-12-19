@@ -32,8 +32,6 @@
 #define COFACTOR 4
 #define EDDSA_PREHASH_BYTES 64
 
-// TODO: take cofactor from the python code
-
 #if NO_CONTEXT
 const uint8_t NO_CONTEXT_POINTS_HERE = 0;
 const uint8_t * const DECAF_ED448_NO_CONTEXT = &NO_CONTEXT_POINTS_HERE;
