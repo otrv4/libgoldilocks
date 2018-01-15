@@ -18,10 +18,11 @@
 /* Template stuff */
 #define API_NS(_id) decaf_448_##_id
 #define point_t API_NS(point_t)
-#define IMAGINE_TWIST 0
+/* TODO: for the moment state */
 #define COFACTOR 4
 static const int EDWARDS_D = -39081;
 
+/* This is prob also not needed */
 #define RISTRETTO_FACTOR DECAF_448_RISTRETTO_FACTOR
 extern const gf RISTRETTO_FACTOR;
 
@@ -76,13 +77,6 @@ void API_NS(point_from_hash_nonuniform) (
     gf_mul(b,c,N);
     gf_cond_neg(b,square);
     gf_sub(b,b,ONE);
-
-    /* isogenize */
-#if IMAGINE_TWIST
-    gf_mul(c,a,SQRT_MINUS_ONE);
-    gf_copy(a,c);
-#endif
-
     gf_sqr(c,a); /* s^2 */
     gf_add(a,a,a); /* 2s */
     gf_add(e,c,ONE);
@@ -131,18 +125,9 @@ API_NS(invert_elligator_nonuniform) (
     API_NS(deisogenize)(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
 
     mask_t is_identity = gf_eq(p->t,ZERO);
-#if COFACTOR==4
     gf_cond_sel(b,b,ONE,is_identity & sgn_altx);
     gf_cond_sel(c,c,ONE,is_identity & sgn_s &~ sgn_altx);
-#else
-#error "Different special-casing goes here!"
-#endif
-
-#if IMAGINE_TWIST
-    gf_mulw(a,b,-EDWARDS_D);
-#else
     gf_mulw(a,b,EDWARDS_D-1);
-#endif
     gf_add(b,a,b);
     gf_sub(a,a,c);
     gf_add(b,b,c);
@@ -152,12 +137,6 @@ API_NS(invert_elligator_nonuniform) (
     mask_t succ = gf_isr(c,b);
     succ |= gf_eq(b,ZERO);
     gf_mul(b,c,a);
-
-#if 448 == 8*SER_BYTES + 1 /* p521. */
-#error "this won't work because it needs to adjust high bit, not low bit"
-    sgn_r0 = 0;
-#endif
-
     gf_cond_neg(b, sgn_r0^gf_lobit(b));
     /* Eliminate duplicate values for identity ... */
     succ &= ~(gf_eq(b,ZERO) & (sgn_r0 | sgn_s));
