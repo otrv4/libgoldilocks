@@ -124,7 +124,7 @@ void API_NS(deisogenize) (
     mask_t toggle_altx,
     mask_t toggle_rotation
 ) {
-#if COFACTOR == 4 && !IMAGINE_TWIST
+#if COFACTOR == 4
     (void)toggle_rotation; /* Only applies to cofactor 8 */
     gf t1;
     gf_s *t2 = s, *t3=inv_el_sum, *t4=inv_el_m1;
@@ -151,7 +151,7 @@ void API_NS(deisogenize) (
     gf_cond_neg(inv_el_m1,~lobs^negx^toggle_s);
     gf_add(inv_el_m1,inv_el_m1,p->t);
 #else
-#error "Cofactor must be 4 (with no IMAGINE_TWIST)"
+#error "Cofactor must be 4"
 #endif
 }
 
