@@ -167,6 +167,7 @@ class DecafScalar():
 
     @classmethod
     def random(cls):
+        print "lol"
         while True:
             try: return cls.deser(random_array(56))
             except Exception: pass
@@ -214,7 +215,9 @@ class DecafPoint():
         buffer = (c_uint8*int(56)).from_buffer_copy(str)
         cstruct = DecafPoint._UNDER()
         ret = DECAF.decaf_448_point_decode(cstruct,buffer,c_uint64(-1))
+        print(ret)
         if ret != -1:
+            print "invalid point"
             raise Exception("Point didn't decode")
         return cstruct
 
@@ -285,19 +288,21 @@ class DecafPoint():
         try: cstruct = cls._c_deser(str)
         except Exception: good = False
 
+        print("the bool", good)
         good2 = True
         try: point = cls._sage_deser(str)
         except Exception: good2 = False
 
         if good != good2:
             raise Exception("C and SAGE don't agree")
-        elif not good:
+        elif good == False:
+            print "not a good decode"
             raise Exception("Point didn't decode")
-
         return cls(cstruct,point)
 
     @classmethod
     def random(cls):
+        # this is not correctly handled
         while True:
             try: return cls.deser(random_array(56))
             except Exception: pass
