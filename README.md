@@ -1,4 +1,4 @@
-# Little-ed448-Goldilocks library
+# Goldilocks library
 
 The Goldilocks library is for ed448-Goldilocks elliptic curve research and
 practical application. It is based upon Mike Hamburg's libdecaf library:
