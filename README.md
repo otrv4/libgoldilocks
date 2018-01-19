@@ -1,6 +1,6 @@
 # Little-ed448-Goldilocks library
 
-The little-ed448 library is for ed448-Goldilocks elliptic curve research and
+The Goldilocks library is for ed448-Goldilocks elliptic curve research and
 practical application. It is based upon Mike Hamburg's libdecaf library:
 [ed448goldilocks](https://sourceforge.net/p/ed448goldilocks/code/ci/master/tree/).
 
@@ -55,7 +55,7 @@ supported curves:
   (VRFs).
 
 Internally, the library uses twisted Edwards curves with the "decaf"
-and "ristretto" technique to remove the curve's cofactor of 4 or 8.
+and "ristretto" technique to remove the curve's cofactor of 4.
 The upshot is that systems using the "decaf" interface will be using
 a prime-order group, which mitigates one of the few disadvantages of
 Edwards curves.  However, this means that it is not able to implement
@@ -79,7 +79,7 @@ such as precomputed signature verification.
 
 ## Symmetric crypto and hashing
 
-The Decaf library doesn't implement much symmetric crypto, but it does
+The Goldilocks library doesn't implement much symmetric crypto, but it does
 contain the hash functions required by the CFRG cryptosystems: SHA-3 and SHAKE.
 
 ## Internals
@@ -102,6 +102,7 @@ this point is written out.  The y-coordinate is not written out, but the
 decoder knows which of the two possible y-coordinates is correct because
 of the distinguishing rules.  See the paper for more details.
 
+// TODO: is this going to be up someday?
 As of v0.9.4, libdecaf uses the "Ristretto" variant of this encoding.
 See https://www.ristretto.group for details, once that site is up.
 
