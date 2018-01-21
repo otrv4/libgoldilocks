@@ -60,14 +60,14 @@ static void field_print(const gf f) {
 
 int main(int argc, char **argv) {
     (void)argc; (void)argv;
-    
+
     API_NS(point_t) real_point_base;
     int ret = API_NS(point_decode)(real_point_base,base_point_ser_for_pregen,0);
     if (ret != DECAF_SUCCESS) {
         fprintf(stderr, "Can't decode base point!\n");
         return 1;
     }
-    
+
     API_NS(precomputed_s) *pre;
     ret = posix_memalign((void**)&pre, API_NS(alignof_precomputed_s), API_NS(sizeof_precomputed_s));
     if (ret || !pre) {
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     API_NS(precompute)(pre, real_point_base);
-    
+
     struct niels_s *pre_wnaf;
     ret = posix_memalign((void**)&pre_wnaf, API_NS(alignof_precomputed_s), API_NS(sizeof_precomputed_wnafs));
     if (ret || !pre_wnaf) {
@@ -86,12 +86,12 @@ int main(int argc, char **argv) {
 
     const gf_s *output;
     unsigned i;
-    
+
     printf("/** @warning: this file was automatically generated. */\n");
     printf("#include \"field.h\"\n\n");
     printf("#include <decaf.h>\n\n");
     printf("#define API_NS(_id) decaf_448_##_id\n");
-    
+
     output = (const gf_s *)real_point_base;
     printf("const API_NS(point_t) API_NS(point_base) = {{\n");
     for (i=0; i < sizeof(API_NS(point_t)); i+=sizeof(gf)) {
@@ -99,20 +99,20 @@ int main(int argc, char **argv) {
         field_print(output++);
     }
     printf("\n}};\n");
-    
+
     output = (const gf_s *)pre;
-    printf("const gf API_NS(precomputed_base_as_fe)[%d]\n", 
+    printf("const gf API_NS(precomputed_base_as_fe)[%d]\n",
         (int)(API_NS(sizeof_precomputed_s) / sizeof(gf)));
     printf("VECTOR_ALIGNED __attribute__((visibility(\"hidden\"))) = {\n  ");
-    
+
     for (i=0; i < API_NS(sizeof_precomputed_s); i+=sizeof(gf)) {
         if (i) printf(",\n  ");
         field_print(output++);
     }
     printf("\n};\n");
-    
+
     output = (const gf_s *)pre_wnaf;
-    printf("const gf API_NS(precomputed_wnaf_as_fe)[%d]\n", 
+    printf("const gf API_NS(precomputed_wnaf_as_fe)[%d]\n",
         (int)(API_NS(sizeof_precomputed_wnafs) / sizeof(gf)));
     printf("VECTOR_ALIGNED __attribute__((visibility(\"hidden\"))) = {\n  ");
     for (i=0; i < API_NS(sizeof_precomputed_wnafs); i+=sizeof(gf)) {
@@ -120,6 +120,6 @@ int main(int argc, char **argv) {
         field_print(output++);
     }
     printf("\n};\n");
-    
+
     return 0;
 }

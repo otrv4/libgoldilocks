@@ -43,12 +43,9 @@ const gf RISTRETTO_FACTOR = {{{
 }}};
 
 /* probably the imagine twist is also not needed */
-#if IMAGINE_TWIST
-#define TWISTED_D (-(EDWARDS_D))
-#else
 #define TWISTED_D ((EDWARDS_D)-1)
-#endif
 
+/* check this too */
 #if TWISTED_D < 0
 #define EFF_D (-(TWISTED_D))
 #define NEG_D 1
@@ -59,26 +56,8 @@ const gf RISTRETTO_FACTOR = {{{
 
 /* End of template stuff */
 
-/* Sanity */
-#if (COFACTOR == 8) && !IMAGINE_TWIST && !UNSAFE_CURVE_HAS_POINTS_AT_INFINITY
-/* FUTURE MAGIC: Curve41417 doesn't have these properties. */
-#error "Currently require IMAGINE_TWIST (and thus p=5 mod 8) for cofactor 8"
-        /* OK, but why?
-         * Two reasons: #1: There are bugs when COFACTOR == && IMAGINE_TWIST
-         # #2:
-         */
-#endif
-
-#if IMAGINE_TWIST && (P_MOD_8 != 5)
-    #error "Cannot use IMAGINE_TWIST except for p == 5 mod 8"
-#endif
-
 #if (COFACTOR != 4)
     #error "COFACTOR must be 4"
-#endif
-
-#if IMAGINE_TWIST
-    extern const gf SQRT_MINUS_ONE;
 #endif
 
 #define WBITS DECAF_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
@@ -185,9 +164,6 @@ decaf_error_t API_NS(point_decode) (
     succ &= ~gf_lobit(s);
 
     gf_sqr(s2,s);                  /* s^2 = -as^2 */
-#if IMAGINE_TWIST
-    gf_sub(s2,ZERO,s2);            /* -as^2 */
-#endif
     gf_sub(den,ONE,s2);            /* 1+as^2 */
     gf_add(ynum,ONE,s2);           /* 1-as^2 */
     gf_mulw(num,s2,-4*TWISTED_D);
@@ -203,12 +179,6 @@ decaf_error_t API_NS(point_decode) (
     gf_mul(p->x,tmp,num);          /* 2*s*isr^2*den*num */
     gf_mul(tmp,tmp2,RISTRETTO_FACTOR); /* 2*s*isr*den*magic */
     gf_cond_neg(p->x,gf_lobit(tmp)); /* flip x */
-
-#if IMAGINE_TWIST
-    gf_copy(tmp,p->x);
-    gf_mul_i(p->x,tmp);
-#endif
-
     /* Fill in z and t */
     gf_copy(p->z,ONE);
     gf_mul(p->t,p->x,p->y);
@@ -699,6 +669,7 @@ decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     #if (COFACTOR == 8) && IMAGINE_TWIST
         gf_mul ( a, p->y, q->y );
         gf_mul ( b, q->x, p->x );
+    /* this is a very odd case to check */
         #if !(IMAGINE_TWIST)
             gf_sub ( a, ZERO, a );
         #else
@@ -750,7 +721,6 @@ void API_NS(point_debugging_pscale) (
     const uint8_t factor[SER_BYTES]
 ) {
     gf gfac,tmp;
-    /* NB this means you'll never pscale by negative numbers for p521 */
     ignore_result(gf_deserialize(gfac,factor,0,0));
     gf_cond_sel(gfac,gfac,ONE,gf_eq(gfac,ZERO));
     gf_mul(tmp,p->x,gfac);
@@ -998,21 +968,9 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
         gf_mul ( u, z, t );
         gf_copy( z, u );
         gf_mul ( u, x, RISTRETTO_FACTOR );
-#if IMAGINE_TWIST
-        gf_mul_i( x, u );
-#else
 #error "... probably wrong"
         gf_copy( x, u );
-#endif
         decaf_bzero(u,sizeof(u));
-    }
-#elif IMAGINE_TWIST
-    {
-        API_NS(point_double)(q,q);
-        API_NS(point_double)(q,q);
-        gf_mul_i(x, q->x);
-        gf_copy(y, q->y);
-        gf_copy(z, q->z);
     }
 #else
     {
@@ -1118,12 +1076,6 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
         decaf_bzero(b,sizeof(b));
         decaf_bzero(c,sizeof(c));
         decaf_bzero(d,sizeof(d));
-    }
-    #elif IMAGINE_TWIST
-    {
-        gf_mul(p->t,p->x,SQRT_MINUS_ONE);
-        gf_copy(p->x,p->t);
-        gf_mul(p->t,p->x,p->y);
     }
     #else
     {
@@ -1280,9 +1232,6 @@ void API_NS(point_mul_by_ratio_and_encode_like_x448) (
     gf_invert(q->t,q->x,0); /* 1/x */
     gf_mul(q->z,q->t,q->y); /* y/x */
     gf_sqr(q->y,q->z); /* (y/x)^2 */
-#if IMAGINE_TWIST
-    gf_sub(q->y,ZERO,q->y);
-#endif
     gf_serialize(out,q->y,1);
     API_NS(point_destroy(q));
 }

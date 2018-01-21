@@ -19,7 +19,6 @@
 #define hash_hash    decaf_$(eddsa_hash)_hash
 
 #define NO_CONTEXT DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS
-#define EDDSA_USE_SIGMA_ISOGENY $(eddsa_sigma_iso)
 #define COFACTOR $(cofactor)
 #define EDDSA_PREHASH_BYTES 64
 

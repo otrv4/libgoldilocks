@@ -66,12 +66,6 @@ void API_NS(point_from_hash_nonuniform) (
     gf_cond_neg(b,square);
     gf_sub(b,b,ONE);
 
-    /* isogenize */
-#if IMAGINE_TWIST
-    gf_mul(c,a,SQRT_MINUS_ONE);
-    gf_copy(a,c);
-#endif
-
     gf_sqr(c,a); /* s^2 */
     gf_add(a,a,a); /* 2s */
     gf_add(e,c,ONE);
@@ -127,11 +121,7 @@ API_NS(invert_elligator_nonuniform) (
 #error "Different special-casing goes here!"
 #endif
 
-#if IMAGINE_TWIST
-    gf_mulw(a,b,-EDWARDS_D);
-#else
     gf_mulw(a,b,EDWARDS_D-1);
-#endif
     gf_add(b,a,b);
     gf_sub(a,a,c);
     gf_add(b,b,c);
@@ -141,11 +131,6 @@ API_NS(invert_elligator_nonuniform) (
     mask_t succ = gf_isr(c,b);
     succ |= gf_eq(b,ZERO);
     gf_mul(b,c,a);
-
-#if $(gf_bits) == 8*SER_BYTES + 1 /* p521. */
-#error "this won't work because it needs to adjust high bit, not low bit"
-    sgn_r0 = 0;
-#endif
 
     gf_cond_neg(b, sgn_r0^gf_lobit(b));
     /* Eliminate duplicate values for identity ... */

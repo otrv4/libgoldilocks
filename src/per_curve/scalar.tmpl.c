@@ -41,7 +41,7 @@ static DECAF_NOINLINE void sc_subx(
         chain >>= WBITS;
     }
     decaf_word_t borrow = chain+extra; /* = 0 or -1 */
-    
+
     chain = 0;
     for (i=0; i<SCALAR_LIMBS; i++) {
         chain = (chain + out->limb[i]) + (p->limb[i] & borrow);
@@ -58,11 +58,11 @@ static DECAF_NOINLINE void sc_montmul (
     unsigned int i,j;
     decaf_word_t accum[SCALAR_LIMBS+1] = {0};
     decaf_word_t hi_carry = 0;
-    
+
     for (i=0; i<SCALAR_LIMBS; i++) {
         decaf_word_t mand = a->limb[i];
         const decaf_word_t *mier = b->limb;
-        
+
         decaf_dword_t chain = 0;
         for (j=0; j<SCALAR_LIMBS; j++) {
             chain += ((decaf_dword_t)mand)*mier[j] + accum[j];
@@ -70,7 +70,7 @@ static DECAF_NOINLINE void sc_montmul (
             chain >>= WBITS;
         }
         accum[j] = chain;
-        
+
         mand = accum[0] * MONTGOMERY_FACTOR;
         chain = 0;
         mier = sc_p->limb;
@@ -84,7 +84,7 @@ static DECAF_NOINLINE void sc_montmul (
         accum[j-1] = chain;
         hi_carry = chain >> WBITS;
     }
-    
+
     sc_subx(out, accum, sc_p, sc_p, hi_carry);
 }
 
@@ -121,26 +121,26 @@ decaf_error_t API_NS(scalar_invert) (
     for (i=1; i<=LAST; i++) {
         sc_montmul(precmp[i],precmp[i-1],precmp[LAST]);
     }
-    
+
     /* Sliding window */
     unsigned residue = 0, trailing = 0, started = 0;
     for (i=SCALAR_BITS-1; i>=-SCALAR_WINDOW_BITS; i--) {
-        
+
         if (started) sc_montsqr(out,out);
-        
+
         decaf_word_t w = (i>=0) ? sc_p->limb[i/WBITS] : 0;
         if (i >= 0 && i<WBITS) {
             assert(w >= 2);
             w-=2;
         }
-        
+
         residue = (residue<<1) | ((w>>(i%WBITS))&1);
         if (residue>>SCALAR_WINDOW_BITS != 0) {
             assert(trailing == 0);
             trailing = residue;
             residue = 0;
         }
-        
+
         if (trailing > 0 && (trailing & ((1<<SCALAR_WINDOW_BITS)-1)) == 0) {
             if (started) {
                 sc_montmul(out,out,precmp[trailing>>(SCALAR_WINDOW_BITS+1)]);
@@ -151,11 +151,11 @@ decaf_error_t API_NS(scalar_invert) (
             trailing = 0;
         }
         trailing <<= 1;
-        
+
     }
     assert(residue==0);
     assert(trailing==0);
-    
+
     /* Demontgomerize */
     sc_montmul(out,out,API_NS(scalar_one));
     decaf_bzero(precmp, sizeof(precmp));
@@ -239,9 +239,9 @@ decaf_error_t API_NS(scalar_decode)(
         accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
     }
     /* Here accum == 0 or -1 */
-    
+
     API_NS(scalar_mul)(s,s,API_NS(scalar_one)); /* ham-handed reduce */
-    
+
     return decaf_succeed_if(~word_is_zero(accum));
 }
 
@@ -260,13 +260,13 @@ void API_NS(scalar_decode_long)(
         API_NS(scalar_copy)(s, API_NS(scalar_zero));
         return;
     }
-    
+
     size_t i;
     scalar_t t1, t2;
 
     i = ser_len - (ser_len%SCALAR_SER_BYTES);
     if (i==ser_len) i -= SCALAR_SER_BYTES;
-    
+
     scalar_decode_short(t1, &ser[i], ser_len-i);
 
     if (ser_len == sizeof(scalar_t)) {
