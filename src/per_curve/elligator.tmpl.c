@@ -11,6 +11,7 @@
 #define COFACTOR $(cofactor)
 static const int EDWARDS_D = $(d);
 
+/* This is prob also not needed */
 #define RISTRETTO_FACTOR $(C_NS)_RISTRETTO_FACTOR
 extern const gf RISTRETTO_FACTOR;
 
@@ -135,15 +136,7 @@ API_NS(invert_elligator_nonuniform) (
     gf_cond_neg(b, sgn_r0^gf_lobit(b));
     /* Eliminate duplicate values for identity ... */
     succ &= ~(gf_eq(b,ZERO) & (sgn_r0 | sgn_s));
-    // #if COFACTOR == 8
-    //     succ &= ~(is_identity & sgn_ed_T); /* NB: there are no preimages of rotated identity. */
-    // #endif
-
-    #if $(gf_bits) == 8*SER_BYTES + 1 /* p521 */
-        gf_serialize(recovered_hash,b,0);
-    #else
-        gf_serialize(recovered_hash,b,1);
-    #endif
+    gf_serialize(recovered_hash,b,1);
 #if $(gf_bits%8)
         recovered_hash[SER_BYTES-1] ^= (hint>>3)<<$(gf_bits%8);
 #endif

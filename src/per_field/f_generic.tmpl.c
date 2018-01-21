@@ -5,7 +5,7 @@
 static const gf MODULUS = {FIELD_LITERAL(
     $(ser(modulus,gf_lit_limb_bits))
 )};
-    
+
 #if P_MOD_8 == 5
     const gf SQRT_MINUS_ONE = {FIELD_LITERAL(
         $(ser(msqrt(-1,modulus),gf_lit_limb_bits) if modulus % 4 == 1 else "/* NOPE */")
@@ -18,7 +18,7 @@ void gf_serialize (uint8_t serial[SER_BYTES], const gf x, int with_hibit) {
     gf_copy(red, x);
     gf_strong_reduce(red);
     if (!with_hibit) { assert(gf_hibit(red) == 0); }
-    
+
     unsigned int j=0, fill=0;
     dword_t buffer = 0;
     UNROLL for (unsigned int i=0; i<(with_hibit ? X_SER_BYTES : SER_BYTES); i++) {
