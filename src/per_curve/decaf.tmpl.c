@@ -39,10 +39,9 @@ const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] = { $(ser(mont_base
 
 #define RISTRETTO_FACTOR $(C_NS)_RISTRETTO_FACTOR
 const gf RISTRETTO_FACTOR = {{{
-    $(ser(msqrt(d-1 if imagine_twist else -d,modulus,hi_bit_clear=True),gf_lit_limb_bits))
+    $(ser(msqrt(-d,modulus,hi_bit_clear=True),gf_lit_limb_bits))
 }}};
 
-/* probably the imagine twist is also not needed */
 #define TWISTED_D ((EDWARDS_D)-1)
 
 /* check this too */
@@ -114,7 +113,7 @@ void API_NS(deisogenize) (
     mask_t toggle_altx,
     mask_t toggle_rotation
 ) {
-#if COFACTOR == 4 && !IMAGINE_TWIST
+#if COFACTOR == 4
     (void)toggle_rotation; /* Only applies to cofactor 8 */
     gf t1;
     gf_s *t2 = s, *t3=inv_el_sum, *t4=inv_el_m1;
@@ -141,7 +140,7 @@ void API_NS(deisogenize) (
     gf_cond_neg(inv_el_m1,~lobs^negx^toggle_s);
     gf_add(inv_el_m1,inv_el_m1,p->t);
 #else
-#error "Cofactor must be 4 (with no IMAGINE_TWIST)"
+#error "Cofactor must be 4"
 #endif
 }
 
