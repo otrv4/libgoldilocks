@@ -68,7 +68,7 @@ constant_time_cond_swap (
     word_t k;
     unsigned char *a = (unsigned char *)a_;
     unsigned char *b = (unsigned char *)b_;
-    
+
     big_register_t br_mask = br_set_to_mask(doswap);
     for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
         if (elem_bytes % sizeof(big_register_t)) {
@@ -111,7 +111,7 @@ constant_time_cond_swap (
             }
         }
     }
-    
+
     if (elem_bytes % sizeof(word_t)) {
         for (; k<elem_bytes; k+=1) {
             unsigned char xor = a[k] ^ b[k];
@@ -140,14 +140,14 @@ constant_time_lookup (
     word_t idx
 ) {
     big_register_t big_one = br_set_to_mask(1), big_i = br_set_to_mask(idx);
-    
+
     /* Can't do pointer arithmetic on void* */
     unsigned char *out = (unsigned char *)out_;
     const unsigned char *table = (const unsigned char *)table_;
     word_t j,k;
-    
+
     memset(out, 0, elem_bytes);
-    for (j=0; j<n_table; j++, big_i-=big_one) {        
+    for (j=0; j<n_table; j++, big_i-=big_one) {
         big_register_t br_mask = br_is_zero(big_i);
         for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
             if (elem_bytes % sizeof(big_register_t)) {
@@ -172,7 +172,7 @@ constant_time_lookup (
                 }
             }
         }
-        
+
         if (elem_bytes % sizeof(word_t)) {
             for (; k<elem_bytes; k+=1) {
                 out[k] |= mask & table[k+j*elem_bytes];
@@ -199,13 +199,13 @@ constant_time_insert (
     word_t idx
 ) {
     big_register_t big_one = br_set_to_mask(1), big_i = br_set_to_mask(idx);
-    
+
     /* Can't do pointer arithmetic on void* */
     const unsigned char *in = (const unsigned char *)in_;
     unsigned char *table = (unsigned char *)table_;
     word_t j,k;
-    
-    for (j=0; j<n_table; j++, big_i-=big_one) {        
+
+    for (j=0; j<n_table; j++, big_i-=big_one) {
         big_register_t br_mask = br_is_zero(big_i);
         for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
             if (elem_bytes % sizeof(big_register_t)) {
@@ -237,7 +237,7 @@ constant_time_insert (
                 }
             }
         }
-        
+
         if (elem_bytes % sizeof(word_t)) {
             for (; k<elem_bytes; k+=1) {
                 table[k+j*elem_bytes]
@@ -263,7 +263,7 @@ constant_time_mask (
 ) {
     unsigned char *a = (unsigned char *)a_;
     const unsigned char *b = (const unsigned char *)b_;
-    
+
     word_t k;
     big_register_t br_mask = br_set_to_mask(mask);
     for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
@@ -287,7 +287,7 @@ constant_time_mask (
             }
         }
     }
-    
+
     if (elem_bytes % sizeof(word_t)) {
         for (; k<elem_bytes; k+=1) {
             a[k] = mask & b[k];
@@ -317,7 +317,7 @@ constant_time_select (
     unsigned char *a = (unsigned char *)a_;
     const unsigned char *bTrue = (const unsigned char *)bTrue_;
     const unsigned char *bFalse = (const unsigned char *)bFalse_;
-    
+
     alignment_bytes |= elem_bytes;
 
     word_t k;
@@ -351,7 +351,7 @@ constant_time_select (
             }
         }
     }
-    
+
     if (elem_bytes % sizeof(word_t)) {
         for (; k<elem_bytes; k+=1) {
             a[k] = ( mask & bTrue[k]) | (~mask & bFalse[k]);

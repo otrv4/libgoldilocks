@@ -13,7 +13,7 @@
 #include "constant_time.h"
 #include "f_field.h"
 #include <string.h>
-    
+
 /** Square x, n times. */
 static DECAF_INLINE void gf_sqrn (
     gf_s *__restrict__ y,
