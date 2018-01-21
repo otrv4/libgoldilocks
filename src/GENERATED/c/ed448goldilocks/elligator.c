@@ -18,7 +18,6 @@
 /* Template stuff */
 #define API_NS(_id) decaf_448_##_id
 #define point_t API_NS(point_t)
-#define IMAGINE_TWIST 0
 #define COFACTOR 4
 static const int EDWARDS_D = -39081;
 

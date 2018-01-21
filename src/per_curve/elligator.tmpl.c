@@ -7,7 +7,6 @@
 /* Template stuff */
 #define API_NS(_id) $(c_ns)_##_id
 #define point_t API_NS(point_t)
-#define IMAGINE_TWIST $(imagine_twist)
 #define COFACTOR $(cofactor)
 static const int EDWARDS_D = $(d);
 
