@@ -6,12 +6,6 @@ static const gf MODULUS = {FIELD_LITERAL(
     $(ser(modulus,gf_lit_limb_bits))
 )};
 
-#if P_MOD_8 == 5
-    const gf SQRT_MINUS_ONE = {FIELD_LITERAL(
-        $(ser(msqrt(-1,modulus),gf_lit_limb_bits) if modulus % 4 == 1 else "/* NOPE */")
-    )};
-#endif
-
 /** Serialize to wire format. */
 void gf_serialize (uint8_t serial[SER_BYTES], const gf x, int with_hibit) {
     gf red;

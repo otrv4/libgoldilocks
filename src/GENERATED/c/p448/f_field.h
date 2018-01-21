@@ -96,9 +96,6 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES],int with_hibit,uint
 #include "f_impl.h" /* Bring in the inline implementations */
 
 #define P_MOD_8 7
-#if P_MOD_8 == 5
-    extern const gf SQRT_MINUS_ONE;
-#endif
 
 #ifndef LIMBPERM
   #define LIMBPERM(i) (i)
