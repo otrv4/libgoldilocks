@@ -107,14 +107,7 @@ for curve,data in curve_data.items():
             )
 
     if "imagine_twist" not in data:
-        # This is a HACK.  The real problem is that iso-Ed25519
-        # has points at infinity unless you IMAGINE_TWIST.
-        #
-        # Also there are lots of bugs when cofactor=8 != IMAGINE_TWIST.
-        # (FUTURE: fix all this to support other curves, eventually)
-        if data["modulus"]%4 == 3: data["imagine_twist"] = 0
-        else: data["imagine_twist"] = 1
-        # data["imagine_twist"] = 0
+        data["imagine_twist"] = 0
 
     data["q"] = (data["modulus"]+1-data["trace"]) // data["cofactor"]
     data["bits"] = ceil_log2(data["modulus"])
