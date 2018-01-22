@@ -631,14 +631,14 @@ static void test_convert_eddsa_to_x() {
 static void test_dalek_vectors() {
     Test test("Test vectors from Dalek");
     Point p = Point::base(), q;
-    for (signed i=0; i<base_multiples<Group>::count; i++) {
+    for (int i=0; i<base_multiples<Group>::count; i++) {
         if (!decaf_memeq(q.serialize().data(),base_multiples<Group>::values[i],Point::SER_BYTES)) {
             test.fail();
             printf("    Failed test vector for %d * base point.\n", i);
         }
         q += p;
     }
-    for (signed i=0; i<elligator_examples<Group>::count; i++) {
+    for (int i=0; i<elligator_examples<Group>::count; i++) {
         Point r = Point::from_hash(FixedBlock<Point::HASH_BYTES>(elligator_examples<Group>::inputs[i]));
         Point s = Point(FixedBlock<Point::SER_BYTES>(elligator_examples<Group>::outputs[i]));
         point_check(test,r,r,r,0,0,r,s,"elligator test vector");
