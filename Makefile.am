@@ -4,6 +4,9 @@ SUBDIRS = src test pkgconfig
 ACLOCAL_AMFLAGS = -I m4
 
 .PHONY: gen_code gen_code_static test_ct todo lib sage sagetest
+all-lib:
+	$(MAKE) all -f $(top_srcdir)/Makefile.original
+
 gen-code:
 	$(MAKE) gen_code -f $(top_srcdir)/Makefile.original
 
@@ -24,6 +27,9 @@ sagetest:
 
 lib:
 	$(MAKE) lib -f $(top_srcdir)/Makefile.original
+
+clean-scan:
+	$(MAKE) clean -f $(top_srcdir)/Makefile.original
 
 test: check
 	$(top_srcdir)/test/test
