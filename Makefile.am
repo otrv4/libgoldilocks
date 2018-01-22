@@ -4,6 +4,9 @@ SUBDIRS = src test pkgconfig
 ACLOCAL_AMFLAGS = -I m4
 
 .PHONY: gen_code gen_code_static test_ct todo lib sage sagetest all clean
+
+ci: test mem-check
+
 all-lib:
 	$(MAKE) all -f $(top_srcdir)/Makefile.original
 
@@ -42,4 +45,4 @@ microbench: check
 
 # NB: you must compile with XCFLAGS=-DNDEBUG or you will get lots of extra warnings due to assert(stuff).
 mem-check: check
-	valgrind $(top_srcdir)/test/test_ct
+	valgrind $(top_srcdir)/test/test
