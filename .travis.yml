@@ -25,6 +25,4 @@ before_install:
 
 before_script: ./autogen.sh
 script:
-  - ./autogen.sh && ./configure --disable-shared
-  - if [[ $(lsb_release -c -s) == "precise" ]]; then make ci; fi
-  - if [[ $(lsb_release -c -s) == "trusty" ]];  then make ci;   fi
+  - ./autogen.sh && ./configure --disable-shared && make ci
