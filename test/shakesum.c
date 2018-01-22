@@ -29,8 +29,6 @@ int main(int argc, char **argv) {
     unsigned int outlen = 512;
     decaf_shake256_gen_init(sponge);
 
-    int use_sha512 = 0;
-
     /* Sloppy.  Real utility would parse --algo, --size ... */
     if (argc > 1) {
         if (!strcmp(argv[1], "shake256") || !strcmp(argv[1], "SHAKE256")) {
