@@ -503,9 +503,60 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         y = (1-a*s^2) / t
         return cls(x,sgn*y)
 
+    @optimized_version_of("doubleAndEncodeSpec")
     def doubleAndEncode(self):
-        # TODO
-        return self.doubleAndEncodeSpec()
+        X,Y,Z,T = self.xyzt()
+        a,d = self.a,self.d
+
+        if self.cofactor == 8:
+            # TODO: optimized version with no isqrt
+            e = 2*X*Y
+            f = Z^2+d*T^2
+            g = Y^2-a*X^2
+            h = Z^2-d*T^2
+            x = e*h
+            y = f*g
+            z = f*h
+            t = e*g
+
+            # Cofactor 8 version
+            # Simulate IMAGINE_TWIST because that's how libdecaf does it
+            x = self.i*x
+            t = self.i*t
+            a = -a
+            d = -d
+
+            # OK, the actual libdecaf code should be here
+            num = (z+y)*(z-y)
+            den = x*y
+            isr = isqrt(num*(a-d)*den^2)
+
+            iden = isr * den * self.isoMagic
+            inum = isr * num
+
+            if negative(iden*inum*self.i*t^2*(d-a)):
+                iden,inum = inum,iden
+                fac = x*sqrt(a)
+                toggle=(a==-1)
+            else:
+                fac = y
+                toggle=False
+
+            imi = self.isoMagic * self.i
+            if negative(inum*t*imi) != toggle: inum =- inum
+
+            tmp = fac*(inum*z + 1)
+            s = iden*tmp*imi
+
+        else:
+            xy = X*Y
+            h = Z^2-d*T^2
+            inv = 1/(xy*h)
+            if negative(inv*2*xy^2*self.isoMagic): tmp = Y
+            else: tmp = X
+            s = tmp^2*h*inv # = X/Y or Y/X, interestingly
+
+        return self.gfToBytes(s,mustBePositive=True)
 
     @classmethod
     def elligatorSpec(cls,r0,fromR=False):
@@ -734,8 +785,10 @@ def gangtest(classes,n):
 def testDoubleAndEncode(cls,n):
     print "Testing doubleAndEncode on %s" % cls.__name__
     for i in xrange(n):
-        r = randombytes(cls.encLen)
-        cls.elligator(r).doubleAndEncode()
+        r1 = randombytes(cls.encLen)
+        r2 = randombytes(cls.encLen)
+        u = cls.elligator(r1) + cls.elligator(r2)
+        u.doubleAndEncode()
 
 testDoubleAndEncode(IsoEd448Point,100)
 testDoubleAndEncode(TwistedEd448GoldilocksPoint,100)
