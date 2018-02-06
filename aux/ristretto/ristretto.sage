@@ -147,7 +147,6 @@ class RistrettoPoint(QuotientEdwardsPoint):
     def encodeSpec(self):
         """Unoptimized specification for encoding"""
         x,y = self
-        if self.cofactor==8 and (negative(x*y) or y==0): (x,y) = self.torque()
         if y == -1: y = 1 # Avoid divide by 0; doesn't affect impl
 
         if negative(x): x,y = -x,-y
@@ -162,9 +161,6 @@ class RistrettoPoint(QuotientEdwardsPoint):
         a,d = cls.a,cls.d
         x = xsqrt(4*s^2 / (a*d*(1+a*s^2)^2 - (1-a*s^2)^2))
         y = (1+a*s^2) / (1-a*s^2)
-
-        if cls.cofactor==8 and (negative(x*y) or y==0):
-            raise InvalidEncodingException("x*y has high bit")
 
         return cls(x,y)
 
@@ -215,9 +211,6 @@ class RistrettoPoint(QuotientEdwardsPoint):
         if negative(x): x = -x
         y = ynum * yden_inv
 
-        if cls.cofactor==8 and (negative(x*y) or y==0):
-            raise InvalidEncodingException("x*y is invalid: %d, %d" % (x,y))
-
         return cls(x,y)
 
     @classmethod
@@ -262,7 +255,6 @@ class RistrettoPoint(QuotientEdwardsPoint):
         if negative(s) == iss: s = -s
         return cls.fromJacobiQuartic(s,t)
 
-
 class Decaf_1_1_Point(QuotientEdwardsPoint):
     """Like current decaf but tweaked for simplicity"""
     def encodeSpec(self):
@@ -270,9 +262,6 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         a,d = self.a,self.d
         x,y = self
         if x==0 or y==0: return(self.gfToBytes(0))
-
-        if self.cofactor==8 and negative(x*y*self.isoMagic):
-            x,y = self.torque()
 
         sr = xsqrt(1-a*x^2)
         altx = x*y*self.isoMagic / sr
@@ -293,9 +282,6 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         if negative(altx): t = -t
         x = 2*s / (1+a*s^2)
         y = (1-a*s^2) / t
-
-        if cls.cofactor==8 and (negative(x*y*cls.isoMagic) or y==0):
-            raise InvalidEncodingException("x*y is invalid: %d, %d" % (x,y))
 
         return cls(x,y)
 
@@ -332,7 +318,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
 
         rets = []
 
-        tr = [False,True] if self.cofactor == 8 else [False]
+        tr = [False,True] if self.cofactor != 4 else [False]
         for toggle_rotation in tr:
             for toggle_altx in [False,True]:
                 for toggle_s in [False,True]:
@@ -343,7 +329,6 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
                         #print toggle_rotation,toggle_altx,toggle_s
                         #print m1
                         #print m12
-
 
                         if self == self.__class__():
                             if self.cofactor == 4:
@@ -401,9 +386,6 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         if negative(altx): isr = -isr
         x = 2*s *isr^2*den*num
         y = (1-a*s^2) * isr*den
-
-        if cls.cofactor==8 and (negative(x*y*cls.isoMagic) or y==0):
-            raise InvalidEncodingException("x*y is invalid: %d, %d" % (x,y))
 
         return cls(x,y)
 
@@ -567,7 +549,6 @@ def test(cls,n):
         except NotOnCurveException: pass
         except InvalidEncodingException: pass
 
-
     P = cls.base()
     Q = cls()
     for i in xrange(n):
@@ -582,8 +563,6 @@ def test(cls,n):
             ss = cls.gfToBytes(1/s,mustBePositive=True)
             try:
                 QN = cls.decode(ss)
-                if cls.cofactor == 8:
-                    raise TestFailedException("1/s shouldnt work for cofactor 8")
                 if QN != -Q:
                     raise TestFailedException("s -> 1/s should negate point for cofactor 4")
             except InvalidEncodingException as e:
@@ -671,6 +650,7 @@ def testDoubleAndEncode(cls,n):
 
 testDoubleAndEncode(IsoEd448Point,100)
 testDoubleAndEncode(TwistedEd448GoldilocksPoint,100)
+# uncomment to see it work, but it is wip
 #test(IsoEd448Point,100)
 #test(TwistedEd448GoldilocksPoint,100)
 #test(Ed448GoldilocksPoint,100)
