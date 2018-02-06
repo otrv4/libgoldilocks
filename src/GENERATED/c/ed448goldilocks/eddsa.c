@@ -17,8 +17,8 @@
 #include <decaf/shake.h>
 #include <string.h>
 
-#define API_NAME "decaf_448"
-#define API_NS(_id) decaf_448_##_id
+#define API_NAME "goldilocks_448"
+#define API_NS(_id) goldilocks_448_##_id
 
 #define hash_ctx_t   decaf_shake256_ctx_t
 #define hash_init    decaf_shake256_init
@@ -122,7 +122,7 @@ void decaf_ed448_derive_secret_scalar (
      * the decaf base point is on Etwist_d, and when converted it effectively
      * picks up a factor of 2 from the isogenies.  So we might start at 2 instead of 1.
      */
-    for (unsigned int c=1; c < DECAF_448_EDDSA_ENCODE_RATIO; c <<= 1) {
+    for (unsigned int c=1; c < GOLDILOCKS_448_EDDSA_ENCODE_RATIO; c <<= 1) {
         API_NS(scalar_halve)(secret,secret);
     }
 
@@ -194,7 +194,7 @@ void decaf_ed448_sign (
         /* Scalarmul to create the nonce-point */
         API_NS(scalar_t) nonce_scalar_2;
         API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar);
-        for (unsigned int c = 2; c < DECAF_448_EDDSA_ENCODE_RATIO; c <<= 1) {
+        for (unsigned int c = 2; c < GOLDILOCKS_448_EDDSA_ENCODE_RATIO; c <<= 1) {
             API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar_2);
         }
 
@@ -291,7 +291,7 @@ decaf_error_t decaf_ed448_verify (
         DECAF_EDDSA_448_PRIVATE_BYTES
     );
 
-    for (unsigned c=1; c<DECAF_448_EDDSA_DECODE_RATIO; c<<=1) {
+    for (unsigned c=1; c<GOLDILOCKS_448_EDDSA_DECODE_RATIO; c<<=1) {
         API_NS(scalar_add)(response_scalar,response_scalar,response_scalar);
     }
 

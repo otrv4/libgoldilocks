@@ -16,13 +16,13 @@
 #include <decaf.h>
 
 /* Template stuff */
-#define API_NS(_id) decaf_448_##_id
+#define API_NS(_id) goldilocks_448_##_id
 #define point_t API_NS(point_t)
 #define COFACTOR 4
 static const int EDWARDS_D = -39081;
 
 /* This is prob also not needed */
-#define RISTRETTO_FACTOR DECAF_448_RISTRETTO_FACTOR
+#define RISTRETTO_FACTOR GOLDILOCKS_448_RISTRETTO_FACTOR
 extern const gf RISTRETTO_FACTOR;
 
 /* End of template stuff */

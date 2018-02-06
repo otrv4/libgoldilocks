@@ -22,11 +22,11 @@ extern "C" {
 #endif
 
 /** @cond internal */
-#define DECAF_448_SCALAR_LIMBS ((446-1)/DECAF_WORD_BITS+1)
+#define GOLDILOCKS_448_SCALAR_LIMBS ((446-1)/DECAF_WORD_BITS+1)
 /** @endcond */
 
 /** The number of bits in a scalar */
-#define DECAF_448_SCALAR_BITS 446
+#define GOLDILOCKS_448_SCALAR_BITS 446
 
 /** @cond internal */
 #ifndef __DECAF_448_GF_DEFINED__
@@ -39,21 +39,21 @@ typedef struct gf_448_s {
 /** @endcond */
 
 /** Number of bytes in a serialized point. */
-#define DECAF_448_SER_BYTES 56
+#define GOLDILOCKS_448_SER_BYTES 56
 
 /** Number of bytes in an elligated point.  For now set the same as SER_BYTES
  * but could be different for other curves.
  */
-#define DECAF_448_HASH_BYTES 56
+#define GOLDILOCKS_448_HASH_BYTES 56
 
 /** Number of bytes in a serialized scalar. */
-#define DECAF_448_SCALAR_BYTES 56
+#define GOLDILOCKS_448_SCALAR_BYTES 56
 
 /** Number of bits in the "which" field of an elligator inverse */
-#define DECAF_448_INVERT_ELLIGATOR_WHICH_BITS 3
+#define GOLDILOCKS_448_INVERT_ELLIGATOR_WHICH_BITS 3
 
 /** The cofactor the curve would have, if we hadn't removed it */
-#define DECAF_448_REMOVED_COFACTOR 4
+#define GOLDILOCKS_448_REMOVED_COFACTOR 4
 
 /** X448 encoding ratio. */
 #define DECAF_X448_ENCODE_RATIO 2
@@ -65,42 +65,42 @@ typedef struct gf_448_s {
 #define DECAF_X448_PRIVATE_BYTES 56
 
 /** Representation of a point on the elliptic curve. */
-typedef struct decaf_448_point_s {
+typedef struct goldilocks_448_point_s {
     /** @cond internal */
     gf_448_t x,y,z,t; /* Twisted extended homogeneous coordinates */
     /** @endcond */
-} decaf_448_point_t[1];
+} goldilocks_448_point_t[1];
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
-struct decaf_448_precomputed_s;
+struct goldilocks_448_precomputed_s;
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
-typedef struct decaf_448_precomputed_s decaf_448_precomputed_s;
+typedef struct goldilocks_448_precomputed_s goldilocks_448_precomputed_s;
 
 /** Size and alignment of precomputed point tables. */
-extern const size_t decaf_448_sizeof_precomputed_s DECAF_API_VIS, decaf_448_alignof_precomputed_s DECAF_API_VIS;
+extern const size_t goldilocks_448_sizeof_precomputed_s DECAF_API_VIS, goldilocks_448_alignof_precomputed_s DECAF_API_VIS;
 
 /** Representation of an element of the scalar field. */
-typedef struct decaf_448_scalar_s {
+typedef struct goldilocks_448_scalar_s {
     /** @cond internal */
-    decaf_word_t limb[DECAF_448_SCALAR_LIMBS];
+    decaf_word_t limb[GOLDILOCKS_448_SCALAR_LIMBS];
     /** @endcond */
-} decaf_448_scalar_t[1];
+} goldilocks_448_scalar_t[1];
 
 /** The scalar 1. */
-extern const decaf_448_scalar_t decaf_448_scalar_one DECAF_API_VIS;
+extern const goldilocks_448_scalar_t goldilocks_448_scalar_one DECAF_API_VIS;
 
 /** The scalar 0. */
-extern const decaf_448_scalar_t decaf_448_scalar_zero DECAF_API_VIS;
+extern const goldilocks_448_scalar_t goldilocks_448_scalar_zero DECAF_API_VIS;
 
 /** The identity (zero) point on the curve. */
-extern const decaf_448_point_t decaf_448_point_identity DECAF_API_VIS;
+extern const goldilocks_448_point_t goldilocks_448_point_identity DECAF_API_VIS;
 
 /** An arbitrarily-chosen base point on the curve. */
-extern const decaf_448_point_t decaf_448_point_base DECAF_API_VIS;
+extern const goldilocks_448_point_t goldilocks_448_point_base DECAF_API_VIS;
 
 /** Precomputed table of multiples of the base point on the curve. */
-extern const struct decaf_448_precomputed_s *decaf_448_precomputed_base DECAF_API_VIS;
+extern const struct goldilocks_448_precomputed_s *goldilocks_448_precomputed_base DECAF_API_VIS;
 
 /**
  * @brief Read a scalar from wire format or from bytes.
@@ -112,9 +112,9 @@ extern const struct decaf_448_precomputed_s *decaf_448_precomputed_base DECAF_AP
  * @retval DECAF_FAILURE The scalar was greater than the modulus,
  * and has been reduced modulo that modulus.
  */
-decaf_error_t decaf_448_scalar_decode (
-    decaf_448_scalar_t out,
-    const unsigned char ser[DECAF_448_SCALAR_BYTES]
+decaf_error_t goldilocks_448_scalar_decode (
+    goldilocks_448_scalar_t out,
+    const unsigned char ser[GOLDILOCKS_448_SCALAR_BYTES]
 ) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -125,8 +125,8 @@ decaf_error_t decaf_448_scalar_decode (
  * @param [in] ser_len Length of serialized form.
  * @param [out] out Deserialized form.
  */
-void decaf_448_scalar_decode_long (
-    decaf_448_scalar_t out,
+void goldilocks_448_scalar_decode_long (
+    goldilocks_448_scalar_t out,
     const unsigned char *ser,
     size_t ser_len
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
@@ -137,9 +137,9 @@ void decaf_448_scalar_decode_long (
  * @param [out] ser Serialized form of a scalar.
  * @param [in] s Deserialized scalar.
  */
-void decaf_448_scalar_encode (
-    unsigned char ser[DECAF_448_SCALAR_BYTES],
-    const decaf_448_scalar_t s
+void goldilocks_448_scalar_encode (
+    unsigned char ser[GOLDILOCKS_448_SCALAR_BYTES],
+    const goldilocks_448_scalar_t s
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_NOINLINE;
 
 /**
@@ -148,10 +148,10 @@ void decaf_448_scalar_encode (
  * @param [in] b Another scalar.
  * @param [out] out a+b.
  */
-void decaf_448_scalar_add (
-    decaf_448_scalar_t out,
-    const decaf_448_scalar_t a,
-    const decaf_448_scalar_t b
+void goldilocks_448_scalar_add (
+    goldilocks_448_scalar_t out,
+    const goldilocks_448_scalar_t a,
+    const goldilocks_448_scalar_t b
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -161,9 +161,9 @@ void decaf_448_scalar_add (
  * @retval DECAF_TRUE The scalars are equal.
  * @retval DECAF_FALSE The scalars are not equal.
  */
-decaf_bool_t decaf_448_scalar_eq (
-    const decaf_448_scalar_t a,
-    const decaf_448_scalar_t b
+decaf_bool_t goldilocks_448_scalar_eq (
+    const goldilocks_448_scalar_t a,
+    const goldilocks_448_scalar_t b
 ) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -172,10 +172,10 @@ decaf_bool_t decaf_448_scalar_eq (
  * @param [in] b Another scalar.
  * @param [out] out a-b.
  */
-void decaf_448_scalar_sub (
-    decaf_448_scalar_t out,
-    const decaf_448_scalar_t a,
-    const decaf_448_scalar_t b
+void goldilocks_448_scalar_sub (
+    goldilocks_448_scalar_t out,
+    const goldilocks_448_scalar_t a,
+    const goldilocks_448_scalar_t b
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -184,10 +184,10 @@ void decaf_448_scalar_sub (
  * @param [in] b Another scalar.
  * @param [out] out a*b.
  */
-void decaf_448_scalar_mul (
-    decaf_448_scalar_t out,
-    const decaf_448_scalar_t a,
-    const decaf_448_scalar_t b
+void goldilocks_448_scalar_mul (
+    goldilocks_448_scalar_t out,
+    const goldilocks_448_scalar_t a,
+    const goldilocks_448_scalar_t b
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -195,9 +195,9 @@ void decaf_448_scalar_mul (
 * @param [in] a A scalar.
 * @param [out] out a/2.
 */
-void decaf_448_scalar_halve (
-   decaf_448_scalar_t out,
-   const decaf_448_scalar_t a
+void goldilocks_448_scalar_halve (
+   goldilocks_448_scalar_t out,
+   const goldilocks_448_scalar_t a
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -206,9 +206,9 @@ void decaf_448_scalar_halve (
  * @param [out] out 1/a.
  * @return DECAF_SUCCESS The input is nonzero.
  */
-decaf_error_t decaf_448_scalar_invert (
-    decaf_448_scalar_t out,
-    const decaf_448_scalar_t a
+decaf_error_t goldilocks_448_scalar_invert (
+    goldilocks_448_scalar_t out,
+    const goldilocks_448_scalar_t a
 ) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -217,9 +217,9 @@ decaf_error_t decaf_448_scalar_invert (
  * @param [in] a A scalar.
  * @param [out] out Will become a copy of a.
  */
-static inline void DECAF_NONNULL decaf_448_scalar_copy (
-    decaf_448_scalar_t out,
-    const decaf_448_scalar_t a
+static inline void DECAF_NONNULL goldilocks_448_scalar_copy (
+    goldilocks_448_scalar_t out,
+    const goldilocks_448_scalar_t a
 ) {
     *out = *a;
 }
@@ -229,8 +229,8 @@ static inline void DECAF_NONNULL decaf_448_scalar_copy (
  * @param [in] a An integer.
  * @param [out] out Will become equal to a.
  */
-void decaf_448_scalar_set_unsigned (
-    decaf_448_scalar_t out,
+void goldilocks_448_scalar_set_unsigned (
+    goldilocks_448_scalar_t out,
     uint64_t a
 ) DECAF_API_VIS DECAF_NONNULL;
 
@@ -240,9 +240,9 @@ void decaf_448_scalar_set_unsigned (
  * @param [out] ser The byte representation of the point.
  * @param [in] pt The point to encode.
  */
-void decaf_448_point_encode (
-    uint8_t ser[DECAF_448_SER_BYTES],
-    const decaf_448_point_t pt
+void goldilocks_448_point_encode (
+    uint8_t ser[GOLDILOCKS_448_SER_BYTES],
+    const goldilocks_448_point_t pt
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -254,14 +254,14 @@ void decaf_448_point_encode (
  *
  * @param [out] pt The decoded point.
  * @param [in] ser The serialized version of the point.
- * @param [in] allow_identity DECAF_TRUE if the identity is a legal input.
+ * @param [in] allow_identity GOLDILOCKS_TRUE if the identity is a legal input.
  * @retval DECAF_SUCCESS The decoding succeeded.
  * @retval DECAF_FAILURE The decoding didn't succeed, because
  * ser does not represent a point.
  */
-decaf_error_t decaf_448_point_decode (
-    decaf_448_point_t pt,
-    const uint8_t ser[DECAF_448_SER_BYTES],
+decaf_error_t goldilocks_448_point_decode (
+    goldilocks_448_point_t pt,
+    const uint8_t ser[GOLDILOCKS_448_SER_BYTES],
     decaf_bool_t allow_identity
 ) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
@@ -272,25 +272,25 @@ decaf_error_t decaf_448_point_decode (
  * @param [out] a A copy of the point.
  * @param [in] b Any point.
  */
-static inline void DECAF_NONNULL decaf_448_point_copy (
-    decaf_448_point_t a,
-    const decaf_448_point_t b
+static inline void DECAF_NONNULL goldilocks_448_point_copy (
+    goldilocks_448_point_t a,
+    const goldilocks_448_point_t b
 ) {
     *a=*b;
 }
 
 /**
  * @brief Test whether two points are equal.  If yes, return
- * DECAF_TRUE, else return DECAF_FALSE.
+ * GOLDILOCKS_TRUE, else return GOLDILOCKS_FALSE.
  *
  * @param [in] a A point.
  * @param [in] b Another point.
- * @retval DECAF_TRUE The points are equal.
- * @retval DECAF_FALSE The points are not equal.
+ * @retval GOLDILOCKS_TRUE The points are equal.
+ * @retval GOLDILOCKS_FALSE The points are not equal.
  */
-decaf_bool_t decaf_448_point_eq (
-    const decaf_448_point_t a,
-    const decaf_448_point_t b
+decaf_bool_t goldilocks_448_point_eq (
+    const goldilocks_448_point_t a,
+    const goldilocks_448_point_t b
 ) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -302,22 +302,22 @@ decaf_bool_t decaf_448_point_eq (
  * @param [in] a An addend.
  * @param [in] b An addend.
  */
-void decaf_448_point_add (
-    decaf_448_point_t sum,
-    const decaf_448_point_t a,
-    const decaf_448_point_t b
+void goldilocks_448_point_add (
+    goldilocks_448_point_t sum,
+    const goldilocks_448_point_t a,
+    const goldilocks_448_point_t b
 ) DECAF_API_VIS DECAF_NONNULL;
 
 /**
  * @brief Double a point.  Equivalent to
- * decaf_448_point_add(two_a,a,a), but potentially faster.
+ * goldilocks_448_point_add(two_a,a,a), but potentially faster.
  *
  * @param [out] two_a The sum a+a.
  * @param [in] a A point.
  */
-void decaf_448_point_double (
-    decaf_448_point_t two_a,
-    const decaf_448_point_t a
+void goldilocks_448_point_double (
+    goldilocks_448_point_t two_a,
+    const goldilocks_448_point_t a
 ) DECAF_API_VIS DECAF_NONNULL;
 
 /**
@@ -329,10 +329,10 @@ void decaf_448_point_double (
  * @param [in] a The minuend.
  * @param [in] b The subtrahend.
  */
-void decaf_448_point_sub (
-    decaf_448_point_t diff,
-    const decaf_448_point_t a,
-    const decaf_448_point_t b
+void goldilocks_448_point_sub (
+    goldilocks_448_point_t diff,
+    const goldilocks_448_point_t a,
+    const goldilocks_448_point_t b
 ) DECAF_API_VIS DECAF_NONNULL;
 
 /**
@@ -342,9 +342,9 @@ void decaf_448_point_sub (
  * @param [out] nega The negated input point
  * @param [in] a The input point.
  */
-void decaf_448_point_negate (
-   decaf_448_point_t nega,
-   const decaf_448_point_t a
+void goldilocks_448_point_negate (
+   goldilocks_448_point_t nega,
+   const goldilocks_448_point_t a
 ) DECAF_API_VIS DECAF_NONNULL;
 
 /**
@@ -354,10 +354,10 @@ void decaf_448_point_negate (
  * @param [in] base The point to be scaled.
  * @param [in] scalar The scalar to multiply by.
  */
-void decaf_448_point_scalarmul (
-    decaf_448_point_t scaled,
-    const decaf_448_point_t base,
-    const decaf_448_scalar_t scalar
+void goldilocks_448_point_scalarmul (
+    goldilocks_448_point_t scaled,
+    const goldilocks_448_point_t base,
+    const goldilocks_448_scalar_t scalar
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -377,10 +377,10 @@ void decaf_448_point_scalarmul (
  * @retval DECAF_FAILURE The scalarmul didn't succeed, because
  * base does not represent a point.
  */
-decaf_error_t decaf_448_direct_scalarmul (
-    uint8_t scaled[DECAF_448_SER_BYTES],
-    const uint8_t base[DECAF_448_SER_BYTES],
-    const decaf_448_scalar_t scalar,
+decaf_error_t goldilocks_448_direct_scalarmul (
+    uint8_t scaled[GOLDILOCKS_448_SER_BYTES],
+    const uint8_t base[GOLDILOCKS_448_SER_BYTES],
+    const goldilocks_448_scalar_t scalar,
     decaf_bool_t allow_identity,
     decaf_bool_t short_circuit
 ) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
@@ -423,9 +423,9 @@ decaf_error_t decaf_x448 (
  * @param [out] out The scaled and encoded point.
  * @param [in] p The point to be scaled and encoded.
  */
-void decaf_448_point_mul_by_ratio_and_encode_like_x448 (
+void goldilocks_448_point_mul_by_ratio_and_encode_like_x448 (
     uint8_t out[DECAF_X448_PUBLIC_BYTES],
-    const decaf_448_point_t p
+    const goldilocks_448_point_t p
 ) DECAF_API_VIS DECAF_NONNULL;
 
 /** The base point for X448 Diffie-Hellman */
@@ -467,7 +467,7 @@ void decaf_x448_derive_public_key (
     const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
-/* FUTURE: uint8_t decaf_448_encode_like_curve448) */
+/* FUTURE: uint8_t goldilocks_448_encode_like_curve448) */
 
 /**
  * @brief Precompute a table for fast scalar multiplication.
@@ -478,9 +478,9 @@ void decaf_x448_derive_public_key (
  * @param [out] a A precomputed table of multiples of the point.
  * @param [in] b Any point.
  */
-void decaf_448_precompute (
-    decaf_448_precomputed_s *a,
-    const decaf_448_point_t b
+void goldilocks_448_precompute (
+    goldilocks_448_precomputed_s *a,
+    const goldilocks_448_point_t b
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -488,23 +488,23 @@ void decaf_448_precompute (
  * scaled = scalar*base.
  * Some implementations do not include precomputed points; for
  * those implementations, this function is the same as
- * decaf_448_point_scalarmul
+ * goldilocks_448_point_scalarmul
  *
  * @param [out] scaled The scaled point base*scalar
  * @param [in] base The point to be scaled.
  * @param [in] scalar The scalar to multiply by.
  */
-void decaf_448_precomputed_scalarmul (
-    decaf_448_point_t scaled,
-    const decaf_448_precomputed_s *base,
-    const decaf_448_scalar_t scalar
+void goldilocks_448_precomputed_scalarmul (
+    goldilocks_448_point_t scaled,
+    const goldilocks_448_precomputed_s *base,
+    const goldilocks_448_scalar_t scalar
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:
  * scaled = scalar1*base1 + scalar2*base2.
  *
- * Equivalent to two calls to decaf_448_point_scalarmul, but may be
+ * Equivalent to two calls to goldilocks_448_point_scalarmul, but may be
  * faster.
  *
  * @param [out] combo The linear combination scalar1*base1 + scalar2*base2.
@@ -513,12 +513,12 @@ void decaf_448_precomputed_scalarmul (
  * @param [in] base2 A second point to be scaled.
  * @param [in] scalar2 A second scalar to multiply by.
  */
-void decaf_448_point_double_scalarmul (
-    decaf_448_point_t combo,
-    const decaf_448_point_t base1,
-    const decaf_448_scalar_t scalar1,
-    const decaf_448_point_t base2,
-    const decaf_448_scalar_t scalar2
+void goldilocks_448_point_double_scalarmul (
+    goldilocks_448_point_t combo,
+    const goldilocks_448_point_t base1,
+    const goldilocks_448_scalar_t scalar1,
+    const goldilocks_448_point_t base2,
+    const goldilocks_448_scalar_t scalar2
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -527,7 +527,7 @@ void decaf_448_point_double_scalarmul (
  * a1 = scalar1 * base
  * a2 = scalar2 * base
  *
- * Equivalent to two calls to decaf_448_point_scalarmul, but may be
+ * Equivalent to two calls to goldilocks_448_point_scalarmul, but may be
  * faster.
  *
  * @param [out] a1 The first multiple.  It may be the same as the input point.
@@ -536,19 +536,19 @@ void decaf_448_point_double_scalarmul (
  * @param [in] scalar1 A first scalar to multiply by.
  * @param [in] scalar2 A second scalar to multiply by.
  */
-void decaf_448_point_dual_scalarmul (
-    decaf_448_point_t a1,
-    decaf_448_point_t a2,
-    const decaf_448_point_t base1,
-    const decaf_448_scalar_t scalar1,
-    const decaf_448_scalar_t scalar2
+void goldilocks_448_point_dual_scalarmul (
+    goldilocks_448_point_t a1,
+    goldilocks_448_point_t a2,
+    const goldilocks_448_point_t base1,
+    const goldilocks_448_scalar_t scalar1,
+    const goldilocks_448_scalar_t scalar2
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:
- * scaled = scalar1*decaf_448_point_base + scalar2*base2.
+ * scaled = scalar1*goldilocks_448_point_base + scalar2*base2.
  *
- * Otherwise equivalent to decaf_448_point_double_scalarmul, but may be
+ * Otherwise equivalent to goldilocks_448_point_double_scalarmul, but may be
  * faster at the expense of being variable time.
  *
  * @param [out] combo The linear combination scalar1*base + scalar2*base2.
@@ -559,11 +559,11 @@ void decaf_448_point_dual_scalarmul (
  * @warning: This function takes variable time, and may leak the scalars
  * used.  It is designed for signature verification.
  */
-void decaf_448_base_double_scalarmul_non_secret (
-    decaf_448_point_t combo,
-    const decaf_448_scalar_t scalar1,
-    const decaf_448_point_t base2,
-    const decaf_448_scalar_t scalar2
+void goldilocks_448_base_double_scalarmul_non_secret (
+    goldilocks_448_point_t combo,
+    const goldilocks_448_scalar_t scalar1,
+    const goldilocks_448_point_t base2,
+    const goldilocks_448_scalar_t scalar2
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -575,10 +575,10 @@ void decaf_448_base_double_scalarmul_non_secret (
  * @param [in] b Any point.
  * @param [in] pick_b If nonzero, choose point b.
  */
-void decaf_448_point_cond_sel (
-    decaf_448_point_t out,
-    const decaf_448_point_t a,
-    const decaf_448_point_t b,
+void goldilocks_448_point_cond_sel (
+    goldilocks_448_point_t out,
+    const goldilocks_448_point_t a,
+    const goldilocks_448_point_t b,
     decaf_word_t pick_b
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
@@ -591,10 +591,10 @@ void decaf_448_point_cond_sel (
  * @param [in] b Any scalar.
  * @param [in] pick_b If nonzero, choose scalar b.
  */
-void decaf_448_scalar_cond_sel (
-    decaf_448_scalar_t out,
-    const decaf_448_scalar_t a,
-    const decaf_448_scalar_t b,
+void goldilocks_448_scalar_cond_sel (
+    goldilocks_448_scalar_t out,
+    const goldilocks_448_scalar_t a,
+    const goldilocks_448_scalar_t b,
     decaf_word_t pick_b
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
@@ -602,11 +602,11 @@ void decaf_448_scalar_cond_sel (
  * @brief Test that a point is valid, for debugging purposes.
  *
  * @param [in] to_test The point to test.
- * @retval DECAF_TRUE The point is valid.
- * @retval DECAF_FALSE The point is invalid.
+ * @retval GOLDILOCKS_TRUE The point is valid.
+ * @retval GOLDILOCKS_FALSE The point is invalid.
  */
-decaf_bool_t decaf_448_point_valid (
-    const decaf_448_point_t to_test
+decaf_bool_t goldilocks_448_point_valid (
+    const goldilocks_448_point_t to_test
 ) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -616,9 +616,9 @@ decaf_bool_t decaf_448_point_valid (
  * @param [out] q The point to torque.
  * @param [in] p The point to torque.
  */
-void decaf_448_point_debugging_torque (
-    decaf_448_point_t q,
-    const decaf_448_point_t p
+void goldilocks_448_point_debugging_torque (
+    goldilocks_448_point_t q,
+    const goldilocks_448_point_t p
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -630,10 +630,10 @@ void decaf_448_point_debugging_torque (
  * @param [in] p The point to scale.
  * @param [in] factor Serialized GF factor to scale.
  */
-void decaf_448_point_debugging_pscale (
-    decaf_448_point_t q,
-    const decaf_448_point_t p,
-    const unsigned char factor[DECAF_448_SER_BYTES]
+void goldilocks_448_point_debugging_pscale (
+    goldilocks_448_point_t q,
+    const goldilocks_448_point_t p,
+    const unsigned char factor[GOLDILOCKS_448_SER_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -641,7 +641,7 @@ void decaf_448_point_debugging_pscale (
  *
  * Call this function with the output of a hash to make a hash to the curve.
  *
- * This function runs Elligator2 on the decaf_448 Jacobi quartic model.  It then
+ * This function runs Elligator2 on the goldilocks_448 Jacobi quartic model.  It then
  * uses the isogeny to put the result in twisted Edwards form.  As a result,
  * it is safe (cannot produce points of order 4), and would be compatible with
  * hypothetical other implementations of Decaf using a Montgomery or untwisted
@@ -665,29 +665,29 @@ void decaf_448_point_debugging_pscale (
  * @param [out] pt The data hashed to the curve.
  */
 void
-decaf_448_point_from_hash_nonuniform (
-    decaf_448_point_t pt,
-    const unsigned char hashed_data[DECAF_448_HASH_BYTES]
+goldilocks_448_point_from_hash_nonuniform (
+    goldilocks_448_point_t pt,
+    const unsigned char hashed_data[GOLDILOCKS_448_HASH_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Indifferentiable hash function encoding to curve.
  *
- * Equivalent to calling decaf_448_point_from_hash_nonuniform twice and adding.
+ * Equivalent to calling goldilocks_448_point_from_hash_nonuniform twice and adding.
  *
  * @param [in] hashed_data Output of some hash function.
  * @param [out] pt The data hashed to the curve.
  */
-void decaf_448_point_from_hash_uniform (
-    decaf_448_point_t pt,
-    const unsigned char hashed_data[2*DECAF_448_HASH_BYTES]
+void goldilocks_448_point_from_hash_uniform (
+    goldilocks_448_point_t pt,
+    const unsigned char hashed_data[2*GOLDILOCKS_448_HASH_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Inverse of elligator-like hash to curve.
  *
  * This function writes to the buffer, to make it so that
- * decaf_448_point_from_hash_nonuniform(buffer) = pt if
+ * goldilocks_448_point_from_hash_nonuniform(buffer) = pt if
  * possible.  Since there may be multiple preimages, the
  * "which" parameter chooses between them.  To ensure uniform
  * inverse sampling, this function succeeds or fails
@@ -712,9 +712,9 @@ void decaf_448_point_from_hash_uniform (
  * @retval DECAF_FAILURE The inverse failed.
  */
 decaf_error_t
-decaf_448_invert_elligator_nonuniform (
-    unsigned char recovered_hash[DECAF_448_HASH_BYTES],
-    const decaf_448_point_t pt,
+goldilocks_448_invert_elligator_nonuniform (
+    unsigned char recovered_hash[GOLDILOCKS_448_HASH_BYTES],
+    const goldilocks_448_point_t pt,
     uint32_t which
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_WARN_UNUSED;
 
@@ -722,7 +722,7 @@ decaf_448_invert_elligator_nonuniform (
  * @brief Inverse of elligator-like hash to curve.
  *
  * This function writes to the buffer, to make it so that
- * decaf_448_point_from_hash_uniform(buffer) = pt if
+ * goldilocks_448_point_from_hash_uniform(buffer) = pt if
  * possible.  Since there may be multiple preimages, the
  * "which" parameter chooses between them.  To ensure uniform
  * inverse sampling, this function succeeds or fails
@@ -737,29 +737,29 @@ decaf_448_invert_elligator_nonuniform (
  * @retval DECAF_FAILURE The inverse failed.
  */
 decaf_error_t
-decaf_448_invert_elligator_uniform (
-    unsigned char recovered_hash[2*DECAF_448_HASH_BYTES],
-    const decaf_448_point_t pt,
+goldilocks_448_invert_elligator_uniform (
+    unsigned char recovered_hash[2*GOLDILOCKS_448_HASH_BYTES],
+    const goldilocks_448_point_t pt,
     uint32_t which
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_WARN_UNUSED;
 
 /** Securely erase a scalar. */
-void decaf_448_scalar_destroy (
-    decaf_448_scalar_t scalar
+void goldilocks_448_scalar_destroy (
+    goldilocks_448_scalar_t scalar
 ) DECAF_NONNULL DECAF_API_VIS;
 
 /** Securely erase a point by overwriting it with zeros.
  * @warning This causes the point object to become invalid.
  */
-void decaf_448_point_destroy (
-    decaf_448_point_t point
+void goldilocks_448_point_destroy (
+    goldilocks_448_point_t point
 ) DECAF_NONNULL DECAF_API_VIS;
 
 /** Securely erase a precomputed table by overwriting it with zeros.
  * @warning This causes the table object to become invalid.
  */
-void decaf_448_precomputed_destroy (
-    decaf_448_precomputed_s *pre
+void goldilocks_448_precomputed_destroy (
+    goldilocks_448_precomputed_s *pre
 ) DECAF_NONNULL DECAF_API_VIS;
 
 #ifdef __cplusplus

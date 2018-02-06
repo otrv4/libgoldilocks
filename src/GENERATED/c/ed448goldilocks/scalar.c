@@ -16,10 +16,10 @@
 #include <decaf.h>
 
 /* Template stuff */
-#define API_NS(_id) decaf_448_##_id
-#define SCALAR_BITS DECAF_448_SCALAR_BITS
-#define SCALAR_SER_BYTES DECAF_448_SCALAR_BYTES
-#define SCALAR_LIMBS DECAF_448_SCALAR_LIMBS
+#define API_NS(_id) goldilocks_448_##_id
+#define SCALAR_BITS GOLDILOCKS_448_SCALAR_BITS
+#define SCALAR_SER_BYTES GOLDILOCKS_448_SCALAR_BYTES
+#define SCALAR_LIMBS GOLDILOCKS_448_SCALAR_LIMBS
 #define scalar_t API_NS(scalar_t)
 
 static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x3bd440fae918bc5ull;

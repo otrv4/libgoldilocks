@@ -54,7 +54,7 @@ extern "C" {
         #define DECAF_WORD_BITS 32 /**< The number of bits in a word */
     #endif
 #endif
-    
+
 #if DECAF_WORD_BITS == 64
 typedef uint64_t decaf_word_t;      /**< Word size for internal computations */
 typedef int64_t decaf_sword_t;      /**< Signed word size for internal computations */

@@ -19,10 +19,10 @@
 #include <decaf/ed448.h>
 
 /* Template stuff */
-#define API_NS(_id) decaf_448_##_id
-#define SCALAR_BITS DECAF_448_SCALAR_BITS
-#define SCALAR_SER_BYTES DECAF_448_SCALAR_BYTES
-#define SCALAR_LIMBS DECAF_448_SCALAR_LIMBS
+#define API_NS(_id) goldilocks_448_##_id
+#define SCALAR_BITS GOLDILOCKS_448_SCALAR_BITS
+#define SCALAR_SER_BYTES GOLDILOCKS_448_SCALAR_BYTES
+#define SCALAR_LIMBS GOLDILOCKS_448_SCALAR_LIMBS
 #define scalar_t API_NS(scalar_t)
 #define point_t API_NS(point_t)
 #define precomputed_s API_NS(precomputed_s)
@@ -48,7 +48,7 @@ static const scalar_t point_scalarmul_adjustment = {{{
 
 const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] = { 0x05 };
 
-#define RISTRETTO_FACTOR DECAF_448_RISTRETTO_FACTOR
+#define RISTRETTO_FACTOR GOLDILOCKS_448_RISTRETTO_FACTOR
 const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
     0x42ef0f45572736, 0x7bf6aa20ce5296, 0xf4fd6eded26033, 0x968c14ba839a66, 0xb8d54b64a2d780, 0x6aa0a1f1a7b8a5, 0x683bf68d722fa2, 0x22d962fbeb24f7
 )};

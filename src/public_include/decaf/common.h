@@ -54,7 +54,7 @@ extern "C" {
         #define DECAF_WORD_BITS 32 /**< The number of bits in a word */
     #endif
 #endif
-    
+
 #if DECAF_WORD_BITS == 64
 typedef uint64_t decaf_word_t;      /**< Word size for internal computations */
 typedef int64_t decaf_sword_t;      /**< Signed word size for internal computations */
@@ -96,7 +96,7 @@ decaf_successful(decaf_error_t e) {
     decaf_dword_t w = ((decaf_word_t)e) ^  ((decaf_word_t)DECAF_SUCCESS);
     return (w-1)>>DECAF_WORD_BITS;
 }
-    
+
 /** Overwrite data with zeros.  Uses memset_s if available. */
 void decaf_bzero (
     void *data,
@@ -109,9 +109,9 @@ decaf_bool_t decaf_memeq (
     const void *data2,
     size_t size
 ) DECAF_NONNULL DECAF_WARN_UNUSED DECAF_API_VIS;
-    
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-    
+
 #endif /* __DECAF_COMMON_H__ */

@@ -3,7 +3,7 @@
 
 #include <decaf.h>
 
-#define API_NS(_id) decaf_448_##_id
+#define API_NS(_id) goldilocks_448_##_id
 const API_NS(point_t) API_NS(point_base) = {{
 {FIELD_LITERAL(0x0000000000000000,0x0000000000000000,0x0000000000000000,0x0080000000000000,0x00fffffffffffffe,0x00ffffffffffffff,0x00ffffffffffffff,0x007fffffffffffff)},
   {FIELD_LITERAL(0x006079b4dfdd4a64,0x000c1e3ab470a1c8,0x0044d73f48e5199b,0x0050452714141818,0x004c74c393d5242c,0x0024080526437050,0x00d48d06c13078ca,0x008508de14f04286)},
