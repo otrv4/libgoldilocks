@@ -218,7 +218,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
             g = Y^2-a*X^2
             h = Z^2-d*T^2
 
-            inv1 = 1/(e*f*g*h)
+            inv1 = inv0(e*f*g*h)
             z_inv = inv1*e*g # 1 / (f*h)
             t_inv = inv1*f*h
 
@@ -236,7 +236,7 @@ class RistrettoPoint(QuotientEdwardsPoint):
         else:
             foo = Y^2+a*X^2
             bar = X*Y
-            den = 1/(foo*bar)
+            den = inv0(foo*bar)
             if negative(2*bar^2*den): tmp = a*X^2
             else: tmp = Y^2
             s = self.magic*(Z^2-tmp)*foo*den
@@ -524,7 +524,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
             h = Z^2-d*T^2
 
             eim = e*self.isoMagic
-            inv = 1/(eim*g*f*h)
+            inv = inv0(eim*g*f*h)
             fh_inv = eim*g*inv*self.i
 
             if negative(eim*g*fh_inv):
@@ -545,7 +545,7 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         else:
             xy = X*Y
             h = Z^2-d*T^2
-            inv = 1/(xy*h)
+            inv = inv0(xy*h)
             if negative(inv*2*xy^2*self.isoMagic): tmp = Y
             else: tmp = X
             s = tmp^2*h*inv # = X/Y or Y/X, interestingly
@@ -778,11 +778,18 @@ def gangtest(classes,n):
 
 def testDoubleAndEncode(cls,n):
     print "Testing doubleAndEncode on %s" % cls.__name__
+
+    P = cls()
+    for i in xrange(cls.cofactor):
+        Q = P.torque()
+        assert P.doubleAndEncode() == Q.doubleAndEncode()
+        P = Q
+
     for i in xrange(n):
         r1 = randombytes(cls.encLen)
         r2 = randombytes(cls.encLen)
         u = cls.elligator(r1) + cls.elligator(r2)
-        u.doubleAndEncode()
+        assert u.doubleAndEncode() == u.torque().doubleAndEncode()
 
 testDoubleAndEncode(IsoEd448Point,100)
 testDoubleAndEncode(TwistedEd448GoldilocksPoint,100)
