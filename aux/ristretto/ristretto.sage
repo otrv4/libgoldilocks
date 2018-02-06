@@ -115,11 +115,7 @@ class QuotientEdwardsPoint(object):
 
     def torque(self):
         """Apply cofactor group, except keeping the point even"""
-        if self.cofactor == 8:
-            if self.a == -1: return self.__class__(self.y*self.i, self.x*self.i)
-            if self.a ==  1: return self.__class__(-self.y, self.x)
-        else:
-            return self.__class__(-self.x, -self.y)
+        return self.__class__(-self.x, -self.y)
 
     def doubleAndEncodeSpec(self):
         return (self+self).encode()
@@ -178,32 +174,10 @@ class RistrettoPoint(QuotientEdwardsPoint):
         a,d,mneg = self.a,self.d,self.mneg
         x,y,z,t = self.xyzt()
 
-        if self.cofactor==8:
-            u1    = mneg*(z+y)*(z-y)
-            u2    = x*y # = t*z
-            isr   = isqrt(u1*u2^2)
-            i1    = isr*u1 # sqrt(mneg*(z+y)*(z-y))/(x*y)
-            i2    = isr*u2 # 1/sqrt(a*(y+z)*(y-z))
-            z_inv = i1*i2*t # 1/z
-
-            if negative(t*z_inv):
-                if a==-1:
-                    x,y = y*self.i,x*self.i
-                    den_inv = self.magic * i1
-                else:
-                    x,y = -y,x
-                    den_inv = self.i * self.magic * i1
-
-            else:
-                den_inv = i2
-
-            if negative(x*z_inv): y = -y
-            s = (z-y) * den_inv
-        else:
-            num   = mneg*(z+y)*(z-y)
-            isr   = isqrt(num*y^2)
-            if negative(isr^2*num*y*t): y = -y
-            s = isr*y*(z-y)
+        num   = mneg*(z+y)*(z-y)
+        isr   = isqrt(num*y^2)
+        if negative(isr^2*num*y*t): y = -y
+        s = isr*y*(z-y)
 
         return self.gfToBytes(s,mustBePositive=True)
 
@@ -212,34 +186,12 @@ class RistrettoPoint(QuotientEdwardsPoint):
         X,Y,Z,T = self.xyzt()
         a,d,mneg = self.a,self.d,self.mneg
 
-        if self.cofactor==8:
-            e = 2*X*Y
-            f = Z^2+d*T^2
-            g = Y^2-a*X^2
-            h = Z^2-d*T^2
-
-            inv1 = inv0(e*f*g*h)
-            z_inv = inv1*e*g # 1 / (f*h)
-            t_inv = inv1*f*h
-
-            if negative(e*g*z_inv):
-                if a==-1: sqrta = self.i
-                else:     sqrta = -1
-                e,f,g,h = g,h,-e,f*sqrta
-                factor = self.i
-            else:
-                factor = self.magic
-
-            if negative(h*e*z_inv): g=-g
-            s = (h-g)*factor*g*t_inv
-
-        else:
-            foo = Y^2+a*X^2
-            bar = X*Y
-            den = inv0(foo*bar)
-            if negative(2*bar^2*den): tmp = a*X^2
-            else: tmp = Y^2
-            s = self.magic*(Z^2-tmp)*foo*den
+        foo = Y^2+a*X^2
+        bar = X*Y
+        den = inv0(foo*bar)
+        if negative(2*bar^2*den): tmp = a*X^2
+        else: tmp = Y^2
+        s = self.magic*(Z^2-tmp)*foo*den
         return self.gfToBytes(s,mustBePositive=True)
 
     @classmethod
@@ -352,62 +304,23 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         a,d = self.a,self.d
         x,y,z,t = self.xyzt()
 
-        if self.cofactor == 8:
-            # Cofactor 8 version
-            # Simulate IMAGINE_TWIST because that's how libdecaf does it
-            x = self.i*x
-            t = self.i*t
-            a = -a
-            d = -d
+        # Cofactor 4 version
+        num = (x+t)*(x-t)
+        isr = isqrt(num*(a-d)*x^2)
+        ratio = isr*num
+        altx = ratio*self.isoMagic
 
-            # OK, the actual libdecaf code should be here
-            num = (z+y)*(z-y)
-            den = x*y
-            isr = isqrt(num*(a-d)*den^2)
+        neg_altx = negative(altx) != toggle_altx
+        if neg_altx: ratio =- ratio
 
-            iden = isr * den * self.isoMagic # 1/sqrt((z+y)(z-y)) = 1/sqrt(1-Y^2) / z
-            inum = isr * num # sqrt(1-Y^2) * z / xysqrt(a-d) ~ 1/sqrt(1-ax^2)/z
+        tmp = ratio*z - t
+        s = (a-d)*isr*x*tmp
 
-            if negative(iden*inum*self.i*t^2*(d-a)) != toggle_rotation:
-                iden,inum = inum,iden
-                fac = x*sqrt(a)
-                toggle=(a==-1)
-            else:
-                fac = y
-                toggle=False
+        negx = (negative(s) != toggle_s) != neg_altx
+        if negx: m1 = -a*t + x
+        else:    m1 = -a*t - x
 
-            imi = self.isoMagic * self.i
-            altx = inum*t*imi
-            neg_altx = negative(altx) != toggle_altx
-            if neg_altx != toggle: inum =- inum
-
-            tmp = fac*(inum*z + 1)
-            s = iden*tmp*imi
-
-            negm1 = (negative(s) != toggle_s) != neg_altx
-            if negm1: m1 = a*fac + z
-            else:     m1 = a*fac - z
-
-            swap = toggle_s
-
-        else:
-            # Much simpler cofactor 4 version
-            num = (x+t)*(x-t)
-            isr = isqrt(num*(a-d)*x^2)
-            ratio = isr*num
-            altx = ratio*self.isoMagic
-
-            neg_altx = negative(altx) != toggle_altx
-            if neg_altx: ratio =- ratio
-
-            tmp = ratio*z - t
-            s = (a-d)*isr*x*tmp
-
-            negx = (negative(s) != toggle_s) != neg_altx
-            if negx: m1 = -a*t + x
-            else:    m1 = -a*t - x
-
-            swap = toggle_s
+        swap = toggle_s
 
         if negative(s): s = -s
 
@@ -508,47 +421,12 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         X,Y,Z,T = self.xyzt()
         a,d = self.a,self.d
 
-        if self.cofactor == 8:
-            # Cofactor 8 version
-            # Simulate IMAGINE_TWIST because that's how libdecaf does it
-            X = self.i*X
-            T = self.i*T
-            a = -a
-            d = -d
-            # TODO: This is only being called for a=-1, so could
-            # be wrong for a=1
-
-            e = 2*X*Y
-            f = Y^2+a*X^2
-            g = Y^2-a*X^2
-            h = Z^2-d*T^2
-
-            eim = e*self.isoMagic
-            inv = inv0(eim*g*f*h)
-            fh_inv = eim*g*inv*self.i
-
-            if negative(eim*g*fh_inv):
-                idf = g*self.isoMagic*self.i
-                bar = f
-                foo = g
-                test = eim*f
-
-            else:
-                idf = eim
-                bar = h
-                foo = -eim
-                test = g*h
-
-            if negative(test*fh_inv): bar =- bar
-            s = idf*(foo+bar)*inv*f*h
-
-        else:
-            xy = X*Y
-            h = Z^2-d*T^2
-            inv = inv0(xy*h)
-            if negative(inv*2*xy^2*self.isoMagic): tmp = Y
-            else: tmp = X
-            s = tmp^2*h*inv # = X/Y or Y/X, interestingly
+        xy = X*Y
+        h = Z^2-d*T^2
+        inv = inv0(xy*h)
+        if negative(inv*2*xy^2*self.isoMagic): tmp = Y
+        else: tmp = X
+        s = tmp^2*h*inv # = X/Y or Y/X, interestingly
 
         return self.gfToBytes(s,mustBePositive=True)
 
