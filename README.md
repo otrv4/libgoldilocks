@@ -21,13 +21,14 @@ cryptographer for advice.
 * To generate the code based on the curve data and per field: `make gen-code-static`
 * To test the internal test programs: `make test-ct`
 * To test the internal test programs: `make test`
-* To generate the main decaf library, and its symlinks: `make lib`
+* To generate the main decaf library and its symlinks: `make lib`
 
 ## Mailing lists
 
 Because this is new software, please expect it to have bugs, perhaps
 even critical security bugs.  If you are using it, please sign up for
-updates on Mike Hamburg's library:
+updates on Mike Hamburg's library (note here that any update that we consider
+useful for this library from libdecaf will be incorporated):
 
 * Security-critical announcements (very low volume, God willing):
     decaf-security@googlegroups.com, join at https://groups.google.com/forum/#!forum/decaf-security
@@ -38,7 +39,7 @@ updates on Mike Hamburg's library:
 
 ## General elliptic curve operations.
 
-This is a multi-purpose elliptic curve library.  There is a C library,
+This is a multi-purpose elliptic curve library. There is a C library,
 and a set of C++ wrapper headers.  The C++ code consists entirely of
 inline calls, and has no compiled component.
 
@@ -104,6 +105,7 @@ decoder knows which of the two possible y-coordinates is correct because
 of the distinguishing rules.  See the paper for more details.
 
 // TODO: is this going to be up someday?
+
 As of v0.9.4, libdecaf uses the "Ristretto" variant of this encoding.
 See https://www.ristretto.group for details, once that site is up.
 
@@ -116,7 +118,7 @@ files are usable under the MIT license contained in LICENSE.txt.
 ## Caveats
 
 As mentioned in the license, there is absolutely NO WARRANTY on any of this
-code.  This code might well have security-critical bugs despite best efforts.
+code. This code might well have security-critical bugs despite best efforts.
 
 It has been attempted to protect against timing attacks and invalid point
 attacks, but as of yet there is no attempt to protect against power analysis.
