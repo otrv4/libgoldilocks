@@ -509,44 +509,38 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         a,d = self.a,self.d
 
         if self.cofactor == 8:
-            # TODO: optimized version with no isqrt
-            e = 2*X*Y
-            f = Z^2+d*T^2
-            g = Y^2-a*X^2
-            h = Z^2-d*T^2
-            x = e*h
-            y = f*g
-            z = f*h
-            t = e*g
-
             # Cofactor 8 version
             # Simulate IMAGINE_TWIST because that's how libdecaf does it
-            x = self.i*x
-            t = self.i*t
+            X = self.i*X
+            T = self.i*T
             a = -a
             d = -d
+            # TODO: This is only being called for a=-1, so could
+            # be wrong for a=1
 
-            # OK, the actual libdecaf code should be here
-            num = (z+y)*(z-y)
-            den = x*y
-            isr = isqrt(num*(a-d)*den^2)
+            e = 2*X*Y
+            f = Y^2+a*X^2
+            g = Y^2-a*X^2
+            h = Z^2-d*T^2
 
-            iden = isr * den * self.isoMagic
-            inum = isr * num
+            eim = e*self.isoMagic
+            inv = 1/(eim*g*f*h)
+            fh_inv = eim*g*inv*self.i
 
-            if negative(iden*inum*self.i*t^2*(d-a)):
-                iden,inum = inum,iden
-                fac = x*sqrt(a)
-                toggle=(a==-1)
+            if negative(eim*g*fh_inv):
+                idf = g*self.isoMagic*self.i
+                bar = f
+                foo = g
+                test = eim*f
+
             else:
-                fac = y
-                toggle=False
+                idf = eim
+                bar = h
+                foo = -eim
+                test = g*h
 
-            imi = self.isoMagic * self.i
-            if negative(inum*t*imi) != toggle: inum =- inum
-
-            tmp = fac*(inum*z + 1)
-            s = iden*tmp*imi
+            if negative(test*fh_inv): bar =- bar
+            s = idf*(foo+bar)*inv*f*h
 
         else:
             xy = X*Y
