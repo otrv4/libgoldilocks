@@ -38,9 +38,9 @@ static const scalar_t point_scalarmul_adjustment = {{{
 const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] = { $(ser(mont_base,8)) };
 
 #define RISTRETTO_FACTOR $(C_NS)_RISTRETTO_FACTOR
-const gf RISTRETTO_FACTOR = {{{
+const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
     $(ser(msqrt(-d,modulus,hi_bit_clear=True),gf_lit_limb_bits))
-}}};
+)};
 
 #define TWISTED_D ((EDWARDS_D)-1)
 
