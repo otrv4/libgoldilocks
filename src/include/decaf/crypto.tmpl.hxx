@@ -6,5 +6,5 @@
  */
 
 $("\n".join([
-    "#include <decaf/crypto_%s.hxx>" % g for g in sorted([c["bits"] for _,c in curve.items()])
+    "#include <decaf/point_%s.hxx>" % g for g in sorted([c["bits"] for _,c in curve.items()])
 ]))

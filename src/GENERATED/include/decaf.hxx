@@ -15,7 +15,7 @@
 #ifndef __DECAF_HXX__
 #define __DECAF_HXX__ 1
 
-#include <decaf/point_448.hxx>
+#include <decaf/ed448.hxx>
 
 /** Namespace for all C++ decaf objects. */
 namespace decaf {
