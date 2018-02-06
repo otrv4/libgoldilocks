@@ -143,8 +143,8 @@ void $(c_ns)_scalar_add (
  * @brief Compare two scalars.
  * @param [in] a One scalar.
  * @param [in] b Another scalar.
- * @retval DECAF_TRUE The scalars are equal.
- * @retval DECAF_FALSE The scalars are not equal.
+ * @retval GOLDILOCKS_TRUE The scalars are equal.
+ * @retval GOLDILOCKS_FALSE The scalars are not equal.
  */
 decaf_bool_t $(c_ns)_scalar_eq (
     const $(c_ns)_scalar_t a,
@@ -239,7 +239,7 @@ void $(c_ns)_point_encode (
  *
  * @param [out] pt The decoded point.
  * @param [in] ser The serialized version of the point.
- * @param [in] allow_identity DECAF_TRUE if the identity is a legal input.
+ * @param [in] allow_identity GOLDILOCKS_TRUE if the identity is a legal input.
  * @retval DECAF_SUCCESS The decoding succeeded.
  * @retval DECAF_FAILURE The decoding didn't succeed, because
  * ser does not represent a point.
@@ -266,12 +266,12 @@ static inline void DECAF_NONNULL $(c_ns)_point_copy (
 
 /**
  * @brief Test whether two points are equal.  If yes, return
- * DECAF_TRUE, else return DECAF_FALSE.
+ * GOLDILOCKS_TRUE, else return GOLDILOCKS_FALSE.
  *
  * @param [in] a A point.
  * @param [in] b Another point.
- * @retval DECAF_TRUE The points are equal.
- * @retval DECAF_FALSE The points are not equal.
+ * @retval GOLDILOCKS_TRUE The points are equal.
+ * @retval GOLDILOCKS_FALSE The points are not equal.
  */
 decaf_bool_t $(c_ns)_point_eq (
     const $(c_ns)_point_t a,
@@ -587,8 +587,8 @@ void $(c_ns)_scalar_cond_sel (
  * @brief Test that a point is valid, for debugging purposes.
  *
  * @param [in] to_test The point to test.
- * @retval DECAF_TRUE The point is valid.
- * @retval DECAF_FALSE The point is invalid.
+ * @retval GOLDILOCKS_TRUE The point is valid.
+ * @retval GOLDILOCKS_FALSE The point is invalid.
  */
 decaf_bool_t $(c_ns)_point_valid (
     const $(c_ns)_point_t to_test

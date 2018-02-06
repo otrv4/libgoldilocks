@@ -70,12 +70,12 @@ typedef int64_t decaf_dsword_t;     /**< Signed double-word size for internal co
 #else
 #error "Only supporting DECAF_WORD_BITS = 32 or 64 for now"
 #endif
-    
-/** DECAF_TRUE = -1 so that DECAF_TRUE & x = x */
-static const decaf_bool_t DECAF_TRUE = -(decaf_bool_t)1;
 
-/** DECAF_FALSE = 0 so that DECAF_FALSE & x = 0 */
-static const decaf_bool_t DECAF_FALSE = 0;
+/** GOLDILOCKS_TRUE = -1 so that GOLDILOCKS_TRUE & x = x */
+static const decaf_bool_t GOLDILOCKS_TRUE = -(decaf_bool_t)1;
+
+/** GOLDILOCKS_FALSE = 0 so that GOLDILOCKS_FALSE & x = 0 */
+static const decaf_bool_t GOLDILOCKS_FALSE = 0;
 
 /** Another boolean type used to indicate success or failure. */
 typedef enum {
@@ -90,7 +90,7 @@ decaf_succeed_if(decaf_bool_t x) {
     return (decaf_error_t)x;
 }
 
-/** Return DECAF_TRUE iff x == DECAF_SUCCESS */
+/** Return GOLDILOCKS_TRUE iff x == DECAF_SUCCESS */
 static DECAF_INLINE decaf_bool_t
 decaf_successful(decaf_error_t e) {
     decaf_dword_t w = ((decaf_word_t)e) ^  ((decaf_word_t)DECAF_SUCCESS);
@@ -103,7 +103,7 @@ void decaf_bzero (
     size_t size
 ) DECAF_NONNULL DECAF_API_VIS;
 
-/** Compare two buffers, returning DECAF_TRUE if they are equal. */
+/** Compare two buffers, returning GOLDILOCKS_TRUE if they are equal. */
 decaf_bool_t decaf_memeq (
     const void *data1,
     const void *data2,

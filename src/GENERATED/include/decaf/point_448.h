@@ -158,8 +158,8 @@ void goldilocks_448_scalar_add (
  * @brief Compare two scalars.
  * @param [in] a One scalar.
  * @param [in] b Another scalar.
- * @retval DECAF_TRUE The scalars are equal.
- * @retval DECAF_FALSE The scalars are not equal.
+ * @retval GOLDILOCKS_TRUE The scalars are equal.
+ * @retval GOLDILOCKS_FALSE The scalars are not equal.
  */
 decaf_bool_t goldilocks_448_scalar_eq (
     const goldilocks_448_scalar_t a,

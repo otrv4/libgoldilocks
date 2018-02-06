@@ -107,7 +107,7 @@ static void test_cfrg() {
 
 /* Specify the same value as you did when compiling decaf_crypto.c */
 #ifndef DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
-#define DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT DECAF_FALSE
+#define DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT GOLDILOCKS_FALSE
 #endif
 
 static void test_crypto() {

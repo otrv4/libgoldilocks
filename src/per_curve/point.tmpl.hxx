@@ -217,16 +217,16 @@ public:
      */
     inline SecureBuffer direct_scalarmul (
         const FixedBlock<SER_BYTES> &in,
-        decaf_bool_t allow_identity=DECAF_FALSE,
-        decaf_bool_t short_circuit=DECAF_TRUE
+        decaf_bool_t allow_identity=GOLDILOCKS_FALSE,
+        decaf_bool_t short_circuit=GOLDILOCKS_TRUE
     ) const /*throw(CryptoException)*/;
 
     /** Direct scalar multiplication. */
     inline decaf_error_t DECAF_WARN_UNUSED direct_scalarmul_noexcept(
         FixedBuffer<SER_BYTES> &out,
         const FixedBlock<SER_BYTES> &in,
-        decaf_bool_t allow_identity=DECAF_FALSE,
-        decaf_bool_t short_circuit=DECAF_TRUE
+        decaf_bool_t allow_identity=GOLDILOCKS_FALSE,
+        decaf_bool_t short_circuit=GOLDILOCKS_TRUE
     ) const DECAF_NOEXCEPT;
 };
 
@@ -301,11 +301,11 @@ public:
     * The all-zero string maps to the identity.
     *
     * @throw CryptoException the string was the wrong length, or wasn't the encoding of a point,
-    * or was the identity and allow_identity was DECAF_FALSE.
+    * or was the identity and allow_identity was GOLDILOCKS_FALSE.
     */
     inline explicit Point(const FixedBlock<SER_BYTES> &buffer, bool allow_identity=true)
         /*throw(CryptoException)*/ {
-        if (DECAF_SUCCESS != decode(buffer,allow_identity ? DECAF_TRUE : DECAF_FALSE)) {
+        if (DECAF_SUCCESS != decode(buffer,allow_identity ? GOLDILOCKS_TRUE : GOLDILOCKS_FALSE)) {
             throw CryptoException();
         }
     }
@@ -316,12 +316,12 @@ public:
      *
      * @retval DECAF_SUCCESS the string was successfully decoded.
      * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point,
-     * or was the identity and allow_identity was DECAF_FALSE. Contents of the buffer are undefined.
+     * or was the identity and allow_identity was GOLDILOCKS_FALSE. Contents of the buffer are undefined.
      */
     inline decaf_error_t DECAF_WARN_UNUSED decode (
         const FixedBlock<SER_BYTES> &buffer, bool allow_identity=true
     ) DECAF_NOEXCEPT {
-        return $(c_ns)_point_decode(p,buffer.data(),allow_identity ? DECAF_TRUE : DECAF_FALSE);
+        return $(c_ns)_point_decode(p,buffer.data(),allow_identity ? GOLDILOCKS_TRUE : GOLDILOCKS_FALSE);
     }
 
     /**

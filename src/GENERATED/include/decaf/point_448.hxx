@@ -230,16 +230,16 @@ public:
      */
     inline SecureBuffer direct_scalarmul (
         const FixedBlock<SER_BYTES> &in,
-        decaf_bool_t allow_identity=DECAF_FALSE,
-        decaf_bool_t short_circuit=DECAF_TRUE
+        decaf_bool_t allow_identity=GOLDILOCKS_FALSE,
+        decaf_bool_t short_circuit=GOLDILOCKS_TRUE
     ) const /*throw(CryptoException)*/;
 
     /** Direct scalar multiplication. */
     inline decaf_error_t DECAF_WARN_UNUSED direct_scalarmul_noexcept(
         FixedBuffer<SER_BYTES> &out,
         const FixedBlock<SER_BYTES> &in,
-        decaf_bool_t allow_identity=DECAF_FALSE,
-        decaf_bool_t short_circuit=DECAF_TRUE
+        decaf_bool_t allow_identity=GOLDILOCKS_FALSE,
+        decaf_bool_t short_circuit=GOLDILOCKS_TRUE
     ) const DECAF_NOEXCEPT;
 };
 
