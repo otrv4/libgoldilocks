@@ -102,8 +102,11 @@ for curve,data in curve_data.items():
         data["eddsa_sigma_iso"] = 0
 
     if "rist_base_decoded" not in data:
+        def xord(x):
+            if isinstance(x,str): return ord(x)
+            else: return x
         data["rist_base_decoded"] = sum(
-                ord(b)<<(8*i) for i,b in enumerate(unhexlify(data["rist_base"]))
+                xord(b)<<(8*i) for i,b in enumerate(unhexlify(data["rist_base"]))
             )
 
     if "imagine_twist" not in data:
