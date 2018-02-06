@@ -10,6 +10,7 @@ p_tor4 = E.lift_x(-1)
 Tor = [p_tor4 * i for i in xrange(4)]
 q = 2^446-0x8335dc163bb124b65129c96fde933d8d723a70aadc873d6d54a7bb0d
 FQ = GF(q)
+isoMagic = 1/sqrt(F(39082/39081)-1)
 
 passing = True
 
@@ -195,7 +196,16 @@ class DecafScalar():
         return True
 
 class DecafPoint():
-    _UNDER = c_uint64 * int(8*4)
+    @staticmethod
+    def _UNDER():
+        size = int(8*8*4)
+        alignment = 32
+        buf1 = bytearray(size+alignment-1)
+        buf2 = (c_char * int(size+alignment-1)).from_buffer(buf1)
+        raw_addr = addressof(buf2)
+        offset = (-raw_addr) % alignment
+        return (c_char*size).from_buffer(buf2,int(offset))
+
     def __init__(self,cstruct=None,point=None):
         if cstruct is None:
             cstruct = DecafPoint._UNDER()
@@ -224,12 +234,11 @@ class DecafPoint():
     @staticmethod
     def _sage_deser(str):
         s = from_le(str)
-        if s > (F.cardinality()-1)/2: raise Exception("Point didn't decode")
+        if is_odd(s): raise Exception("Point didn't decode")
         if (s==0): return E(0)
         if not E.is_x_coord(s^2): raise Exception("Point didn't decode")
         P = E.lift_x(s^2)
-        t = P.xy()[1] / s
-        if is_odd(int(2*t/s)): P = -P
+        if is_odd(int(2*s^2*isoMagic/P.xy()[1])): P = -P
         return P
 
     def __eq__(self,other):
@@ -322,16 +331,16 @@ class DecafPoint():
         x,y = P.xy()
         s = sqrt(x)
         if s==0: return to_le(0,56)
-        if is_odd(int(2*y/s^2)): s = 1/s
-        if int(s) > (F.cardinality()-1)/2: s = -s
+        if is_odd(int(2*s^2*isoMagic/y)): s = 1/s
+        if is_odd(int(s)): s = -s
         return to_le(s,56)
 
     def _check(self):
         ss = self._sage_ser(self.point)
         cs = self._c_ser(self.cstruct)
         if ss != cs:
-            print ss
-            print cs
+            print "SAGE",b64encode(ss)
+            print "C   ",b64encode(cs)
             raise Exception("Check failed!")
         return True
 
