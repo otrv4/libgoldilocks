@@ -121,6 +121,8 @@ class QuotientEdwardsPoint(object):
         else:
             return self.__class__(-self.x, -self.y)
 
+    def doubleAndEncodeSpec(self):
+        return (self+self).encode()
 
     # Utility functions
     @classmethod
@@ -203,7 +205,41 @@ class RistrettoPoint(QuotientEdwardsPoint):
             if negative(isr^2*num*y*t): y = -y
             s = isr*y*(z-y)
 
+        return self.gfToBytes(s,mustBePositive=True)
 
+    @optimized_version_of("doubleAndEncodeSpec")
+    def doubleAndEncode(self):
+        X,Y,Z,T = self.xyzt()
+        a,d,mneg = self.a,self.d,self.mneg
+
+        if self.cofactor==8:
+            e = 2*X*Y
+            f = Z^2+d*T^2
+            g = Y^2-a*X^2
+            h = Z^2-d*T^2
+
+            inv1 = 1/(e*f*g*h)
+            z_inv = inv1*e*g # 1 / (f*h)
+            t_inv = inv1*f*h
+
+            if negative(e*g*z_inv):
+                if a==-1: sqrta = self.i
+                else:     sqrta = -1
+                e,f,g,h = g,h,-e,f*sqrta
+                factor = self.i
+            else:
+                factor = self.magic
+
+            if negative(h*e*z_inv): g=-g
+            s = (h-g)*factor*g*t_inv
+
+        else:
+            foo = Y^2+a*X^2
+            bar = X*Y
+            den = 1/(foo*bar)
+            if negative(2*bar^2*den): tmp = a*X^2
+            else: tmp = Y^2
+            s = self.magic*(Z^2-tmp)*foo*den
         return self.gfToBytes(s,mustBePositive=True)
 
     @classmethod
@@ -467,6 +503,10 @@ class Decaf_1_1_Point(QuotientEdwardsPoint):
         y = (1-a*s^2) / t
         return cls(x,sgn*y)
 
+    def doubleAndEncode(self):
+        # TODO
+        return self.doubleAndEncodeSpec()
+
     @classmethod
     def elligatorSpec(cls,r0,fromR=False):
         a,d = cls.a,cls.d
@@ -644,7 +684,6 @@ def test(cls,n):
         if Q1 + Q0 != Q2: raise TestFailedException("Scalarmul doesn't work")
         Q = Q1
 
-
 def testElligator(cls,n):
     print "Testing elligator on %s" % cls.__name__
     for i in xrange(n):
@@ -664,9 +703,6 @@ def testElligator(cls,n):
                 #break
         else:
             pass # TODO
-
-
-
 
 def gangtest(classes,n):
     print "Gang test",[cls.__name__ for cls in classes]
@@ -695,11 +731,18 @@ def gangtest(classes,n):
                 print c,binascii.hexlify(ret)
             print
 
+def testDoubleAndEncode(cls,n):
+    print "Testing doubleAndEncode on %s" % cls.__name__
+    for i in xrange(n):
+        r = randombytes(cls.encLen)
+        cls.elligator(r).doubleAndEncode()
 
-test(IsoEd448Point,100)
-test(TwistedEd448GoldilocksPoint,100)
-test(Ed448GoldilocksPoint,100)
-testElligator(IsoEd448Point,100)
-testElligator(Ed448GoldilocksPoint,100)
-testElligator(TwistedEd448GoldilocksPoint,100)
-gangtest([IsoEd448Point,TwistedEd448GoldilocksPoint,Ed448GoldilocksPoint],100)
+testDoubleAndEncode(IsoEd448Point,100)
+testDoubleAndEncode(TwistedEd448GoldilocksPoint,100)
+#test(IsoEd448Point,100)
+#test(TwistedEd448GoldilocksPoint,100)
+#test(Ed448GoldilocksPoint,100)
+#testElligator(IsoEd448Point,100)
+#testElligator(Ed448GoldilocksPoint,100)
+#testElligator(TwistedEd448GoldilocksPoint,100)
+#gangtest([IsoEd448Point,TwistedEd448GoldilocksPoint,Ed448GoldilocksPoint],100)
