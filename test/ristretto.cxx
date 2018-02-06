@@ -13,14 +13,14 @@
 #include <stdio.h>
 using namespace decaf;
 
-inline int hexi(char c) {
+static inline int hexi(char c) {
     if (c >= '0' && c <= '9') return c-'0';
     if (c >= 'a' && c <= 'f') return c-'a'+0xa;
     if (c >= 'A' && c <= 'F') return c-'A'+0xa;
     return -1;
 }
 
-int parsehex(uint8_t *out, size_t sizeof_out, const char *hex) {
+static int parsehex(uint8_t *out, size_t sizeof_out, const char *hex) {
     size_t l = strlen(hex);
     if (l%2 != 0) {
         fprintf(stderr,"String should be hex, but has odd length\n: %s\n", hex);
@@ -43,7 +43,7 @@ int parsehex(uint8_t *out, size_t sizeof_out, const char *hex) {
     return 0;
 }
 
-void printhex(const uint8_t *in, size_t sizeof_in) {
+static void printhex(const uint8_t *in, size_t sizeof_in) {
     for (; sizeof_in > 0; in++,sizeof_in--) {
         printf("%02x",*in);
     }
@@ -55,7 +55,7 @@ static char **g_argv = NULL;
 static int error = 0;
 static int done = 0;
 
-void usage() {
+static void usage() {
     const char *me=g_argv[0];
     if (!me) me = "ristretto";
     for (unsigned i=0; g_argv[0][i]; i++) {
