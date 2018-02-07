@@ -48,7 +48,7 @@ $("extern const uint8_t * const DECAF_ED" + 448 + "_NO_CONTEXT DECAF_API_VIS;\n"
 void decaf_ed448_derive_secret_scalar (
     $(c_ns)_scalar_t secret,
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief EdDSA key generation.  This function uses a different (non-Decaf)
@@ -60,7 +60,7 @@ void decaf_ed448_derive_secret_scalar (
 void decaf_ed448_derive_public_key (
     uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief EdDSA signing.
@@ -202,7 +202,7 @@ goldilocks_error_t decaf_ed448_verify_prehash (
 void $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
     const $(c_ns)_point_t p
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief EdDSA point decoding.  Multiplies by $(C_NS)_EDDSA_DECODE_RATIO,
@@ -216,7 +216,7 @@ void $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa (
 goldilocks_error_t $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio (
     $(c_ns)_point_t p,
     const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief EdDSA to ECDH public key conversion
@@ -232,7 +232,7 @@ goldilocks_error_t $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio (
 void decaf_ed448_convert_public_key_to_x448 (
     uint8_t x[DECAF_X448_PUBLIC_BYTES],
     const uint8_t ed[DECAF_EDDSA_448_PUBLIC_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief EdDSA to ECDH private key conversion
@@ -245,7 +245,7 @@ void decaf_ed448_convert_public_key_to_x448 (
 void decaf_ed448_convert_private_key_to_x448 (
     uint8_t x[DECAF_X448_PRIVATE_BYTES],
     const uint8_t ed[DECAF_EDDSA_448_PRIVATE_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
 
 #ifdef __cplusplus
 } /* extern "C" */

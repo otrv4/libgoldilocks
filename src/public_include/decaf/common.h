@@ -28,7 +28,7 @@ extern "C" {
 #define DECAF_API_VIS __attribute__((visibility("default")))
 #define DECAF_NOINLINE  __attribute__((noinline))
 #define DECAF_WARN_UNUSED __attribute__((warn_unused_result))
-#define DECAF_NONNULL __attribute__((nonnull))
+#define GOLDILOCKS_NONNULL __attribute__((nonnull))
 #define DECAF_INLINE inline __attribute__((always_inline,unused))
 // Cribbed from libnotmuch
 #if defined (__clang_major__) && __clang_major__ >= 3 \
@@ -101,14 +101,14 @@ decaf_successful(goldilocks_error_t e) {
 void decaf_bzero (
     void *data,
     size_t size
-) DECAF_NONNULL DECAF_API_VIS;
+) GOLDILOCKS_NONNULL DECAF_API_VIS;
 
 /** Compare two buffers, returning GOLDILOCKS_TRUE if they are equal. */
 decaf_bool_t decaf_memeq (
     const void *data1,
     const void *data2,
     size_t size
-) DECAF_NONNULL DECAF_WARN_UNUSED DECAF_API_VIS;
+) GOLDILOCKS_NONNULL DECAF_WARN_UNUSED DECAF_API_VIS;
 
 #ifdef __cplusplus
 } /* extern "C" */
