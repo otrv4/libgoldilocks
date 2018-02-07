@@ -23,7 +23,7 @@ static const long NTESTS = 10;
 const char *undef_str = "Valgrind thinks this string is undefined.";
 const Block undef_block(undef_str);
 
-static inline void ignore_result(decaf_error_t x) {
+static inline void ignore_result(goldilocks_error_t x) {
     (void)x;
 }
 

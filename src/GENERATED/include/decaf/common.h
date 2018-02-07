@@ -79,21 +79,21 @@ static const decaf_bool_t GOLDILOCKS_FALSE = 0;
 
 /** Another boolean type used to indicate success or failure. */
 typedef enum {
-    DECAF_SUCCESS = -1, /**< The operation succeeded. */
-    DECAF_FAILURE = 0   /**< The operation failed. */
-} decaf_error_t;
+    GOLDILOCKS_SUCCESS = -1, /**< The operation succeeded. */
+    GOLDILOCKS_FAILURE = 0   /**< The operation failed. */
+} goldilocks_error_t;
 
 
 /** Return success if x is true */
-static DECAF_INLINE decaf_error_t
+static DECAF_INLINE goldilocks_error_t
 decaf_succeed_if(decaf_bool_t x) {
-    return (decaf_error_t)x;
+    return (goldilocks_error_t)x;
 }
 
-/** Return GOLDILOCKS_TRUE iff x == DECAF_SUCCESS */
+/** Return GOLDILOCKS_TRUE iff x == GOLDILOCKS_SUCCESS */
 static DECAF_INLINE decaf_bool_t
-decaf_successful(decaf_error_t e) {
-    decaf_dword_t w = ((decaf_word_t)e) ^  ((decaf_word_t)DECAF_SUCCESS);
+decaf_successful(goldilocks_error_t e) {
+    decaf_dword_t w = ((decaf_word_t)e) ^  ((decaf_word_t)GOLDILOCKS_SUCCESS);
     return (w-1)>>DECAF_WORD_BITS;
 }
 

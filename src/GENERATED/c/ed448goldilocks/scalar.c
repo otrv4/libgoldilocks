@@ -113,7 +113,7 @@ static DECAF_INLINE void sc_montsqr (scalar_t out, const scalar_t a) {
     sc_montmul(out,a,a);
 }
 
-decaf_error_t API_NS(scalar_invert) (
+goldilocks_error_t API_NS(scalar_invert) (
     scalar_t out,
     const scalar_t a
 ) {
@@ -239,7 +239,7 @@ static DECAF_INLINE void scalar_decode_short (
     }
 }
 
-decaf_error_t API_NS(scalar_decode)(
+goldilocks_error_t API_NS(scalar_decode)(
     scalar_t s,
     const unsigned char ser[SCALAR_SER_BYTES]
 ) {

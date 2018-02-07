@@ -151,7 +151,7 @@ public:
                 } else if (elligator) {
                     point = true;
                     b.set_to_hash(Block(tmp,sizeof(tmp))); elligator=false;
-                } else if (DECAF_SUCCESS != b.decode(Block(tmp,sizeof(tmp)))) {
+                } else if (GOLDILOCKS_SUCCESS != b.decode(Block(tmp,sizeof(tmp)))) {
                     fprintf(stderr,"Error: %s isn't in the group\n",g_argv[i]);
                     error = -1;
                 } else {
@@ -174,7 +174,7 @@ public:
             if (einv) {
                 uint8_t buffer[Group::Point::HASH_BYTES];
                 for (int h=0; h<1<<Group::Point::INVERT_ELLIGATOR_WHICH_BITS; h++) {
-                    if (DECAF_SUCCESS == a.invert_elligator(
+                    if (GOLDILOCKS_SUCCESS == a.invert_elligator(
                         Buffer(buffer,sizeof(buffer)), h
                     )) {
                         printhex(buffer,sizeof(buffer));

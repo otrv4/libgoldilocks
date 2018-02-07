@@ -37,14 +37,14 @@ class SpongeRng : public Rng {
 private:
     /** C wrapped object */
     decaf_keccak_prng_t sp;
-    
+
 public:
     /** Deterministic flag.
      * The idea is that DETERMINISTIC is used for testing or for lockstep computations,
      * and NONDETERMINISTIC is used in production.
      */
     enum Deterministic { RANDOM = 0, DETERMINISTIC = 1 };
-    
+
     /** Exception thrown when The RNG fails (to seed itself) */
     class RngException : public std::exception {
     private:
@@ -56,44 +56,44 @@ public:
         const char *what() const DECAF_NOEXCEPT { return what_; } /**< Description of exception. */
         RngException(int err_code, const char *what_) DECAF_NOEXCEPT : what_(what_), err_code(err_code) {} /**< Construct */
     };
-    
+
     /** Initialize, deterministically by default, from block */
     inline SpongeRng( const Block &in, Deterministic det ) {
         decaf_spongerng_init_from_buffer(sp,in.data(),in.size(),(int)det);
     }
-    
+
     /** Initialize, non-deterministically by default, from C/C++ filename */
     inline SpongeRng( const std::string &in = "/dev/urandom", size_t len = 32, Deterministic det = RANDOM )
         /*throw(RngException)*/ {
-        decaf_error_t ret = decaf_spongerng_init_from_file(sp,in.c_str(),len,det);
+        goldilocks_error_t ret = decaf_spongerng_init_from_file(sp,in.c_str(),len,det);
         if (!decaf_successful(ret)) {
             throw RngException(errno, "Couldn't load from file");
         }
     }
-    
+
     /** Stir in new data */
     inline void stir( const Block &data ) DECAF_NOEXCEPT {
         decaf_spongerng_stir(sp,data.data(),data.size());
     }
-    
+
     /** Securely destroy by overwriting state. */
     inline ~SpongeRng() DECAF_NOEXCEPT { decaf_spongerng_destroy(sp); }
-    
+
     using Rng::read;
-    
+
     /** Read data to a buffer. */
     virtual inline void read(Buffer buffer) DECAF_NOEXCEPT
 #if __cplusplus >= 201103L
         final
 #endif
         { decaf_spongerng_next(sp,buffer.data(),buffer.size()); }
-    
+
 private:
     SpongeRng(const SpongeRng &) DECAF_DELETE;
     SpongeRng &operator=(const SpongeRng &) DECAF_DELETE;
 };
 /**@endcond*/
-  
+
 } /* namespace decaf */
 
 #undef DECAF_NOEXCEPT

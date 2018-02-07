@@ -415,10 +415,10 @@ static void test_ec() {
 
         q=p;
         for (int j=1; j<Group::REMOVED_COFACTOR; j<<=1) q = q.times_two();
-        decaf_error_t error = r.decode_like_eddsa_and_mul_by_ratio_noexcept(
+        goldilocks_error_t error = r.decode_like_eddsa_and_mul_by_ratio_noexcept(
             p.mul_by_ratio_and_encode_like_eddsa()
         );
-        if (error != DECAF_SUCCESS) {
+        if (error != GOLDILOCKS_SUCCESS) {
             test.fail();
             printf("    Decode like EdDSA failed.");
         }
@@ -438,8 +438,8 @@ static void test_cfrg_crypto() {
     {
         FixedArrayBuffer<DhLadder::PUBLIC_BYTES> base, out;
         FixedArrayBuffer<DhLadder::PRIVATE_BYTES> s1(rng);
-        decaf_error_t e = DhLadder::shared_secret_noexcept(out,base,s1);
-        if (e != DECAF_FAILURE) {
+        goldilocks_error_t e = DhLadder::shared_secret_noexcept(out,base,s1);
+        if (e != GOLDILOCKS_FAILURE) {
             test.fail();
             printf("    Multiply by 0 didn't give an error\n");
         }

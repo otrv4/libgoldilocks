@@ -252,7 +252,7 @@ void decaf_ed448_sign_prehash (
     decaf_bzero(hash_output,sizeof(hash_output));
 }
 
-decaf_error_t decaf_ed448_verify (
+goldilocks_error_t decaf_ed448_verify (
     const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t *message,
@@ -262,11 +262,11 @@ decaf_error_t decaf_ed448_verify (
     uint8_t context_len
 ) {
     API_NS(point_t) pk_point, r_point;
-    decaf_error_t error = API_NS(point_decode_like_eddsa_and_mul_by_ratio)(pk_point,pubkey);
-    if (DECAF_SUCCESS != error) { return error; }
+    goldilocks_error_t error = API_NS(point_decode_like_eddsa_and_mul_by_ratio)(pk_point,pubkey);
+    if (GOLDILOCKS_SUCCESS != error) { return error; }
 
     error = API_NS(point_decode_like_eddsa_and_mul_by_ratio)(r_point,signature);
-    if (DECAF_SUCCESS != error) { return error; }
+    if (GOLDILOCKS_SUCCESS != error) { return error; }
 
     API_NS(scalar_t) challenge_scalar;
     {
@@ -307,14 +307,14 @@ decaf_error_t decaf_ed448_verify (
 }
 
 
-decaf_error_t decaf_ed448_verify_prehash (
+goldilocks_error_t decaf_ed448_verify_prehash (
     const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const decaf_ed448_prehash_ctx_t hash,
     const uint8_t *context,
     uint8_t context_len
 ) {
-    decaf_error_t ret;
+    goldilocks_error_t ret;
 
     uint8_t hash_output[EDDSA_PREHASH_BYTES];
     {

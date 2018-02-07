@@ -108,11 +108,11 @@ extern const struct goldilocks_448_precomputed_s *goldilocks_448_precomputed_bas
  * @param [in] ser Serialized form of a scalar.
  * @param [out] out Deserialized form.
  *
- * @retval DECAF_SUCCESS The scalar was correctly encoded.
- * @retval DECAF_FAILURE The scalar was greater than the modulus,
+ * @retval GOLDILOCKS_SUCCESS The scalar was correctly encoded.
+ * @retval GOLDILOCKS_FAILURE The scalar was greater than the modulus,
  * and has been reduced modulo that modulus.
  */
-decaf_error_t goldilocks_448_scalar_decode (
+goldilocks_error_t goldilocks_448_scalar_decode (
     goldilocks_448_scalar_t out,
     const unsigned char ser[GOLDILOCKS_448_SCALAR_BYTES]
 ) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
@@ -204,9 +204,9 @@ void goldilocks_448_scalar_halve (
  * @brief Invert a scalar.  When passed zero, return 0.  The input and output may alias.
  * @param [in] a A scalar.
  * @param [out] out 1/a.
- * @return DECAF_SUCCESS The input is nonzero.
+ * @return GOLDILOCKS_SUCCESS The input is nonzero.
  */
-decaf_error_t goldilocks_448_scalar_invert (
+goldilocks_error_t goldilocks_448_scalar_invert (
     goldilocks_448_scalar_t out,
     const goldilocks_448_scalar_t a
 ) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
@@ -255,11 +255,11 @@ void goldilocks_448_point_encode (
  * @param [out] pt The decoded point.
  * @param [in] ser The serialized version of the point.
  * @param [in] allow_identity GOLDILOCKS_TRUE if the identity is a legal input.
- * @retval DECAF_SUCCESS The decoding succeeded.
- * @retval DECAF_FAILURE The decoding didn't succeed, because
+ * @retval GOLDILOCKS_SUCCESS The decoding succeeded.
+ * @retval GOLDILOCKS_FAILURE The decoding didn't succeed, because
  * ser does not represent a point.
  */
-decaf_error_t goldilocks_448_point_decode (
+goldilocks_error_t goldilocks_448_point_decode (
     goldilocks_448_point_t pt,
     const uint8_t ser[GOLDILOCKS_448_SER_BYTES],
     decaf_bool_t allow_identity
@@ -373,11 +373,11 @@ void goldilocks_448_point_scalarmul (
  * @param [in] allow_identity Allow the input to be the identity.
  * @param [in] short_circuit Allow a fast return if the input is illegal.
  *
- * @retval DECAF_SUCCESS The scalarmul succeeded.
- * @retval DECAF_FAILURE The scalarmul didn't succeed, because
+ * @retval GOLDILOCKS_SUCCESS The scalarmul succeeded.
+ * @retval GOLDILOCKS_FAILURE The scalarmul didn't succeed, because
  * base does not represent a point.
  */
-decaf_error_t goldilocks_448_direct_scalarmul (
+goldilocks_error_t goldilocks_448_direct_scalarmul (
     uint8_t scaled[GOLDILOCKS_448_SER_BYTES],
     const uint8_t base[GOLDILOCKS_448_SER_BYTES],
     const goldilocks_448_scalar_t scalar,
@@ -393,11 +393,11 @@ decaf_error_t goldilocks_448_direct_scalarmul (
  * @param [in] base The other party's public key, used as the base of the scalarmul.
  * @param [in] scalar The private scalar to multiply by.
  *
- * @retval DECAF_SUCCESS The scalarmul succeeded.
- * @retval DECAF_FAILURE The scalarmul didn't succeed, because the base
+ * @retval GOLDILOCKS_SUCCESS The scalarmul succeeded.
+ * @retval GOLDILOCKS_FAILURE The scalarmul didn't succeed, because the base
  * point is in a small subgroup.
  */
-decaf_error_t decaf_x448 (
+goldilocks_error_t decaf_x448 (
     uint8_t shared[DECAF_X448_PUBLIC_BYTES],
     const uint8_t base[DECAF_X448_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
@@ -708,10 +708,10 @@ void goldilocks_448_point_from_hash_uniform (
  * @param [in] which A value determining which inverse point
  * to return.
  *
- * @retval DECAF_SUCCESS The inverse succeeded.
- * @retval DECAF_FAILURE The inverse failed.
+ * @retval GOLDILOCKS_SUCCESS The inverse succeeded.
+ * @retval GOLDILOCKS_FAILURE The inverse failed.
  */
-decaf_error_t
+goldilocks_error_t
 goldilocks_448_invert_elligator_nonuniform (
     unsigned char recovered_hash[GOLDILOCKS_448_HASH_BYTES],
     const goldilocks_448_point_t pt,
@@ -733,10 +733,10 @@ goldilocks_448_invert_elligator_nonuniform (
  * @param [in] which A value determining which inverse point
  * to return.
  *
- * @retval DECAF_SUCCESS The inverse succeeded.
- * @retval DECAF_FAILURE The inverse failed.
+ * @retval GOLDILOCKS_SUCCESS The inverse succeeded.
+ * @retval GOLDILOCKS_FAILURE The inverse failed.
  */
-decaf_error_t
+goldilocks_error_t
 goldilocks_448_invert_elligator_uniform (
     unsigned char recovered_hash[2*GOLDILOCKS_448_HASH_BYTES],
     const goldilocks_448_point_t pt,

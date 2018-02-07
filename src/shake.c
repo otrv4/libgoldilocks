@@ -60,7 +60,7 @@ void keccakf(kdomain_t state, uint8_t start_round) {
     uint64_t* a = state->w;
     uint64_t b[5] = {0}, t, u;
     uint8_t x, y, i;
-    
+
     for (i=0; i<25; i++) a[i] = le64toh(a[i]);
 
     for (i = start_round; i < 24; i++) {
@@ -85,7 +85,7 @@ void keccakf(kdomain_t state, uint8_t start_round) {
     for (i=0; i<25; i++) a[i] = htole64(a[i]);
 }
 
-decaf_error_t decaf_sha3_update (
+goldilocks_error_t decaf_sha3_update (
     struct decaf_keccak_sponge_s * __restrict__ decaf_sponge,
     const uint8_t *in,
     size_t len
@@ -107,27 +107,27 @@ decaf_error_t decaf_sha3_update (
             in += cando;
         }
     }
-    return (decaf_sponge->params->flags == FLAG_ABSORBING) ? DECAF_SUCCESS : DECAF_FAILURE;
+    return (decaf_sponge->params->flags == FLAG_ABSORBING) ? GOLDILOCKS_SUCCESS : GOLDILOCKS_FAILURE;
 }
 
-decaf_error_t decaf_sha3_output (
+goldilocks_error_t decaf_sha3_output (
     decaf_keccak_sponge_t decaf_sponge,
     uint8_t * __restrict__ out,
     size_t len
 ) {
-    decaf_error_t ret = DECAF_SUCCESS;
+    goldilocks_error_t ret = GOLDILOCKS_SUCCESS;
     assert(decaf_sponge->params->position < decaf_sponge->params->rate);
     assert(decaf_sponge->params->rate < sizeof(decaf_sponge->state));
-    
+
     if (decaf_sponge->params->max_out != 0xFF) {
         if (decaf_sponge->params->remaining >= len) {
             decaf_sponge->params->remaining -= len;
         } else {
             decaf_sponge->params->remaining = 0;
-            ret = DECAF_FAILURE;
+            ret = GOLDILOCKS_FAILURE;
         }
     }
-    
+
     switch (decaf_sponge->params->flags) {
     case FLAG_SQUEEZING: break;
     case FLAG_ABSORBING:
@@ -142,7 +142,7 @@ decaf_error_t decaf_sha3_output (
     default:
         assert(0);
     }
-    
+
     while (len) {
         size_t cando = decaf_sponge->params->rate - decaf_sponge->params->position;
         uint8_t* state = &decaf_sponge->state->b[decaf_sponge->params->position];
@@ -160,12 +160,12 @@ decaf_error_t decaf_sha3_output (
     return ret;
 }
 
-decaf_error_t decaf_sha3_final (
+goldilocks_error_t decaf_sha3_final (
     decaf_keccak_sponge_t decaf_sponge,
     uint8_t * __restrict__ out,
     size_t len
 ) {
-    decaf_error_t ret = decaf_sha3_output(decaf_sponge,out,len);
+    goldilocks_error_t ret = decaf_sha3_output(decaf_sponge,out,len);
     decaf_sha3_reset(decaf_sponge);
     return ret;
 }
@@ -191,7 +191,7 @@ void decaf_sha3_init (
     decaf_sponge->params->position = 0;
 }
 
-decaf_error_t decaf_sha3_hash (
+goldilocks_error_t decaf_sha3_hash (
     uint8_t *out,
     size_t outlen,
     const uint8_t *in,
@@ -201,7 +201,7 @@ decaf_error_t decaf_sha3_hash (
     decaf_keccak_sponge_t decaf_sponge;
     decaf_sha3_init(decaf_sponge, params);
     decaf_sha3_update(decaf_sponge, in, inlen);
-    decaf_error_t ret = decaf_sha3_output(decaf_sponge, out, outlen);
+    goldilocks_error_t ret = decaf_sha3_output(decaf_sponge, out, outlen);
     decaf_sha3_destroy(decaf_sponge);
     return ret;
 }
@@ -209,7 +209,7 @@ decaf_error_t decaf_sha3_hash (
 #define DEFSHAKE(n) \
     const struct decaf_kparams_s DECAF_SHAKE##n##_params_s = \
         { 0, FLAG_ABSORBING, 200-n/4, 0, 0x1f, 0x80, 0xFF, 0xFF };
-    
+
 #define DEFSHA3(n) \
     const struct decaf_kparams_s DECAF_SHA3_##n##_params_s = \
         { 0, FLAG_ABSORBING, 200-n/4, 0, 0x06, 0x80, n/8, n/8 };

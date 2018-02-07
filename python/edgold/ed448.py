@@ -70,7 +70,7 @@ ed448_sig_t = c_uint8 * DECAF_EDDSA_448_SIGNATURE_BYTES
 
 c_uint8_p = POINTER(c_uint8)
 
-decaf_error_t = c_int
+goldilocks_error_t = c_int
 
 # Data
 try:
@@ -81,7 +81,7 @@ except ValueError:
 funs = {
 	'decaf_ed448_derive_public_key': (None, [ ed448_pubkey_t, ed448_privkey_t]),
 	'decaf_ed448_sign': (None, [ ed448_sig_t, ed448_privkey_t, ed448_pubkey_t, c_uint8_p, c_size_t, c_uint8, c_uint8_p, c_uint8 ]),
-	'decaf_ed448_verify': (decaf_error_t, [ ed448_sig_t, ed448_pubkey_t, c_uint8_p, c_size_t, c_uint8, c_uint8_p, c_uint8 ]),
+	'decaf_ed448_verify': (goldilocks_error_t, [ ed448_sig_t, ed448_pubkey_t, c_uint8_p, c_size_t, c_uint8, c_uint8_p, c_uint8 ]),
 }
 
 for i in funs:

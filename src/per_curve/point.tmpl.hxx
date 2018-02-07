@@ -144,9 +144,9 @@ public:
 
     /**
      * Decode from correct-length little-endian byte sequence.
-     * @return DECAF_FAILURE if the scalar is greater than or equal to the group order q.
+     * @return GOLDILOCKS_FAILURE if the scalar is greater than or equal to the group order q.
      */
-    static inline decaf_error_t DECAF_WARN_UNUSED decode (
+    static inline goldilocks_error_t DECAF_WARN_UNUSED decode (
         Scalar &sc, const FixedBlock<SER_BYTES> buffer
     ) DECAF_NOEXCEPT {
         return $(c_ns)_scalar_decode(sc.s,buffer.data());
@@ -178,15 +178,15 @@ public:
      */
     inline Scalar inverse() const /*throw(CryptoException)*/ {
         Scalar r;
-        if (DECAF_SUCCESS != $(c_ns)_scalar_invert(r.s,s)) {
+        if (GOLDILOCKS_SUCCESS != $(c_ns)_scalar_invert(r.s,s)) {
             throw CryptoException();
         }
         return r;
     }
 
     /** Invert with Fermat's Little Theorem (slow!). If *this == 0, set r=0
-     * and return DECAF_FAILURE. */
-    inline decaf_error_t DECAF_WARN_UNUSED
+     * and return GOLDILOCKS_FAILURE. */
+    inline goldilocks_error_t DECAF_WARN_UNUSED
     inverse_noexcept(Scalar &r) const DECAF_NOEXCEPT {
         return $(c_ns)_scalar_invert(r.s,s);
     }
@@ -222,7 +222,7 @@ public:
     ) const /*throw(CryptoException)*/;
 
     /** Direct scalar multiplication. */
-    inline decaf_error_t DECAF_WARN_UNUSED direct_scalarmul_noexcept(
+    inline goldilocks_error_t DECAF_WARN_UNUSED direct_scalarmul_noexcept(
         FixedBuffer<SER_BYTES> &out,
         const FixedBlock<SER_BYTES> &in,
         decaf_bool_t allow_identity=GOLDILOCKS_FALSE,
@@ -305,7 +305,7 @@ public:
     */
     inline explicit Point(const FixedBlock<SER_BYTES> &buffer, bool allow_identity=true)
         /*throw(CryptoException)*/ {
-        if (DECAF_SUCCESS != decode(buffer,allow_identity ? GOLDILOCKS_TRUE : GOLDILOCKS_FALSE)) {
+        if (GOLDILOCKS_SUCCESS != decode(buffer,allow_identity ? GOLDILOCKS_TRUE : GOLDILOCKS_FALSE)) {
             throw CryptoException();
         }
     }
@@ -314,11 +314,11 @@ public:
      * Initialize from C++ fixed-length byte string.
      * The all-zero string maps to the identity.
      *
-     * @retval DECAF_SUCCESS the string was successfully decoded.
-     * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point,
+     * @retval GOLDILOCKS_SUCCESS the string was successfully decoded.
+     * @return GOLDILOCKS_FAILURE the string was the wrong length, or wasn't the encoding of a point,
      * or was the identity and allow_identity was GOLDILOCKS_FALSE. Contents of the buffer are undefined.
      */
-    inline decaf_error_t DECAF_WARN_UNUSED decode (
+    inline goldilocks_error_t DECAF_WARN_UNUSED decode (
         const FixedBlock<SER_BYTES> &buffer, bool allow_identity=true
     ) DECAF_NOEXCEPT {
         return $(c_ns)_point_decode(p,buffer.data(),allow_identity ? GOLDILOCKS_TRUE : GOLDILOCKS_FALSE);
@@ -328,11 +328,11 @@ public:
      * Initialize from C++ fixed-length byte string, like EdDSA.
      * The all-zero string maps to the identity.
      *
-     * @retval DECAF_SUCCESS the string was successfully decoded.
-     * @return DECAF_FAILURE the string was the wrong length, or wasn't the encoding of a point.
+     * @retval GOLDILOCKS_SUCCESS the string was successfully decoded.
+     * @return GOLDILOCKS_FAILURE the string was the wrong length, or wasn't the encoding of a point.
      * Contents of the point are undefined.
      */
-    inline decaf_error_t DECAF_WARN_UNUSED decode_like_eddsa_and_mul_by_ratio_noexcept (
+    inline goldilocks_error_t DECAF_WARN_UNUSED decode_like_eddsa_and_mul_by_ratio_noexcept (
         const FixedBlock<DECAF_EDDSA_448_PUBLIC_BYTES> &buffer
     ) DECAF_NOEXCEPT {
         return $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio(p,buffer.data());
@@ -346,7 +346,7 @@ public:
     inline void decode_like_eddsa_and_mul_by_ratio(
         const FixedBlock<DECAF_EDDSA_448_PUBLIC_BYTES> &buffer
     ) /*throw(CryptoException)*/ {
-        if (DECAF_SUCCESS != decode_like_eddsa_and_mul_by_ratio_noexcept(buffer)) throw(CryptoException());
+        if (GOLDILOCKS_SUCCESS != decode_like_eddsa_and_mul_by_ratio_noexcept(buffer)) throw(CryptoException());
     }
 
     /** Multiply by EDDSA_ENCODE_RATIO and encode like EdDSA. */
@@ -518,10 +518,10 @@ public:
     }
 
     /**
-     * Modify buffer so that Point::from_hash(Buffer) == *this, and return DECAF_SUCCESS;
-     * or leave buf unmodified and return DECAF_FAILURE.
+     * Modify buffer so that Point::from_hash(Buffer) == *this, and return GOLDILOCKS_SUCCESS;
+     * or leave buf unmodified and return GOLDILOCKS_FAILURE.
      */
-    inline decaf_error_t invert_elligator (
+    inline goldilocks_error_t invert_elligator (
         Buffer buf, uint32_t hint
     ) const DECAF_NOEXCEPT {
         unsigned char buf2[2*HASH_BYTES];
@@ -547,7 +547,7 @@ public:
     inline SecureBuffer steg_encode(Rng &rng, size_t size=STEG_BYTES) const /*throw(std::bad_alloc, LengthException)*/ {
         if (size <= HASH_BYTES + 4 || size > 2*HASH_BYTES) throw LengthException();
         SecureBuffer out(STEG_BYTES);
-        decaf_error_t done;
+        goldilocks_error_t done;
         do {
             rng.read(Buffer(out).slice(HASH_BYTES-4,STEG_BYTES-HASH_BYTES+1));
             uint32_t hint = 0;
@@ -678,14 +678,14 @@ public:
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) /*throw(std::bad_alloc,CryptoException)*/ {
         SecureBuffer out(PUBLIC_BYTES);
-        if (DECAF_SUCCESS != decaf_x448(out.data(), pk.data(), scalar.data())) {
+        if (GOLDILOCKS_SUCCESS != decaf_x448(out.data(), pk.data(), scalar.data())) {
             throw CryptoException();
         }
         return out;
     }
 
     /** Calculate and write into out a shared secret with public key, noexcept version.  */
-    static inline decaf_error_t DECAF_WARN_UNUSED
+    static inline goldilocks_error_t DECAF_WARN_UNUSED
     shared_secret_noexcept (
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PUBLIC_BYTES> &pk,
@@ -752,7 +752,7 @@ inline SecureBuffer $(cxx_ns)::Scalar::direct_scalarmul (
     decaf_bool_t short_circuit
 ) const /*throw(CryptoException)*/ {
     SecureBuffer out($(cxx_ns)::Point::SER_BYTES);
-    if (DECAF_SUCCESS !=
+    if (GOLDILOCKS_SUCCESS !=
         $(c_ns)_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit)
     ) {
         throw CryptoException();
@@ -760,7 +760,7 @@ inline SecureBuffer $(cxx_ns)::Scalar::direct_scalarmul (
     return out;
 }
 
-inline decaf_error_t $(cxx_ns)::Scalar::direct_scalarmul_noexcept (
+inline goldilocks_error_t $(cxx_ns)::Scalar::direct_scalarmul_noexcept (
     FixedBuffer<$(cxx_ns)::Point::SER_BYTES> &out,
     const FixedBlock<$(cxx_ns)::Point::SER_BYTES> &in,
     decaf_bool_t allow_identity,

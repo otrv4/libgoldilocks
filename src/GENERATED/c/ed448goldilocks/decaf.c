@@ -161,7 +161,7 @@ void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
     gf_serialize(ser,s,1);
 }
 
-decaf_error_t API_NS(point_decode) (
+goldilocks_error_t API_NS(point_decode) (
     point_t p,
     const unsigned char ser[SER_BYTES],
     decaf_bool_t allow_identity
@@ -926,7 +926,7 @@ void API_NS(point_cond_sel) (
     constant_time_select(out,a,b,sizeof(point_t),bool_to_mask(pick_b),0);
 }
 
-decaf_error_t API_NS(direct_scalarmul) (
+goldilocks_error_t API_NS(direct_scalarmul) (
     uint8_t scaled[SER_BYTES],
     const uint8_t base[SER_BYTES],
     const scalar_t scalar,
@@ -934,8 +934,8 @@ decaf_error_t API_NS(direct_scalarmul) (
     decaf_bool_t short_circuit
 ) {
     point_t basep;
-    decaf_error_t succ = API_NS(point_decode)(basep, base, allow_identity);
-    if (short_circuit && succ != DECAF_SUCCESS) return succ;
+    goldilocks_error_t succ = API_NS(point_decode)(basep, base, allow_identity);
+    if (short_circuit && succ != GOLDILOCKS_SUCCESS) return succ;
     API_NS(point_cond_sel)(basep, API_NS(point_base), basep, succ);
     API_NS(point_scalarmul)(basep, basep, scalar);
     API_NS(point_encode)(scaled, basep);
@@ -987,7 +987,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
 }
 
 
-decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
+goldilocks_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     point_t p,
     const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) {
@@ -1042,7 +1042,7 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     return decaf_succeed_if(mask_to_bool(succ));
 }
 
-decaf_error_t decaf_x448 (
+goldilocks_error_t decaf_x448 (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t base[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]

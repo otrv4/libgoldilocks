@@ -262,14 +262,14 @@ public:
 /** Verification (i.e. public) EdDSA key, PureEdDSA version. */
 template<class CRTP> class Verification<CRTP,PURE> {
 public:
-    /** Verify a signature, returning DECAF_FAILURE if verification fails */
-    inline decaf_error_t DECAF_WARN_UNUSED verify_noexcept (
+    /** Verify a signature, returning GOLDILOCKS_FAILURE if verification fails */
+    inline goldilocks_error_t DECAF_WARN_UNUSED verify_noexcept (
         const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Block &message,
         const Block &context = NO_CONTEXT()
     ) const /*DECAF_NOEXCEPT*/ {
         if (context.size() > 255) {
-            return DECAF_FAILURE;
+            return GOLDILOCKS_FAILURE;
         }
 
         return decaf_ed448_verify (
@@ -298,7 +298,7 @@ public:
             throw LengthException();
         }
 
-        if (DECAF_SUCCESS != verify_noexcept( sig, message, context )) {
+        if (GOLDILOCKS_SUCCESS != verify_noexcept( sig, message, context )) {
             throw CryptoException();
         }
     }
@@ -308,7 +308,7 @@ public:
 template<class CRTP> class Verification<CRTP,PREHASHED> {
 public:
     /** Verify that a signature is valid for a given prehashed message, given the context. */
-    inline decaf_error_t DECAF_WARN_UNUSED verify_prehashed_noexcept (
+    inline goldilocks_error_t DECAF_WARN_UNUSED verify_prehashed_noexcept (
         const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Prehash &ph
     ) const /*DECAF_NOEXCEPT*/ {
@@ -326,7 +326,7 @@ public:
         const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Prehash &ph
     ) const /*throw(CryptoException)*/ {
-        if (DECAF_SUCCESS != decaf_ed448_verify_prehash (
+        if (GOLDILOCKS_SUCCESS != decaf_ed448_verify_prehash (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
             (const decaf_ed448_prehash_ctx_s*)ph.wrapped,

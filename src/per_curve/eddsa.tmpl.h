@@ -141,7 +141,7 @@ void decaf_ed448_prehash_init (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-decaf_error_t decaf_ed448_verify (
+goldilocks_error_t decaf_ed448_verify (
     const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t *message,
@@ -167,7 +167,7 @@ decaf_error_t decaf_ed448_verify (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-decaf_error_t decaf_ed448_verify_prehash (
+goldilocks_error_t decaf_ed448_verify_prehash (
     const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const decaf_ed448_prehash_ctx_t hash,
@@ -213,7 +213,7 @@ void $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa (
  * @param [out] enc The encoded point.
  * @param [in] p The point.
  */
-decaf_error_t $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio (
+goldilocks_error_t $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio (
     $(c_ns)_point_t p,
     const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;

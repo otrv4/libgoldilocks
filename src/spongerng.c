@@ -142,7 +142,7 @@ void decaf_spongerng_init_from_buffer (
     decaf_spongerng_stir(prng, in, len);
 }
 
-decaf_error_t decaf_spongerng_init_from_file (
+goldilocks_error_t decaf_spongerng_init_from_file (
     decaf_keccak_prng_t prng,
     const char *file,
     size_t len,
@@ -150,17 +150,17 @@ decaf_error_t decaf_spongerng_init_from_file (
 ) {
     decaf_sha3_init(prng->sponge,&DECAF_SHAKE256_params_s);
     prng->sponge->params->remaining = !deterministic; /* A bit of a hack; this param is ignored for SHAKE */
-    if (!len) return DECAF_FAILURE;
+    if (!len) return GOLDILOCKS_FAILURE;
 
     int fd = open(file, O_RDONLY);
-    if (fd < 0) return DECAF_FAILURE;
+    if (fd < 0) return GOLDILOCKS_FAILURE;
 
     uint8_t buffer[128];
     while (len) {
         ssize_t red = read(fd, buffer, (len > sizeof(buffer)) ? sizeof(buffer) : len);
         if (red <= 0) {
             close(fd);
-            return DECAF_FAILURE;
+            return GOLDILOCKS_FAILURE;
         }
         decaf_sha3_update(prng->sponge,buffer,red);
         len -= red;
@@ -169,10 +169,10 @@ decaf_error_t decaf_spongerng_init_from_file (
     const uint8_t nope;
     decaf_spongerng_stir(prng,&nope,0);
 
-    return DECAF_SUCCESS;
+    return GOLDILOCKS_SUCCESS;
 }
 
-decaf_error_t decaf_spongerng_init_from_dev_urandom (
+goldilocks_error_t decaf_spongerng_init_from_dev_urandom (
     decaf_keccak_prng_t decaf_sponge
 ) {
     return decaf_spongerng_init_from_file(decaf_sponge, "/dev/urandom", 64, 0);

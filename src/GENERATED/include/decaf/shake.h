@@ -53,10 +53,10 @@ void decaf_sha3_init (
  * @param [inout] sponge The context.
  * @param [in] in The input data.
  * @param [in] len The input data's length in bytes.
- * @return DECAF_FAILURE if the sponge has already been used for output.
- * @return DECAF_SUCCESS otherwise.
+ * @return GOLDILOCKS_FAILURE if the sponge has already been used for output.
+ * @return GOLDILOCKS_SUCCESS otherwise.
  */
-decaf_error_t decaf_sha3_update (
+goldilocks_error_t decaf_sha3_update (
     struct decaf_keccak_sponge_s * __restrict__ sponge,
     const uint8_t *in,
     size_t len
@@ -70,10 +70,10 @@ decaf_error_t decaf_sha3_update (
  * @param [inout] sponge The context.
  * @param [out] out The output data.
  * @param [in] len The requested output data length in bytes.
- * @return DECAF_FAILURE if the sponge has exhausted its output capacity.
- * @return DECAF_SUCCESS otherwise.
- */  
-decaf_error_t decaf_sha3_output (
+ * @return GOLDILOCKS_FAILURE if the sponge has exhausted its output capacity.
+ * @return GOLDILOCKS_SUCCESS otherwise.
+ */
+goldilocks_error_t decaf_sha3_output (
     decaf_keccak_sponge_t sponge,
     uint8_t * __restrict__ out,
     size_t len
@@ -86,8 +86,8 @@ decaf_error_t decaf_sha3_output (
  * @param [inout] sponge The context.
  * @param [out] out The output data.
  * @param [in] len The requested output data length in bytes.
- */  
-decaf_error_t decaf_sha3_final (
+ */
+goldilocks_error_t decaf_sha3_final (
     decaf_keccak_sponge_t sponge,
     uint8_t * __restrict__ out,
     size_t len
@@ -97,7 +97,7 @@ decaf_error_t decaf_sha3_final (
  * @brief Reset the sponge to the empty string.
  *
  * @param [inout] sponge The context.
- */  
+ */
 void decaf_sha3_reset (
     decaf_keccak_sponge_t sponge
 ) DECAF_API_VIS;
@@ -107,7 +107,7 @@ void decaf_sha3_reset (
  * for the purpose of C++ default operators.
  *
  * Returns n/8 for DECAF_SHA3-n and 2n/8 for DECAF_SHAKE-n.
- */  
+ */
 size_t decaf_sha3_default_output_bytes (
     const decaf_keccak_sponge_t sponge /**< [inout] The context. */
 ) DECAF_API_VIS;
@@ -117,7 +117,7 @@ size_t decaf_sha3_default_output_bytes (
  * for the purpose of C++ default operators.
  *
  * Returns n/8 for DECAF_SHA3-n and SIZE_MAX for DECAF_SHAKE-n.
- */  
+ */
 size_t decaf_sha3_max_output_bytes (
     const decaf_keccak_sponge_t sponge /**< [inout] The context. */
 ) DECAF_API_VIS;
@@ -125,7 +125,7 @@ size_t decaf_sha3_max_output_bytes (
 /**
  * @brief Destroy a DECAF_SHA3 or DECAF_SHAKE sponge context by overwriting it with 0.
  * @param [out] sponge The context.
- */  
+ */
 void decaf_sha3_destroy (
     decaf_keccak_sponge_t sponge
 ) DECAF_API_VIS;
@@ -137,8 +137,8 @@ void decaf_sha3_destroy (
  * @param [out] out A buffer for the output data.
  * @param [in] outlen The length of the output data.
  * @param [in] params The parameters of the sponge hash.
- */  
-decaf_error_t decaf_sha3_hash (
+ */
+goldilocks_error_t decaf_sha3_hash (
     uint8_t *out,
     size_t outlen,
     const uint8_t *in,
@@ -158,7 +158,7 @@ decaf_error_t decaf_sha3_hash (
     static inline void DECAF_NONNULL decaf_shake##n##_gen_init(decaf_keccak_sponge_t sponge) { \
         decaf_sha3_init(sponge, &DECAF_SHAKE##n##_params_s); \
     } \
-    static inline decaf_error_t DECAF_NONNULL decaf_shake##n##_update(decaf_shake##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
+    static inline goldilocks_error_t DECAF_NONNULL decaf_shake##n##_update(decaf_shake##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
         return decaf_sha3_update(sponge->s, in, inlen); \
     } \
     static inline void  DECAF_NONNULL decaf_shake##n##_final(decaf_shake##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
@@ -184,18 +184,18 @@ decaf_error_t decaf_sha3_hash (
     static inline void DECAF_NONNULL decaf_sha3_##n##_gen_init(decaf_keccak_sponge_t sponge) { \
         decaf_sha3_init(sponge, &DECAF_SHA3_##n##_params_s); \
     } \
-    static inline decaf_error_t DECAF_NONNULL decaf_sha3_##n##_update(decaf_sha3_##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
+    static inline goldilocks_error_t DECAF_NONNULL decaf_sha3_##n##_update(decaf_sha3_##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
         return decaf_sha3_update(sponge->s, in, inlen); \
     } \
-    static inline decaf_error_t DECAF_NONNULL decaf_sha3_##n##_final(decaf_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
-        decaf_error_t ret = decaf_sha3_output(sponge->s, out, outlen); \
+    static inline goldilocks_error_t DECAF_NONNULL decaf_sha3_##n##_final(decaf_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
+        goldilocks_error_t ret = decaf_sha3_output(sponge->s, out, outlen); \
         decaf_sha3_init(sponge->s, &DECAF_SHA3_##n##_params_s); \
         return ret; \
     } \
-    static inline decaf_error_t DECAF_NONNULL decaf_sha3_##n##_output(decaf_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
+    static inline goldilocks_error_t DECAF_NONNULL decaf_sha3_##n##_output(decaf_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
         return decaf_sha3_output(sponge->s, out, outlen); \
     } \
-    static inline decaf_error_t DECAF_NONNULL decaf_sha3_##n##_hash(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen) { \
+    static inline goldilocks_error_t DECAF_NONNULL decaf_sha3_##n##_hash(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen) { \
         return decaf_sha3_hash(out,outlen,in,inlen,&DECAF_SHA3_##n##_params_s); \
     } \
     static inline void DECAF_NONNULL decaf_sha3_##n##_destroy(decaf_sha3_##n##_ctx_t sponge) { \
@@ -215,5 +215,5 @@ DECAF_DEC_SHA3(512)
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-    
+
 #endif /* __DECAF_SHAKE_H__ */

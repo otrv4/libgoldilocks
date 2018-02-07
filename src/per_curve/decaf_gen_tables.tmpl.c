@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
 
     API_NS(point_t) real_point_base;
     int ret = API_NS(point_decode)(real_point_base,base_point_ser_for_pregen,0);
-    if (ret != DECAF_SUCCESS) {
+    if (ret != GOLDILOCKS_SUCCESS) {
         fprintf(stderr, "Can't decode base point!\n");
         return 1;
     }

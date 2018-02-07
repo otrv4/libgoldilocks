@@ -107,7 +107,7 @@ void API_NS(point_from_hash_uniform) (
  */
 #define MAX(A,B) (((A)>(B)) ? (A) : (B))
 
-decaf_error_t
+goldilocks_error_t
 API_NS(invert_elligator_nonuniform) (
     unsigned char recovered_hash[SER_BYTES],
     const point_t p,
@@ -153,7 +153,7 @@ API_NS(invert_elligator_nonuniform) (
     return decaf_succeed_if(mask_to_bool(succ));
 }
 
-decaf_error_t
+goldilocks_error_t
 API_NS(invert_elligator_uniform) (
     unsigned char partial_hash[2*SER_BYTES],
     const point_t p,
