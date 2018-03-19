@@ -36,3 +36,4 @@ src/GENERATED/c/ed448goldilocks/.dirstamp
 src/GENERATED/c/p448/.dirstamp
 src/p448/.dirstamp
 src/p448/arch_x86_64/.dirstamp
+build/
