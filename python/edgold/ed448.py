@@ -51,22 +51,22 @@ try:
 	_dname = os.path.dirname(__file__)
 	if not _dname:
 		_dname = '.'
-	_path = os.path.join(_dname, 'libdecaf.so')
-	decaf = CDLL(_path)
+	_path = os.path.join(_dname, 'libgoldilocks.so')
+	goldilocks = CDLL(_path)
 except OSError as e: # pragma: no cover
 	import warnings
-	warnings.warn('libdecaf.so not installed.')
+	warnings.warn('libgoldilocks.so not installed.')
 	raise ImportError(str(e))
 
-DECAF_EDDSA_448_PUBLIC_BYTES = 57
-DECAF_EDDSA_448_PRIVATE_BYTES = DECAF_EDDSA_448_PUBLIC_BYTES
-DECAF_EDDSA_448_SIGNATURE_BYTES = DECAF_EDDSA_448_PUBLIC_BYTES + DECAF_EDDSA_448_PRIVATE_BYTES
+GOLDILOCKS_EDDSA_448_PUBLIC_BYTES = 57
+GOLDILOCKS_EDDSA_448_PRIVATE_BYTES = GOLDILOCKS_EDDSA_448_PUBLIC_BYTES
+GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES = GOLDILOCKS_EDDSA_448_PUBLIC_BYTES + GOLDILOCKS_EDDSA_448_PRIVATE_BYTES
 
 # Types
 
-ed448_pubkey_t = c_uint8 * DECAF_EDDSA_448_PUBLIC_BYTES
-ed448_privkey_t = c_uint8 * DECAF_EDDSA_448_PRIVATE_BYTES
-ed448_sig_t = c_uint8 * DECAF_EDDSA_448_SIGNATURE_BYTES
+ed448_pubkey_t = c_uint8 * GOLDILOCKS_EDDSA_448_PUBLIC_BYTES
+ed448_privkey_t = c_uint8 * GOLDILOCKS_EDDSA_448_PRIVATE_BYTES
+ed448_sig_t = c_uint8 * GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES
 
 c_uint8_p = POINTER(c_uint8)
 
@@ -74,18 +74,18 @@ goldilocks_error_t = c_int
 
 # Data
 try:
-	DECAF_ED448_NO_CONTEXT = POINTER(c_uint8).in_dll(decaf, 'DECAF_ED448_NO_CONTEXT')
+	GOLDILOCKS_ED448_NO_CONTEXT = POINTER(c_uint8).in_dll(goldilocks, 'GOLDILOCKS_ED448_NO_CONTEXT')
 except ValueError:
-	DECAF_ED448_NO_CONTEXT = None
+	GOLDILOCKS_ED448_NO_CONTEXT = None
 
 funs = {
-	'decaf_ed448_derive_public_key': (None, [ ed448_pubkey_t, ed448_privkey_t]),
-	'decaf_ed448_sign': (None, [ ed448_sig_t, ed448_privkey_t, ed448_pubkey_t, c_uint8_p, c_size_t, c_uint8, c_uint8_p, c_uint8 ]),
-	'decaf_ed448_verify': (goldilocks_error_t, [ ed448_sig_t, ed448_pubkey_t, c_uint8_p, c_size_t, c_uint8, c_uint8_p, c_uint8 ]),
+	'goldilocks_ed448_derive_public_key': (None, [ ed448_pubkey_t, ed448_privkey_t]),
+	'goldilocks_ed448_sign': (None, [ ed448_sig_t, ed448_privkey_t, ed448_pubkey_t, c_uint8_p, c_size_t, c_uint8, c_uint8_p, c_uint8 ]),
+	'goldilocks_ed448_verify': (goldilocks_error_t, [ ed448_sig_t, ed448_pubkey_t, c_uint8_p, c_size_t, c_uint8, c_uint8_p, c_uint8 ]),
 }
 
 for i in funs:
-	f = getattr(decaf, i)
+	f = getattr(goldilocks, i)
 	f.restype, f.argtypes = funs[i]
 
 def _makeba(s):
@@ -103,12 +103,12 @@ def _makestr(a):
 
 
 def _ed448_privkey():
-	return _makeba(os.urandom(DECAF_EDDSA_448_PRIVATE_BYTES))
+	return _makeba(os.urandom(GOLDILOCKS_EDDSA_448_PRIVATE_BYTES))
 
 class EDDSA448(object):
-	_PUBLIC_SIZE = DECAF_EDDSA_448_PUBLIC_BYTES
-	_PRIVATE_SIZE = DECAF_EDDSA_448_PRIVATE_BYTES
-	_SIG_SIZE = DECAF_EDDSA_448_SIGNATURE_BYTES
+	_PUBLIC_SIZE = GOLDILOCKS_EDDSA_448_PUBLIC_BYTES
+	_PRIVATE_SIZE = GOLDILOCKS_EDDSA_448_PRIVATE_BYTES
+	_SIG_SIZE = GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES
 
 	def __init__(self, priv=None, pub=None):
 		'''Generate a new sign or verify object.  At least one
@@ -134,7 +134,7 @@ class EDDSA448(object):
 
 		if self._priv is not None and pub is None:
 			self._pub = ed448_pubkey_t()
-			decaf.decaf_ed448_derive_public_key(self._pub, self._priv)
+			goldilocks.goldilocks_ed448_derive_public_key(self._pub, self._priv)
 		else:
 			self._pub = _makeba(pub)
 
@@ -176,7 +176,7 @@ class EDDSA448(object):
 	@staticmethod
 	def _makectxargs(ctx):
 		if ctx is None:
-			ctxargs = (DECAF_ED448_NO_CONTEXT, 0)
+			ctxargs = (GOLDILOCKS_ED448_NO_CONTEXT, 0)
 		else:
 			ctxargs = (_makeba(ctx), len(ctx))
 
@@ -187,7 +187,7 @@ class EDDSA448(object):
 
 		sig = ed448_sig_t()
 		ctxargs = self._makectxargs(ctx)
-		decaf.decaf_ed448_sign(sig, self._priv, self._pub, _makeba(msg), len(msg), 0, *ctxargs)
+		goldilocks.goldilocks_ed448_sign(sig, self._priv, self._pub, _makeba(msg), len(msg), 0, *ctxargs)
 
 		return _makestr(sig)
 
@@ -197,7 +197,7 @@ class EDDSA448(object):
 		_sig = ed448_sig_t()
 		_sig[:] = array.array('B', sig)
 		ctxargs = self._makectxargs(ctx)
-		if not decaf.decaf_ed448_verify(_sig, self._pub, _makeba(msg), len(msg), 0, *ctxargs):
+		if not goldilocks.goldilocks_ed448_verify(_sig, self._pub, _makeba(msg), len(msg), 0, *ctxargs):
 			raise ValueError('signature is not valid')
 
 def generate(curve='ed448'):
@@ -240,14 +240,14 @@ class TestEd448(unittest.TestCase):
 		self.assertRaises(ValueError, key.export_key, 'PEM')
 
 	def test_keyimportexport(self):
-		privkey = b'1' * DECAF_EDDSA_448_PRIVATE_BYTES
+		privkey = b'1' * GOLDILOCKS_EDDSA_448_PRIVATE_BYTES
 		key = EDDSA448(privkey)
 
 		self.assertEqual(key.export_key(format='raw'), privkey)
 
-		key = EDDSA448(pub=b'1' * DECAF_EDDSA_448_PUBLIC_BYTES)
+		key = EDDSA448(pub=b'1' * GOLDILOCKS_EDDSA_448_PUBLIC_BYTES)
 
-		self.assertRaises(ValueError, EDDSA448, priv=u'1' * DECAF_EDDSA_448_PRIVATE_BYTES)
+		self.assertRaises(ValueError, EDDSA448, priv=u'1' * GOLDILOCKS_EDDSA_448_PRIVATE_BYTES)
 
 	def test_sig(self):
 		key = generate()
@@ -291,16 +291,16 @@ class TestBasicLib(unittest.TestCase):
 		priv = _ed448_privkey()
 		pub = ed448_pubkey_t()
 
-		decaf.decaf_ed448_derive_public_key(pub, priv)
+		goldilocks.goldilocks_ed448_derive_public_key(pub, priv)
 
 		message = b'this is a test message'
 
 		sig = ed448_sig_t()
-		decaf.decaf_ed448_sign(sig, priv, pub, _makeba(message), len(message), 0, None, 0)
+		goldilocks.goldilocks_ed448_sign(sig, priv, pub, _makeba(message), len(message), 0, None, 0)
 
-		r = decaf.decaf_ed448_verify(sig, pub, _makeba(message), len(message), 0, None, 0)
+		r = goldilocks.goldilocks_ed448_verify(sig, pub, _makeba(message), len(message), 0, None, 0)
 		self.assertTrue(r)
 
 		message = b'aofeijseflj'
-		r = decaf.decaf_ed448_verify(sig, pub, _makeba(message), len(message), 0, None, 0)
+		r = goldilocks.goldilocks_ed448_verify(sig, pub, _makeba(message), len(message), 0, None, 0)
 		self.assertFalse(r)

@@ -10,7 +10,7 @@ class my_build(build):
         build.run(self)
         if not self.dry_run:
             os.spawnlp(os.P_WAIT, 'sh', 'sh', '-c', 'cd .. && gmake lib')
-            self.copy_file(os.path.join('..', 'build', 'lib', 'libdecaf.so'), os.path.join(self.build_lib, 'edgold'))
+            self.copy_file(os.path.join('..', 'build', 'lib', 'libgoldilocks.so'), os.path.join(self.build_lib, 'edgold'))
 
 cmdclass = {}
 cmdclass['build'] = my_build
