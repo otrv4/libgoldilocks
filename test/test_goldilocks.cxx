@@ -1,5 +1,5 @@
 /**
- * @file test_decaf.cxx
+ * @file test_goldilocks.cxx
  * @author Mike Hamburg
  *
  * @copyright
@@ -9,13 +9,13 @@
  * @brief C++ tests, because that's easier.
  */
 
-#include <decaf.hxx>
-#include <decaf/spongerng.hxx>
-#include <decaf/eddsa.hxx>
-#include <decaf/shake.hxx>
+#include <goldilocks.hxx>
+#include <goldilocks/spongerng.hxx>
+#include <goldilocks/eddsa.hxx>
+#include <goldilocks/shake.hxx>
 #include <stdio.h>
 
-using namespace decaf;
+using namespace goldilocks;
 
 static bool passing = true;
 static const long NTESTS = 10000;
@@ -143,8 +143,8 @@ static void test_arithmetic() {
 
     Test test("Arithmetic");
     Scalar x(0),y(0),z(0);
-    arith_check(test,x,y,z,INT_MAX,(decaf_word_t)INT_MAX,"cast from max");
-    arith_check(test,x,y,z,INT_MIN,-Scalar(1+(decaf_word_t)INT_MAX),"cast from min");
+    arith_check(test,x,y,z,INT_MAX,(goldilocks_word_t)INT_MAX,"cast from max");
+    arith_check(test,x,y,z,INT_MIN,-Scalar(1+(goldilocks_word_t)INT_MAX),"cast from min");
 
     for (int i=0; i<NTESTS*10 && test.passing_now; i++) {
         size_t sob = i % (2*Group::Scalar::SER_BYTES);
@@ -237,8 +237,8 @@ static void test_elligator() {
             if (len > Point::HASH_BYTES)
                 memcpy(&(*alts2[j])[Point::HASH_BYTES], &b1[Point::HASH_BYTES], len-Point::HASH_BYTES);
 
-            successes[j]  = decaf_successful( s.invert_elligator(*alts[j], j));
-            successes2[j] = decaf_successful(ss.invert_elligator(*alts2[j],j));
+            successes[j]  = goldilocks_successful( s.invert_elligator(*alts[j], j));
+            successes2[j] = goldilocks_successful(ss.invert_elligator(*alts2[j],j));
 
             if (successes[j] != successes2[j]
                 || (successes[j] && successes2[j] && *alts[j] != *alts2[j])
@@ -632,7 +632,7 @@ static void test_dalek_vectors() {
     Test test("Test vectors from Dalek");
     Point p = Point::base(), q;
     for (int i=0; i<base_multiples<Group>::count; i++) {
-        if (!decaf_memeq(q.serialize().data(),base_multiples<Group>::values[i],Point::SER_BYTES)) {
+        if (!goldilocks_memeq(q.serialize().data(),base_multiples<Group>::values[i],Point::SER_BYTES)) {
             test.fail();
             printf("    Failed test vector for %d * base point.\n", i);
         }

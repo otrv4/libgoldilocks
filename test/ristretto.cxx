@@ -9,9 +9,9 @@
  * @brief Ristretto implementation widget
  */
 
-#include <decaf.hxx>
+#include <goldilocks.hxx>
 #include <stdio.h>
-using namespace decaf;
+using namespace goldilocks;
 
 static inline int hexi(char c) {
     if (c >= '0' && c <= '9') return c-'0';

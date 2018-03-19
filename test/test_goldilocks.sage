@@ -1,7 +1,7 @@
 from ctypes import *
 from base64 import *
 
-DECAF = CDLL("build/lib/libdecaf.so")
+DECAF = CDLL("build/lib/libgoldilocks.so")
 
 F = GF(2^448-2^224-1)
 d = -39081
@@ -32,10 +32,10 @@ def youfail(why,n):
 
 def run_test(i):
     try:
-        s = DecafScalar.random()
-        t = DecafScalar.random()
-        p = DecafPoint.random()
-        q = DecafPoint.random()
+        s = GoldilocksScalar.random()
+        t = GoldilocksScalar.random()
+        p = GoldilocksPoint.random()
+        q = GoldilocksPoint.random()
         s*p + t*q
         if s*(t*p) != (s*t)*p:
             raise Exception("Mul doesn't work")
@@ -55,13 +55,13 @@ def to_le(x,n):
         raise Exception("Integer too big in to_le(%d,%d)" % (x,n))
     return "".join([chr(x>>(8*i) & 255) for i in xrange(n)])
 
-class DecafScalar():
+class GoldilocksScalar():
     _UNDER = c_uint64 * int(7)
     def __init__(self,cstruct=None,scalar=None):
         if cstruct is None:
-            cstruct = DecafScalar._UNDER()
+            cstruct = GoldilocksScalar._UNDER()
             memmove(addressof(cstruct),
-                DECAF.decaf_448_scalar_zero,
+                GOLDILOCKS.goldilocks_448_scalar_zero,
                 8*7
             )
         if scalar is None:
@@ -74,8 +74,8 @@ class DecafScalar():
     @staticmethod
     def _c_deser(str):
         buffer = (c_uint8*int(56)).from_buffer_copy(str)
-        cstruct = DecafScalar._UNDER()
-        ret = DECAF.decaf_448_scalar_decode(cstruct,buffer,c_uint64(-1))
+        cstruct = GoldilocksScalar._UNDER()
+        ret = GOLDILOCKS.goldilocks_448_scalar_decode(cstruct,buffer,c_uint64(-1))
         if ret != -1:
             raise Exception("scalar didn't decode")
         return cstruct
@@ -87,7 +87,7 @@ class DecafScalar():
         return FQ(s)
 
     def __eq__(self,other):
-        csays = bool(DECAF.decaf_448_scalar_eq(self.cstruct,other.cstruct))
+        csays = bool(GOLDILOCKS.goldilocks_448_scalar_eq(self.cstruct,other.cstruct))
         sagesays = any([self.scalar == other.scalar + t for t in Tor])
         if csays != sagesays:
             raise Exception("C and SAGE don't agree: %d %d" % (csays, sagesays))
@@ -97,46 +97,46 @@ class DecafScalar():
         return not self==other
 
     def __add__(self,other):
-        cstruct = DecafScalar._UNDER()
-        DECAF.decaf_448_scalar_add(cstruct,self.cstruct,other.cstruct)
-        return DecafScalar(cstruct,self.scalar + other.scalar)
+        cstruct = GoldilocksScalar._UNDER()
+        GOLDILOCKS.goldilocks_448_scalar_add(cstruct,self.cstruct,other.cstruct)
+        return GoldilocksScalar(cstruct,self.scalar + other.scalar)
 
     def __sub__(self,other):
-        cstruct = DecafScalar._UNDER()
-        DECAF.decaf_448_scalar_sub(cstruct,self.cstruct,other.cstruct)
-        return DecafScalar(cstruct,self.scalar - other.scalar)
+        cstruct = GoldilocksScalar._UNDER()
+        GOLDILOCKS.goldilocks_448_scalar_sub(cstruct,self.cstruct,other.cstruct)
+        return GoldilocksScalar(cstruct,self.scalar - other.scalar)
 
     def __mul__(self,other):
-        if isinstance(other,DecafScalar):
-            cstruct = DecafScalar._UNDER()
-            DECAF.decaf_448_scalar_mul(cstruct,self.cstruct,other.cstruct)
-            return DecafScalar(cstruct,self.scalar * other.scalar)
-        elif isinstance(other,DecafPoint):
-            cstruct = DecafPoint._UNDER()
-            DECAF.decaf_448_point_scalarmul(cstruct,other.cstruct,self.cstruct)
-            return DecafPoint(cstruct,int(self.scalar) * other.point)
+        if isinstance(other,GoldilocksScalar):
+            cstruct = GoldilocksScalar._UNDER()
+            GOLDILOCKS.goldilocks_448_scalar_mul(cstruct,self.cstruct,other.cstruct)
+            return GoldilocksScalar(cstruct,self.scalar * other.scalar)
+        elif isinstance(other,GoldilocksPoint):
+            cstruct = GoldilocksPoint._UNDER()
+            GOLDILOCKS.goldilocks_448_point_scalarmul(cstruct,other.cstruct,self.cstruct)
+            return GoldilocksPoint(cstruct,int(self.scalar) * other.point)
         else: raise Exception("Nope")
 
     def __div__(self,other):
         return self / other.inverse()
 
     def inverse(self):
-        cstruct = DecafScalar._UNDER()
-        z = DECAF.decaf_448_scalar_invert(cstruct,self.cstruct)
+        cstruct = GoldilocksScalar._UNDER()
+        z = GOLDILOCKS.goldilocks_448_scalar_invert(cstruct,self.cstruct)
         if bool(z) != (self.scalar == 0):
             raise Exception("C and SAGE don't agree")
-        return DecafScalar(cstruct,1/self.scalar)
+        return GoldilocksScalar(cstruct,1/self.scalar)
 
     def __neg__(self):
-        cstruct = DecafScalar._UNDER()
-        DECAF.decaf_448_scalar_negate(cstruct,self.cstruct)
-        return DecafScalar(cstruct,-self.scalar)
+        cstruct = GoldilocksScalar._UNDER()
+        GOLDILOCKS.goldilocks_448_scalar_negate(cstruct,self.cstruct)
+        return GoldilocksScalar(cstruct,-self.scalar)
 
     def __str__(self):
         return " ".join(["%02x"%ord(b) for b in self.ser()])
 
     def __repr__(self):
-        return "DecafScalar.fromInt(%d)" % self.scalar
+        return "GoldilocksScalar.fromInt(%d)" % self.scalar
 
     @classmethod
     def fromInt(cls,i):
@@ -175,7 +175,7 @@ class DecafScalar():
     @staticmethod
     def _c_ser(cstruct):
         buffer = (c_uint8*int(56))()
-        DECAF.decaf_448_scalar_encode(buffer,cstruct)
+        GOLDILOCKS.goldilocks_448_scalar_encode(buffer,cstruct)
         return str(bytearray(buffer))
 
     def ser(self):
@@ -194,7 +194,7 @@ class DecafScalar():
             raise Exception("Check failed!")
         return True
 
-class DecafPoint():
+class GoldilocksPoint():
     @staticmethod
     def _UNDER():
         size = int(8*8*4)
@@ -207,9 +207,9 @@ class DecafPoint():
 
     def __init__(self,cstruct=None,point=None):
         if cstruct is None:
-            cstruct = DecafPoint._UNDER()
+            cstruct = GoldilocksPoint._UNDER()
             memmove(addressof(cstruct),
-                DECAF.decaf_448_point_identity,
+                GOLDILOCKS.goldilocks_448_point_identity,
                 8*8*4
             )
         if point is None:
@@ -222,8 +222,8 @@ class DecafPoint():
     @staticmethod
     def _c_deser(str):
         buffer = (c_uint8*int(56)).from_buffer_copy(str)
-        cstruct = DecafPoint._UNDER()
-        ret = DECAF.decaf_448_point_decode(cstruct,buffer,c_uint64(-1))
+        cstruct = GoldilocksPoint._UNDER()
+        ret = GOLDILOCKS.goldilocks_448_point_decode(cstruct,buffer,c_uint64(-1))
         if ret != -1:
             raise Exception("Point didn't decode")
         return cstruct
@@ -239,7 +239,7 @@ class DecafPoint():
         return P
 
     def __eq__(self,other):
-        csays = bool(DECAF.decaf_448_point_eq(self.cstruct,other.cstruct))
+        csays = bool(GOLDILOCKS.goldilocks_448_point_eq(self.cstruct,other.cstruct))
         sagesays = any([self.point == other.point + t for t in Tor])
         if csays != sagesays:
             raise Exception("C and SAGE don't agree: %d %d" % (csays, sagesays))
@@ -249,37 +249,37 @@ class DecafPoint():
         return not self==other
 
     def __add__(self,other):
-        cstruct = DecafPoint._UNDER()
-        DECAF.decaf_448_point_add(cstruct,self.cstruct,other.cstruct)
-        return DecafPoint(cstruct,self.point + other.point)
+        cstruct = GoldilocksPoint._UNDER()
+        GOLDILOCKS.goldilocks_448_point_add(cstruct,self.cstruct,other.cstruct)
+        return GoldilocksPoint(cstruct,self.point + other.point)
 
     def __sub__(self,other):
-        cstruct = DecafPoint._UNDER()
-        DECAF.decaf_448_point_sub(cstruct,self.cstruct,other.cstruct)
-        return DecafPoint(cstruct,self.point - other.point)
+        cstruct = GoldilocksPoint._UNDER()
+        GOLDILOCKS.goldilocks_448_point_sub(cstruct,self.cstruct,other.cstruct)
+        return GoldilocksPoint(cstruct,self.point - other.point)
 
     def __mul__(self,other):
-        if isinstance(other,DecafScalar):
+        if isinstance(other,GoldilocksScalar):
             return other*self
         else:
             raise Exception("nope")
 
     def __div__(self,other):
-        if isinstance(other,DecafScalar):
+        if isinstance(other,GoldilocksScalar):
             return other.inverse()*self
         else:
             raise Exception("nope")
 
     def __neg__(self):
-        cstruct = DecafPoint._UNDER()
-        DECAF.decaf_448_point_negate(cstruct,self.cstruct)
-        return DecafPoint(cstruct,-self.point)
+        cstruct = GoldilocksPoint._UNDER()
+        GOLDILOCKS.goldilocks_448_point_negate(cstruct,self.cstruct)
+        return GoldilocksPoint(cstruct,-self.point)
 
     def __str__(self):
         return " ".join(["%02x"%ord(b) for b in self.ser()])
 
     def __repr__(self):
-        return "DecafPoint.from64('%s')" % self.to64()
+        return "GoldilocksPoint.from64('%s')" % self.to64()
 
     def to64(self):
         return b64encode(self.ser())
@@ -313,7 +313,7 @@ class DecafPoint():
     @staticmethod
     def _c_ser(cstruct):
         buffer = (c_uint8*int(56))()
-        DECAF.decaf_448_point_encode(buffer,cstruct)
+        GOLDILOCKS.goldilocks_448_point_encode(buffer,cstruct)
         return str(bytearray(buffer))
 
     def ser(self):

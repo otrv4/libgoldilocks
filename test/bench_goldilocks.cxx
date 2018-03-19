@@ -1,5 +1,5 @@
 /**
- * @file test_decaf.cxx
+ * @file test_goldilocks.cxx
  * @author Mike Hamburg
  *
  * @copyright
@@ -9,10 +9,10 @@
  * @brief C++ benchmarks, because that's easier.
  */
 
-#include <decaf.hxx>
-#include <decaf/shake.hxx>
-#include <decaf/spongerng.hxx>
-#include <decaf/eddsa.hxx>
+#include <goldilocks.hxx>
+#include <goldilocks/shake.hxx>
+#include <goldilocks/spongerng.hxx>
+#include <goldilocks/eddsa.hxx>
 #include <stdio.h>
 #include <sys/time.h>
 #include <assert.h>
@@ -20,7 +20,7 @@
 #include <vector>
 #include <algorithm>
 
-using namespace decaf;
+using namespace goldilocks;
 
 
 static __inline__ void __attribute__((unused)) ignore_result ( int result ) { (void)result; }

@@ -1,5 +1,5 @@
 /**
- * @file test_decaf.cxx
+ * @file test_ct.cxx
  * @author Mike Hamburg
  *
  * @copyright
@@ -9,14 +9,14 @@
  * @brief C++ tests, because that's easier.
  */
 
-#include <decaf.hxx>
-#include <decaf/spongerng.hxx>
-#include <decaf/crypto.hxx>
+#include <goldilocks.hxx>
+#include <goldilocks/spongerng.hxx>
+#include <goldilocks/crypto.hxx>
 #include <stdio.h>
 #include <valgrind/memcheck.h>
 
-using namespace decaf;
-using namespace decaf::TOY;
+using namespace goldilocks;
+using namespace goldilocks::TOY;
 
 static const long NTESTS = 10;
 
@@ -105,16 +105,16 @@ static void test_cfrg() {
     }
 }
 
-/* Specify the same value as you did when compiling decaf_crypto.c */
-#ifndef DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
-#define DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT GOLDILOCKS_FALSE
+/* Specify the same value as you did when compiling goldilocks_crypto.c */
+#ifndef GOLDILOCKS_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
+#define GOLDILOCKS_CRYPTO_SHARED_SECRET_SHORT_CIRUIT GOLDILOCKS_FALSE
 #endif
 
 static void test_crypto() {
     SpongeRng rng(Block("test_crypto"),SpongeRng::DETERMINISTIC);
     rng.stir(undef_block);
 
-#if DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
+#if GOLDILOCKS_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
     SpongeRng defrng(Block("test_crypto_defined"));
 #endif
 
@@ -124,7 +124,7 @@ static void test_crypto() {
         PrivateKey<Group> sk1(rng);
         SecureBuffer sig = sk1.sign(undef_block);
 
-#if DECAF_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
+#if GOLDILOCKS_CRYPTO_SHARED_SECRET_SHORT_CIRUIT
         PrivateKey<Group> sk2(defrng);
         ignore_result(sk1.shared_secret_noexcept(shared,sk2.pub(),i&1));
 #else
