@@ -30,7 +30,3 @@ Important work items for Ed448-Goldilocks / decaf:
     * Currently using clang ext_vector_length.
     * I can't get a simple for-loop to autovectorize :-/
     * SAGE tool?
-
-* More curves?  E-521 at least?  Ed41417?
-
-* Submit Decaf to SUPERCOP

@@ -1,13 +1,7 @@
 # Goldilocks library
 
-The Goldilocks library is for ed448-Goldilocks elliptic curve research and
-practical application. It is based upon Mike Hamburg's libdecaf library:
+The Goldilocks library is a production library, providing the ed448 elliptic curve. It is based on Mike Hamburg's libdecaf library:
 [ed448goldilocks](https://sourceforge.net/p/ed448goldilocks/code/ci/master/tree/).
-
-The goals of this library are:
-
-* Creating a pure implementation of ed448-Goldilocks.
-
 
 This library is intended for developers who have experience with
 cryptography.  It doesn't (yet?) include documentation on how to use

@@ -2,8 +2,7 @@ dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-# Change lib name
-AC_INIT([libdecaf], [0.0.1], [otrv4-dev@autonomia.digital])
+AC_INIT([libgoldilocks], [0.0.1], [otrv4-dev@autonomia.digital])
 AC_CONFIG_SRCDIR([src/include/field.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -52,7 +51,7 @@ AC_CONFIG_FILES([
                  Makefile
                  src/Makefile
                  test/Makefile
-                 pkgconfig/libdecaf.pc
+                 pkgconfig/libgoldilocks.pc
                  pkgconfig/Makefile
                  ])
 AC_OUTPUT
