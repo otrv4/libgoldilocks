@@ -305,7 +305,7 @@ public:
     */
     inline explicit Point(const FixedBlock<SER_BYTES> &buffer, bool allow_identity=true)
         /*throw(CryptoException)*/ {
-        if (GOLDILOCKS_SUCCESS != decode(buffer,allow_identity ? GOLDILOCKS_TRUE : GOLDILOCKS_FALSE)) {
+        if (GOLDILOCKS_SUCCESS != decode(buffer,allow_identity)) {
             throw CryptoException();
         }
     }
