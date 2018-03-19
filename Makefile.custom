@@ -96,40 +96,40 @@ scan: clean
 		make all
 
 # Internal test programs, which are not part of the final build/bin directory.
-$(BUILD_IBIN)/test: $(BUILD_OBJ)/test_decaf.o lib
+$(BUILD_IBIN)/test: $(BUILD_OBJ)/test_goldilocks.o lib
 ifeq ($(UNAME),Darwin)
-	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -ldecaf
+	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
 else
-	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -ldecaf
+	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
 endif
 
 $(BUILD_BIN)/ristretto: $(BUILD_OBJ)/ristretto.o lib
 ifeq ($(UNAME),Darwin)
-	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -ldecaf
+	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
 else
-	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -ldecaf
+	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
 endif
 
 # Internal test programs, which are not part of the final build/bin directory.
 $(BUILD_IBIN)/test_ct: $(BUILD_OBJ)/test_ct.o lib
 ifeq ($(UNAME),Darwin)
-	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -ldecaf
+	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
 else
-	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -ldecaf
+	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
 endif
 
-$(BUILD_IBIN)/bench: $(BUILD_OBJ)/bench_decaf.o lib
+$(BUILD_IBIN)/bench: $(BUILD_OBJ)/bench_goldilocks.o lib
 ifeq ($(UNAME),Darwin)
-	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -ldecaf
+	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
 else
-	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -ldecaf
+	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
 endif
 
 # Create all the build subdirectories
 $(BUILD_OBJ)/timestamp:
 	mkdir -p $(BUILD_OBJ) $(BUILD_C) $(BUILD_PY) \
-		$(BUILD_LIB) $(BUILD_INC) $(BUILD_BIN) $(BUILD_IBIN) $(BUILD_H) $(BUILD_INC)/decaf \
-		$(PER_OBJ_DIRS) $(BUILD_C)/decaf
+		$(BUILD_LIB) $(BUILD_INC) $(BUILD_BIN) $(BUILD_IBIN) $(BUILD_H) $(BUILD_INC)/goldilocks \
+		$(PER_OBJ_DIRS) $(BUILD_C)/goldilocks
 	touch $@
 
 $(BUILD_INC)/%: src/public_include/% $(BUILD_OBJ)/timestamp
@@ -193,8 +193,8 @@ define define_curve
 LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/elligator.o $$(BUILD_OBJ)/$(1)/scalar.o \
 	 $$(BUILD_OBJ)/$(1)/eddsa.o $$(BUILD_OBJ)/$(1)/decaf_tables.o
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
-GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/decaf/point_$(3).h $(BUILD_INC)/decaf/point_$(3).hxx \
-		$(BUILD_INC)/decaf/ed$(3).h $(BUILD_INC)/decaf/ed$(3).hxx
+GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/goldilocks/point_$(3).h $(BUILD_INC)/goldilocks/point_$(3).hxx \
+		$(BUILD_INC)/goldilocks/ed$(3).h $(BUILD_INC)/goldilocks/ed$(3).hxx
 HEADERS_OF_$(1) = $$(HEADERS_OF_$(2)) $$(GLOBAL_HEADERS_OF_$(1))
 HEADERS += $$(GLOBAL_HEADERS_OF_$(1))
 
@@ -209,16 +209,16 @@ $$(BUILD_C)/$(1)/%.c: src/per_curve/%.tmpl.c src/generator/* Makefile.custom
 $$(BUILD_H)/$(1)/%.h: src/per_curve/%.tmpl.h src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
 
-$$(BUILD_INC)/decaf/point_$(3).%: src/per_curve/point.tmpl.% src/generator/* Makefile.custom
+$$(BUILD_INC)/goldilocks/point_$(3).%: src/per_curve/point.tmpl.% src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
-$$(BUILD_INC)/decaf/ed$(3).%: src/per_curve/eddsa.tmpl.% src/generator/* Makefile.custom
+$$(BUILD_INC)/goldilocks/ed$(3).%: src/per_curve/eddsa.tmpl.% src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
-$$(BUILD_INC)/decaf/elligator_$(3).%: src/per_curve/elligator.tmpl.% src/generator/* Makefile.custom
+$$(BUILD_INC)/goldilocks/elligator_$(3).%: src/per_curve/elligator.tmpl.% src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
-$$(BUILD_INC)/decaf/scalar_$(3).%: src/per_curve/scalar.tmpl.% src/generator/* Makefile.custom
+$$(BUILD_INC)/goldilocks/scalar_$(3).%: src/per_curve/scalar.tmpl.% src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
 $$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/$(1)/decaf_gen_tables.o \
@@ -251,12 +251,12 @@ $(BUILD_BIN)/shakesum: $(BUILD_OBJ)/shakesum.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 # The main decaf library, and its symlinks.
-lib: $(BUILD_LIB)/libdecaf.so
+lib: $(BUILD_LIB)/libgoldilocks.so
 
-$(BUILD_LIB)/libdecaf.so: $(BUILD_LIB)/libdecaf.so.1
+$(BUILD_LIB)/libgoldilocks.so: $(BUILD_LIB)/libgoldilocks.so.1
 	ln -sf `basename $^` $@
 
-$(BUILD_LIB)/libdecaf.so.1: $(LIBCOMPONENTS)
+$(BUILD_LIB)/libgoldilocks.so.1: $(LIBCOMPONENTS)
 	rm -f $@
 ifeq ($(UNAME),Darwin)
 	libtool -macosx_version_min $(MACOSX_VERSION_MIN) -dynamic -dead_strip -lc -x -o $@ \

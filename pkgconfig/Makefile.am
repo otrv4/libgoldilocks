@@ -1,2 +1,2 @@
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libdecaf.pc
+pkgconfig_DATA = libgoldilocks.pc

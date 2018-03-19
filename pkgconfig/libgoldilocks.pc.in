@@ -3,8 +3,8 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: lib-little-ed448
+Name: libgoldilocks
 Description: Pure ed448 implementation
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} -ldecaf
+Libs: -L${libdir} -lgoldilocks
 Cflags: -I${includedir}
