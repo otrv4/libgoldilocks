@@ -8,31 +8,31 @@ ACLOCAL_AMFLAGS = -I m4
 ci: test mem-check
 
 all-lib:
-	$(MAKE) all -f $(top_srcdir)/Makefile.original
+	$(MAKE) all -f $(top_srcdir)/Makefile.custom
 
 gen-code:
-	$(MAKE) gen_code -f $(top_srcdir)/Makefile.original
+	$(MAKE) gen_code -f $(top_srcdir)/Makefile.custom
 
 gen-code-static:
-	$(MAKE) gen_code_static -f $(top_srcdir)/Makefile.original
+	$(MAKE) gen_code_static -f $(top_srcdir)/Makefile.custom
 
 test-ct:
-	$(MAKE) test_ct -f $(top_srcdir)/Makefile.original
+	$(MAKE) test_ct -f $(top_srcdir)/Makefile.custom
 
 todo:
-	$(MAKE) todo -f $(top_srcdir)/Makefile.original
+	$(MAKE) todo -f $(top_srcdir)/Makefile.custom
 
 sage:
-	$(MAKE) sage -f $(top_srcdir)/Makefile.original
+	$(MAKE) sage -f $(top_srcdir)/Makefile.custom
 
 sagetest:
-	$(MAKE) sagetest -f $(top_srcdir)/Makefile.original
+	$(MAKE) sagetest -f $(top_srcdir)/Makefile.custom
 
 lib:
-	$(MAKE) lib -f $(top_srcdir)/Makefile.original
+	$(MAKE) lib -f $(top_srcdir)/Makefile.custom
 
 clean-scan:
-	$(MAKE) clean -f $(top_srcdir)/Makefile.original
+	$(MAKE) clean -f $(top_srcdir)/Makefile.custom
 
 test: check
 	$(top_srcdir)/test/test

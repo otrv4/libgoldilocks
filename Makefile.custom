@@ -79,7 +79,7 @@ GEN_CODE_0= $(HEADER_SRCS:src/public_include/%=$(BUILD_INC)/%)
 GEN_CODE_0+= $(HEADER_PRIVATE_SRCS:src/include/%=$(BUILD_C)/%)
 GEN_CODE_1= $(GEN_CODE_0:%.tmpl.h=%.h)
 GEN_CODE= $(GEN_CODE_1:%.tmpl.hxx=%.hxx)
-HEADERS= Makefile.original $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_CODE)
+HEADERS= Makefile.custom $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp $(GEN_CODE)
 
 # components needed by the lib
 LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/spongerng.o
@@ -162,10 +162,10 @@ GEN_CODE_FOR_$(1) += $$(patsubst src/per_field/%,$(BUILD_H)/$(1)/%,$(patsubst %.
 GEN_CODE += $$(GEN_CODE_FOR_$(1))
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
 
-$$(BUILD_C)/$(1)/%.c: src/per_field/%.tmpl.c src/generator/* Makefile.original
+$$(BUILD_C)/$(1)/%.c: src/per_field/%.tmpl.c src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=field --guard=$(1)/`basename $$@` --item=$(1) -o $$@ $$<
 
-$$(BUILD_H)/$(1)/%.h: src/per_field/%.tmpl.h src/generator/* Makefile.original
+$$(BUILD_H)/$(1)/%.h: src/per_field/%.tmpl.h src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=field --guard=$(1)/`basename $$@` --item=$(1) -o $$@ $$<
 
 $$(BUILD_OBJ)/$(1)/%.o: $$(BUILD_C)/$(1)/%.c $$(HEADERS_OF_$(1))
@@ -203,22 +203,22 @@ GEN_CODE_FOR_$(1) += $$(GLOBAL_HEADERS_OF_$(1))
 GEN_CODE_P2 += $(BUILD_C)/$(1)/decaf_tables.c
 GEN_CODE += $$(GEN_CODE_FOR_$(1))
 
-$$(BUILD_C)/$(1)/%.c: src/per_curve/%.tmpl.c src/generator/* Makefile.original
+$$(BUILD_C)/$(1)/%.c: src/per_curve/%.tmpl.c src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
 
-$$(BUILD_H)/$(1)/%.h: src/per_curve/%.tmpl.h src/generator/* Makefile.original
+$$(BUILD_H)/$(1)/%.h: src/per_curve/%.tmpl.h src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$(1)/`basename $$@` -o $$@ $$<
 
-$$(BUILD_INC)/decaf/point_$(3).%: src/per_curve/point.tmpl.% src/generator/* Makefile.original
+$$(BUILD_INC)/decaf/point_$(3).%: src/per_curve/point.tmpl.% src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
-$$(BUILD_INC)/decaf/ed$(3).%: src/per_curve/eddsa.tmpl.% src/generator/* Makefile.original
+$$(BUILD_INC)/decaf/ed$(3).%: src/per_curve/eddsa.tmpl.% src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
-$$(BUILD_INC)/decaf/elligator_$(3).%: src/per_curve/elligator.tmpl.% src/generator/* Makefile.original
+$$(BUILD_INC)/decaf/elligator_$(3).%: src/per_curve/elligator.tmpl.% src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
-$$(BUILD_INC)/decaf/scalar_$(3).%: src/per_curve/scalar.tmpl.% src/generator/* Makefile.original
+$$(BUILD_INC)/decaf/scalar_$(3).%: src/per_curve/scalar.tmpl.% src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
 $$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/$(1)/decaf_gen_tables.o \
@@ -308,7 +308,7 @@ gen_code: gen_code_static $(GEN_CODE_P2)
 
 # Finds todo items in .h and .c files
 TODO_TYPES ?= HACK TODO @todo FIXME BUG XXX PERF FUTURE REMOVE MAGIC UNIFY
-TODO_LOCATIONS ?= src/*.c src/include src/p* src/generator test Makefile.original Doxyfile
+TODO_LOCATIONS ?= src/*.c src/include src/p* src/generator test Makefile.custom Doxyfile
 todo::
 	@(find $(TODO_LOCATIONS) -name '*.h' -or -name '*.c' -or -name '*.cxx' -or -name '*.hxx' -or -name '*.py') | xargs egrep --color=auto -w \
 		`echo $(TODO_TYPES) | tr ' ' '|'`
