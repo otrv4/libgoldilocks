@@ -15,7 +15,7 @@
 #include <string.h>
 
 /** Square x, n times. */
-static DECAF_INLINE void gf_sqrn (
+static GOLDILOCKS_INLINE void gf_sqrn (
     gf_s *__restrict__ y,
     const gf x,
     int n
@@ -80,7 +80,7 @@ gf_cond_swap(gf x, gf_s *__restrict__ y, mask_t swap) {
     constant_time_cond_swap(x,y,sizeof(gf_s),swap);
 }
 
-static DECAF_INLINE void gf_mul_qnr(gf_s *__restrict__ out, const gf x) {
+static GOLDILOCKS_INLINE void gf_mul_qnr(gf_s *__restrict__ out, const gf x) {
 #if P_MOD_8 == 7
     gf_sub(out,ZERO,x);
 #else
@@ -88,7 +88,7 @@ static DECAF_INLINE void gf_mul_qnr(gf_s *__restrict__ out, const gf x) {
 #endif
 }
 
-static DECAF_INLINE void gf_div_qnr(gf_s *__restrict__ out, const gf x) {
+static GOLDILOCKS_INLINE void gf_div_qnr(gf_s *__restrict__ out, const gf x) {
 #if P_MOD_8 == 7
     gf_sub(out,ZERO,x);
 #else

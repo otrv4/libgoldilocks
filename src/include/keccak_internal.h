@@ -7,32 +7,32 @@
  * @author Mike Hamburg
  * @brief Keccak internal interfaces.  Will be used by STROBE once reintegrated.
  */
-#ifndef __DECAF_KECCAK_INTERNAL_H__
-#define __DECAF_KECCAK_INTERNAL_H__ 1
+#ifndef __GOLDILOCKS_KECCAK_INTERNAL_H__
+#define __GOLDILOCKS_KECCAK_INTERNAL_H__ 1
 
 #include <stdint.h>
 
-/* The internal, non-opaque definition of the decaf_sponge struct. */
+/* The internal, non-opaque definition of the goldilocks_sponge struct. */
 typedef union {
     uint64_t w[25]; uint8_t b[25*8];
 } kdomain_t[1];
 
-typedef struct decaf_kparams_s {
+typedef struct goldilocks_kparams_s {
     uint8_t position, flags, rate, start_round, pad, rate_pad, max_out, remaining;
-} decaf_kparams_s, decaf_kparams_t[1];
+} goldilocks_kparams_s, goldilocks_kparams_t[1];
 
-typedef struct decaf_keccak_sponge_s {
+typedef struct goldilocks_keccak_sponge_s {
     kdomain_t state;
-    decaf_kparams_t params;
-} decaf_keccak_sponge_s, decaf_keccak_sponge_t[1];
+    goldilocks_kparams_t params;
+} goldilocks_keccak_sponge_s, goldilocks_keccak_sponge_t[1];
 
 #define INTERNAL_SPONGE_STRUCT 1
 
 void __attribute__((noinline)) keccakf(kdomain_t state, uint8_t start_round);
 
-static inline void dokeccak (decaf_keccak_sponge_t decaf_sponge) {
-    keccakf(decaf_sponge->state, decaf_sponge->params->start_round);
-    decaf_sponge->params->position = 0;
+static inline void dokeccak (goldilocks_keccak_sponge_t goldilocks_sponge) {
+    keccakf(goldilocks_sponge->state, goldilocks_sponge->params->start_round);
+    goldilocks_sponge->params->position = 0;
 }
 
-#endif /* __DECAF_KECCAK_INTERNAL_H__ */
+#endif /* __GOLDILOCKS_KECCAK_INTERNAL_H__ */
