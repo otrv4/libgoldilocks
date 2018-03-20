@@ -1,34 +1,34 @@
 include $(top_srcdir)/variables.am
 
-noinst_PROGRAMS = decaf_gen_tables_ed448goldilocks
+noinst_PROGRAMS = goldilocks_gen_tables_ed448goldilocks
 
-decaf_gen_tables_ed448goldilocks_SOURCES = utils.c \
-					   GENERATED/c/ed448goldilocks/decaf_gen_tables.c \
+goldilocks_gen_tables_ed448goldilocks_SOURCES = utils.c \
+					   GENERATED/c/ed448goldilocks/goldilocks_gen_tables.c \
 					   p448/arch_x86_64/f_impl.c \
 		       			   p448/f_arithmetic.c \
 		       			   GENERATED/c/p448/f_generic.c \
 		      			   GENERATED/c/ed448goldilocks/decaf.c \
 		      			   GENERATED/c/ed448goldilocks/scalar.c
 
-decaf_gen_tables_ed448goldilocks_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(INCFLAGS_448) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
-decaf_gen_tables_ed448goldilocks_LDFLAGS = $(AM_LDFLAGS) $(XLDFLAGS)
+goldilocks_gen_tables_ed448goldilocks_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(INCFLAGS_448) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
+goldilocks_gen_tables_ed448goldilocks_LDFLAGS = $(AM_LDFLAGS) $(XLDFLAGS)
 
 
-GENERATED/c/ed448goldilocks/decaf_tables.c: decaf_gen_tables_ed448goldilocks
+GENERATED/c/ed448goldilocks/decaf_tables.c: goldilocks_gen_tables_ed448goldilocks
 	./$< > $@ || (rm $@; exit 1)
 
-noinst_LTLIBRARIES = libdecaf448.la
-lib_LTLIBRARIES = libdecaf.la
+noinst_LTLIBRARIES = libgoldilocks448.la
+lib_LTLIBRARIES = libgoldilocks.la
 
-libdecaf_la_SOURCES = utils.c \
+libgoldilocks_la_SOURCES = utils.c \
 		      shake.c \
 		      spongerng.c
 
-libdecaf_la_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
-libdecaf_la_LDFLAGS = $(AM_LDFLAGS) $(XLDFLAGS)
-libdecaf_la_LIBADD = libdecaf448.la
+libgoldilocks_la_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
+libgoldilocks_la_LDFLAGS = $(AM_LDFLAGS) $(XLDFLAGS)
+libgoldilocks_la_LIBADD = libgoldilocks448.la
 
-libdecaf448_la_SOURCES = p448/arch_x86_64/f_impl.c \
+libgoldilocks448_la_SOURCES = p448/arch_x86_64/f_impl.c \
 		      p448/f_arithmetic.c \
 		      GENERATED/c/p448/f_generic.c \
 		      GENERATED/c/ed448goldilocks/decaf.c \
@@ -37,25 +37,25 @@ libdecaf448_la_SOURCES = p448/arch_x86_64/f_impl.c \
 		      GENERATED/c/ed448goldilocks/eddsa.c \
 		      GENERATED/c/ed448goldilocks/decaf_tables.c
 
-libdecaf448_la_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(INCFLAGS_448) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
-libdecaf448_la_LDFLAGS = $(AM_LDFLAGS) $(XLDFLAGS)
+libgoldilocks448_la_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(INCFLAGS_448) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
+libgoldilocks448_la_LDFLAGS = $(AM_LDFLAGS) $(XLDFLAGS)
 
-incsubdir = $(includedir)/decaf
+incsubdir = $(includedir)/goldilocks
 
-incsub_HEADERS = GENERATED/include/decaf/common.h \
-		 GENERATED/include/decaf/ed448.h \
-		 GENERATED/include/decaf/ed448.hxx \
-		 GENERATED/include/decaf/eddsa.hxx \
-		 GENERATED/include/decaf/point_448.h \
-		 GENERATED/include/decaf/point_448.hxx \
-		 GENERATED/include/decaf/secure_buffer.hxx \
-		 GENERATED/include/decaf/shake.h \
-		 GENERATED/include/decaf/shake.hxx \
-		 GENERATED/include/decaf/spongerng.h \
-		 GENERATED/include/decaf/spongerng.hxx
+incsub_HEADERS = GENERATED/include/goldilocks/common.h \
+		 GENERATED/include/goldilocks/ed448.h \
+		 GENERATED/include/goldilocks/ed448.hxx \
+		 GENERATED/include/goldilocks/eddsa.hxx \
+		 GENERATED/include/goldilocks/point_448.h \
+		 GENERATED/include/goldilocks/point_448.hxx \
+		 GENERATED/include/goldilocks/secure_buffer.hxx \
+		 GENERATED/include/goldilocks/shake.h \
+		 GENERATED/include/goldilocks/shake.hxx \
+		 GENERATED/include/goldilocks/spongerng.h \
+		 GENERATED/include/goldilocks/spongerng.hxx
 
-include_HEADERS = GENERATED/include/decaf.h \
-		  GENERATED/include/decaf.hxx
+include_HEADERS = GENERATED/goldilocks/goldilocks.h \
+		  GENERATED/include/goldilocks.hxx
 
 #pkginclude_HEADERS = GENERATED/include/
 

@@ -16,7 +16,7 @@
 #include <string.h>
 
 #include "keccak_internal.h"
-#include <decaf/spongerng.h>
+#include <goldilocks/spongerng.h>
 
 /* to open and read from /dev/urandom */
 #include <sys/types.h>
@@ -88,8 +88,8 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
 #endif
 }
 
-void decaf_spongerng_next (
-    decaf_keccak_prng_t prng,
+void goldilocks_spongerng_next (
+    goldilocks_keccak_prng_t prng,
     uint8_t * __restrict__ out,
     size_t len
 ) {
@@ -97,8 +97,8 @@ void decaf_spongerng_next (
         /* nondet */
         uint8_t cpu_entropy[32] = {0};
         get_cpu_entropy(cpu_entropy, sizeof(cpu_entropy));
-        decaf_spongerng_stir(prng,cpu_entropy,sizeof(cpu_entropy));
-        decaf_bzero(cpu_entropy,sizeof(cpu_entropy));
+        goldilocks_spongerng_stir(prng,cpu_entropy,sizeof(cpu_entropy));
+        goldilocks_bzero(cpu_entropy,sizeof(cpu_entropy));
     }
 
     uint8_t lenx[8];
@@ -107,48 +107,48 @@ void decaf_spongerng_next (
         lenx[i] = len1;
         len1 >>= 8;
     }
-    decaf_sha3_update(prng->sponge,lenx,sizeof(lenx));
-    decaf_sha3_output(prng->sponge,out,len);
+    goldilocks_sha3_update(prng->sponge,lenx,sizeof(lenx));
+    goldilocks_sha3_output(prng->sponge,out,len);
 
     const uint8_t nope;
-    decaf_spongerng_stir(prng,&nope,0);
+    goldilocks_spongerng_stir(prng,&nope,0);
 }
 
-void decaf_spongerng_stir (
-    decaf_keccak_prng_t prng,
+void goldilocks_spongerng_stir (
+    goldilocks_keccak_prng_t prng,
     const uint8_t * __restrict__ in,
     size_t len
 ) {
     uint8_t seed[32];
-    decaf_sha3_output(prng->sponge,seed,sizeof(seed));
+    goldilocks_sha3_output(prng->sponge,seed,sizeof(seed));
     uint8_t nondet = prng->sponge->params->remaining;
 
-    decaf_sha3_reset(prng->sponge);
-    decaf_sha3_update(prng->sponge,seed,sizeof(seed));
-    decaf_sha3_update(prng->sponge,in,len);
+    goldilocks_sha3_reset(prng->sponge);
+    goldilocks_sha3_update(prng->sponge,seed,sizeof(seed));
+    goldilocks_sha3_update(prng->sponge,in,len);
 
     prng->sponge->params->remaining = nondet;
-    decaf_bzero(seed,sizeof(seed));
+    goldilocks_bzero(seed,sizeof(seed));
 }
 
-void decaf_spongerng_init_from_buffer (
-    decaf_keccak_prng_t prng,
+void goldilocks_spongerng_init_from_buffer (
+    goldilocks_keccak_prng_t prng,
     const uint8_t * __restrict__ in,
     size_t len,
     int deterministic
 ) {
-    decaf_sha3_init(prng->sponge,&DECAF_SHAKE256_params_s);
+    goldilocks_sha3_init(prng->sponge,&GOLDILOCKS_SHAKE256_params_s);
     prng->sponge->params->remaining = !deterministic; /* A bit of a hack; this param is ignored for SHAKE */
-    decaf_spongerng_stir(prng, in, len);
+    goldilocks_spongerng_stir(prng, in, len);
 }
 
-goldilocks_error_t decaf_spongerng_init_from_file (
-    decaf_keccak_prng_t prng,
+goldilocks_error_t goldilocks_spongerng_init_from_file (
+    goldilocks_keccak_prng_t prng,
     const char *file,
     size_t len,
     int deterministic
 ) {
-    decaf_sha3_init(prng->sponge,&DECAF_SHAKE256_params_s);
+    goldilocks_sha3_init(prng->sponge,&GOLDILOCKS_SHAKE256_params_s);
     prng->sponge->params->remaining = !deterministic; /* A bit of a hack; this param is ignored for SHAKE */
     if (!len) return GOLDILOCKS_FAILURE;
 
@@ -162,18 +162,18 @@ goldilocks_error_t decaf_spongerng_init_from_file (
             close(fd);
             return GOLDILOCKS_FAILURE;
         }
-        decaf_sha3_update(prng->sponge,buffer,red);
+        goldilocks_sha3_update(prng->sponge,buffer,red);
         len -= red;
     };
     close(fd);
     const uint8_t nope;
-    decaf_spongerng_stir(prng,&nope,0);
+    goldilocks_spongerng_stir(prng,&nope,0);
 
     return GOLDILOCKS_SUCCESS;
 }
 
-goldilocks_error_t decaf_spongerng_init_from_dev_urandom (
-    decaf_keccak_prng_t decaf_sponge
+goldilocks_error_t goldilocks_spongerng_init_from_dev_urandom (
+    goldilocks_keccak_prng_t goldilocks_sponge
 ) {
-    return decaf_spongerng_init_from_file(decaf_sponge, "/dev/urandom", 64, 0);
+    return goldilocks_spongerng_init_from_file(goldilocks_sponge, "/dev/urandom", 64, 0);
 }

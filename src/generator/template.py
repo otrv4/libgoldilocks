@@ -5,7 +5,7 @@ import os
 import argparse
 import re
 
-parser = argparse.ArgumentParser(description='Generate Decaf headers and other such files.')
+parser = argparse.ArgumentParser(description='Generate Goldilocks headers and other such files.')
 parser.add_argument('-o', required = True, help = "Output")
 parser.add_argument('--per', required = True, help = "Files to be generated are global or per field/curve", choices=["global","field","curve"])
 parser.add_argument('--item', required = False, default = "global", help = "Which curve/field to choose")

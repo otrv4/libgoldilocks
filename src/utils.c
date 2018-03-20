@@ -5,12 +5,12 @@
 /**
  * @file utils.c
  * @author Mike Hamburg
- * @brief Decaf utility functions.
+ * @brief Goldilocks utility functions.
  */
 
-#include <decaf/common.h>
+#include <goldilocks/common.h>
 
-void decaf_bzero (
+void goldilocks_bzero (
     void *s,
     size_t size
 ) {
@@ -28,7 +28,7 @@ void decaf_bzero (
 #endif
 }
 
-decaf_bool_t decaf_memeq (
+goldilocks_bool_t goldilocks_memeq (
    const void *data1_,
    const void *data2_,
    size_t size
@@ -39,5 +39,5 @@ decaf_bool_t decaf_memeq (
     for (; size; size--, data1++, data2++) {
         ret |= *data1 ^ *data2;
     }
-    return (((decaf_dword_t)ret) - 1) >> 8;
+    return (((goldilocks_dword_t)ret) - 1) >> 8;
 }
