@@ -696,19 +696,6 @@ public:
 
     /** Calculate and return a public key; equivalent to shared_secret(base_point(),scalar)
      * but possibly faster.
-     * @deprecated Renamed to derive_public_key.
-     */
-    static inline SecureBuffer GOLDILOCKS_DEPRECATED("Renamed to derive_public_key")
-    generate_key(
-        const FixedBlock<PRIVATE_BYTES> &scalar
-    ) /*throw(std::bad_alloc)*/ {
-        SecureBuffer out(PUBLIC_BYTES);
-        goldilocks_x448_derive_public_key(out.data(), scalar.data());
-        return out;
-    }
-
-    /** Calculate and return a public key; equivalent to shared_secret(base_point(),scalar)
-     * but possibly faster.
      */
     static inline SecureBuffer derive_public_key(
         const FixedBlock<PRIVATE_BYTES> &scalar
@@ -723,19 +710,6 @@ public:
      */
     static inline void
     derive_public_key_noexcept (
-        FixedBuffer<PUBLIC_BYTES> &out,
-        const FixedBlock<PRIVATE_BYTES> &scalar
-    ) GOLDILOCKS_NOEXCEPT {
-        goldilocks_x448_derive_public_key(out.data(), scalar.data());
-    }
-
-    /** Calculate and return a public key into a fixed buffer;
-     * equivalent to shared_secret(base_point(),scalar) but possibly faster.
-     * @deprecated Renamed to derive_public_key_noexcept.
-     */
-    static inline void
-    GOLDILOCKS_DEPRECATED("Renamed to derive_public_key_noexcept")
-    generate_key_noexcept (
         FixedBuffer<PUBLIC_BYTES> &out,
         const FixedBlock<PRIVATE_BYTES> &scalar
     ) GOLDILOCKS_NOEXCEPT {

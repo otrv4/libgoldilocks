@@ -1128,13 +1128,6 @@ void goldilocks_ed448_convert_public_key_to_x448 (
     goldilocks_bzero(d,sizeof(d));
 }
 
-void goldilocks_x448_generate_key (
-    uint8_t out[X_PUBLIC_BYTES],
-    const uint8_t scalar[X_PRIVATE_BYTES]
-) {
-    goldilocks_x448_derive_public_key(out,scalar);
-}
-
 void API_NS(point_mul_by_ratio_and_encode_like_x448) (
     uint8_t out[X_PUBLIC_BYTES],
     const point_t p

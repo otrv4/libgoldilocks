@@ -441,24 +441,6 @@ extern const uint8_t
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
  * a different (non-Decaf) encoding.
  *
- * @deprecated Renamed to goldilocks_x448_derive_public_key.
- * I have no particular timeline for removing this name.
- *
- * @param [out] out The public key base*scalar.
- * @param [in] scalar The private scalar.
- */
-void goldilocks_x448_generate_key (
-    uint8_t out[GOLDILOCKS_X448_PUBLIC_BYTES],
-    const uint8_t scalar[GOLDILOCKS_X448_PRIVATE_BYTES]
-) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE GOLDILOCKS_DEPRECATED("Renamed to goldilocks_x448_derive_public_key");
-
-/**
- * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
- * a different (non-Decaf) encoding.
- *
- * Does exactly the same thing as goldilocks_x448_generate_key,
- * but has a better name.
- *
  * @param [out] out The public key base*scalar
  * @param [in] scalar The private scalar.
  */
