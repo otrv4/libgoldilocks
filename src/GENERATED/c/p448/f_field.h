@@ -21,7 +21,7 @@
 
 #include "word.h"
 
-#define __DECAF_448_GF_DEFINED__ 1
+#define __GOLDILOCKS_448_GF_DEFINED__ 1
 #define NLIMBS (64/sizeof(word_t))
 #define X_SER_BYTES 56
 #define SER_BYTES 56

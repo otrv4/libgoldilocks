@@ -1,5 +1,5 @@
 /**
- * @file decaf/ed448.hxx
+ * @file goldilocks/ed448.hxx
  * @author Mike Hamburg
  *
  * @copyright
@@ -12,32 +12,32 @@
  * Please do not edit it.
  */
 
-#ifndef __DECAF_ED448_HXX__
-#define __DECAF_ED448_HXX__ 1
+#ifndef __GOLDILOCKS_ED448_HXX__
+#define __GOLDILOCKS_ED448_HXX__ 1
 /*
- * Example Decaf cyrpto routines, C++ wrapper.
+ * Example Goldilocks crypto routines, C++ wrapper.
  * @warning These are merely examples, though they ought to be secure.  But real
  * protocols will decide differently on magic numbers, formats, which items to
  * hash, etc.
  * @warning Experimental!  The names, parameter orders etc are likely to change.
  */
 
-#include <decaf/eddsa.hxx>
-#include <decaf/point_448.hxx>
-#include <decaf/ed448.h>
+#include <goldilocks/eddsa.hxx>
+#include <goldilocks/point_448.hxx>
+#include <goldilocks/ed448.h>
 
-#include <decaf/shake.hxx>
+#include <goldilocks/shake.hxx>
 
 /** @cond internal */
 #if __cplusplus >= 201103L
-#define DECAF_NOEXCEPT noexcept
+#define GOLDILOCKS_NOEXCEPT noexcept
 #else
-#define DECAF_NOEXCEPT throw()
+#define GOLDILOCKS_NOEXCEPT throw()
 #endif
 /** @endcond */
 
-/** Namespace for all libdecaf C++ objects. */
-namespace decaf {
+/** Namespace for all libgoldilocks C++ objects. */
+namespace goldilocks {
 
 /** A public key for crypto over some Group */
 template <typename Group> struct EdDSA;
@@ -60,8 +60,8 @@ typedef class PublicKeyBase PublicKey, PublicKeyPure, PublicKeyPh;
  * is no context.  For Ed448, contexts are built-in and mandatory, so "no context"
  * is the same as the empty string.
  */
-#if DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS
-static inline const Block NO_CONTEXT() { return Block(DECAF_ED448_NO_CONTEXT,0); }
+#if GOLDILOCKS_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS
+static inline const Block NO_CONTEXT() { return Block(GOLDILOCKS_ED448_NO_CONTEXT,0); }
 #else
 static inline const Block NO_CONTEXT() { return Block(NULL,0); }
 #endif
@@ -82,7 +82,7 @@ private:
             throw LengthException();
         }
 
-        decaf_ed448_prehash_init((decaf_shake256_ctx_s *)wrapped);
+        goldilocks_ed448_prehash_init((goldilocks_shake256_ctx_s *)wrapped);
     }
     /** @endcond */
 
@@ -97,7 +97,7 @@ public:
     }
 
     /** Reset this hash */
-    void reset() DECAF_NOEXCEPT { init(); }
+    void reset() GOLDILOCKS_NOEXCEPT { init(); }
 
     /** Output from this hash */
     SecureBuffer final() /*throw(std::bad_alloc)*/ {
@@ -135,7 +135,7 @@ public:
         }
 
         SecureBuffer out(CRTP::SIG_BYTES);
-        decaf_ed448_sign (
+        goldilocks_ed448_sign (
             out.data(),
             ((const CRTP*)this)->priv_.data(),
             ((const CRTP*)this)->pub_.data(),
@@ -155,11 +155,11 @@ public:
     /** Sign a prehash context, and reset the context */
     inline SecureBuffer sign_prehashed ( const Prehash &ph ) const /*throw(std::bad_alloc)*/ {
         SecureBuffer out(CRTP::SIG_BYTES);
-        decaf_ed448_sign_prehash (
+        goldilocks_ed448_sign_prehash (
             out.data(),
             ((const CRTP*)this)->priv_.data(),
             ((const CRTP*)this)->pub_.data(),
-            (const decaf_ed448_prehash_ctx_s*)ph.wrapped,
+            (const goldilocks_ed448_prehash_ctx_s*)ph.wrapped,
             ph.context_.data(),
             ph.context_.size()
         );
@@ -193,67 +193,67 @@ private:
 /** @endcond */
 
     /** The pre-expansion form of the signing key. */
-    FixedArrayBuffer<DECAF_EDDSA_448_PRIVATE_BYTES> priv_;
+    FixedArrayBuffer<GOLDILOCKS_EDDSA_448_PRIVATE_BYTES> priv_;
 
     /** The post-expansion public key. */
-    FixedArrayBuffer<DECAF_EDDSA_448_PUBLIC_BYTES> pub_;
+    FixedArrayBuffer<GOLDILOCKS_EDDSA_448_PUBLIC_BYTES> pub_;
 
 public:
     /** Underlying group */
     typedef Ed448Goldilocks Group;
 
     /** Signature size. */
-    static const size_t SIG_BYTES = DECAF_EDDSA_448_SIGNATURE_BYTES;
+    static const size_t SIG_BYTES = GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES;
 
     /** Serialization size. */
-    static const size_t SER_BYTES = DECAF_EDDSA_448_PRIVATE_BYTES;
+    static const size_t SER_BYTES = GOLDILOCKS_EDDSA_448_PRIVATE_BYTES;
 
 
     /** Create but don't initialize */
-    inline explicit PrivateKeyBase(const NOINIT&) DECAF_NOEXCEPT : priv_((NOINIT())), pub_((NOINIT())) { }
+    inline explicit PrivateKeyBase(const NOINIT&) GOLDILOCKS_NOEXCEPT : priv_((NOINIT())), pub_((NOINIT())) { }
 
     /** Read a private key from a string */
-    inline explicit PrivateKeyBase(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT { *this = b; }
+    inline explicit PrivateKeyBase(const FixedBlock<SER_BYTES> &b) GOLDILOCKS_NOEXCEPT { *this = b; }
 
     /** Copy constructor */
-    inline PrivateKeyBase(const PrivateKey &k) DECAF_NOEXCEPT { *this = k; }
+    inline PrivateKeyBase(const PrivateKey &k) GOLDILOCKS_NOEXCEPT { *this = k; }
 
     /** Create at random */
-    inline explicit PrivateKeyBase(Rng &r) DECAF_NOEXCEPT : priv_(r) {
-        decaf_ed448_derive_public_key(pub_.data(), priv_.data());
+    inline explicit PrivateKeyBase(Rng &r) GOLDILOCKS_NOEXCEPT : priv_(r) {
+        goldilocks_ed448_derive_public_key(pub_.data(), priv_.data());
     }
 
     /** Assignment from string */
-    inline PrivateKeyBase &operator=(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT {
+    inline PrivateKeyBase &operator=(const FixedBlock<SER_BYTES> &b) GOLDILOCKS_NOEXCEPT {
         memcpy(priv_.data(),b.data(),b.size());
-        decaf_ed448_derive_public_key(pub_.data(), priv_.data());
+        goldilocks_ed448_derive_public_key(pub_.data(), priv_.data());
         return *this;
     }
 
     /** Copy assignment */
-    inline PrivateKeyBase &operator=(const PrivateKey &k) DECAF_NOEXCEPT {
+    inline PrivateKeyBase &operator=(const PrivateKey &k) GOLDILOCKS_NOEXCEPT {
         memcpy(priv_.data(),k.priv_.data(), priv_.size());
         memcpy(pub_.data(),k.pub_.data(), pub_.size());
         return *this;
     }
 
     /** Serialization size. */
-    inline size_t ser_size() const DECAF_NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const GOLDILOCKS_NOEXCEPT { return SER_BYTES; }
 
     /** Serialize into a buffer. */
-    inline void serialize_into(unsigned char *x) const DECAF_NOEXCEPT {
+    inline void serialize_into(unsigned char *x) const GOLDILOCKS_NOEXCEPT {
         memcpy(x,priv_.data(), priv_.size());
     }
 
     /** Convert to X format (to be used for key exchange) */
     inline SecureBuffer convert_to_x() const {
-        SecureBuffer out(DECAF_X448_PRIVATE_BYTES);
-        decaf_ed448_convert_private_key_to_x448(out.data(), priv_.data());
+        SecureBuffer out(GOLDILOCKS_X448_PRIVATE_BYTES);
+        goldilocks_ed448_convert_private_key_to_x448(out.data(), priv_.data());
         return out;
     }
 
     /** Return the corresponding public key */
-    inline PublicKey pub() const DECAF_NOEXCEPT {
+    inline PublicKey pub() const GOLDILOCKS_NOEXCEPT {
         PublicKey pub(*this);
         return pub;
     }
@@ -263,16 +263,16 @@ public:
 template<class CRTP> class Verification<CRTP,PURE> {
 public:
     /** Verify a signature, returning GOLDILOCKS_FAILURE if verification fails */
-    inline goldilocks_error_t DECAF_WARN_UNUSED verify_noexcept (
-        const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
+    inline goldilocks_error_t GOLDILOCKS_WARN_UNUSED verify_noexcept (
+        const FixedBlock<GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Block &message,
         const Block &context = NO_CONTEXT()
-    ) const /*DECAF_NOEXCEPT*/ {
+    ) const /*GOLDILOCKS_NOEXCEPT*/ {
         if (context.size() > 255) {
             return GOLDILOCKS_FAILURE;
         }
 
-        return decaf_ed448_verify (
+        return goldilocks_ed448_verify (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
             message.data(),
@@ -290,7 +290,7 @@ public:
      *
      */
     inline void verify (
-        const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
+        const FixedBlock<GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Block &message,
         const Block &context = NO_CONTEXT()
     ) const /*throw(LengthException,CryptoException)*/ {
@@ -308,14 +308,14 @@ public:
 template<class CRTP> class Verification<CRTP,PREHASHED> {
 public:
     /** Verify that a signature is valid for a given prehashed message, given the context. */
-    inline goldilocks_error_t DECAF_WARN_UNUSED verify_prehashed_noexcept (
-        const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
+    inline goldilocks_error_t GOLDILOCKS_WARN_UNUSED verify_prehashed_noexcept (
+        const FixedBlock<GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Prehash &ph
-    ) const /*DECAF_NOEXCEPT*/ {
-        return decaf_ed448_verify_prehash (
+    ) const /*GOLDILOCKS_NOEXCEPT*/ {
+        return goldilocks_ed448_verify_prehash (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
-            (const decaf_ed448_prehash_ctx_s*)ph.wrapped,
+            (const goldilocks_ed448_prehash_ctx_s*)ph.wrapped,
             ph.context_.data(),
             ph.context_.size()
         );
@@ -323,13 +323,13 @@ public:
 
     /** Verify that a signature is valid for a given prehashed message, given the context. */
     inline void verify_prehashed (
-        const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
+        const FixedBlock<GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Prehash &ph
     ) const /*throw(CryptoException)*/ {
-        if (GOLDILOCKS_SUCCESS != decaf_ed448_verify_prehash (
+        if (GOLDILOCKS_SUCCESS != goldilocks_ed448_verify_prehash (
             sig.data(),
             ((const CRTP*)this)->pub_.data(),
-            (const decaf_ed448_prehash_ctx_s*)ph.wrapped,
+            (const goldilocks_ed448_prehash_ctx_s*)ph.wrapped,
             ph.context_.data(),
             ph.context_.size()
         )) {
@@ -339,7 +339,7 @@ public:
 
     /** Hash and verify a message, using the prehashed verification mode. */
     inline void verify_with_prehash (
-        const FixedBlock<DECAF_EDDSA_448_SIGNATURE_BYTES> &sig,
+        const FixedBlock<GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES> &sig,
         const Block &message,
         const Block &context = NO_CONTEXT()
     ) const /*throw(LengthException,CryptoException)*/ {
@@ -366,7 +366,7 @@ private:
 
 private:
     /** The pre-expansion form of the signature */
-    FixedArrayBuffer<DECAF_EDDSA_448_PUBLIC_BYTES> pub_;
+    FixedArrayBuffer<GOLDILOCKS_EDDSA_448_PUBLIC_BYTES> pub_;
 /** @endcond */
 
 public:
@@ -376,58 +376,58 @@ public:
     typedef Ed448Goldilocks Group;
 
     /** Signature size. */
-    static const size_t SIG_BYTES = DECAF_EDDSA_448_SIGNATURE_BYTES;
+    static const size_t SIG_BYTES = GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES;
 
     /** Serialization size. */
-    static const size_t SER_BYTES = DECAF_EDDSA_448_PRIVATE_BYTES;
+    static const size_t SER_BYTES = GOLDILOCKS_EDDSA_448_PRIVATE_BYTES;
 
     /** Create but don't initialize */
-    inline explicit PublicKeyBase(const NOINIT&) DECAF_NOEXCEPT : pub_((NOINIT())) { }
+    inline explicit PublicKeyBase(const NOINIT&) GOLDILOCKS_NOEXCEPT : pub_((NOINIT())) { }
 
     /** Read a private key from a string */
-    inline explicit PublicKeyBase(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT { *this = b; }
+    inline explicit PublicKeyBase(const FixedBlock<SER_BYTES> &b) GOLDILOCKS_NOEXCEPT { *this = b; }
 
     /** Copy constructor */
-    inline PublicKeyBase(const PublicKeyBase &k) DECAF_NOEXCEPT { *this = k; }
+    inline PublicKeyBase(const PublicKeyBase &k) GOLDILOCKS_NOEXCEPT { *this = k; }
 
     /** Copy constructor */
-    inline explicit PublicKeyBase(const PrivateKey &k) DECAF_NOEXCEPT { *this = k; }
+    inline explicit PublicKeyBase(const PrivateKey &k) GOLDILOCKS_NOEXCEPT { *this = k; }
 
     /** Assignment from string */
-    inline PublicKey &operator=(const FixedBlock<SER_BYTES> &b) DECAF_NOEXCEPT {
+    inline PublicKey &operator=(const FixedBlock<SER_BYTES> &b) GOLDILOCKS_NOEXCEPT {
         memcpy(pub_.data(),b.data(),b.size());
         return *this;
     }
 
     /** Assignment from private key */
-    inline PublicKey &operator=(const PublicKey &p) DECAF_NOEXCEPT {
+    inline PublicKey &operator=(const PublicKey &p) GOLDILOCKS_NOEXCEPT {
         return *this = p.pub_;
     }
 
     /** Assignment from private key */
-    inline PublicKey &operator=(const PrivateKey &p) DECAF_NOEXCEPT {
+    inline PublicKey &operator=(const PrivateKey &p) GOLDILOCKS_NOEXCEPT {
         return *this = p.pub_;
     }
 
     /** Serialization size. */
-    inline size_t ser_size() const DECAF_NOEXCEPT { return SER_BYTES; }
+    inline size_t ser_size() const GOLDILOCKS_NOEXCEPT { return SER_BYTES; }
 
     /** Serialize into a buffer. */
-    inline void serialize_into(unsigned char *x) const DECAF_NOEXCEPT {
+    inline void serialize_into(unsigned char *x) const GOLDILOCKS_NOEXCEPT {
         memcpy(x,pub_.data(), pub_.size());
     }
 
     /** Convert to X format (to be used for key exchange) */
     inline SecureBuffer convert_to_x() const {
-        SecureBuffer out(DECAF_X448_PRIVATE_BYTES);
-        decaf_ed448_convert_public_key_to_x448(out.data(), pub_.data());
+        SecureBuffer out(GOLDILOCKS_X448_PRIVATE_BYTES);
+        goldilocks_ed448_convert_public_key_to_x448(out.data(), pub_.data());
         return out;
     }
 }; /* class PublicKey */
 
 }; /* template<> struct EdDSA<Ed448Goldilocks> */
 
-#undef DECAF_NOEXCEPT
-} /* namespace decaf */
+#undef GOLDILOCKS_NOEXCEPT
+} /* namespace goldilocks */
 
-#endif /* __DECAF_ED448_HXX__ */
+#endif /* __GOLDILOCKS_ED448_HXX__ */

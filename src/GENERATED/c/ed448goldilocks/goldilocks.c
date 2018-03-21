@@ -1,12 +1,12 @@
 /**
- * @file ed448goldilocks/decaf.c
+ * @file ed448goldilocks/goldilocks.c
  * @author Mike Hamburg
  *
  * @copyright
  *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
- * @brief Decaf high-level functions.
+ * @brief Goldilocks high-level functions.
  *
  * @warning This file was automatically generated in Python.
  * Please do not edit it.
@@ -15,8 +15,8 @@
 #include "word.h"
 #include "field.h"
 
-#include <decaf.h>
-#include <decaf/ed448.h>
+#include <goldilocks.h>
+#include <goldilocks/ed448.h>
 
 /* Template stuff */
 #define API_NS(_id) goldilocks_448_##_id
@@ -33,9 +33,9 @@
 #define COMBS_N 5
 #define COMBS_T 5
 #define COMBS_S 18
-#define DECAF_WINDOW_BITS 5
-#define DECAF_WNAF_FIXED_TABLE_BITS 5
-#define DECAF_WNAF_VAR_TABLE_BITS 3
+#define GOLDILOCKS_WINDOW_BITS 5
+#define GOLDILOCKS_WNAF_FIXED_TABLE_BITS 5
+#define GOLDILOCKS_WNAF_VAR_TABLE_BITS 3
 
 #define EDDSA_USE_SIGMA_ISOGENY 0
 
@@ -46,7 +46,7 @@ static const scalar_t point_scalarmul_adjustment = {{{
     SC_LIMB(0xc873d6d54a7bb0cf), SC_LIMB(0xe933d8d723a70aad), SC_LIMB(0xbb124b65129c96fd), SC_LIMB(0x00000008335dc163)
 }}};
 
-const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] = { 0x05 };
+const uint8_t goldilocks_x448_base_point[GOLDILOCKS_X448_PUBLIC_BYTES] = { 0x05 };
 
 #define RISTRETTO_FACTOR GOLDILOCKS_448_RISTRETTO_FACTOR
 const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
@@ -70,7 +70,7 @@ const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
     #error "COFACTOR must be 4"
 #endif
 
-#define WBITS DECAF_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
+#define WBITS GOLDILOCKS_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
 extern const point_t API_NS(point_base);
 
@@ -164,7 +164,7 @@ void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
 goldilocks_error_t API_NS(point_decode) (
     point_t p,
     const unsigned char ser[SER_BYTES],
-    decaf_bool_t allow_identity
+    goldilocks_bool_t allow_identity
 ) {
     gf s, s2, num, tmp;
     gf_s *tmp2=s2, *ynum=p->z, *isr=p->x, *den=p->t;
@@ -194,7 +194,7 @@ goldilocks_error_t API_NS(point_decode) (
     gf_mul(p->t,p->x,p->y);
 
     assert(API_NS(point_valid)(p) | ~succ);
-    return decaf_succeed_if(mask_to_bool(succ));
+    return goldilocks_succeed_if(mask_to_bool(succ));
 }
 
 void API_NS(point_sub) (
@@ -261,7 +261,7 @@ void API_NS(point_add) (
     gf_mul ( p->t, b, c );
 }
 
-static DECAF_NOINLINE void
+static GOLDILOCKS_NOINLINE void
 point_double_internal (
     point_t p,
     const point_t q,
@@ -300,7 +300,7 @@ void API_NS(point_negate) (
 }
 
 /* Operations on [p]niels */
-static DECAF_INLINE void
+static GOLDILOCKS_INLINE void
 cond_neg_niels (
     niels_t n,
     mask_t neg
@@ -309,7 +309,7 @@ cond_neg_niels (
     gf_cond_neg(n->c, neg);
 }
 
-static DECAF_NOINLINE void pt_to_pniels (
+static GOLDILOCKS_NOINLINE void pt_to_pniels (
     pniels_t b,
     const point_t a
 ) {
@@ -319,7 +319,7 @@ static DECAF_NOINLINE void pt_to_pniels (
     gf_add ( b->z, a->z, a->z );
 }
 
-static DECAF_NOINLINE void pniels_to_pt (
+static GOLDILOCKS_NOINLINE void pniels_to_pt (
     point_t e,
     const pniels_t d
 ) {
@@ -332,7 +332,7 @@ static DECAF_NOINLINE void pniels_to_pt (
     gf_sqr ( e->z, d->z );
 }
 
-static DECAF_NOINLINE void
+static GOLDILOCKS_NOINLINE void
 niels_to_pt (
     point_t e,
     const niels_t n
@@ -343,7 +343,7 @@ niels_to_pt (
     gf_copy ( e->z, ONE );
 }
 
-static DECAF_NOINLINE void
+static GOLDILOCKS_NOINLINE void
 add_niels_to_pt (
     point_t d,
     const niels_t e,
@@ -365,7 +365,7 @@ add_niels_to_pt (
     if (!before_double) gf_mul ( d->t, b, c );
 }
 
-static DECAF_NOINLINE void
+static GOLDILOCKS_NOINLINE void
 sub_niels_from_pt (
     point_t d,
     const niels_t e,
@@ -411,7 +411,7 @@ sub_pniels_from_pt (
     sub_niels_from_pt( p, pn->n, before_double );
 }
 
-static DECAF_NOINLINE void
+static GOLDILOCKS_NOINLINE void
 prepare_fixed_window(
     pniels_t *multiples,
     const point_t b,
@@ -430,8 +430,8 @@ prepare_fixed_window(
         pt_to_pniels(multiples[i], tmp);
     }
 
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(tmp,sizeof(tmp));
+    goldilocks_bzero(pn,sizeof(pn));
+    goldilocks_bzero(tmp,sizeof(tmp));
 }
 
 void API_NS(point_scalarmul) (
@@ -439,7 +439,7 @@ void API_NS(point_scalarmul) (
     const point_t b,
     const scalar_t scalar
 ) {
-    const int WINDOW = DECAF_WINDOW_BITS,
+    const int WINDOW = GOLDILOCKS_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
@@ -488,10 +488,10 @@ void API_NS(point_scalarmul) (
     /* Write out the answer */
     API_NS(point_copy)(a,tmp);
 
-    decaf_bzero(scalar1x,sizeof(scalar1x));
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(multiples,sizeof(multiples));
-    decaf_bzero(tmp,sizeof(tmp));
+    goldilocks_bzero(scalar1x,sizeof(scalar1x));
+    goldilocks_bzero(pn,sizeof(pn));
+    goldilocks_bzero(multiples,sizeof(multiples));
+    goldilocks_bzero(tmp,sizeof(tmp));
 }
 
 void API_NS(point_double_scalarmul) (
@@ -501,7 +501,7 @@ void API_NS(point_double_scalarmul) (
     const point_t c,
     const scalar_t scalarc
 ) {
-    const int WINDOW = DECAF_WINDOW_BITS,
+    const int WINDOW = GOLDILOCKS_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
@@ -561,12 +561,12 @@ void API_NS(point_double_scalarmul) (
     /* Write out the answer */
     API_NS(point_copy)(a,tmp);
 
-    decaf_bzero(scalar1x,sizeof(scalar1x));
-    decaf_bzero(scalar2x,sizeof(scalar2x));
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(multiples1,sizeof(multiples1));
-    decaf_bzero(multiples2,sizeof(multiples2));
-    decaf_bzero(tmp,sizeof(tmp));
+    goldilocks_bzero(scalar1x,sizeof(scalar1x));
+    goldilocks_bzero(scalar2x,sizeof(scalar2x));
+    goldilocks_bzero(pn,sizeof(pn));
+    goldilocks_bzero(multiples1,sizeof(multiples1));
+    goldilocks_bzero(multiples2,sizeof(multiples2));
+    goldilocks_bzero(tmp,sizeof(tmp));
 }
 
 void API_NS(point_dual_scalarmul) (
@@ -576,7 +576,7 @@ void API_NS(point_dual_scalarmul) (
     const scalar_t scalar1,
     const scalar_t scalar2
 ) {
-    const int WINDOW = DECAF_WINDOW_BITS,
+    const int WINDOW = GOLDILOCKS_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
@@ -660,16 +660,16 @@ void API_NS(point_dual_scalarmul) (
         API_NS(point_copy)(a2, multiples2[0]);
     }
 
-    decaf_bzero(scalar1x,sizeof(scalar1x));
-    decaf_bzero(scalar2x,sizeof(scalar2x));
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(multiples1,sizeof(multiples1));
-    decaf_bzero(multiples2,sizeof(multiples2));
-    decaf_bzero(tmp,sizeof(tmp));
-    decaf_bzero(working,sizeof(working));
+    goldilocks_bzero(scalar1x,sizeof(scalar1x));
+    goldilocks_bzero(scalar2x,sizeof(scalar2x));
+    goldilocks_bzero(pn,sizeof(pn));
+    goldilocks_bzero(multiples1,sizeof(multiples1));
+    goldilocks_bzero(multiples2,sizeof(multiples2));
+    goldilocks_bzero(tmp,sizeof(tmp));
+    goldilocks_bzero(working,sizeof(working));
 }
 
-decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
+goldilocks_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     /* equality mod 2-torsion compares x/y */
     gf a, b;
     gf_mul ( a, p->y, q->x );
@@ -696,7 +696,7 @@ decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     return mask_to_bool(succ);
 }
 
-decaf_bool_t API_NS(point_valid) (
+goldilocks_bool_t API_NS(point_valid) (
     const point_t p
 ) {
     gf a,b,c;
@@ -792,7 +792,7 @@ static void batch_normalize_niels (
         gf_copy(table[i]->c, product);
     }
 
-    decaf_bzero(product,sizeof(product));
+    goldilocks_bzero(product,sizeof(product));
 }
 
 void API_NS(precompute) (
@@ -852,15 +852,15 @@ void API_NS(precompute) (
 
     batch_normalize_niels(table->table,(const gf *)zs,zis,n<<(t-1));
 
-    decaf_bzero(zs,sizeof(zs));
-    decaf_bzero(zis,sizeof(zis));
-    decaf_bzero(pn_tmp,sizeof(pn_tmp));
-    decaf_bzero(working,sizeof(working));
-    decaf_bzero(start,sizeof(start));
-    decaf_bzero(doubles,sizeof(doubles));
+    goldilocks_bzero(zs,sizeof(zs));
+    goldilocks_bzero(zis,sizeof(zis));
+    goldilocks_bzero(pn_tmp,sizeof(pn_tmp));
+    goldilocks_bzero(working,sizeof(working));
+    goldilocks_bzero(start,sizeof(start));
+    goldilocks_bzero(doubles,sizeof(doubles));
 }
 
-static DECAF_INLINE void
+static GOLDILOCKS_INLINE void
 constant_time_lookup_niels (
     niels_s *__restrict__ ni,
     const niels_t *table,
@@ -913,15 +913,15 @@ void API_NS(precomputed_scalarmul) (
         }
     }
 
-    decaf_bzero(ni,sizeof(ni));
-    decaf_bzero(scalar1x,sizeof(scalar1x));
+    goldilocks_bzero(ni,sizeof(ni));
+    goldilocks_bzero(scalar1x,sizeof(scalar1x));
 }
 
 void API_NS(point_cond_sel) (
     point_t out,
     const point_t a,
     const point_t b,
-    decaf_bool_t pick_b
+    goldilocks_bool_t pick_b
 ) {
     constant_time_select(out,a,b,sizeof(point_t),bool_to_mask(pick_b),0);
 }
@@ -930,8 +930,8 @@ goldilocks_error_t API_NS(direct_scalarmul) (
     uint8_t scaled[SER_BYTES],
     const uint8_t base[SER_BYTES],
     const scalar_t scalar,
-    decaf_bool_t allow_identity,
-    decaf_bool_t short_circuit
+    goldilocks_bool_t allow_identity,
+    goldilocks_bool_t short_circuit
 ) {
     point_t basep;
     goldilocks_error_t succ = API_NS(point_decode)(basep, base, allow_identity);
@@ -944,7 +944,7 @@ goldilocks_error_t API_NS(direct_scalarmul) (
 }
 
 void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
-    uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
+    uint8_t enc[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
     const point_t p
 ) {
 
@@ -967,7 +967,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     gf_mul ( x, t, y );
     gf_mul ( y, z, u );
     gf_mul ( z, u, t );
-    decaf_bzero(u,sizeof(u));
+    goldilocks_bzero(u,sizeof(u));
 
     /* Affinize */
     gf_invert(z,z,1);
@@ -975,32 +975,32 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     gf_mul(x,y,z);
 
     /* Encode */
-    enc[DECAF_EDDSA_448_PRIVATE_BYTES-1] = 0;
+    enc[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1] = 0;
     gf_serialize(enc, x, 1);
-    enc[DECAF_EDDSA_448_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
+    enc[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
 
-    decaf_bzero(x,sizeof(x));
-    decaf_bzero(y,sizeof(y));
-    decaf_bzero(z,sizeof(z));
-    decaf_bzero(t,sizeof(t));
+    goldilocks_bzero(x,sizeof(x));
+    goldilocks_bzero(y,sizeof(y));
+    goldilocks_bzero(z,sizeof(z));
+    goldilocks_bzero(t,sizeof(t));
     API_NS(point_destroy)(q);
 }
 
 
 goldilocks_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     point_t p,
-    const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
+    const uint8_t enc[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES]
 ) {
-    uint8_t enc2[DECAF_EDDSA_448_PUBLIC_BYTES];
+    uint8_t enc2[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES];
     memcpy(enc2,enc,sizeof(enc2));
 
-    mask_t low = ~word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] & 0x80);
-    enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] &= ~0x80;
+    mask_t low = ~word_is_zero(enc2[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1] & 0x80);
+    enc2[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1] &= ~0x80;
 
     mask_t succ = gf_deserialize(p->y, enc2, 1, 0);
 /* actually the case on 448 */
 #if 0 == 0
-    succ &= word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1]);
+    succ &= word_is_zero(enc2[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1]);
 #endif
 
     gf_sqr(p->x,p->y);
@@ -1031,18 +1031,18 @@ goldilocks_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     gf_mul ( p->z, p->t, a );
     gf_mul ( p->y, p->t, d );
     gf_mul ( p->t, b, d );
-    decaf_bzero(a,sizeof(a));
-    decaf_bzero(b,sizeof(b));
-    decaf_bzero(c,sizeof(c));
-    decaf_bzero(d,sizeof(d));
+    goldilocks_bzero(a,sizeof(a));
+    goldilocks_bzero(b,sizeof(b));
+    goldilocks_bzero(c,sizeof(c));
+    goldilocks_bzero(d,sizeof(d));
 
-    decaf_bzero(enc2,sizeof(enc2));
+    goldilocks_bzero(enc2,sizeof(enc2));
     assert(API_NS(point_valid)(p) || ~succ);
 
-    return decaf_succeed_if(mask_to_bool(succ));
+    return goldilocks_succeed_if(mask_to_bool(succ));
 }
 
-goldilocks_error_t decaf_x448 (
+goldilocks_error_t goldilocks_x448 (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t base[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
@@ -1102,21 +1102,21 @@ goldilocks_error_t decaf_x448 (
     gf_serialize(out,x1,1);
     mask_t nz = ~gf_eq(x1,ZERO);
 
-    decaf_bzero(x1,sizeof(x1));
-    decaf_bzero(x2,sizeof(x2));
-    decaf_bzero(z2,sizeof(z2));
-    decaf_bzero(x3,sizeof(x3));
-    decaf_bzero(z3,sizeof(z3));
-    decaf_bzero(t1,sizeof(t1));
-    decaf_bzero(t2,sizeof(t2));
+    goldilocks_bzero(x1,sizeof(x1));
+    goldilocks_bzero(x2,sizeof(x2));
+    goldilocks_bzero(z2,sizeof(z2));
+    goldilocks_bzero(x3,sizeof(x3));
+    goldilocks_bzero(z3,sizeof(z3));
+    goldilocks_bzero(t1,sizeof(t1));
+    goldilocks_bzero(t2,sizeof(t2));
 
-    return decaf_succeed_if(mask_to_bool(nz));
+    return goldilocks_succeed_if(mask_to_bool(nz));
 }
 
 /* Thanks Johan Pascal */
-void decaf_ed448_convert_public_key_to_x448 (
-    uint8_t x[DECAF_X448_PUBLIC_BYTES],
-    const uint8_t ed[DECAF_EDDSA_448_PUBLIC_BYTES]
+void goldilocks_ed448_convert_public_key_to_x448 (
+    uint8_t x[GOLDILOCKS_X448_PUBLIC_BYTES],
+    const uint8_t ed[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES]
 ) {
     gf y;
     const uint8_t mask = (uint8_t)(0xFE<<(7));
@@ -1134,16 +1134,16 @@ void decaf_ed448_convert_public_key_to_x448 (
     gf_mul(n, y, d); /* y^2 * (1-dy^2) / (1-y^2) */
     gf_serialize(x,n,1);
 
-    decaf_bzero(y,sizeof(y));
-    decaf_bzero(n,sizeof(n));
-    decaf_bzero(d,sizeof(d));
+    goldilocks_bzero(y,sizeof(y));
+    goldilocks_bzero(n,sizeof(n));
+    goldilocks_bzero(d,sizeof(d));
 }
 
-void decaf_x448_generate_key (
+void goldilocks_x448_generate_key (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
 ) {
-    decaf_x448_derive_public_key(out,scalar);
+    goldilocks_x448_derive_public_key(out,scalar);
 }
 
 void API_NS(point_mul_by_ratio_and_encode_like_x448) (
@@ -1159,7 +1159,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_x448) (
     API_NS(point_destroy(q));
 }
 
-void decaf_x448_derive_public_key (
+void goldilocks_x448_derive_public_key (
     uint8_t out[X_PUBLIC_BYTES],
     const uint8_t scalar[X_PRIVATE_BYTES]
 ) {
@@ -1175,7 +1175,7 @@ void decaf_x448_derive_public_key (
     API_NS(scalar_decode_long)(the_scalar,scalar2,sizeof(scalar2));
 
     /* Compensate for the encoding ratio */
-    for (unsigned i=1; i<DECAF_X448_ENCODE_RATIO; i<<=1) {
+    for (unsigned i=1; i<GOLDILOCKS_X448_ENCODE_RATIO; i<<=1) {
         API_NS(scalar_halve)(the_scalar,the_scalar);
     }
     point_t p;
@@ -1269,36 +1269,36 @@ prepare_wnaf_table(
     }
 
     API_NS(point_destroy)(tmp);
-    decaf_bzero(twop,sizeof(twop));
+    goldilocks_bzero(twop,sizeof(twop));
 }
 
 extern const gf API_NS(precomputed_wnaf_as_fe)[];
 static const niels_t *API_NS(wnaf_base) = (const niels_t *)API_NS(precomputed_wnaf_as_fe);
 const size_t API_NS(sizeof_precomputed_wnafs) __attribute((visibility("hidden")))
-    = sizeof(niels_t)<<DECAF_WNAF_FIXED_TABLE_BITS;
+    = sizeof(niels_t)<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS;
 
 void API_NS(precompute_wnafs) (
-    niels_t out[1<<DECAF_WNAF_FIXED_TABLE_BITS],
+    niels_t out[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS],
     const point_t base
 ) __attribute__ ((visibility ("hidden")));
 
 void API_NS(precompute_wnafs) (
-    niels_t out[1<<DECAF_WNAF_FIXED_TABLE_BITS],
+    niels_t out[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS],
     const point_t base
 ) {
-    pniels_t tmp[1<<DECAF_WNAF_FIXED_TABLE_BITS];
-    gf zs[1<<DECAF_WNAF_FIXED_TABLE_BITS], zis[1<<DECAF_WNAF_FIXED_TABLE_BITS];
+    pniels_t tmp[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS];
+    gf zs[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS], zis[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS];
     int i;
-    prepare_wnaf_table(tmp,base,DECAF_WNAF_FIXED_TABLE_BITS);
-    for (i=0; i<1<<DECAF_WNAF_FIXED_TABLE_BITS; i++) {
+    prepare_wnaf_table(tmp,base,GOLDILOCKS_WNAF_FIXED_TABLE_BITS);
+    for (i=0; i<1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS; i++) {
         memcpy(out[i], tmp[i]->n, sizeof(niels_t));
         gf_copy(zs[i], tmp[i]->z);
     }
-    batch_normalize_niels(out, (const gf *)zs, zis, 1<<DECAF_WNAF_FIXED_TABLE_BITS);
+    batch_normalize_niels(out, (const gf *)zs, zis, 1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS);
 
-    decaf_bzero(tmp,sizeof(tmp));
-    decaf_bzero(zs,sizeof(zs));
-    decaf_bzero(zis,sizeof(zis));
+    goldilocks_bzero(tmp,sizeof(tmp));
+    goldilocks_bzero(zs,sizeof(zs));
+    goldilocks_bzero(zis,sizeof(zis));
 }
 
 void API_NS(base_double_scalarmul_non_secret) (
@@ -1307,8 +1307,8 @@ void API_NS(base_double_scalarmul_non_secret) (
     const point_t base2,
     const scalar_t scalar2
 ) {
-    const int table_bits_var = DECAF_WNAF_VAR_TABLE_BITS,
-        table_bits_pre = DECAF_WNAF_FIXED_TABLE_BITS;
+    const int table_bits_var = GOLDILOCKS_WNAF_VAR_TABLE_BITS,
+        table_bits_pre = GOLDILOCKS_WNAF_FIXED_TABLE_BITS;
     struct smvt_control control_var[SCALAR_BITS/(table_bits_var+1)+3];
     struct smvt_control control_pre[SCALAR_BITS/(table_bits_pre+1)+3];
 
@@ -1364,9 +1364,9 @@ void API_NS(base_double_scalarmul_non_secret) (
     }
 
     /* This function is non-secret, but whatever this is cheap. */
-    decaf_bzero(control_var,sizeof(control_var));
-    decaf_bzero(control_pre,sizeof(control_pre));
-    decaf_bzero(precmp_var,sizeof(precmp_var));
+    goldilocks_bzero(control_var,sizeof(control_var));
+    goldilocks_bzero(control_pre,sizeof(control_pre));
+    goldilocks_bzero(precmp_var,sizeof(precmp_var));
 
     assert(contv == ncb_var); (void)ncb_var;
     assert(contp == ncb_pre); (void)ncb_pre;
@@ -1375,11 +1375,11 @@ void API_NS(base_double_scalarmul_non_secret) (
 void API_NS(point_destroy) (
     point_t point
 ) {
-    decaf_bzero(point, sizeof(point_t));
+    goldilocks_bzero(point, sizeof(point_t));
 }
 
 void API_NS(precomputed_destroy) (
     precomputed_s *pre
 ) {
-    decaf_bzero(pre, API_NS(sizeof_precomputed_s));
+    goldilocks_bzero(pre, API_NS(sizeof_precomputed_s));
 }

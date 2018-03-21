@@ -1,5 +1,5 @@
 /**
- * @file decaf/ed448.h
+ * @file goldilocks/ed448.h
  * @author Mike Hamburg
  *
  * @copyright
@@ -12,40 +12,40 @@
  * Please do not edit it.
  */
 
-#ifndef __DECAF_ED448_H__
-#define __DECAF_ED448_H__ 1
+#ifndef __GOLDILOCKS_ED448_H__
+#define __GOLDILOCKS_ED448_H__ 1
 
-#include <decaf/point_448.h>
-#include <decaf/shake.h>
+#include <goldilocks/point_448.h>
+#include <goldilocks/shake.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /** Number of bytes in an EdDSA public key. */
-#define DECAF_EDDSA_448_PUBLIC_BYTES 57
+#define GOLDILOCKS_EDDSA_448_PUBLIC_BYTES 57
 
 /** Number of bytes in an EdDSA private key. */
-#define DECAF_EDDSA_448_PRIVATE_BYTES DECAF_EDDSA_448_PUBLIC_BYTES
+#define GOLDILOCKS_EDDSA_448_PRIVATE_BYTES GOLDILOCKS_EDDSA_448_PUBLIC_BYTES
 
 /** Number of bytes in an EdDSA private key. */
-#define DECAF_EDDSA_448_SIGNATURE_BYTES (DECAF_EDDSA_448_PUBLIC_BYTES + DECAF_EDDSA_448_PRIVATE_BYTES)
+#define GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES (GOLDILOCKS_EDDSA_448_PUBLIC_BYTES + GOLDILOCKS_EDDSA_448_PRIVATE_BYTES)
 
 /** Does EdDSA support non-contextual signatures? */
-#define DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS 0
+#define GOLDILOCKS_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS 0
 
 
 /** Prehash context (raw), because each EdDSA instance has a different prehash. */
-#define decaf_ed448_prehash_ctx_s   decaf_shake256_ctx_s
+#define goldilocks_ed448_prehash_ctx_s   goldilocks_shake256_ctx_s
 
 /** Prehash context, array[1] form. */
-#define decaf_ed448_prehash_ctx_t   decaf_shake256_ctx_t
+#define goldilocks_ed448_prehash_ctx_t   goldilocks_shake256_ctx_t
 
 /** Prehash update. */
-#define decaf_ed448_prehash_update  decaf_shake256_update
+#define goldilocks_ed448_prehash_update  goldilocks_shake256_update
 
 /** Prehash destroy. */
-#define decaf_ed448_prehash_destroy decaf_shake256_destroy
+#define goldilocks_ed448_prehash_destroy goldilocks_shake256_destroy
 
 /** EdDSA encoding ratio. */
 #define GOLDILOCKS_448_EDDSA_ENCODE_RATIO 4
@@ -60,10 +60,10 @@ extern "C" {
  * @param [out] secret The secret key.
  * @param [in] privkey The private key.
  */
-void decaf_ed448_derive_secret_scalar (
+void goldilocks_ed448_derive_secret_scalar (
     goldilocks_448_scalar_t secret,
-    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+    const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES]
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief EdDSA key generation.  This function uses a different (non-Decaf)
@@ -72,10 +72,10 @@ void decaf_ed448_derive_secret_scalar (
  * @param [out] pubkey The public key.
  * @param [in] privkey The private key.
  */
-void decaf_ed448_derive_public_key (
-    uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+void goldilocks_ed448_derive_public_key (
+    uint8_t pubkey[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
+    const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES]
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief EdDSA signing.
@@ -94,16 +94,16 @@ void decaf_ed448_derive_public_key (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-void decaf_ed448_sign (
-    uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+void goldilocks_ed448_sign (
+    uint8_t signature[GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES],
+    const uint8_t pubkey[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
     uint8_t prehashed,
     const uint8_t *context,
     uint8_t context_len
-) DECAF_API_VIS __attribute__((nonnull(1,2,3))) DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS __attribute__((nonnull(1,2,3))) GOLDILOCKS_NOINLINE;
 
 /**
  * @brief EdDSA signing with prehash.
@@ -120,23 +120,23 @@ void decaf_ed448_sign (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-void decaf_ed448_sign_prehash (
-    uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const decaf_ed448_prehash_ctx_t hash,
+void goldilocks_ed448_sign_prehash (
+    uint8_t signature[GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES],
+    const uint8_t pubkey[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
+    const goldilocks_ed448_prehash_ctx_t hash,
     const uint8_t *context,
     uint8_t context_len
-) DECAF_API_VIS __attribute__((nonnull(1,2,3,4))) DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS __attribute__((nonnull(1,2,3,4))) GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Prehash initialization, with contexts if supported.
  *
  * @param [out] hash The hash object to be initialized.
  */
-void decaf_ed448_prehash_init (
-    decaf_ed448_prehash_ctx_t hash
-) DECAF_API_VIS __attribute__((nonnull(1))) DECAF_NOINLINE;
+void goldilocks_ed448_prehash_init (
+    goldilocks_ed448_prehash_ctx_t hash
+) GOLDILOCKS_API_VIS __attribute__((nonnull(1))) GOLDILOCKS_NOINLINE;
 
 /**
  * @brief EdDSA signature verification.
@@ -156,15 +156,15 @@ void decaf_ed448_prehash_init (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-goldilocks_error_t decaf_ed448_verify (
-    const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+goldilocks_error_t goldilocks_ed448_verify (
+    const uint8_t signature[GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t pubkey[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
     const uint8_t *message,
     size_t message_len,
     uint8_t prehashed,
     const uint8_t *context,
     uint8_t context_len
-) DECAF_API_VIS __attribute__((nonnull(1,2))) DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS __attribute__((nonnull(1,2))) GOLDILOCKS_NOINLINE;
 
 /**
  * @brief EdDSA signature verification.
@@ -182,13 +182,13 @@ goldilocks_error_t decaf_ed448_verify (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-goldilocks_error_t decaf_ed448_verify_prehash (
-    const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const decaf_ed448_prehash_ctx_t hash,
+goldilocks_error_t goldilocks_ed448_verify_prehash (
+    const uint8_t signature[GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES],
+    const uint8_t pubkey[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
+    const goldilocks_ed448_prehash_ctx_t hash,
     const uint8_t *context,
     uint8_t context_len
-) DECAF_API_VIS __attribute__((nonnull(1,2))) DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS __attribute__((nonnull(1,2))) GOLDILOCKS_NOINLINE;
 
 /**
  * @brief EdDSA point encoding.  Used internally, exposed externally.
@@ -200,7 +200,7 @@ goldilocks_error_t decaf_ed448_verify_prehash (
  * EdDSA, the cofactor info must get cleared, because the intermediate
  * representation doesn't track it.
  *
- * The way libdecaf handles this is to multiply by
+ * The way libgoldilocks handles this is to multiply by
  * GOLDILOCKS_448_EDDSA_DECODE_RATIO when decoding, and by
  * GOLDILOCKS_448_EDDSA_ENCODE_RATIO when encoding.  The product of these
  * ratios is always exactly the cofactor 4, so the cofactor
@@ -215,9 +215,9 @@ goldilocks_error_t decaf_ed448_verify_prehash (
  * @param [in] p The point.
  */
 void goldilocks_448_point_mul_by_ratio_and_encode_like_eddsa (
-    uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
+    uint8_t enc[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
     const goldilocks_448_point_t p
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief EdDSA point decoding.  Multiplies by GOLDILOCKS_448_EDDSA_DECODE_RATIO,
@@ -230,8 +230,8 @@ void goldilocks_448_point_mul_by_ratio_and_encode_like_eddsa (
  */
 goldilocks_error_t goldilocks_448_point_decode_like_eddsa_and_mul_by_ratio (
     goldilocks_448_point_t p,
-    const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+    const uint8_t enc[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES]
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief EdDSA to ECDH public key conversion
@@ -244,10 +244,10 @@ goldilocks_error_t goldilocks_448_point_decode_like_eddsa_and_mul_by_ratio (
  * @param[out] x The ECDH public key as in RFC7748(point on Montgomery curve)
  * @param[in] ed The EdDSA public key(point on Edwards curve)
  */
-void decaf_ed448_convert_public_key_to_x448 (
-    uint8_t x[DECAF_X448_PUBLIC_BYTES],
-    const uint8_t ed[DECAF_EDDSA_448_PUBLIC_BYTES]
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+void goldilocks_ed448_convert_public_key_to_x448 (
+    uint8_t x[GOLDILOCKS_X448_PUBLIC_BYTES],
+    const uint8_t ed[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES]
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief EdDSA to ECDH private key conversion
@@ -257,13 +257,13 @@ void decaf_ed448_convert_public_key_to_x448 (
  * @param[out] x The ECDH private key as in RFC7748
  * @param[in] ed The EdDSA private key
  */
-void decaf_ed448_convert_private_key_to_x448 (
-    uint8_t x[DECAF_X448_PRIVATE_BYTES],
-    const uint8_t ed[DECAF_EDDSA_448_PRIVATE_BYTES]
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+void goldilocks_ed448_convert_private_key_to_x448 (
+    uint8_t x[GOLDILOCKS_X448_PRIVATE_BYTES],
+    const uint8_t ed[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES]
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif /* __DECAF_ED448_H__ */
+#endif /* __GOLDILOCKS_ED448_H__ */

@@ -1,5 +1,5 @@
 /**
- * @file decaf/eddsa.hxx
+ * @file goldilocks/eddsa.hxx
  * @author Mike Hamburg
  *
  * @copyright
@@ -12,11 +12,11 @@
  * Please do not edit it.
  */
 
-#ifndef __DECAF_EDDSA_HXX__
-#define __DECAF_EDDSA_HXX__ 1
+#ifndef __GOLDILOCKS_EDDSA_HXX__
+#define __GOLDILOCKS_EDDSA_HXX__ 1
 
-/** Namespace for all libdecaf C++ objects. */
-namespace decaf {
+/** Namespace for all libgoldilocks C++ objects. */
+namespace goldilocks {
     /** How signatures handle hashing. */
     enum Prehashed {
         PURE,     /**< Sign the message itself.  This can't be done in one pass. */
@@ -24,6 +24,6 @@ namespace decaf {
     };
 }
 
-#include <decaf/ed448.hxx>
+#include <goldilocks/ed448.hxx>
 
-#endif /* __DECAF_EDDSA_HXX__ */
+#endif /* __GOLDILOCKS_EDDSA_HXX__ */

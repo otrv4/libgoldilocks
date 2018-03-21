@@ -13,7 +13,7 @@
  */
 #include "word.h"
 #include "field.h"
-#include <decaf.h>
+#include <goldilocks.h>
 
 /* Template stuff */
 #define API_NS(_id) goldilocks_448_##_id
@@ -150,7 +150,7 @@ API_NS(invert_elligator_nonuniform) (
 #if 0
         recovered_hash[SER_BYTES-1] ^= (hint>>3)<<0;
 #endif
-    return decaf_succeed_if(mask_to_bool(succ));
+    return goldilocks_succeed_if(mask_to_bool(succ));
 }
 
 goldilocks_error_t

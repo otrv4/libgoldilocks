@@ -54,7 +54,7 @@ incsub_HEADERS = GENERATED/include/goldilocks/common.h \
 		 GENERATED/include/goldilocks/spongerng.h \
 		 GENERATED/include/goldilocks/spongerng.hxx
 
-include_HEADERS = GENERATED/goldilocks/goldilocks.h \
+include_HEADERS = GENERATED/include/goldilocks.h \
 		  GENERATED/include/goldilocks.hxx
 
 #pkginclude_HEADERS = GENERATED/include/

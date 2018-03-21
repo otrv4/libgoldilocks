@@ -85,7 +85,7 @@ void goldilocks_ed448_convert_private_key_to_x448 (
         x,
         GOLDILOCKS_X448_PRIVATE_BYTES,
         ed,
-        GOlDILOCKS_EDDSA_448_PRIVATE_BYTES
+        GOLDILOCKS_EDDSA_448_PRIVATE_BYTES
     );
 }
 

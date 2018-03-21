@@ -1,12 +1,12 @@
 /**
- * @file ed448goldilocks/decaf_gen_tables.c
+ * @file ed448goldilocks/goldilocks_gen_tables.c
  * @author Mike Hamburg
  *
  * @copyright
  *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
- * @brief Decaf global constant table precomputation.
+ * @brief Goldilocks global constant table precomputation.
  *
  * @warning This file was automatically generated in Python.
  * Please do not edit it.
@@ -17,7 +17,7 @@
 
 #include "field.h"
 #include "f_field.h"
-#include "decaf.h"
+#include "goldilocks.h"
 
 #define API_NS(_id) goldilocks_448_##_id
 static const unsigned char base_point_ser_for_pregen[SER_BYTES] = {
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 
     printf("/** @warning: this file was automatically generated. */\n");
     printf("#include \"field.h\"\n\n");
-    printf("#include <decaf.h>\n\n");
+    printf("#include <goldilocks.h>\n\n");
     printf("#define API_NS(_id) goldilocks_448_##_id\n");
 
     output = (const gf_s *)real_point_base;

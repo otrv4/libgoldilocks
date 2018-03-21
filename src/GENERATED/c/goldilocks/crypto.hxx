@@ -1,12 +1,12 @@
 /**
- * @file decaf/crypto.hxx
+ * @file goldilocks/crypto.hxx
  * @author Mike Hamburg
  *
  * @copyright
  *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
- * Example Decaf crypto routines, C++ metaheader.
+ * Example Goldilocks crypto routines, C++ metaheader.
  * @warning These are merely examples, though they ought to be secure.  But real
  * protocols will decide differently on magic numbers, formats, which items to
  * hash, etc.
@@ -15,9 +15,9 @@
  * Please do not edit it.
  */
 
-#ifndef __DECAF_CRYPTO_HXX__
-#define __DECAF_CRYPTO_HXX__ 1
+#ifndef __GOLDILOCKS_CRYPTO_HXX__
+#define __GOLDILOCKS_CRYPTO_HXX__ 1
 
-#include <decaf/point_448.hxx>
+#include <goldilocks/point_448.hxx>
 
-#endif /* __DECAF_CRYPTO_HXX__ */
+#endif /* __GOLDILOCKS_CRYPTO_HXX__ */
