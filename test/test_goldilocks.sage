@@ -1,7 +1,7 @@
 from ctypes import *
 from base64 import *
 
-DECAF = CDLL("build/lib/libgoldilocks.so")
+GOLDILOCKS = CDLL("build/lib/libgoldilocks.so")
 
 F = GF(2^448-2^224-1)
 d = -39081

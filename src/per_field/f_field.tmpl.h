@@ -6,7 +6,7 @@
 
 #include "word.h"
 
-#define __DECAF_448_GF_DEFINED__ 1
+#define __GOLDILOCKS_448_GF_DEFINED__ 1
 #define NLIMBS ($(gf_impl_bits//8)/sizeof(word_t))
 #define X_SER_BYTES $(((gf_bits-1)//8 + 1))
 #define SER_BYTES $(((gf_bits-2)//8 + 1))

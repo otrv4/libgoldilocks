@@ -1,16 +1,16 @@
 /**
- * @file decaf/common.h
+ * @file goldilocks/common.h
  * @author Mike Hamburg
  *
  * @copyright
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
- * @brief Common utility headers for Decaf library.
+ * @brief Common utility headers for Goldilocks library.
  */
 
-#ifndef __DECAF_COMMON_H__
-#define __DECAF_COMMON_H__ 1
+#ifndef __GOLDILOCKS_COMMON_H__
+#define __GOLDILOCKS_COMMON_H__ 1
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -25,18 +25,18 @@ extern "C" {
 #define __attribute__(x)
 #define NOINLINE
 #endif
-#define DECAF_API_VIS __attribute__((visibility("default")))
-#define DECAF_NOINLINE  __attribute__((noinline))
-#define DECAF_WARN_UNUSED __attribute__((warn_unused_result))
+#define GOLDILOCKS_API_VIS __attribute__((visibility("default")))
+#define GOLDILOCKS_NOINLINE  __attribute__((noinline))
+#define GOLDILOCKS_WARN_UNUSED __attribute__((warn_unused_result))
 #define GOLDILOCKS_NONNULL __attribute__((nonnull))
-#define DECAF_INLINE inline __attribute__((always_inline,unused))
+#define GOLDILOCKS_INLINE inline __attribute__((always_inline,unused))
 // Cribbed from libnotmuch
 #if defined (__clang_major__) && __clang_major__ >= 3 \
     || defined (__GNUC__) && __GNUC__ >= 5 \
     || defined (__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ >= 5
-#define DECAF_DEPRECATED(msg) __attribute__ ((deprecated(msg)))
+#define GOLDILOCKS_DEPRECATED(msg) __attribute__ ((deprecated(msg)))
 #else
-#define DECAF_DEPRECATED(msg) __attribute__ ((deprecated))
+#define GOLDILOCKS_DEPRECATED(msg) __attribute__ ((deprecated))
 #endif
 /** @endcond */
 
@@ -47,35 +47,35 @@ extern "C" {
  * platform to support dynamic linking, since even if you header was built
  * with eg arch_neon, you might end up linking a library built with arch_arm32.
  */
-#ifndef DECAF_WORD_BITS
+#ifndef GOLDILOCKS_WORD_BITS
     #if (defined(__ILP64__) || defined(__amd64__) || defined(__x86_64__) || (((__UINT_FAST32_MAX__)>>30)>>30))
-        #define DECAF_WORD_BITS 64 /**< The number of bits in a word */
+        #define GOLDILOCKS_WORD_BITS 64 /**< The number of bits in a word */
     #else
-        #define DECAF_WORD_BITS 32 /**< The number of bits in a word */
+        #define GOLDILOCKS_WORD_BITS 32 /**< The number of bits in a word */
     #endif
 #endif
 
-#if DECAF_WORD_BITS == 64
-typedef uint64_t decaf_word_t;      /**< Word size for internal computations */
-typedef int64_t decaf_sword_t;      /**< Signed word size for internal computations */
-typedef uint64_t decaf_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
-typedef __uint128_t decaf_dword_t;  /**< Double-word size for internal computations */
-typedef __int128_t decaf_dsword_t;  /**< Signed double-word size for internal computations */
-#elif DECAF_WORD_BITS == 32         /**< The number of bits in a word */
-typedef uint32_t decaf_word_t;      /**< Word size for internal computations */
-typedef int32_t decaf_sword_t;      /**< Signed word size for internal computations */
-typedef uint32_t decaf_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
-typedef uint64_t decaf_dword_t;     /**< Double-word size for internal computations */
-typedef int64_t decaf_dsword_t;     /**< Signed double-word size for internal computations */
+#if GOLDILOCKS_WORD_BITS == 64
+typedef uint64_t goldilocks_word_t;      /**< Word size for internal computations */
+typedef int64_t goldilocks_sword_t;      /**< Signed word size for internal computations */
+typedef uint64_t goldilocks_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
+typedef __uint128_t goldilocks_dword_t;  /**< Double-word size for internal computations */
+typedef __int128_t goldilocks_dsword_t;  /**< Signed double-word size for internal computations */
+#elif GOLDILOCKS_WORD_BITS == 32         /**< The number of bits in a word */
+typedef uint32_t goldilocks_word_t;      /**< Word size for internal computations */
+typedef int32_t goldilocks_sword_t;      /**< Signed word size for internal computations */
+typedef uint32_t goldilocks_bool_t;      /**< "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
+typedef uint64_t goldilocks_dword_t;     /**< Double-word size for internal computations */
+typedef int64_t goldilocks_dsword_t;     /**< Signed double-word size for internal computations */
 #else
-#error "Only supporting DECAF_WORD_BITS = 32 or 64 for now"
+#error "Only supporting GOLDILOCKS_WORD_BITS = 32 or 64 for now"
 #endif
 
 /** GOLDILOCKS_TRUE = -1 so that GOLDILOCKS_TRUE & x = x */
-static const decaf_bool_t GOLDILOCKS_TRUE = -(decaf_bool_t)1;
+static const goldilocks_bool_t GOLDILOCKS_TRUE = -(goldilocks_bool_t)1;
 
 /** GOLDILOCKS_FALSE = 0 so that GOLDILOCKS_FALSE & x = 0 */
-static const decaf_bool_t GOLDILOCKS_FALSE = 0;
+static const goldilocks_bool_t GOLDILOCKS_FALSE = 0;
 
 /** Another boolean type used to indicate success or failure. */
 typedef enum {
@@ -85,33 +85,33 @@ typedef enum {
 
 
 /** Return success if x is true */
-static DECAF_INLINE goldilocks_error_t
-decaf_succeed_if(decaf_bool_t x) {
+static GOLDILOCKS_INLINE goldilocks_error_t
+goldilocks_succeed_if(goldilocks_bool_t x) {
     return (goldilocks_error_t)x;
 }
 
 /** Return GOLDILOCKS_TRUE iff x == GOLDILOCKS_SUCCESS */
-static DECAF_INLINE decaf_bool_t
-decaf_successful(goldilocks_error_t e) {
-    decaf_dword_t w = ((decaf_word_t)e) ^  ((decaf_word_t)GOLDILOCKS_SUCCESS);
-    return (w-1)>>DECAF_WORD_BITS;
+static GOLDILOCKS_INLINE goldilocks_bool_t
+goldilocks_successful(goldilocks_error_t e) {
+    goldilocks_dword_t w = ((goldilocks_word_t)e) ^  ((goldilocks_word_t)GOLDILOCKS_SUCCESS);
+    return (w-1)>>GOLDILOCKS_WORD_BITS;
 }
 
 /** Overwrite data with zeros.  Uses memset_s if available. */
-void decaf_bzero (
+void goldilocks_bzero (
     void *data,
     size_t size
-) GOLDILOCKS_NONNULL DECAF_API_VIS;
+) GOLDILOCKS_NONNULL GOLDILOCKS_API_VIS;
 
 /** Compare two buffers, returning GOLDILOCKS_TRUE if they are equal. */
-decaf_bool_t decaf_memeq (
+goldilocks_bool_t goldilocks_memeq (
     const void *data1,
     const void *data2,
     size_t size
-) GOLDILOCKS_NONNULL DECAF_WARN_UNUSED DECAF_API_VIS;
+) GOLDILOCKS_NONNULL GOLDILOCKS_WARN_UNUSED GOLDILOCKS_API_VIS;
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif /* __DECAF_COMMON_H__ */
+#endif /* __GOLDILOCKS_COMMON_H__ */

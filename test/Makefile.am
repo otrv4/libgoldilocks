@@ -9,9 +9,9 @@ test_LDADD = $(top_srcdir)/src/libgoldilocks.la
 
 # This is broken
 #test_ct_SOURCES = test_ct.cxx
-#test_ct_CXXFLAGS = $(AM_CXXFLAGS) $(LANGXXFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCXXFLAGS) $(LIBDECAF_CXXFLAGS)
-#test_ct_LDFLAGS = $(AM_LDFLAGS) $(XLDFLAGS) $(LIBDECAF_LIBS)
-#test_ct_LDADD = $(top_srcdir)/src/libdecaf.la
+#test_ct_CXXFLAGS = $(AM_CXXFLAGS) $(LANGXXFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCXXFLAGS) $(LIBGOLDILOCKS_CXXFLAGS)
+#test_ct_LDFLAGS = $(AM_LDFLAGS) $(XLDFLAGS) $(LIBGOLDILOCKS_LIBS)
+#test_ct_LDADD = $(top_srcdir)/src/libgoldilocks.la
 
 test_bench_SOURCES = bench_goldilocks.cxx
 test_bench_CXXFLAGS = $(AM_CXXFLAGS) $(LANGXXFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCXXFLAGS) $(LIBGOLDILOCKS_CXXFLAGS)

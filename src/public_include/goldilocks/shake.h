@@ -1,21 +1,21 @@
 /**
- * @file decaf/shake.h
+ * @file goldilocks/shake.h
  * @copyright
  *   Based on CC0 code by David Leon Gil, 2015 \n
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  * @author Mike Hamburg
- * @brief SHA-3-n and DECAF_SHAKE-n instances.
+ * @brief SHA-3-n and GOLDILOCKS_SHAKE-n instances.
  */
 
-#ifndef __DECAF_SHAKE_H__
-#define __DECAF_SHAKE_H__
+#ifndef __GOLDILOCKS_SHAKE_H__
+#define __GOLDILOCKS_SHAKE_H__
 
 #include <stdint.h>
 #include <sys/types.h>
 #include <stdlib.h> /* for NULL */
 
-#include <decaf/common.h>
+#include <goldilocks/common.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,19 +23,19 @@ extern "C" {
 
 #ifndef INTERNAL_SPONGE_STRUCT
     /** Sponge container object for the various primitives. */
-    typedef struct decaf_keccak_sponge_s {
+    typedef struct goldilocks_keccak_sponge_s {
         /** @cond internal */
         uint64_t opaque[26];
         /** @endcond */
-    } decaf_keccak_sponge_s;
+    } goldilocks_keccak_sponge_s;
 
     /** Convenience GMP-style one-element array version */
-    typedef struct decaf_keccak_sponge_s decaf_keccak_sponge_t[1];
+    typedef struct goldilocks_keccak_sponge_s goldilocks_keccak_sponge_t[1];
 
-    /** Parameters for sponge construction, distinguishing DECAF_SHA3 and
-     * DECAF_SHAKE instances.
+    /** Parameters for sponge construction, distinguishing GOLDILOCKS_SHA3 and
+     * GOLDILOCKS_SHAKE instances.
      */
-    struct decaf_kparams_s;
+    struct goldilocks_kparams_s;
 #endif
 
 /**
@@ -43,29 +43,29 @@ extern "C" {
  * @param [out] sponge The object to initialize.
  * @param [in] params The sponge's parameter description.
  */
-void decaf_sha3_init (
-    decaf_keccak_sponge_t sponge,
-    const struct decaf_kparams_s *params
-) DECAF_API_VIS;
+void goldilocks_sha3_init (
+    goldilocks_keccak_sponge_t sponge,
+    const struct goldilocks_kparams_s *params
+) GOLDILOCKS_API_VIS;
 
 /**
- * @brief Absorb data into a DECAF_SHA3 or DECAF_SHAKE hash context.
+ * @brief Absorb data into a GOLDILOCKS_SHA3 or GOLDILOCKS_SHAKE hash context.
  * @param [inout] sponge The context.
  * @param [in] in The input data.
  * @param [in] len The input data's length in bytes.
  * @return GOLDILOCKS_FAILURE if the sponge has already been used for output.
  * @return GOLDILOCKS_SUCCESS otherwise.
  */
-goldilocks_error_t decaf_sha3_update (
-    struct decaf_keccak_sponge_s * __restrict__ sponge,
+goldilocks_error_t goldilocks_sha3_update (
+    struct goldilocks_keccak_sponge_s * __restrict__ sponge,
     const uint8_t *in,
     size_t len
-) DECAF_API_VIS;
+) GOLDILOCKS_API_VIS;
 
 /**
- * @brief Squeeze output data from a DECAF_SHA3 or DECAF_SHAKE hash context.
+ * @brief Squeeze output data from a GOLDILOCKS_SHA3 or GOLDILOCKS_SHAKE hash context.
  * This does not destroy or re-initialize the hash context, and
- * decaf_sha3 output can be called more times.
+ * goldilocks_sha3 output can be called more times.
  *
  * @param [inout] sponge The context.
  * @param [out] out The output data.
@@ -73,62 +73,62 @@ goldilocks_error_t decaf_sha3_update (
  * @return GOLDILOCKS_FAILURE if the sponge has exhausted its output capacity.
  * @return GOLDILOCKS_SUCCESS otherwise.
  */
-goldilocks_error_t decaf_sha3_output (
-    decaf_keccak_sponge_t sponge,
+goldilocks_error_t goldilocks_sha3_output (
+    goldilocks_keccak_sponge_t sponge,
     uint8_t * __restrict__ out,
     size_t len
-) DECAF_API_VIS;
+) GOLDILOCKS_API_VIS;
 
 /**
- * @brief Squeeze output data from a DECAF_SHA3 or DECAF_SHAKE hash context.
+ * @brief Squeeze output data from a GOLDILOCKS_SHA3 or GOLDILOCKS_SHAKE hash context.
  * This re-initializes the context to its starting parameters.
  *
  * @param [inout] sponge The context.
  * @param [out] out The output data.
  * @param [in] len The requested output data length in bytes.
  */
-goldilocks_error_t decaf_sha3_final (
-    decaf_keccak_sponge_t sponge,
+goldilocks_error_t goldilocks_sha3_final (
+    goldilocks_keccak_sponge_t sponge,
     uint8_t * __restrict__ out,
     size_t len
-) DECAF_API_VIS;
+) GOLDILOCKS_API_VIS;
 
 /**
  * @brief Reset the sponge to the empty string.
  *
  * @param [inout] sponge The context.
  */
-void decaf_sha3_reset (
-    decaf_keccak_sponge_t sponge
-) DECAF_API_VIS;
+void goldilocks_sha3_reset (
+    goldilocks_keccak_sponge_t sponge
+) GOLDILOCKS_API_VIS;
 
 /**
  * @brief Return the default output length of the sponge construction,
  * for the purpose of C++ default operators.
  *
- * Returns n/8 for DECAF_SHA3-n and 2n/8 for DECAF_SHAKE-n.
+ * Returns n/8 for GOLDILOCKS_SHA3-n and 2n/8 for GOLDILOCKS_SHAKE-n.
  */
-size_t decaf_sha3_default_output_bytes (
-    const decaf_keccak_sponge_t sponge /**< [inout] The context. */
-) DECAF_API_VIS;
+size_t goldilocks_sha3_default_output_bytes (
+    const goldilocks_keccak_sponge_t sponge /**< [inout] The context. */
+) GOLDILOCKS_API_VIS;
 
 /**
  * @brief Return the default output length of the sponge construction,
  * for the purpose of C++ default operators.
  *
- * Returns n/8 for DECAF_SHA3-n and SIZE_MAX for DECAF_SHAKE-n.
+ * Returns n/8 for GOLDILOCKS_SHA3-n and SIZE_MAX for GOLDILOCKS_SHAKE-n.
  */
-size_t decaf_sha3_max_output_bytes (
-    const decaf_keccak_sponge_t sponge /**< [inout] The context. */
-) DECAF_API_VIS;
+size_t goldilocks_sha3_max_output_bytes (
+    const goldilocks_keccak_sponge_t sponge /**< [inout] The context. */
+) GOLDILOCKS_API_VIS;
 
 /**
- * @brief Destroy a DECAF_SHA3 or DECAF_SHAKE sponge context by overwriting it with 0.
+ * @brief Destroy a GOLDILOCKS_SHA3 or GOLDILOCKS_SHAKE sponge context by overwriting it with 0.
  * @param [out] sponge The context.
  */
-void decaf_sha3_destroy (
-    decaf_keccak_sponge_t sponge
-) DECAF_API_VIS;
+void goldilocks_sha3_destroy (
+    goldilocks_keccak_sponge_t sponge
+) GOLDILOCKS_API_VIS;
 
 /**
  * @brief Hash (in) to (out)
@@ -138,82 +138,82 @@ void decaf_sha3_destroy (
  * @param [in] outlen The length of the output data.
  * @param [in] params The parameters of the sponge hash.
  */
-goldilocks_error_t decaf_sha3_hash (
+goldilocks_error_t goldilocks_sha3_hash (
     uint8_t *out,
     size_t outlen,
     const uint8_t *in,
     size_t inlen,
-    const struct decaf_kparams_s *params
-) DECAF_API_VIS;
+    const struct goldilocks_kparams_s *params
+) GOLDILOCKS_API_VIS;
 
-/* FUTURE: expand/doxygenate individual DECAF_SHAKE/DECAF_SHA3 instances? */
+/* FUTURE: expand/doxygenate individual GOLDILOCKS_SHAKE/GOLDILOCKS_SHA3 instances? */
 
 /** @cond internal */
-#define DECAF_DEC_SHAKE(n) \
-    extern const struct decaf_kparams_s DECAF_SHAKE##n##_params_s DECAF_API_VIS; \
-    typedef struct decaf_shake##n##_ctx_s { decaf_keccak_sponge_t s; } decaf_shake##n##_ctx_t[1]; \
-    static inline void GOLDILOCKS_NONNULL decaf_shake##n##_init(decaf_shake##n##_ctx_t sponge) { \
-        decaf_sha3_init(sponge->s, &DECAF_SHAKE##n##_params_s); \
+#define GOLDILOCKS_DEC_SHAKE(n) \
+    extern const struct goldilocks_kparams_s GOLDILOCKS_SHAKE##n##_params_s GOLDILOCKS_API_VIS; \
+    typedef struct goldilocks_shake##n##_ctx_s { goldilocks_keccak_sponge_t s; } goldilocks_shake##n##_ctx_t[1]; \
+    static inline void GOLDILOCKS_NONNULL goldilocks_shake##n##_init(goldilocks_shake##n##_ctx_t sponge) { \
+        goldilocks_sha3_init(sponge->s, &GOLDILOCKS_SHAKE##n##_params_s); \
     } \
-    static inline void GOLDILOCKS_NONNULL decaf_shake##n##_gen_init(decaf_keccak_sponge_t sponge) { \
-        decaf_sha3_init(sponge, &DECAF_SHAKE##n##_params_s); \
+    static inline void GOLDILOCKS_NONNULL goldilocks_shake##n##_gen_init(goldilocks_keccak_sponge_t sponge) { \
+        goldilocks_sha3_init(sponge, &GOLDILOCKS_SHAKE##n##_params_s); \
     } \
-    static inline goldilocks_error_t GOLDILOCKS_NONNULL decaf_shake##n##_update(decaf_shake##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
-        return decaf_sha3_update(sponge->s, in, inlen); \
+    static inline goldilocks_error_t GOLDILOCKS_NONNULL goldilocks_shake##n##_update(goldilocks_shake##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
+        return goldilocks_sha3_update(sponge->s, in, inlen); \
     } \
-    static inline void  GOLDILOCKS_NONNULL decaf_shake##n##_final(decaf_shake##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
-        decaf_sha3_output(sponge->s, out, outlen); \
-        decaf_sha3_init(sponge->s, &DECAF_SHAKE##n##_params_s); \
+    static inline void  GOLDILOCKS_NONNULL goldilocks_shake##n##_final(goldilocks_shake##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
+        goldilocks_sha3_output(sponge->s, out, outlen); \
+        goldilocks_sha3_init(sponge->s, &GOLDILOCKS_SHAKE##n##_params_s); \
     } \
-    static inline void  GOLDILOCKS_NONNULL decaf_shake##n##_output(decaf_shake##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
-        decaf_sha3_output(sponge->s, out, outlen); \
+    static inline void  GOLDILOCKS_NONNULL goldilocks_shake##n##_output(goldilocks_shake##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
+        goldilocks_sha3_output(sponge->s, out, outlen); \
     } \
-    static inline void  GOLDILOCKS_NONNULL decaf_shake##n##_hash(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen) { \
-        decaf_sha3_hash(out,outlen,in,inlen,&DECAF_SHAKE##n##_params_s); \
+    static inline void  GOLDILOCKS_NONNULL goldilocks_shake##n##_hash(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen) { \
+        goldilocks_sha3_hash(out,outlen,in,inlen,&GOLDILOCKS_SHAKE##n##_params_s); \
     } \
-    static inline void  GOLDILOCKS_NONNULL decaf_shake##n##_destroy( decaf_shake##n##_ctx_t sponge ) { \
-        decaf_sha3_destroy(sponge->s); \
+    static inline void  GOLDILOCKS_NONNULL goldilocks_shake##n##_destroy(goldilocks_shake##n##_ctx_t sponge) { \
+        goldilocks_sha3_destroy(sponge->s); \
     }
 
-#define DECAF_DEC_SHA3(n) \
-    extern const struct decaf_kparams_s DECAF_SHA3_##n##_params_s DECAF_API_VIS; \
-    typedef struct decaf_sha3_##n##_ctx_s { decaf_keccak_sponge_t s; } decaf_sha3_##n##_ctx_t[1]; \
-    static inline void GOLDILOCKS_NONNULL decaf_sha3_##n##_init(decaf_sha3_##n##_ctx_t sponge) { \
-        decaf_sha3_init(sponge->s, &DECAF_SHA3_##n##_params_s); \
+#define GOLDILOCKS_DEC_SHA3(n) \
+    extern const struct goldilocks_kparams_s GOLDILOCKS_SHA3_##n##_params_s GOLDILOCKS_API_VIS; \
+    typedef struct goldilocks_sha3_##n##_ctx_s { goldilocks_keccak_sponge_t s; } goldilocks_sha3_##n##_ctx_t[1]; \
+    static inline void GOLDILOCKS_NONNULL goldilocks_sha3_##n##_init(goldilocks_sha3_##n##_ctx_t sponge) { \
+        goldilocks_sha3_init(sponge->s, &GOLDILOCKS_SHA3_##n##_params_s); \
     } \
-    static inline void GOLDILOCKS_NONNULL decaf_sha3_##n##_gen_init(decaf_keccak_sponge_t sponge) { \
-        decaf_sha3_init(sponge, &DECAF_SHA3_##n##_params_s); \
+    static inline void GOLDILOCKS_NONNULL goldilocks_sha3_##n##_gen_init(goldilocks_keccak_sponge_t sponge) { \
+        goldilocks_sha3_init(sponge, &GOLDILOCKS_SHA3_##n##_params_s); \
     } \
-    static inline goldilocks_error_t GOLDILOCKS_NONNULL decaf_sha3_##n##_update(decaf_sha3_##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
-        return decaf_sha3_update(sponge->s, in, inlen); \
+    static inline goldilocks_error_t GOLDILOCKS_NONNULL goldilocks_sha3_##n##_update(goldilocks_sha3_##n##_ctx_t sponge, const uint8_t *in, size_t inlen ) { \
+        return goldilocks_sha3_update(sponge->s, in, inlen); \
     } \
-    static inline goldilocks_error_t GOLDILOCKS_NONNULL decaf_sha3_##n##_final(decaf_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
-        goldilocks_error_t ret = decaf_sha3_output(sponge->s, out, outlen); \
-        decaf_sha3_init(sponge->s, &DECAF_SHA3_##n##_params_s); \
+    static inline goldilocks_error_t GOLDILOCKS_NONNULL goldilocks_sha3_##n##_final(goldilocks_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
+        goldilocks_error_t ret = goldilocks_sha3_output(sponge->s, out, outlen); \
+        goldilocks_sha3_init(sponge->s, &GOLDILOCKS_SHA3_##n##_params_s); \
         return ret; \
     } \
-    static inline goldilocks_error_t GOLDILOCKS_NONNULL decaf_sha3_##n##_output(decaf_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
-        return decaf_sha3_output(sponge->s, out, outlen); \
+    static inline goldilocks_error_t GOLDILOCKS_NONNULL goldilocks_sha3_##n##_output(goldilocks_sha3_##n##_ctx_t sponge, uint8_t *out, size_t outlen ) { \
+        return goldilocks_sha3_output(sponge->s, out, outlen); \
     } \
-    static inline goldilocks_error_t GOLDILOCKS_NONNULL decaf_sha3_##n##_hash(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen) { \
-        return decaf_sha3_hash(out,outlen,in,inlen,&DECAF_SHA3_##n##_params_s); \
+    static inline goldilocks_error_t GOLDILOCKS_NONNULL goldilocks_sha3_##n##_hash(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen) { \
+        return goldilocks_sha3_hash(out,outlen,in,inlen,&GOLDILOCKS_SHA3_##n##_params_s); \
     } \
-    static inline void GOLDILOCKS_NONNULL decaf_sha3_##n##_destroy(decaf_sha3_##n##_ctx_t sponge) { \
-        decaf_sha3_destroy(sponge->s); \
+    static inline void GOLDILOCKS_NONNULL goldilocks_sha3_##n##_destroy(goldilocks_sha3_##n##_ctx_t sponge) { \
+        goldilocks_sha3_destroy(sponge->s); \
     }
 /** @endcond */
 
-DECAF_DEC_SHAKE(128)
-DECAF_DEC_SHAKE(256)
-DECAF_DEC_SHA3(224)
-DECAF_DEC_SHA3(256)
-DECAF_DEC_SHA3(384)
-DECAF_DEC_SHA3(512)
-#undef DECAF_DEC_SHAKE
-#undef DECAF_DEC_SHA3
+GOLDILOCKS_DEC_SHAKE(128)
+GOLDILOCKS_DEC_SHAKE(256)
+GOLDILOCKS_DEC_SHA3(224)
+GOLDILOCKS_DEC_SHA3(256)
+GOLDILOCKS_DEC_SHA3(384)
+GOLDILOCKS_DEC_SHA3(512)
+#undef GOLDILOCKS_DEC_SHAKE
+#undef GOLDILOCKS_DEC_SHA3
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif /* __DECAF_SHAKE_H__ */
+#endif /* __GOLDILOCKS_SHAKE_H__ */

@@ -1,7 +1,7 @@
 /**
- * Master header for Decaf library.
+ * Master header for the Goldilocks library.
  * 
- * The Decaf library implements cryptographic operations on a elliptic curve
+ * The Goldilocks library implements cryptographic operations on elliptic curve
  * groups of prime order p.  It accomplishes this by using a twisted Edwards
  * curve (isogenous to Ed448-Goldilocks or Ed25519) and wiping out the cofactor.
  * 
@@ -10,9 +10,9 @@
  * every string is the encoding of a valid group element.
  * 
  * The formulas contain no data-dependent branches, timing or memory accesses,
- * except for decaf_XXX_base_double_scalarmul_non_secret.
+ * except for goldilocks_XXX_base_double_scalarmul_non_secret.
  */
 
 $("\n".join([
-    "#include <decaf/point_%s.h>" % g for g in sorted([c["bits"] for _,c in curve.items()])
+    "#include <goldilocks/point_%s.h>" % g for g in sorted([c["bits"] for _,c in curve.items()])
 ]))

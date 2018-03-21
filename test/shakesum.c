@@ -16,7 +16,7 @@
 static void usage() {
     fprintf(
         stderr,
-        "decaf_shakesum [shake256|shake128|sha3-224|sha3-384|sha3-512] < infile > outfile\n"
+        "goldilocks_shakesum [shake256|shake128|sha3-224|sha3-384|sha3-512] < infile > outfile\n"
     );
 }
 

@@ -1,5 +1,5 @@
 /**
- * @file decaf/spongerng.hxx
+ * @file goldilocks/spongerng.hxx
  * @copyright
  *   Based on CC0 code by David Leon Gil, 2015 \n
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
@@ -11,10 +11,10 @@
  * of this library.
  */
 
-#ifndef __DECAF_SPONGERNG_HXX__
-#define __DECAF_SPONGERNG_HXX__
+#ifndef __GOLDILOCKS_SPONGERNG_HXX__
+#define __GOLDILOCKS_SPONGERNG_HXX__
 
-#include <decaf/spongerng.h>
+#include <goldilocks/spongerng.h>
 
 #include <string>
 #include <sys/types.h>
@@ -22,21 +22,21 @@
 
 /** @cond internal */
 #if __cplusplus >= 201103L
-#define DECAF_NOEXCEPT noexcept
-#define DECAF_DELETE = delete
+#define GOLDILOCKS_NOEXCEPT noexcept
+#define GOLDILOCKS_DELETE = delete
 #else
-#define DECAF_NOEXCEPT throw()
-#define DECAF_DELETE
+#define GOLDILOCKS_NOEXCEPT throw()
+#define GOLDILOCKS_DELETE
 #endif
 /** @endcond */
 
-namespace decaf {
+namespace goldilocks {
 
 /** Sponge-based random-number generator */
 class SpongeRng : public Rng {
 private:
     /** C wrapped object */
-    decaf_keccak_prng_t sp;
+    goldilocks_keccak_prng_t sp;
 
 public:
     /** Deterministic flag.
@@ -53,50 +53,50 @@ public:
         /** @endcond */
     public:
         const int err_code; /**< errno that caused the reseed to fail. */
-        const char *what() const DECAF_NOEXCEPT { return what_; } /**< Description of exception. */
-        RngException(int err_code, const char *what_) DECAF_NOEXCEPT : what_(what_), err_code(err_code) {} /**< Construct */
+        const char *what() const GOLDILOCKS_NOEXCEPT { return what_; } /**< Description of exception. */
+        RngException(int err_code, const char *what_) GOLDILOCKS_NOEXCEPT : what_(what_), err_code(err_code) {} /**< Construct */
     };
 
     /** Initialize, deterministically by default, from block */
     inline SpongeRng( const Block &in, Deterministic det ) {
-        decaf_spongerng_init_from_buffer(sp,in.data(),in.size(),(int)det);
+        goldilocks_spongerng_init_from_buffer(sp,in.data(),in.size(),(int)det);
     }
 
     /** Initialize, non-deterministically by default, from C/C++ filename */
     inline SpongeRng( const std::string &in = "/dev/urandom", size_t len = 32, Deterministic det = RANDOM )
         /*throw(RngException)*/ {
-        goldilocks_error_t ret = decaf_spongerng_init_from_file(sp,in.c_str(),len,det);
-        if (!decaf_successful(ret)) {
+        goldilocks_error_t ret = goldilocks_spongerng_init_from_file(sp,in.c_str(),len,det);
+        if (!goldilocks_successful(ret)) {
             throw RngException(errno, "Couldn't load from file");
         }
     }
 
     /** Stir in new data */
-    inline void stir( const Block &data ) DECAF_NOEXCEPT {
-        decaf_spongerng_stir(sp,data.data(),data.size());
+    inline void stir( const Block &data ) GOLDILOCKS_NOEXCEPT {
+        goldilocks_spongerng_stir(sp,data.data(),data.size());
     }
 
     /** Securely destroy by overwriting state. */
-    inline ~SpongeRng() DECAF_NOEXCEPT { decaf_spongerng_destroy(sp); }
+    inline ~SpongeRng() GOLDILOCKS_NOEXCEPT { goldilocks_spongerng_destroy(sp); }
 
     using Rng::read;
 
     /** Read data to a buffer. */
-    virtual inline void read(Buffer buffer) DECAF_NOEXCEPT
+    virtual inline void read(Buffer buffer) GOLDILOCKS_NOEXCEPT
 #if __cplusplus >= 201103L
         final
 #endif
-        { decaf_spongerng_next(sp,buffer.data(),buffer.size()); }
+        { goldilocks_spongerng_next(sp,buffer.data(),buffer.size()); }
 
 private:
-    SpongeRng(const SpongeRng &) DECAF_DELETE;
-    SpongeRng &operator=(const SpongeRng &) DECAF_DELETE;
+    SpongeRng(const SpongeRng &) GOLDILOCKS_DELETE;
+    SpongeRng &operator=(const SpongeRng &) GOLDILOCKS_DELETE;
 };
 /**@endcond*/
 
-} /* namespace decaf */
+} /* namespace goldilocks */
 
-#undef DECAF_NOEXCEPT
-#undef DECAF_DELETE
+#undef GOLDILOCKS_NOEXCEPT
+#undef GOLDILOCKS_DELETE
 
-#endif /* __DECAF_SPONGERNG_HXX__ */
+#endif /* __GOLDILOCKS_SPONGERNG_HXX__ */

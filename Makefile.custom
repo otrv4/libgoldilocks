@@ -190,7 +190,7 @@ endef
 PER_CURVE_C = $(wildcard src/per_curve/*.tmpl.c)
 define define_curve
 
-LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/elligator.o $$(BUILD_OBJ)/$(1)/scalar.o \
+LIBCOMPONENTS += $$(BUILD_OBJ)/$(1)/goldilocks.o $$(BUILD_OBJ)/$(1)/elligator.o $$(BUILD_OBJ)/$(1)/scalar.o \
 	 $$(BUILD_OBJ)/$(1)/eddsa.o $$(BUILD_OBJ)/$(1)/decaf_tables.o
 PER_OBJ_DIRS += $$(BUILD_OBJ)/$(1)
 GLOBAL_HEADERS_OF_$(1) = $(BUILD_INC)/goldilocks/point_$(3).h $(BUILD_INC)/goldilocks/point_$(3).hxx \
@@ -221,12 +221,12 @@ $$(BUILD_INC)/goldilocks/elligator_$(3).%: src/per_curve/elligator.tmpl.% src/ge
 $$(BUILD_INC)/goldilocks/scalar_$(3).%: src/per_curve/scalar.tmpl.% src/generator/* Makefile.custom
 	$(PYTHON) -B src/generator/template.py --per=curve --item=$(1) --guard=$$(@:$(BUILD_INC)/%=%) -o $$@ $$<
 
-$$(BUILD_IBIN)/decaf_gen_tables_$(1): $$(BUILD_OBJ)/$(1)/decaf_gen_tables.o \
-		$$(BUILD_OBJ)/$(1)/decaf.o $$(BUILD_OBJ)/$(1)/scalar.o $$(BUILD_OBJ)/utils.o \
+$$(BUILD_IBIN)/goldilocks_gen_tables_$(1): $$(BUILD_OBJ)/$(1)/goldilocks_gen_tables.o \
+		$$(BUILD_OBJ)/$(1)/goldilocks.o $$(BUILD_OBJ)/$(1)/scalar.o $$(BUILD_OBJ)/utils.o \
 		$$(COMPONENTS_OF_$(2))
 	$$(LD) $$(LDFLAGS) -o $$@ $$^
 
-$$(BUILD_C)/$(1)/decaf_tables.c: $$(BUILD_IBIN)/decaf_gen_tables_$(1)
+$$(BUILD_C)/$(1)/decaf_tables.c: $$(BUILD_IBIN)/goldilocks_gen_tables_$(1)
 	./$$< > $$@ || (rm $$@; exit 1)
 
 $$(BUILD_OBJ)/$(1)/%.o: $$(BUILD_C)/$(1)/%.c $$(HEADERS_OF_$(1))
@@ -234,7 +234,7 @@ $$(BUILD_OBJ)/$(1)/%.o: $$(BUILD_C)/$(1)/%.c $$(HEADERS_OF_$(1))
 		-I build/obj/curve_$(1)/ -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
 		-I $(BUILD_H)/$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2))
 
-$$(BUILD_OBJ)/decaf_gen_tables_$(1).o: src/decaf_gen_tables.c $$(HEADERS_OF_$(1))
+$$(BUILD_OBJ)/goldilocks_gen_tables_$(1).o: src/goldilocks_gen_tables.c $$(HEADERS_OF_$(1))
 	$$(CC) $$(CFLAGS) \
 		-I build/obj/curve_$(1) -I src/$(2) -I src/$(2)/$$(ARCH_FOR_$(2)) -I src/include/$$(ARCH_FOR_$(2)) \
 		-I $(BUILD_H)/$(1) -I $(BUILD_H)/$(2) -I $(BUILD_H)/$(2)/$$(ARCH_FOR_$(2)) \
@@ -250,7 +250,7 @@ $(eval $(call define_curve,ed448goldilocks,p448,448))
 $(BUILD_BIN)/shakesum: $(BUILD_OBJ)/shakesum.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/utils.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
-# The main decaf library, and its symlinks.
+# The main goldilocks library, and its symlinks.
 lib: $(BUILD_LIB)/libgoldilocks.so
 
 $(BUILD_LIB)/libgoldilocks.so: $(BUILD_LIB)/libgoldilocks.so.1
@@ -283,7 +283,7 @@ $(BUILD_OBJ)/%.o: test/%.cxx $(HEADERS)
 sage: $(BUILDPYS)
 
 sagetest: sage lib
-	$(SAGE) $(BUILD_PY)/test_decaf.sage
+	$(SAGE) $(BUILD_PY)/test_goldilocks.sage
 
 $(BUILDPYS): $(SAGES) $(BUILD_OBJ)/timestamp
 	cp -f $(SAGES) $(BUILD_PY)/

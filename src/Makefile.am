@@ -7,7 +7,7 @@ goldilocks_gen_tables_ed448goldilocks_SOURCES = utils.c \
 					   p448/arch_x86_64/f_impl.c \
 		       			   p448/f_arithmetic.c \
 		       			   GENERATED/c/p448/f_generic.c \
-		      			   GENERATED/c/ed448goldilocks/decaf.c \
+		      			   GENERATED/c/ed448goldilocks/goldilocks.c \
 		      			   GENERATED/c/ed448goldilocks/scalar.c
 
 goldilocks_gen_tables_ed448goldilocks_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(INCFLAGS_448) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
@@ -31,7 +31,7 @@ libgoldilocks_la_LIBADD = libgoldilocks448.la
 libgoldilocks448_la_SOURCES = p448/arch_x86_64/f_impl.c \
 		      p448/f_arithmetic.c \
 		      GENERATED/c/p448/f_generic.c \
-		      GENERATED/c/ed448goldilocks/decaf.c \
+		      GENERATED/c/ed448goldilocks/goldilocks.c \
 		      GENERATED/c/ed448goldilocks/elligator.c \
 		      GENERATED/c/ed448goldilocks/scalar.c \
 		      GENERATED/c/ed448goldilocks/eddsa.c \
@@ -60,4 +60,4 @@ include_HEADERS = GENERATED/goldilocks/goldilocks.h \
 #pkginclude_HEADERS = GENERATED/include/
 
 #pkgconfigdir = $(libdir)/pkgconfig
-#pkgconfig_DATA = libdecaf.pc
+#pkgconfig_DATA = libgoldilocks.pc

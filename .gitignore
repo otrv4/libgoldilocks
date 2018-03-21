@@ -28,7 +28,7 @@ stamp-h1
 **/.libs
 pkgconfig/libgoldilocks.pc
 
-src/decaf_gen_tables_ed448goldilocks
+src/goldilocks_gen_tables_ed448goldilocks
 test/test
 test/test_bench
 

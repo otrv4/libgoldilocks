@@ -1,11 +1,11 @@
-/** Master header for Decaf library, C++ version. */
+/** Master header for Goldilocks library, C++ version. */
 
 $("\n".join([
-    "#include <decaf/ed%s.hxx>" % g for g in sorted([c["bits"] for _,c in curve.items()])
+    "#include <goldilocks/ed%s.hxx>" % g for g in sorted([c["bits"] for _,c in curve.items()])
 ]))
 
-/** Namespace for all C++ decaf objects. */
-namespace decaf {
+/** Namespace for all C++ goldilocks objects. */
+namespace goldilocks {
     /** Given a template with a "run" function, run it for all curves */
     template <template<typename Group> class Run>
     void run_for_all_curves() {

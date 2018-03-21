@@ -1,5 +1,5 @@
 /**
- * @file decaf/secure_buffer.hxx
+ * @file goldilocks/secure_buffer.hxx
  * @author Mike Hamburg
  *
  * @copyright
@@ -8,8 +8,8 @@
  *
  * @brief C++ self-zeroizing buffer.
  */
-#ifndef __DECAF_SECURE_BUFFER_HXX__
-#define __DECAF_SECURE_BUFFER_HXX__ 1
+#ifndef __GOLDILOCKS_SECURE_BUFFER_HXX__
+#define __GOLDILOCKS_SECURE_BUFFER_HXX__ 1
 
 #include <string>
 #include <sys/types.h>
@@ -21,20 +21,20 @@
 
 /** @cond internal */
 #if __cplusplus >= 201103L
-#define DECAF_NOEXCEPT noexcept
-#define DECAF_DELETE = delete
+#define GOLDILOCKS_NOEXCEPT noexcept
+#define GOLDILOCKS_DELETE = delete
 #else
-#define DECAF_NOEXCEPT throw()
-#define DECAF_DELETE
+#define GOLDILOCKS_NOEXCEPT throw()
+#define GOLDILOCKS_DELETE
 #endif
 /** @endcond */
 
-namespace decaf {
+namespace goldilocks {
 
 /**
 * Securely zeroize contents of memory.
 */
-static inline void really_bzero(void *data, size_t size) { decaf_bzero(data,size); }
+static inline void really_bzero(void *data, size_t size) { goldilocks_bzero(data,size); }
 
 /** @brief An allocator which zeros its memory on free */
 template<typename T, size_t alignment = 0> class SanitizingAllocator {
@@ -50,24 +50,24 @@ public:
    typedef std::ptrdiff_t difference_type;
    
    template<typename U> struct rebind { typedef SanitizingAllocator<U> other; };
-   inline SanitizingAllocator() DECAF_NOEXCEPT {}
-   inline ~SanitizingAllocator() DECAF_NOEXCEPT {}
-   inline SanitizingAllocator(const SanitizingAllocator &) DECAF_NOEXCEPT {}
-   template<typename U, size_t a> inline SanitizingAllocator(const SanitizingAllocator<U, a> &) DECAF_NOEXCEPT {}
+   inline SanitizingAllocator() GOLDILOCKS_NOEXCEPT {}
+   inline ~SanitizingAllocator() GOLDILOCKS_NOEXCEPT {}
+   inline SanitizingAllocator(const SanitizingAllocator &) GOLDILOCKS_NOEXCEPT {}
+   template<typename U, size_t a> inline SanitizingAllocator(const SanitizingAllocator<U, a> &) GOLDILOCKS_NOEXCEPT {}
    
-   inline T* address(T& r) const DECAF_NOEXCEPT { return &r; }
-   inline const T* address(const T& r) const DECAF_NOEXCEPT { return &r; }
+   inline T* address(T& r) const GOLDILOCKS_NOEXCEPT { return &r; }
+   inline const T* address(const T& r) const GOLDILOCKS_NOEXCEPT { return &r; }
    inline T* allocate (
        size_type cnt,
        typename std::allocator<void>::const_pointer = 0
     ) /*throw(std::bad_alloc)*/;
-   inline void deallocate(T* p, size_t size) DECAF_NOEXCEPT;
-   inline size_t max_size() const DECAF_NOEXCEPT { return std::numeric_limits<size_t>::max() / sizeof(T); }
+   inline void deallocate(T* p, size_t size) GOLDILOCKS_NOEXCEPT;
+   inline size_t max_size() const GOLDILOCKS_NOEXCEPT { return std::numeric_limits<size_t>::max() / sizeof(T); }
    inline void construct(T* p, const T& t) { new(p) T(t); }
    inline void destroy(T* p) { p->~T(); }
    
-   inline bool operator==(SanitizingAllocator const&) const DECAF_NOEXCEPT { return true; }
-   inline bool operator!=(SanitizingAllocator const&) const DECAF_NOEXCEPT { return false; }
+   inline bool operator==(SanitizingAllocator const&) const GOLDILOCKS_NOEXCEPT { return true; }
+   inline bool operator!=(SanitizingAllocator const&) const GOLDILOCKS_NOEXCEPT { return false; }
 /** @endcond */
 };
 
@@ -78,17 +78,17 @@ typedef std::vector<unsigned char, SanitizingAllocator<unsigned char, 0> > Secur
 template<class T,class U, class V, class W>
 inline bool memeq(const std::vector<T,U> &a, const std::vector<V,W> &b) {
     if (a.size() != b.size()) return false;
-    return decaf_memeq(a.data(),b.data(),a.size());
+    return goldilocks_memeq(a.data(),b.data(),a.size());
 }
 
 /** Base class of objects which support serialization */
 template<class Base> class Serializable {
 public:
     /** @brief Return the number of bytes needed to serialize this object */
-    inline size_t ser_size() const DECAF_NOEXCEPT { return static_cast<const Base*>(this)->ser_size(); }
+    inline size_t ser_size() const GOLDILOCKS_NOEXCEPT { return static_cast<const Base*>(this)->ser_size(); }
     
     /** @brief Serialize this object into a buffer */
-    inline void serialize_into(unsigned char *buf) const DECAF_NOEXCEPT {
+    inline void serialize_into(unsigned char *buf) const GOLDILOCKS_NOEXCEPT {
         static_cast<const Base*>(this)->serialize_into(buf);
     }
     
@@ -115,14 +115,14 @@ class Buffer;
 class CryptoException : public std::exception {
 public:
     /** @return "CryptoException" */
-    virtual const char * what() const DECAF_NOEXCEPT { return "CryptoException"; }
+    virtual const char * what() const GOLDILOCKS_NOEXCEPT { return "CryptoException"; }
 };
 
 /** @brief An exception for when crypto (ie point decode) has failed. */
 class LengthException : public std::exception {
 public:
     /** @return "CryptoException" */
-    virtual const char * what() const DECAF_NOEXCEPT { return "LengthException"; }
+    virtual const char * what() const GOLDILOCKS_NOEXCEPT { return "LengthException"; }
 };
 
 /** @brief Passed to constructors to avoid (conservative) initialization */
@@ -137,14 +137,14 @@ protected:
     Rng() {}
     
     /** Not copyable */
-    Rng(const Rng &) DECAF_DELETE;
+    Rng(const Rng &) GOLDILOCKS_DELETE;
     
     /** Not copyable */
-    Rng &operator=(const Rng &) DECAF_DELETE;
+    Rng &operator=(const Rng &) GOLDILOCKS_DELETE;
     
 public:
     /** @brief Read into a Buffer */
-    virtual void read(Buffer buffer) DECAF_NOEXCEPT = 0;
+    virtual void read(Buffer buffer) GOLDILOCKS_NOEXCEPT = 0;
 
     /** @brief Read into a SecureBuffer. */
     inline SecureBuffer read(size_t length) /*throw(std::bad_alloc)*/;
@@ -165,11 +165,11 @@ public:
     inline Block() : data_(NULL), size_(0), zero_on_destroy_(false) {}
     
     /** Init from C string */
-    inline Block(const char *data) DECAF_NOEXCEPT : data_((unsigned char *)data),
+    inline Block(const char *data) GOLDILOCKS_NOEXCEPT : data_((unsigned char *)data),
         size_(strlen(data)), zero_on_destroy_(false) {}
 
     /** Unowned init */
-    inline Block(const unsigned char *data, size_t size, bool zero_on_destroy=false) DECAF_NOEXCEPT : data_((unsigned char *)data),
+    inline Block(const unsigned char *data, size_t size, bool zero_on_destroy=false) GOLDILOCKS_NOEXCEPT : data_((unsigned char *)data),
         size_(size), zero_on_destroy_(zero_on_destroy) {}
     
     /** Block from std::string */
@@ -186,16 +186,16 @@ public:
         : data_(((unsigned char *)&(s)[0])), size_(s.size()), zero_on_destroy_(false) {}
 
     /** Get const data */
-    inline const unsigned char *data() const DECAF_NOEXCEPT { return data_; }
+    inline const unsigned char *data() const GOLDILOCKS_NOEXCEPT { return data_; }
     
     /** Subscript */
     inline const unsigned char &operator[](size_t off) const /*throw(std::out_of_range)*/ {
-        if (off >= size()) throw(std::out_of_range("decaf::Block"));
+        if (off >= size()) throw(std::out_of_range("goldilocks::Block"));
         return data_[off];
     }
 
     /** Get the size */
-    inline size_t size() const DECAF_NOEXCEPT { return size_; }
+    inline size_t size() const GOLDILOCKS_NOEXCEPT { return size_; }
 
     /** Convert to C++ string */
     inline std::string get_string() const {
@@ -209,9 +209,9 @@ public:
     }
     
     /** Content-wise comparison; constant-time if they are the same length. */ 
-    inline decaf_bool_t contents_equal(const Block &b) const DECAF_NOEXCEPT {
+    inline goldilocks_bool_t contents_equal(const Block &b) const GOLDILOCKS_NOEXCEPT {
         if (b.size() != size()) return false;
-        return decaf_memeq(b.data(),data(),size());
+        return goldilocks_memeq(b.data(),data(),size());
     }
     
     /** Create new block from this */
@@ -220,7 +220,7 @@ public:
     }
 
     /** Securely set the buffer to 0. */
-    inline void zeroize() DECAF_NOEXCEPT { really_bzero(data_,size()); }
+    inline void zeroize() GOLDILOCKS_NOEXCEPT { really_bzero(data_,size()); }
     
     /** Debugging print in hex */
     inline void debug_print_hex(const char *name = NULL) {
@@ -231,11 +231,11 @@ public:
     
 private:
     /** @cond internal */
-    inline decaf_bool_t operator>=(const Block &b) const DECAF_NOEXCEPT DECAF_DELETE;
-    inline decaf_bool_t operator<=(const Block &b) const DECAF_NOEXCEPT DECAF_DELETE;
-    inline decaf_bool_t operator> (const Block &b) const DECAF_NOEXCEPT DECAF_DELETE;
-    inline decaf_bool_t operator< (const Block &b) const DECAF_NOEXCEPT DECAF_DELETE;
-    inline void operator= (const Block &b) const DECAF_NOEXCEPT DECAF_DELETE;
+    inline goldilocks_bool_t operator>=(const Block &b) const GOLDILOCKS_NOEXCEPT GOLDILOCKS_DELETE;
+    inline goldilocks_bool_t operator<=(const Block &b) const GOLDILOCKS_NOEXCEPT GOLDILOCKS_DELETE;
+    inline goldilocks_bool_t operator> (const Block &b) const GOLDILOCKS_NOEXCEPT GOLDILOCKS_DELETE;
+    inline goldilocks_bool_t operator< (const Block &b) const GOLDILOCKS_NOEXCEPT GOLDILOCKS_DELETE;
+    inline void operator= (const Block &b) const GOLDILOCKS_NOEXCEPT GOLDILOCKS_DELETE;
     /** @endcond */
 };
 
@@ -253,33 +253,33 @@ public:
     }
     
     /** Explicitly pass a C buffer. */
-    inline explicit FixedBlock(const uint8_t data[Size]) DECAF_NOEXCEPT : Block(data,Size) {}
+    inline explicit FixedBlock(const uint8_t data[Size]) GOLDILOCKS_NOEXCEPT : Block(data,Size) {}
 };
 
 /** A reference to a writable block of data */
 class Buffer : public Block {
 public:
     /** Null init */
-    inline Buffer() DECAF_NOEXCEPT : Block() {}
+    inline Buffer() GOLDILOCKS_NOEXCEPT : Block() {}
 
     /** Unowned init */
-    inline Buffer(unsigned char *data, size_t size, bool zero_on_destroy=false) DECAF_NOEXCEPT : Block(data,size,zero_on_destroy) {}
+    inline Buffer(unsigned char *data, size_t size, bool zero_on_destroy=false) GOLDILOCKS_NOEXCEPT : Block(data,size,zero_on_destroy) {}
     
     /** Block from std::vector */
     template<class alloc> inline Buffer(std::vector<unsigned char,alloc> &s) : Block(s) {}
 
     /** Get const data */
-    inline const unsigned char *data() const DECAF_NOEXCEPT { return data_; }
+    inline const unsigned char *data() const GOLDILOCKS_NOEXCEPT { return data_; }
 
     /** Cast to unsigned char */
-    inline unsigned char* data() DECAF_NOEXCEPT { return data_; }
+    inline unsigned char* data() GOLDILOCKS_NOEXCEPT { return data_; }
 
     /** Slice the buffer*/
     inline Buffer slice(size_t off, size_t length) /*throw(LengthException)*/;
     
     /** Subscript */
     inline unsigned char &operator[](size_t off) /*throw(std::out_of_range)*/ {
-        if (off >= size()) throw(std::out_of_range("decaf::Buffer"));
+        if (off >= size()) throw(std::out_of_range("goldilocks::Buffer"));
         return data_[off];
     }
     
@@ -291,7 +291,7 @@ public:
     
 private:
     /** @cond internal */
-    inline void operator= (const Block &b) const DECAF_NOEXCEPT DECAF_DELETE;
+    inline void operator= (const Block &b) const GOLDILOCKS_NOEXCEPT GOLDILOCKS_DELETE;
     /** @endcond */
 };
 
@@ -310,20 +310,20 @@ public:
     }
     
     /** Explicitly pass a C buffer. */
-    inline explicit FixedBuffer(uint8_t dat[Size],bool zero_on_destroy = false) DECAF_NOEXCEPT : Buffer(dat,Size,zero_on_destroy) {}
+    inline explicit FixedBuffer(uint8_t dat[Size],bool zero_on_destroy = false) GOLDILOCKS_NOEXCEPT : Buffer(dat,Size,zero_on_destroy) {}
     
     /** Cast to a FixedBlock. */
-    inline operator FixedBlock<Size>() const DECAF_NOEXCEPT {
+    inline operator FixedBlock<Size>() const GOLDILOCKS_NOEXCEPT {
         return FixedBlock<Size>(data());
     }
     
 private:
     /** @cond internal */
-    inline void operator= (const Block &b) const DECAF_NOEXCEPT DECAF_DELETE;
+    inline void operator= (const Block &b) const GOLDILOCKS_NOEXCEPT GOLDILOCKS_DELETE;
     /** @endcond */
 };
 
-/** A fixed-size stack-allocated buffer (for DECAF_NOEXCEPT semantics) */
+/** A fixed-size stack-allocated buffer (for GOLDILOCKS_NOEXCEPT semantics) */
 template<size_t Size> class FixedArrayBuffer : public FixedBuffer<Size> {
 private:
     uint8_t storage[Size];
@@ -331,26 +331,26 @@ public:
     using Buffer::zeroize;
     
     /** New buffer initialized to zero. */
-    inline explicit FixedArrayBuffer() DECAF_NOEXCEPT : FixedBuffer<Size>(storage,true) { memset(storage,0,Size); }
+    inline explicit FixedArrayBuffer() GOLDILOCKS_NOEXCEPT : FixedBuffer<Size>(storage,true) { memset(storage,0,Size); }
 
     /** New uninitialized buffer. */
-    inline explicit FixedArrayBuffer(const NOINIT &) DECAF_NOEXCEPT : FixedBuffer<Size>(storage,true) { }
+    inline explicit FixedArrayBuffer(const NOINIT &) GOLDILOCKS_NOEXCEPT : FixedBuffer<Size>(storage,true) { }
     
     /** New random buffer */
-    inline explicit FixedArrayBuffer(Rng &r) DECAF_NOEXCEPT : FixedBuffer<Size>(storage,true) { r.read(*this); }
+    inline explicit FixedArrayBuffer(Rng &r) GOLDILOCKS_NOEXCEPT : FixedBuffer<Size>(storage,true) { r.read(*this); }
     
     /** Copy constructor */
-    inline explicit FixedArrayBuffer(const FixedBlock<Size> &b) DECAF_NOEXCEPT : FixedBuffer<Size>(storage,true) {
+    inline explicit FixedArrayBuffer(const FixedBlock<Size> &b) GOLDILOCKS_NOEXCEPT : FixedBuffer<Size>(storage,true) {
         memcpy(storage,b.data(),Size);
     }
     
     /** Copy operator */
-    inline FixedArrayBuffer& operator=(const FixedBlock<Size> &b) DECAF_NOEXCEPT {
+    inline FixedArrayBuffer& operator=(const FixedBlock<Size> &b) GOLDILOCKS_NOEXCEPT {
         memcpy(storage,b.data(),Size); return *this;
     }
     
     /** Copy operator */
-    inline FixedArrayBuffer& operator=(const FixedArrayBuffer<Size> &b) DECAF_NOEXCEPT {
+    inline FixedArrayBuffer& operator=(const FixedArrayBuffer<Size> &b) GOLDILOCKS_NOEXCEPT {
         memcpy(storage,b.data(),Size); return *this;
     }
     
@@ -366,12 +366,12 @@ public:
     }
     
     /** Copy constructor */
-    inline explicit FixedArrayBuffer(const FixedArrayBuffer<Size> &b) DECAF_NOEXCEPT : FixedBuffer<Size>(storage,true) {
+    inline explicit FixedArrayBuffer(const FixedArrayBuffer<Size> &b) GOLDILOCKS_NOEXCEPT : FixedBuffer<Size>(storage,true) {
         memcpy(storage,b.data(),Size);
     }
     
     /** Destroy the buffer */
-    ~FixedArrayBuffer() DECAF_NOEXCEPT { zeroize(); }
+    ~FixedArrayBuffer() GOLDILOCKS_NOEXCEPT { zeroize(); }
 };
 
 /** @cond internal */
@@ -398,7 +398,7 @@ protected:
     } ours;
     bool is_mine;
 
-    inline void clear() DECAF_NOEXCEPT {
+    inline void clear() GOLDILOCKS_NOEXCEPT {
         if (is_mine) {
             really_bzero(ours.mine, T::size());
             free(ours.mine);
@@ -415,11 +415,11 @@ protected:
         }
         is_mine = true;
     }
-    inline const Wrapped *get() const DECAF_NOEXCEPT { return is_mine ? ours.mine : ours.yours; }
+    inline const Wrapped *get() const GOLDILOCKS_NOEXCEPT { return is_mine ? ours.mine : ours.yours; }
 
     inline OwnedOrUnowned(
         const Wrapped &yours = *T::default_value()
-    ) DECAF_NOEXCEPT {
+    ) GOLDILOCKS_NOEXCEPT {
         ours.yours = &yours;
         is_mine = false;
     }
@@ -441,7 +441,7 @@ protected:
    }
 
 #if __cplusplus >= 201103L
-    inline T &operator=(OwnedOrUnowned &&it) DECAF_NOEXCEPT {
+    inline T &operator=(OwnedOrUnowned &&it) GOLDILOCKS_NOEXCEPT {
         if (this == &it) return *(T*)this;
         clear();
         ours = it.ours;
@@ -475,7 +475,7 @@ T* SanitizingAllocator<T,alignment>::allocate (
 }
 
 template<typename T, size_t alignment>
-void SanitizingAllocator<T,alignment>::deallocate(T* p, size_t size) DECAF_NOEXCEPT {
+void SanitizingAllocator<T,alignment>::deallocate(T* p, size_t size) GOLDILOCKS_NOEXCEPT {
     if (p==NULL) return;
     really_bzero(reinterpret_cast<void*>(p), size);
     free(reinterpret_cast<void*>(p));
@@ -483,10 +483,10 @@ void SanitizingAllocator<T,alignment>::deallocate(T* p, size_t size) DECAF_NOEXC
 
 /** @endcond */
 
-} /* namespace decaf */
+} /* namespace goldilocks */
 
 
-#undef DECAF_NOEXCEPT
-#undef DECAF_DELETE
+#undef GOLDILOCKS_NOEXCEPT
+#undef GOLDILOCKS_DELETE
 
-#endif /* __DECAF_SECURE_BUFFER_HXX__ */
+#endif /* __GOLDILOCKS_SECURE_BUFFER_HXX__ */

@@ -11,7 +11,7 @@ public:
     Foo(int x) : x(x) {}
 };
 
-namespace decaf { namespace internal {
+namespace goldilocks { namespace internal {
 DECLARE_BINOP(ADD,Foo,Foo,Foo,out.x = l.x+r.x)
 DECLARE_BINOP(SUB,Foo,Foo,Foo,out.x = l.x-r.x)
 DECLARE_BINOP(MUL,Foo,Foo,Foo,out.x = l.x*r.x)

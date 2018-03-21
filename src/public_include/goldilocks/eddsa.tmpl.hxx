@@ -2,8 +2,8 @@
  * EdDSA crypto routines, metaheader.
  */
 
-/** Namespace for all libdecaf C++ objects. */
-namespace decaf {
+/** Namespace for all libgoldilocks C++ objects. */
+namespace goldilocks {
     /** How signatures handle hashing. */
     enum Prehashed {
         PURE,     /**< Sign the message itself.  This can't be done in one pass. */
@@ -12,5 +12,5 @@ namespace decaf {
 }
 
 $("\n".join([
-    "#include <decaf/ed%s.hxx>" % g for g in sorted([c["bits"] for _,c in curve.items()])
+    "#include <goldilocks/ed%s.hxx>" % g for g in sorted([c["bits"] for _,c in curve.items()])
 ]))

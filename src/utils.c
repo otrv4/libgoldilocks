@@ -17,12 +17,12 @@ void goldilocks_bzero (
 #ifdef __STDC_LIB_EXT1__
     memset_s(s, size, 0, size);
 #else
-    const size_t sw = sizeof(decaf_word_t);
+    const size_t sw = sizeof(goldilocks_word_t);
     volatile uint8_t *destroy = (volatile uint8_t *)s;
     for (; size && ((uintptr_t)destroy)%sw; size--, destroy++)
         *destroy = 0;
     for (; size >= sw; size -= sw, destroy += sw)
-        *(volatile decaf_word_t *)destroy = 0;
+        *(volatile goldilocks_word_t *)destroy = 0;
     for (; size; size--, destroy++)
         *destroy = 0;
 #endif
