@@ -1,26 +1,26 @@
 /** @brief A group of prime order p, based on $(iso_to). */
 
-#include <decaf/common.h>
+#include <goldilocks/common.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /** @cond internal */
-#define $(C_NS)_SCALAR_LIMBS (($(scalar_bits)-1)/DECAF_WORD_BITS+1)
+#define $(C_NS)_SCALAR_LIMBS (($(scalar_bits)-1)/GOLDILOCKS_WORD_BITS+1)
 /** @endcond */
 
 /** The number of bits in a scalar */
 #define $(C_NS)_SCALAR_BITS $(scalar_bits)
 
 /** @cond internal */
-#ifndef __DECAF_448_GF_DEFINED__
-#define __DECAF_448_GF_DEFINED__ 1
+#ifndef __GOLDILOCKS_448_GF_DEFINED__
+#define __GOLDILOCKS_448_GF_DEFINED__ 1
 /** @brief Galois field element internal structure */
 typedef struct gf_448_s {
-    decaf_word_t limb[$(gf_impl_bits)/DECAF_WORD_BITS];
+    goldilocks_word_t limb[$(gf_impl_bits)/GOLDILOCKS_WORD_BITS];
 } __attribute__((aligned(32))) gf_448_s, gf_448_t[1];
-#endif /* __DECAF_448_GF_DEFINED__ */
+#endif /* __GOLDILOCKS_448_GF_DEFINED__ */
 /** @endcond */
 
 /** Number of bytes in a serialized point. */
@@ -41,13 +41,13 @@ typedef struct gf_448_s {
 #define $(C_NS)_REMOVED_COFACTOR $(cofactor)
 
 /** X448 encoding ratio. */
-#define DECAF_X448_ENCODE_RATIO $(x_encode_ratio)
+#define GOLDILOCKS_X448_ENCODE_RATIO $(x_encode_ratio)
 
 /** Number of bytes in an x448 public key */
-#define DECAF_X448_PUBLIC_BYTES $((gf_bits-1)//8 + 1)
+#define GOLDILOCKS_X448_PUBLIC_BYTES $((gf_bits-1)//8 + 1)
 
 /** Number of bytes in an x448 private key */
-#define DECAF_X448_PRIVATE_BYTES $((gf_bits-1)//8 + 1)
+#define GOLDILOCKS_X448_PRIVATE_BYTES $((gf_bits-1)//8 + 1)
 
 /** Representation of a point on the elliptic curve. */
 typedef struct $(c_ns)_point_s {
@@ -63,29 +63,29 @@ struct $(c_ns)_precomputed_s;
 typedef struct $(c_ns)_precomputed_s $(c_ns)_precomputed_s;
 
 /** Size and alignment of precomputed point tables. */
-extern const size_t $(c_ns)_sizeof_precomputed_s DECAF_API_VIS, $(c_ns)_alignof_precomputed_s DECAF_API_VIS;
+extern const size_t $(c_ns)_sizeof_precomputed_s GOLDILOCKS_API_VIS, $(c_ns)_alignof_precomputed_s GOLDILOCKS_API_VIS;
 
 /** Representation of an element of the scalar field. */
 typedef struct $(c_ns)_scalar_s {
     /** @cond internal */
-    decaf_word_t limb[$(C_NS)_SCALAR_LIMBS];
+    goldilocks_word_t limb[$(C_NS)_SCALAR_LIMBS];
     /** @endcond */
 } $(c_ns)_scalar_t[1];
 
 /** The scalar 1. */
-extern const $(c_ns)_scalar_t $(c_ns)_scalar_one DECAF_API_VIS;
+extern const $(c_ns)_scalar_t $(c_ns)_scalar_one GOLDILOCKS_API_VIS;
 
 /** The scalar 0. */
-extern const $(c_ns)_scalar_t $(c_ns)_scalar_zero DECAF_API_VIS;
+extern const $(c_ns)_scalar_t $(c_ns)_scalar_zero GOLDILOCKS_API_VIS;
 
 /** The identity (zero) point on the curve. */
-extern const $(c_ns)_point_t $(c_ns)_point_identity DECAF_API_VIS;
+extern const $(c_ns)_point_t $(c_ns)_point_identity GOLDILOCKS_API_VIS;
 
 /** An arbitrarily-chosen base point on the curve. */
-extern const $(c_ns)_point_t $(c_ns)_point_base DECAF_API_VIS;
+extern const $(c_ns)_point_t $(c_ns)_point_base GOLDILOCKS_API_VIS;
 
 /** Precomputed table of multiples of the base point on the curve. */
-extern const struct $(c_ns)_precomputed_s *$(c_ns)_precomputed_base DECAF_API_VIS;
+extern const struct $(c_ns)_precomputed_s *$(c_ns)_precomputed_base GOLDILOCKS_API_VIS;
 
 /**
  * @brief Read a scalar from wire format or from bytes.
@@ -100,7 +100,7 @@ extern const struct $(c_ns)_precomputed_s *$(c_ns)_precomputed_base DECAF_API_VI
 goldilocks_error_t $(c_ns)_scalar_decode (
     $(c_ns)_scalar_t out,
     const unsigned char ser[$(C_NS)_SCALAR_BYTES]
-) DECAF_API_VIS DECAF_WARN_UNUSED GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Read a scalar from wire format or from bytes.  Reduces mod
@@ -114,7 +114,7 @@ void $(c_ns)_scalar_decode_long (
     $(c_ns)_scalar_t out,
     const unsigned char *ser,
     size_t ser_len
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Serialize a scalar to wire format.
@@ -125,7 +125,7 @@ void $(c_ns)_scalar_decode_long (
 void $(c_ns)_scalar_encode (
     unsigned char ser[$(C_NS)_SCALAR_BYTES],
     const $(c_ns)_scalar_t s
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Add two scalars.  The scalars may use the same memory.
@@ -137,7 +137,7 @@ void $(c_ns)_scalar_add (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Compare two scalars.
@@ -146,10 +146,10 @@ void $(c_ns)_scalar_add (
  * @retval GOLDILOCKS_TRUE The scalars are equal.
  * @retval GOLDILOCKS_FALSE The scalars are not equal.
  */
-decaf_bool_t $(c_ns)_scalar_eq (
+goldilocks_bool_t $(c_ns)_scalar_eq (
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b
-) DECAF_API_VIS DECAF_WARN_UNUSED GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Subtract two scalars.  The scalars may use the same memory.
@@ -161,7 +161,7 @@ void $(c_ns)_scalar_sub (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Multiply two scalars.  The scalars may use the same memory.
@@ -173,7 +173,7 @@ void $(c_ns)_scalar_mul (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
 * @brief Halve a scalar.  The scalars may use the same memory.
@@ -183,7 +183,7 @@ void $(c_ns)_scalar_mul (
 void $(c_ns)_scalar_halve (
    $(c_ns)_scalar_t out,
    const $(c_ns)_scalar_t a
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Invert a scalar.  When passed zero, return 0.  The input and output may alias.
@@ -194,7 +194,7 @@ void $(c_ns)_scalar_halve (
 goldilocks_error_t $(c_ns)_scalar_invert (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a
-) DECAF_API_VIS DECAF_WARN_UNUSED GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Copy a scalar.  The scalars may use the same memory, in which
@@ -217,7 +217,7 @@ static inline void GOLDILOCKS_NONNULL $(c_ns)_scalar_copy (
 void $(c_ns)_scalar_set_unsigned (
     $(c_ns)_scalar_t out,
     uint64_t a
-) DECAF_API_VIS GOLDILOCKS_NONNULL;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
 /**
  * @brief Encode a point as a sequence of bytes.
@@ -228,7 +228,7 @@ void $(c_ns)_scalar_set_unsigned (
 void $(c_ns)_point_encode (
     uint8_t ser[$(C_NS)_SER_BYTES],
     const $(c_ns)_point_t pt
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Decode a point from a sequence of bytes.
@@ -247,8 +247,8 @@ void $(c_ns)_point_encode (
 goldilocks_error_t $(c_ns)_point_decode (
     $(c_ns)_point_t pt,
     const uint8_t ser[$(C_NS)_SER_BYTES],
-    decaf_bool_t allow_identity
-) DECAF_API_VIS DECAF_WARN_UNUSED GOLDILOCKS_NONNULL DECAF_NOINLINE;
+    goldilocks_bool_t allow_identity
+) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Copy a point.  The input and output may alias,
@@ -273,10 +273,10 @@ static inline void GOLDILOCKS_NONNULL $(c_ns)_point_copy (
  * @retval GOLDILOCKS_TRUE The points are equal.
  * @retval GOLDILOCKS_FALSE The points are not equal.
  */
-decaf_bool_t $(c_ns)_point_eq (
+goldilocks_bool_t $(c_ns)_point_eq (
     const $(c_ns)_point_t a,
     const $(c_ns)_point_t b
-) DECAF_API_VIS DECAF_WARN_UNUSED GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Add two points to produce a third point.  The
@@ -291,7 +291,7 @@ void $(c_ns)_point_add (
     $(c_ns)_point_t sum,
     const $(c_ns)_point_t a,
     const $(c_ns)_point_t b
-) DECAF_API_VIS GOLDILOCKS_NONNULL;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
 /**
  * @brief Double a point.  Equivalent to
@@ -303,7 +303,7 @@ void $(c_ns)_point_add (
 void $(c_ns)_point_double (
     $(c_ns)_point_t two_a,
     const $(c_ns)_point_t a
-) DECAF_API_VIS GOLDILOCKS_NONNULL;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
 /**
  * @brief Subtract two points to produce a third point.  The
@@ -318,7 +318,7 @@ void $(c_ns)_point_sub (
     $(c_ns)_point_t diff,
     const $(c_ns)_point_t a,
     const $(c_ns)_point_t b
-) DECAF_API_VIS GOLDILOCKS_NONNULL;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
 /**
  * @brief Negate a point to produce another point.  The input
@@ -330,7 +330,7 @@ void $(c_ns)_point_sub (
 void $(c_ns)_point_negate (
    $(c_ns)_point_t nega,
    const $(c_ns)_point_t a
-) DECAF_API_VIS GOLDILOCKS_NONNULL;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
 /**
  * @brief Multiply a base point by a scalar: scaled = scalar*base.
@@ -343,7 +343,7 @@ void $(c_ns)_point_scalarmul (
     $(c_ns)_point_t scaled,
     const $(c_ns)_point_t base,
     const $(c_ns)_scalar_t scalar
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Multiply a base point by a scalar: scaled = scalar*base.
@@ -366,9 +366,9 @@ goldilocks_error_t $(c_ns)_direct_scalarmul (
     uint8_t scaled[$(C_NS)_SER_BYTES],
     const uint8_t base[$(C_NS)_SER_BYTES],
     const $(c_ns)_scalar_t scalar,
-    decaf_bool_t allow_identity,
-    decaf_bool_t short_circuit
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
+    goldilocks_bool_t allow_identity,
+    goldilocks_bool_t short_circuit
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NOINLINE;
 
 /**
  * @brief RFC 7748 Diffie-Hellman scalarmul, used to compute shared secrets.
@@ -382,14 +382,14 @@ goldilocks_error_t $(c_ns)_direct_scalarmul (
  * @retval GOLDILOCKS_FAILURE The scalarmul didn't succeed, because the base
  * point is in a small subgroup.
  */
-goldilocks_error_t decaf_x448 (
-    uint8_t shared[DECAF_X448_PUBLIC_BYTES],
-    const uint8_t base[DECAF_X448_PUBLIC_BYTES],
-    const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
+goldilocks_error_t goldilocks_x448 (
+    uint8_t shared[GOLDILOCKS_X448_PUBLIC_BYTES],
+    const uint8_t base[GOLDILOCKS_X448_PUBLIC_BYTES],
+    const uint8_t scalar[GOLDILOCKS_X448_PRIVATE_BYTES]
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NOINLINE;
 
 /**
- * @brief Multiply a point by DECAF_X448_ENCODE_RATIO,
+ * @brief Multiply a point by GOLDILOCKS_X448_ENCODE_RATIO,
  * then encode it like RFC 7748.
  *
  * This function is mainly used internally, but is exported in case
@@ -397,28 +397,28 @@ goldilocks_error_t decaf_x448 (
  *
  * The ratio is necessary because the internal representation doesn't
  * track the cofactor information, so on output we must clear the cofactor.
- * This would multiply by the cofactor, but in fact internally libdecaf's
+ * This would multiply by the cofactor, but in fact internally libgoldilock's
  * points are always even, so it multiplies by half the cofactor instead.
  *
  * As it happens, this aligns with the base point definitions; that is,
  * if you pass the Decaf/Ristretto base point to this function, the result
- * will be DECAF_X448_ENCODE_RATIO times the X448
+ * will be GOLDILOCKS_X448_ENCODE_RATIO times the X448
  * base point.
  *
  * @param [out] out The scaled and encoded point.
  * @param [in] p The point to be scaled and encoded.
  */
 void $(c_ns)_point_mul_by_ratio_and_encode_like_x448 (
-    uint8_t out[DECAF_X448_PUBLIC_BYTES],
+    uint8_t out[GOLDILOCKS_X448_PUBLIC_BYTES],
     const $(c_ns)_point_t p
-) DECAF_API_VIS GOLDILOCKS_NONNULL;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
 /** The base point for X448 Diffie-Hellman */
 extern const uint8_t
-    decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES]
+    goldilocks_x448_base_point[GOLDILOCKS_X448_PUBLIC_BYTES]
 #ifndef DOXYGEN
     /* For some reason Doxygen chokes on this despite the defense in common.h... */
-    DECAF_API_VIS
+    GOLDILOCKS_API_VIS
 #endif
 ;
 
@@ -426,31 +426,31 @@ extern const uint8_t
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
  * a different (non-Decaf) encoding.
  *
- * @deprecated Renamed to decaf_x448_derive_public_key.
+ * @deprecated Renamed to goldilocks_x448_derive_public_key.
  * I have no particular timeline for removing this name.
  *
  * @param [out] out The public key base*scalar.
  * @param [in] scalar The private scalar.
  */
-void decaf_x448_generate_key (
-    uint8_t out[DECAF_X448_PUBLIC_BYTES],
-    const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE DECAF_DEPRECATED("Renamed to decaf_x448_derive_public_key");
+void goldilocks_x448_generate_key (
+    uint8_t out[GOLDILOCKS_X448_PUBLIC_BYTES],
+    const uint8_t scalar[GOLDILOCKS_X448_PRIVATE_BYTES]
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE GOLDILOCKS_DEPRECATED("Renamed to goldilocks_x448_derive_public_key");
 
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
  * a different (non-Decaf) encoding.
  *
- * Does exactly the same thing as decaf_x448_generate_key,
+ * Does exactly the same thing as goldilocks_x448_generate_key,
  * but has a better name.
  *
  * @param [out] out The public key base*scalar
  * @param [in] scalar The private scalar.
  */
-void decaf_x448_derive_public_key (
-    uint8_t out[DECAF_X448_PUBLIC_BYTES],
-    const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+void goldilocks_x448_derive_public_key (
+    uint8_t out[GOLDILOCKS_X448_PUBLIC_BYTES],
+    const uint8_t scalar[GOLDILOCKS_X448_PRIVATE_BYTES]
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /* FUTURE: uint8_t $(c_ns)_encode_like_curve448) */
 
@@ -466,7 +466,7 @@ void decaf_x448_derive_public_key (
 void $(c_ns)_precompute (
     $(c_ns)_precomputed_s *a,
     const $(c_ns)_point_t b
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Multiply a precomputed base point by a scalar:
@@ -483,7 +483,7 @@ void $(c_ns)_precomputed_scalarmul (
     $(c_ns)_point_t scaled,
     const $(c_ns)_precomputed_s *base,
     const $(c_ns)_scalar_t scalar
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:
@@ -504,7 +504,7 @@ void $(c_ns)_point_double_scalarmul (
     const $(c_ns)_scalar_t scalar1,
     const $(c_ns)_point_t base2,
     const $(c_ns)_scalar_t scalar2
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * Multiply one base point by two scalars:
@@ -527,7 +527,7 @@ void $(c_ns)_point_dual_scalarmul (
     const $(c_ns)_point_t base1,
     const $(c_ns)_scalar_t scalar1,
     const $(c_ns)_scalar_t scalar2
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:
@@ -549,7 +549,7 @@ void $(c_ns)_base_double_scalarmul_non_secret (
     const $(c_ns)_scalar_t scalar1,
     const $(c_ns)_point_t base2,
     const $(c_ns)_scalar_t scalar2
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Constant-time decision between two points.  If pick_b
@@ -564,8 +564,8 @@ void $(c_ns)_point_cond_sel (
     $(c_ns)_point_t out,
     const $(c_ns)_point_t a,
     const $(c_ns)_point_t b,
-    decaf_word_t pick_b
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+    goldilocks_word_t pick_b
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Constant-time decision between two scalars.  If pick_b
@@ -580,8 +580,8 @@ void $(c_ns)_scalar_cond_sel (
     $(c_ns)_scalar_t out,
     const $(c_ns)_scalar_t a,
     const $(c_ns)_scalar_t b,
-    decaf_word_t pick_b
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+    goldilocks_word_t pick_b
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Test that a point is valid, for debugging purposes.
@@ -590,9 +590,9 @@ void $(c_ns)_scalar_cond_sel (
  * @retval GOLDILOCKS_TRUE The point is valid.
  * @retval GOLDILOCKS_FALSE The point is invalid.
  */
-decaf_bool_t $(c_ns)_point_valid (
+goldilocks_bool_t $(c_ns)_point_valid (
     const $(c_ns)_point_t to_test
-) DECAF_API_VIS DECAF_WARN_UNUSED GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Torque a point, for debugging purposes.  The output
@@ -604,7 +604,7 @@ decaf_bool_t $(c_ns)_point_valid (
 void $(c_ns)_point_debugging_torque (
     $(c_ns)_point_t q,
     const $(c_ns)_point_t p
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Projectively scale a point, for debugging purposes.
@@ -619,7 +619,7 @@ void $(c_ns)_point_debugging_pscale (
     $(c_ns)_point_t q,
     const $(c_ns)_point_t p,
     const unsigned char factor[$(C_NS)_SER_BYTES]
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Almost-Elligator-like hash to curve.
@@ -653,7 +653,7 @@ void
 $(c_ns)_point_from_hash_nonuniform (
     $(c_ns)_point_t pt,
     const unsigned char hashed_data[$(C_NS)_HASH_BYTES]
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Indifferentiable hash function encoding to curve.
@@ -666,7 +666,7 @@ $(c_ns)_point_from_hash_nonuniform (
 void $(c_ns)_point_from_hash_uniform (
     $(c_ns)_point_t pt,
     const unsigned char hashed_data[2*$(C_NS)_HASH_BYTES]
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
  * @brief Inverse of elligator-like hash to curve.
@@ -701,7 +701,7 @@ $(c_ns)_invert_elligator_nonuniform (
     unsigned char recovered_hash[$(C_NS)_HASH_BYTES],
     const $(c_ns)_point_t pt,
     uint32_t which
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE DECAF_WARN_UNUSED;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE GOLDILOCKS_WARN_UNUSED;
 
 /**
  * @brief Inverse of elligator-like hash to curve.
@@ -726,26 +726,26 @@ $(c_ns)_invert_elligator_uniform (
     unsigned char recovered_hash[2*$(C_NS)_HASH_BYTES],
     const $(c_ns)_point_t pt,
     uint32_t which
-) DECAF_API_VIS GOLDILOCKS_NONNULL DECAF_NOINLINE DECAF_WARN_UNUSED;
+) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE GOLDILOCKS_WARN_UNUSED;
 
 /** Securely erase a scalar. */
 void $(c_ns)_scalar_destroy (
     $(c_ns)_scalar_t scalar
-) GOLDILOCKS_NONNULL DECAF_API_VIS;
+) GOLDILOCKS_NONNULL GOLDILOCKS_API_VIS;
 
 /** Securely erase a point by overwriting it with zeros.
  * @warning This causes the point object to become invalid.
  */
 void $(c_ns)_point_destroy (
     $(c_ns)_point_t point
-) GOLDILOCKS_NONNULL DECAF_API_VIS;
+) GOLDILOCKS_NONNULL GOLDILOCKS_API_VIS;
 
 /** Securely erase a precomputed table by overwriting it with zeros.
  * @warning This causes the table object to become invalid.
  */
 void $(c_ns)_precomputed_destroy (
     $(c_ns)_precomputed_s *pre
-) GOLDILOCKS_NONNULL DECAF_API_VIS;
+) GOLDILOCKS_NONNULL GOLDILOCKS_API_VIS;
 
 #ifdef __cplusplus
 } /* extern "C" */

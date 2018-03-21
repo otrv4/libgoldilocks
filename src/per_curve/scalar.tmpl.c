@@ -1,8 +1,8 @@
-/** @brief Decaf high-level functions. */
+/** @brief Goldilocks high-level functions. */
 
 #include "word.h"
 #include "constant_time.h"
-#include <decaf.h>
+#include <goldilocks.h>
 
 /* Template stuff */
 #define API_NS(_id) $(c_ns)_##_id
@@ -11,7 +11,7 @@
 #define SCALAR_LIMBS $(C_NS)_SCALAR_LIMBS
 #define scalar_t API_NS(scalar_t)
 
-static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x$("%x" % pow(-q,2**64-1,2**64))ull;
+static const goldilocks_word_t MONTGOMERY_FACTOR = (goldilocks_word_t)0x$("%x" % pow(-q,2**64-1,2**64))ull;
 static const scalar_t sc_p = {{{
     $(ser(q,64,"SC_LIMB"))
 }}}, sc_r2 = {{{
@@ -19,28 +19,28 @@ static const scalar_t sc_p = {{{
 }}};
 /* End of template stuff */
 
-#define WBITS DECAF_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
+#define WBITS GOLDILOCKS_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
 const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
 
 /** {extra,accum} - sub +? p
  * Must have extra <= 1
  */
-static DECAF_NOINLINE void sc_subx(
+static GOLDILOCKS_NOINLINE void sc_subx(
     scalar_t out,
-    const decaf_word_t accum[SCALAR_LIMBS],
+    const goldilocks_word_t accum[SCALAR_LIMBS],
     const scalar_t sub,
     const scalar_t p,
-    decaf_word_t extra
+    goldilocks_word_t extra
 ) {
-    decaf_dsword_t chain = 0;
+    goldilocks_dsword_t chain = 0;
     unsigned int i;
     for (i=0; i<SCALAR_LIMBS; i++) {
         chain = (chain + accum[i]) - sub->limb[i];
         out->limb[i] = chain;
         chain >>= WBITS;
     }
-    decaf_word_t borrow = chain+extra; /* = 0 or -1 */
+    goldilocks_word_t borrow = chain+extra; /* = 0 or -1 */
 
     chain = 0;
     for (i=0; i<SCALAR_LIMBS; i++) {
@@ -50,22 +50,22 @@ static DECAF_NOINLINE void sc_subx(
     }
 }
 
-static DECAF_NOINLINE void sc_montmul (
+static GOLDILOCKS_NOINLINE void sc_montmul (
     scalar_t out,
     const scalar_t a,
     const scalar_t b
 ) {
     unsigned int i,j;
-    decaf_word_t accum[SCALAR_LIMBS+1] = {0};
-    decaf_word_t hi_carry = 0;
+    goldilocks_word_t accum[SCALAR_LIMBS+1] = {0};
+    goldilocks_word_t hi_carry = 0;
 
     for (i=0; i<SCALAR_LIMBS; i++) {
-        decaf_word_t mand = a->limb[i];
-        const decaf_word_t *mier = b->limb;
+        goldilocks_word_t mand = a->limb[i];
+        const goldilocks_word_t *mier = b->limb;
 
-        decaf_dword_t chain = 0;
+        goldilocks_dword_t chain = 0;
         for (j=0; j<SCALAR_LIMBS; j++) {
-            chain += ((decaf_dword_t)mand)*mier[j] + accum[j];
+            chain += ((goldilocks_dword_t)mand)*mier[j] + accum[j];
             accum[j] = chain;
             chain >>= WBITS;
         }
@@ -75,7 +75,7 @@ static DECAF_NOINLINE void sc_montmul (
         chain = 0;
         mier = sc_p->limb;
         for (j=0; j<SCALAR_LIMBS; j++) {
-            chain += (decaf_dword_t)mand*mier[j] + accum[j];
+            chain += (goldilocks_dword_t)mand*mier[j] + accum[j];
             if (j) accum[j-1] = chain;
             chain >>= WBITS;
         }
@@ -98,7 +98,7 @@ void API_NS(scalar_mul) (
 }
 
 /* PERF: could implement this */
-static DECAF_INLINE void sc_montsqr (scalar_t out, const scalar_t a) {
+static GOLDILOCKS_INLINE void sc_montsqr (scalar_t out, const scalar_t a) {
     sc_montmul(out,a,a);
 }
 
@@ -128,7 +128,7 @@ goldilocks_error_t API_NS(scalar_invert) (
 
         if (started) sc_montsqr(out,out);
 
-        decaf_word_t w = (i>=0) ? sc_p->limb[i/WBITS] : 0;
+        goldilocks_word_t w = (i>=0) ? sc_p->limb[i/WBITS] : 0;
         if (i >= 0 && i<WBITS) {
             assert(w >= 2);
             w-=2;
@@ -158,8 +158,8 @@ goldilocks_error_t API_NS(scalar_invert) (
 
     /* Demontgomerize */
     sc_montmul(out,out,API_NS(scalar_one));
-    decaf_bzero(precmp, sizeof(precmp));
-    return decaf_succeed_if(~API_NS(scalar_eq)(out,API_NS(scalar_zero)));
+    goldilocks_bzero(precmp, sizeof(precmp));
+    return goldilocks_succeed_if(~API_NS(scalar_eq)(out,API_NS(scalar_zero)));
 }
 
 void API_NS(scalar_sub) (
@@ -175,7 +175,7 @@ void API_NS(scalar_add) (
     const scalar_t a,
     const scalar_t b
 ) {
-    decaf_dword_t chain = 0;
+    goldilocks_dword_t chain = 0;
     unsigned int i;
     for (i=0; i<SCALAR_LIMBS; i++) {
         chain = (chain + a->limb[i]) + b->limb[i];
@@ -192,20 +192,20 @@ API_NS(scalar_set_unsigned) (
 ) {
     memset(out,0,sizeof(scalar_t));
     unsigned int i = 0;
-    for (; i<sizeof(uint64_t)/sizeof(decaf_word_t); i++) {
+    for (; i<sizeof(uint64_t)/sizeof(goldilocks_word_t); i++) {
         out->limb[i] = w;
-#if DECAF_WORD_BITS < 64
-        w >>= 8*sizeof(decaf_word_t);
+#if GOLDILOCKS_WORD_BITS < 64
+        w >>= 8*sizeof(goldilocks_word_t);
 #endif
     }
 }
 
-decaf_bool_t
+goldilocks_bool_t
 API_NS(scalar_eq) (
     const scalar_t a,
     const scalar_t b
 ) {
-    decaf_word_t diff = 0;
+    goldilocks_word_t diff = 0;
     unsigned int i;
     for (i=0; i<SCALAR_LIMBS; i++) {
         diff |= a->limb[i] ^ b->limb[i];
@@ -213,16 +213,16 @@ API_NS(scalar_eq) (
     return mask_to_bool(word_is_zero(diff));
 }
 
-static DECAF_INLINE void scalar_decode_short (
+static GOLDILOCKS_INLINE void scalar_decode_short (
     scalar_t s,
     const unsigned char *ser,
     unsigned int nbytes
 ) {
     unsigned int i,j,k=0;
     for (i=0; i<SCALAR_LIMBS; i++) {
-        decaf_word_t out = 0;
-        for (j=0; j<sizeof(decaf_word_t) && k<nbytes; j++,k++) {
-            out |= ((decaf_word_t)ser[k])<<(8*j);
+        goldilocks_word_t out = 0;
+        for (j=0; j<sizeof(goldilocks_word_t) && k<nbytes; j++,k++) {
+            out |= ((goldilocks_word_t)ser[k])<<(8*j);
         }
         s->limb[i] = out;
     }
@@ -234,7 +234,7 @@ goldilocks_error_t API_NS(scalar_decode)(
 ) {
     unsigned int i;
     scalar_decode_short(s, ser, SCALAR_SER_BYTES);
-    decaf_dsword_t accum = 0;
+    goldilocks_dsword_t accum = 0;
     for (i=0; i<SCALAR_LIMBS; i++) {
         accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
     }
@@ -242,13 +242,13 @@ goldilocks_error_t API_NS(scalar_decode)(
 
     API_NS(scalar_mul)(s,s,API_NS(scalar_one)); /* ham-handed reduce */
 
-    return decaf_succeed_if(~word_is_zero(accum));
+    return goldilocks_succeed_if(~word_is_zero(accum));
 }
 
 void API_NS(scalar_destroy) (
     scalar_t scalar
 ) {
-    decaf_bzero(scalar, sizeof(scalar_t));
+    goldilocks_bzero(scalar, sizeof(scalar_t));
 }
 
 void API_NS(scalar_decode_long)(
@@ -295,7 +295,7 @@ void API_NS(scalar_encode)(
 ) {
     unsigned int i,j,k=0;
     for (i=0; i<SCALAR_LIMBS; i++) {
-        for (j=0; j<sizeof(decaf_word_t); j++,k++) {
+        for (j=0; j<sizeof(goldilocks_word_t); j++,k++) {
             ser[k] = s->limb[i] >> (8*j);
         }
     }
@@ -305,7 +305,7 @@ void API_NS(scalar_cond_sel) (
     scalar_t out,
     const scalar_t a,
     const scalar_t b,
-    decaf_bool_t pick_b
+    goldilocks_bool_t pick_b
 ) {
     constant_time_select(out,a,b,sizeof(scalar_t),bool_to_mask(pick_b),sizeof(out->limb[0]));
 }
@@ -314,13 +314,13 @@ void API_NS(scalar_halve) (
     scalar_t out,
     const scalar_t a
 ) {
-    decaf_word_t mask = -(a->limb[0] & 1);
-    decaf_dword_t chain = 0;
+    goldilocks_word_t mask = -(a->limb[0] & 1);
+    goldilocks_dword_t chain = 0;
     unsigned int i;
     for (i=0; i<SCALAR_LIMBS; i++) {
         chain = (chain + a->limb[i]) + (sc_p->limb[i] & mask);
         out->limb[i] = chain;
-        chain >>= DECAF_WORD_BITS;
+        chain >>= GOLDILOCKS_WORD_BITS;
     }
     for (i=0; i<SCALAR_LIMBS-1; i++) {
         out->limb[i] = out->limb[i]>>1 | out->limb[i+1]<<(WBITS-1);

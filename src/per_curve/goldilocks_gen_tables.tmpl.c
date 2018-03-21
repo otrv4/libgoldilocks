@@ -1,4 +1,4 @@
-/** @brief Decaf global constant table precomputation. */
+/** @brief Goldilocks global constant table precomputation. */
 
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #include <stdio.h>
@@ -6,7 +6,7 @@
 
 #include "field.h"
 #include "f_field.h"
-#include "decaf.h"
+#include "goldilocks.h"
 
 #define API_NS(_id) $(c_ns)_##_id
 static const unsigned char base_point_ser_for_pregen[SER_BYTES] = {
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 
     printf("/** @warning: this file was automatically generated. */\n");
     printf("#include \"field.h\"\n\n");
-    printf("#include <decaf.h>\n\n");
+    printf("#include <goldilocks.h>\n\n");
     printf("#define API_NS(_id) $(c_ns)_##_id\n");
 
     output = (const gf_s *)real_point_base;
