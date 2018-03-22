@@ -25,7 +25,7 @@ todo:
 sage:
 	$(MAKE) sage -f $(top_srcdir)/Makefile.custom
 
-sagetest:
+sage-test:
 	$(MAKE) sagetest -f $(top_srcdir)/Makefile.custom
 
 lib:
