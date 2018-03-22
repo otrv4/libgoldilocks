@@ -10,7 +10,7 @@
  *
  * The Goldilocks library implements cryptographic operations on a an elliptic curve
  * group of prime order. It accomplishes this by using a twisted Edwards
- * curve (isogenous to Ed448-Goldilocks and wiping out the cofactor.
+ * curve (isogenous to Ed448-Goldilocks) and wiping out the cofactor.
  *
  * Most of the functions in this file run in constant time, can't fail
  * except for ubiquitous reasons like memory exhaustion, and contain no
@@ -50,7 +50,7 @@
 namespace goldilocks {
 
 /**
- * Ed448-Goldilocks/Decaf instantiation of group.
+ * Ed448-Goldilocks/Goldilocks instantiation of group.
  */
 struct Ed448Goldilocks {
 
