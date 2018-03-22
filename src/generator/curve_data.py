@@ -98,9 +98,6 @@ for curve,data in curve_data.items():
     if "cxx_ns" not in data:
         data["cxx_ns"] = data["name"].replace("-","")
 
-    if "eddsa_sigma_iso" not in data:
-        data["eddsa_sigma_iso"] = 0
-
     if "rist_base_decoded" not in data:
         def xord(x):
             if isinstance(x,str): return ord(x)

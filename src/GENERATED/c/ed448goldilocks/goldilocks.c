@@ -26,7 +26,6 @@
 #define scalar_t API_NS(scalar_t)
 #define point_t API_NS(point_t)
 #define precomputed_s API_NS(precomputed_s)
-#define IMAGINE_TWIST 0
 #define COFACTOR 4
 
 /* Comb config: number of combs, n, t, s. */
@@ -36,8 +35,6 @@
 #define GOLDILOCKS_WINDOW_BITS 5
 #define GOLDILOCKS_WNAF_FIXED_TABLE_BITS 5
 #define GOLDILOCKS_WNAF_VAR_TABLE_BITS 3
-
-#define EDDSA_USE_SIGMA_ISOGENY 0
 
 static const int EDWARDS_D = -39081;
 static const scalar_t point_scalarmul_adjustment = {{{
@@ -676,20 +673,10 @@ goldilocks_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     gf_mul ( b, q->y, p->x );
     mask_t succ = gf_eq(a,b);
 
-    #if (COFACTOR == 8) && IMAGINE_TWIST
+    /* this should be removed too */
+    #if (COFACTOR == 8)
         gf_mul ( a, p->y, q->y );
         gf_mul ( b, q->x, p->x );
-    /* this is a very odd case to check */
-        #if !(IMAGINE_TWIST)
-            gf_sub ( a, ZERO, a );
-        #else
-           /* Interesting note: the 4tor would normally be rotation.
-            * But because of the *i twist, it's actually
-            * (x,y) <-> (iy,ix)
-            */
-
-           /* No code, just a comment. */
-        #endif
         succ |= gf_eq(a,b);
     #endif
 
