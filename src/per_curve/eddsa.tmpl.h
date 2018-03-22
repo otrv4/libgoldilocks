@@ -1,4 +1,4 @@
-/** @brief A group of prime order p, based on $(iso_to). */
+/** @brief A group of prime order p, based on Ed448-Goldilocks. */
 
 #include <goldilocks/point_$(gf_bits).h>
 #include <goldilocks/shake.h>

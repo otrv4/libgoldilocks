@@ -85,10 +85,6 @@ for curve,data in curve_data.items():
         if key not in data:
             data[key] = field_data[data["field"]][key]
 
-
-    if "iso_to" not in data:
-        data["iso_to"] = data["name"]
-
     if "eddsa_hash" not in data:
         data["eddsa_hash"] = "shake256"
 
@@ -105,9 +101,6 @@ for curve,data in curve_data.items():
         data["rist_base_decoded"] = sum(
                 xord(b)<<(8*i) for i,b in enumerate(unhexlify(data["rist_base"]))
             )
-
-    if "imagine_twist" not in data:
-        data["imagine_twist"] = 0
 
     data["q"] = (data["modulus"]+1-data["trace"]) // data["cofactor"]
     data["bits"] = ceil_log2(data["modulus"])
