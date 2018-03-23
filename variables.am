@@ -1,9 +1,4 @@
-FIELD_NAME_448 = p448
-CURVE_NAME_448 = ed448goldilocks
 ARCH_NAME = arch_x86_64
-
-BUILD_H   = $(top_srcdir)/src/GENERATED/c
-BUILD_INC = $(top_srcdir)/src/GENERATED/include
 
 LANGFLAGS = -std=c99 -fno-strict-aliasing
 
@@ -14,12 +9,9 @@ WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 #WARNFLAGS += -Wgcc-compat
 #endif
 
-INCFLAGS = -I$(top_srcdir)/src/include -I$(BUILD_INC) -I$(BUILD_H)
+INCFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/src/include -I$(top_srcdir)/src/public_include
 INCFLAGS += -I$(top_srcdir)/src/$(ARCH_NAME)
 INCFLAGS += -I$(top_srcdir)/src/include/$(ARCH_NAME)
-INCFLAGS_448 = -I$(top_srcdir)/src/$(FIELD_NAME_448)/$(ARCH_NAME)
-INCFLAGS_448 += -I$(top_srcdir)/src/GENERATED/c/$(FIELD_NAME_448)
-INCFLAGS_448 += -I$(top_srcdir)/src/GENERATED/c/$(FIELD_NAME_448)/$(ARCH_NAME)
 
 OFLAGS ?= -O2
 
