@@ -1,5 +1,5 @@
 /**
- * @file goldilocks/crypto.hxx
+ * @file crypto.hxx
  * @author Mike Hamburg
  *
  * @copyright
@@ -10,9 +10,6 @@
  * @warning These are merely examples, though they ought to be secure.  But real
  * protocols will decide differently on magic numbers, formats, which items to
  * hash, etc.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 
 #ifndef __GOLDILOCKS_CRYPTO_HXX__

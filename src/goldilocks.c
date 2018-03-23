@@ -1,5 +1,5 @@
 /**
- * @file ed448goldilocks/goldilocks.c
+ * @file goldilocks.c
  * @author Mike Hamburg
  *
  * @copyright
@@ -7,9 +7,6 @@
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief Goldilocks high-level functions.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #include "word.h"

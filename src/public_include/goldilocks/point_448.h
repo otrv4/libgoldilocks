@@ -7,9 +7,6 @@
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief A group of prime order p, based on Ed448-Goldilocks.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 
 #ifndef __GOLDILOCKS_POINT_448_H__

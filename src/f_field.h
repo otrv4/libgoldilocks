@@ -1,5 +1,5 @@
 /**
- * @file p448/f_field.h
+ * @file f_field.h
  * @author Mike Hamburg
  *
  * @copyright
@@ -7,9 +7,6 @@
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief Field-specific code for 2^448 - 2^224 - 1.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 
 #ifndef __P448_F_FIELD_H__

@@ -1,5 +1,5 @@
 /**
- * @file ed448goldilocks/elligator.c
+ * @file elligator.c
  * @author Mike Hamburg
  *
  * @copyright
@@ -7,9 +7,6 @@
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief Elligator high-level functions.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 #include "word.h"
 #include "field.h"

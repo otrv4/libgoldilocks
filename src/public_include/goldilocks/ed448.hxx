@@ -1,3 +1,14 @@
+/**
+ * @file goldilocks/ed448.hxx
+ * @author Mike Hamburg
+ *
+ * @copyright
+ *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \n
+ *   Released under the MIT License.  See LICENSE.txt for license information.
+ */
+
+#ifndef __GOLDILOCKS_ED448_HXX__
+#define __GOLDILOCKS_ED448_HXX__ 1
 /*
  * Example Goldilocks crypto routines, C++ wrapper.
  * @warning These are merely examples, though they ought to be secure.  But real
@@ -7,8 +18,8 @@
  */
 
 #include <goldilocks/eddsa.hxx>
-#include <goldilocks/point_$(gf_bits).hxx>
-#include <goldilocks/ed$(gf_bits).h>
+#include <goldilocks/point_448.hxx>
+#include <goldilocks/ed448.h>
 
 #include <goldilocks/shake.hxx>
 
@@ -26,8 +37,8 @@ namespace goldilocks {
 /** A public key for crypto over some Group */
 template <typename Group> struct EdDSA;
 
-/** A public key for crypto over $(name) */
-template<> struct EdDSA<$(cxx_ns)> {
+/** A public key for crypto over Ed448-Goldilocks */
+template<> struct EdDSA<Ed448Goldilocks> {
 
 /** @cond internal */
 template<class CRTP, Prehashed> class Signing;
@@ -51,10 +62,10 @@ static inline const Block NO_CONTEXT() { return Block(NULL,0); }
 #endif
 
 /** Prehash context for EdDSA. */
-class Prehash : public $(re.sub(r"SHAKE(\d+)",r"SHAKE<\1>", eddsa_hash.upper())) {
+class Prehash : public SHAKE<256> {
 private:
     /** @cond internal */
-    typedef $(re.sub(r"SHAKE(\d+)",r"SHAKE<\1>", eddsa_hash.upper())) Super;
+    typedef SHAKE<256> Super;
     SecureBuffer context_;
     template<class T, Prehashed Ph> friend class Signing;
     template<class T, Prehashed Ph> friend class Verification;
@@ -66,7 +77,7 @@ private:
             throw LengthException();
         }
 
-        goldilocks_ed448_prehash_init((goldilocks_$(eddsa_hash)_ctx_s *)wrapped);
+        goldilocks_ed448_prehash_init((goldilocks_shake256_ctx_s *)wrapped);
     }
     /** @endcond */
 
@@ -184,7 +195,7 @@ private:
 
 public:
     /** Underlying group */
-    typedef $(cxx_ns) Group;
+    typedef Ed448Goldilocks Group;
 
     /** Signature size. */
     static const size_t SIG_BYTES = GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES;
@@ -357,7 +368,7 @@ public:
     /* PERF FUTURE: Pre-cached decoding? Precomputed table?? */
 
     /** Underlying group */
-    typedef $(cxx_ns) Group;
+    typedef Ed448Goldilocks Group;
 
     /** Signature size. */
     static const size_t SIG_BYTES = GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES;
@@ -409,7 +420,9 @@ public:
     }
 }; /* class PublicKey */
 
-}; /* template<> struct EdDSA<$(cxx_ns)> */
+}; /* template<> struct EdDSA<Ed448Goldilocks> */
 
 #undef GOLDILOCKS_NOEXCEPT
 } /* namespace goldilocks */
+
+#endif /* __GOLDILOCKS_ED448_HXX__ */

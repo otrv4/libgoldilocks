@@ -1,4 +1,11 @@
 /**
+ * @file goldilocks/point_448.hxx
+ * @author Mike Hamburg
+ *
+ * @copyright
+ *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \n
+ *   Released under the MIT License.  See LICENSE.txt for license information.
+ *
  * A group of prime order, C++ wrapper.
  *
  * The Goldilocks library implements cryptographic operations on a an elliptic curve
@@ -12,6 +19,9 @@
  * fail.
  */
 
+#ifndef __GOLDILOCKS_POINT_448_HXX__
+#define __GOLDILOCKS_POINT_448_HXX__ 1
+
 /** This code uses posix_memalign. */
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 600
@@ -19,8 +29,8 @@
 #include <stdlib.h>
 #include <string.h> /* for memcpy */
 
-#include <goldilocks/point_$(gf_bits).h>
-#include <goldilocks/ed$(gf_bits).h>
+#include <goldilocks/point_448.h>
+#include <goldilocks/ed448.h>
 #include <goldilocks/secure_buffer.hxx>
 #include <string>
 #include <sys/types.h>
@@ -39,19 +49,19 @@ namespace goldilocks {
 /**
  * Ed448-Goldilocks/Goldilocks instantiation of group.
  */
-struct $(cxx_ns) {
+struct Ed448Goldilocks {
 
 /** The name of the curve */
-static inline const char *name() { return "$(name)"; }
+static inline const char *name() { return "Ed448-Goldilocks"; }
 
 /** The name of the curve */
-static inline int bits() { return $(gf_bits); }
+static inline int bits() { return 448; }
 
 /** The curve's cofactor (removed, but useful for testing) */
-static const int REMOVED_COFACTOR = $(cofactor);
+static const int REMOVED_COFACTOR = 4;
 
 /** Residue class of field modulus: p == this mod 2*(this-1) */
-static const int FIELD_MODULUS_TYPE = $(modulus &~ (modulus-3));
+static const int FIELD_MODULUS_TYPE = 3;
 
 /** @cond internal */
 class Point;
@@ -65,10 +75,10 @@ class Precomputed;
 class Scalar : public Serializable<Scalar> {
 public:
     /** wrapped C type */
-    typedef $(c_ns)_scalar_t Wrapped;
+    typedef goldilocks_448_scalar_t Wrapped;
 
     /** Size of a serialized element */
-    static const size_t SER_BYTES = $(C_NS)_SCALAR_BYTES;
+    static const size_t SER_BYTES = GOLDILOCKS_448_SCALAR_BYTES;
 
     /** access to the underlying scalar object */
     Wrapped s;
@@ -97,7 +107,7 @@ public:
     }
 
     /** Construct from goldilocks_scalar_t object. */
-    inline Scalar(const Wrapped &t = $(c_ns)_scalar_zero) GOLDILOCKS_NOEXCEPT { $(c_ns)_scalar_copy(s,t); }
+    inline Scalar(const Wrapped &t = goldilocks_448_scalar_zero) GOLDILOCKS_NOEXCEPT { goldilocks_448_scalar_copy(s,t); }
 
     /** Copy constructor. */
     inline Scalar(const Scalar &x) GOLDILOCKS_NOEXCEPT { *this = x; }
@@ -110,20 +120,20 @@ public:
 
     /** Serializable instance */
     inline void serialize_into(unsigned char *buffer) const GOLDILOCKS_NOEXCEPT {
-        $(c_ns)_scalar_encode(buffer, s);
+        goldilocks_448_scalar_encode(buffer, s);
     }
 
     /** Assignment. */
-    inline Scalar& operator=(const Scalar &x) GOLDILOCKS_NOEXCEPT { $(c_ns)_scalar_copy(s,x.s); return *this; }
+    inline Scalar& operator=(const Scalar &x) GOLDILOCKS_NOEXCEPT { goldilocks_448_scalar_copy(s,x.s); return *this; }
 
     /** Assign from unsigned 64-bit integer. */
-    inline Scalar& operator=(uint64_t w) GOLDILOCKS_NOEXCEPT { $(c_ns)_scalar_set_unsigned(s,w); return *this; }
+    inline Scalar& operator=(uint64_t w) GOLDILOCKS_NOEXCEPT { goldilocks_448_scalar_set_unsigned(s,w); return *this; }
 
 
     /** Assign from signed int. */
     inline Scalar& operator=(int64_t w) GOLDILOCKS_NOEXCEPT {
         Scalar t(-(uint64_t)INT_MIN);
-        $(c_ns)_scalar_set_unsigned(s,(uint64_t)w - (uint64_t)INT_MIN);
+        goldilocks_448_scalar_set_unsigned(s,(uint64_t)w - (uint64_t)INT_MIN);
         *this -= t;
         return *this;
     }
@@ -135,11 +145,11 @@ public:
     inline Scalar& operator=(int w) GOLDILOCKS_NOEXCEPT { return *this = (int64_t)w; }
 
     /** Destructor securely zeorizes the scalar. */
-    inline ~Scalar() GOLDILOCKS_NOEXCEPT { $(c_ns)_scalar_destroy(s); }
+    inline ~Scalar() GOLDILOCKS_NOEXCEPT { goldilocks_448_scalar_destroy(s); }
 
     /** Assign from arbitrary-length little-endian byte sequence in a Block. */
     inline Scalar &operator=(const Block &bl) GOLDILOCKS_NOEXCEPT {
-        $(c_ns)_scalar_decode_long(s,bl.data(),bl.size()); return *this;
+        goldilocks_448_scalar_decode_long(s,bl.data(),bl.size()); return *this;
     }
 
     /**
@@ -149,36 +159,36 @@ public:
     static inline goldilocks_error_t GOLDILOCKS_WARN_UNUSED decode (
         Scalar &sc, const FixedBlock<SER_BYTES> buffer
     ) GOLDILOCKS_NOEXCEPT {
-        return $(c_ns)_scalar_decode(sc.s,buffer.data());
+        return goldilocks_448_scalar_decode(sc.s,buffer.data());
     }
 
     /** Add. */
-    inline Scalar operator+ (const Scalar &q) const GOLDILOCKS_NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_add(r.s,s,q.s); return r; }
+    inline Scalar operator+ (const Scalar &q) const GOLDILOCKS_NOEXCEPT { Scalar r((NOINIT())); goldilocks_448_scalar_add(r.s,s,q.s); return r; }
 
     /** Add to this. */
-    inline Scalar &operator+=(const Scalar &q) GOLDILOCKS_NOEXCEPT { $(c_ns)_scalar_add(s,s,q.s); return *this; }
+    inline Scalar &operator+=(const Scalar &q) GOLDILOCKS_NOEXCEPT { goldilocks_448_scalar_add(s,s,q.s); return *this; }
 
     /** Subtract. */
-    inline Scalar operator- (const Scalar &q) const GOLDILOCKS_NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_sub(r.s,s,q.s); return r; }
+    inline Scalar operator- (const Scalar &q) const GOLDILOCKS_NOEXCEPT { Scalar r((NOINIT())); goldilocks_448_scalar_sub(r.s,s,q.s); return r; }
 
     /** Subtract from this. */
-    inline Scalar &operator-=(const Scalar &q) GOLDILOCKS_NOEXCEPT { $(c_ns)_scalar_sub(s,s,q.s); return *this; }
+    inline Scalar &operator-=(const Scalar &q) GOLDILOCKS_NOEXCEPT { goldilocks_448_scalar_sub(s,s,q.s); return *this; }
 
     /** Multiply */
-    inline Scalar operator* (const Scalar &q) const GOLDILOCKS_NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_mul(r.s,s,q.s); return r; }
+    inline Scalar operator* (const Scalar &q) const GOLDILOCKS_NOEXCEPT { Scalar r((NOINIT())); goldilocks_448_scalar_mul(r.s,s,q.s); return r; }
 
     /** Multiply into this. */
-    inline Scalar &operator*=(const Scalar &q) GOLDILOCKS_NOEXCEPT { $(c_ns)_scalar_mul(s,s,q.s); return *this; }
+    inline Scalar &operator*=(const Scalar &q) GOLDILOCKS_NOEXCEPT { goldilocks_448_scalar_mul(s,s,q.s); return *this; }
 
     /** Negate */
-    inline Scalar operator- () const GOLDILOCKS_NOEXCEPT { Scalar r((NOINIT())); $(c_ns)_scalar_sub(r.s,$(c_ns)_scalar_zero,s); return r; }
+    inline Scalar operator- () const GOLDILOCKS_NOEXCEPT { Scalar r((NOINIT())); goldilocks_448_scalar_sub(r.s,goldilocks_448_scalar_zero,s); return r; }
 
     /** Return 1/this.
      * @throw CryptoException if this is 0.
      */
     inline Scalar inverse() const /*throw(CryptoException)*/ {
         Scalar r;
-        if (GOLDILOCKS_SUCCESS != $(c_ns)_scalar_invert(r.s,s)) {
+        if (GOLDILOCKS_SUCCESS != goldilocks_448_scalar_invert(r.s,s)) {
             throw CryptoException();
         }
         return r;
@@ -188,7 +198,7 @@ public:
      * and return GOLDILOCKS_FAILURE. */
     inline goldilocks_error_t GOLDILOCKS_WARN_UNUSED
     inverse_noexcept(Scalar &r) const GOLDILOCKS_NOEXCEPT {
-        return $(c_ns)_scalar_invert(r.s,s);
+        return goldilocks_448_scalar_invert(r.s,s);
     }
 
     /** Return this/q. @throw CryptoException if q == 0. */
@@ -198,13 +208,13 @@ public:
     inline Scalar &operator/=(const Scalar &q) /*throw(CryptoException)*/ { return *this *= q.inverse(); }
 
     /** Return half this scalar.  Much faster than /2. */
-    inline Scalar half() const { Scalar out; $(c_ns)_scalar_halve(out.s,s); return out; }
+    inline Scalar half() const { Scalar out; goldilocks_448_scalar_halve(out.s,s); return out; }
 
     /** Compare in constant time */
     inline bool operator!=(const Scalar &q) const GOLDILOCKS_NOEXCEPT { return !(*this == q); }
 
     /** Compare in constant time */
-    inline bool operator==(const Scalar &q) const GOLDILOCKS_NOEXCEPT { return !!$(c_ns)_scalar_eq(s,q.s); }
+    inline bool operator==(const Scalar &q) const GOLDILOCKS_NOEXCEPT { return !!goldilocks_448_scalar_eq(s,q.s); }
 
     /** Scalarmul with scalar on left. */
     inline Point operator* (const Point &q) const GOLDILOCKS_NOEXCEPT { return q * (*this); }
@@ -234,13 +244,13 @@ public:
 class Point : public Serializable<Point> {
 public:
     /** Wrapped C type */
-    typedef $(c_ns)_point_t Wrapped;
+    typedef goldilocks_448_point_t Wrapped;
 
     /** Size of a serialized element */
-    static const size_t SER_BYTES = $(C_NS)_SER_BYTES;
+    static const size_t SER_BYTES = GOLDILOCKS_448_SER_BYTES;
 
     /** Bytes required for hash */
-    static const size_t HASH_BYTES = $(C_NS)_HASH_BYTES;
+    static const size_t HASH_BYTES = GOLDILOCKS_448_HASH_BYTES;
 
     /** Bytes required for EdDSA encoding */
     static const size_t EDDSA_BYTES = GOLDILOCKS_EDDSA_448_PUBLIC_BYTES;
@@ -249,10 +259,10 @@ public:
     static const size_t LADDER_BYTES = GOLDILOCKS_X448_PUBLIC_BYTES;
 
     /** Ratio due to EdDSA encoding */
-    static const int EDDSA_ENCODE_RATIO = $(C_NS)_EDDSA_ENCODE_RATIO;
+    static const int EDDSA_ENCODE_RATIO = GOLDILOCKS_448_EDDSA_ENCODE_RATIO;
 
     /** Ratio due to EdDSA decoding */
-    static const int EDDSA_DECODE_RATIO = $(C_NS)_EDDSA_DECODE_RATIO;
+    static const int EDDSA_DECODE_RATIO = GOLDILOCKS_448_EDDSA_DECODE_RATIO;
 
     /** Ratio due to ladder decoding */
     static const int LADDER_ENCODE_RATIO = GOLDILOCKS_X448_ENCODE_RATIO;
@@ -263,7 +273,7 @@ public:
     static const size_t STEG_BYTES = HASH_BYTES * 2;
 
     /** Number of bits in invert_elligator which are actually used. */
-    static const unsigned int INVERT_ELLIGATOR_WHICH_BITS = $(C_NS)_INVERT_ELLIGATOR_WHICH_BITS;
+    static const unsigned int INVERT_ELLIGATOR_WHICH_BITS = GOLDILOCKS_448_INVERT_ELLIGATOR_WHICH_BITS;
 
     /** The c-level object. */
     Wrapped p;
@@ -274,16 +284,16 @@ public:
     /** @endcond */
 
     /** Constructor sets to identity by default. */
-    inline Point(const Wrapped &q = $(c_ns)_point_identity) GOLDILOCKS_NOEXCEPT { $(c_ns)_point_copy(p,q); }
+    inline Point(const Wrapped &q = goldilocks_448_point_identity) GOLDILOCKS_NOEXCEPT { goldilocks_448_point_copy(p,q); }
 
     /** Copy constructor. */
     inline Point(const Point &q) GOLDILOCKS_NOEXCEPT { *this = q; }
 
     /** Assignment. */
-    inline Point& operator=(const Point &q) GOLDILOCKS_NOEXCEPT { $(c_ns)_point_copy(p,q.p); return *this; }
+    inline Point& operator=(const Point &q) GOLDILOCKS_NOEXCEPT { goldilocks_448_point_copy(p,q.p); return *this; }
 
     /** Destructor securely zeorizes the point. */
-    inline ~Point() GOLDILOCKS_NOEXCEPT { $(c_ns)_point_destroy(p); }
+    inline ~Point() GOLDILOCKS_NOEXCEPT { goldilocks_448_point_destroy(p); }
 
     /** Construct from RNG */
     inline explicit Point(Rng &rng, bool uniform = true) GOLDILOCKS_NOEXCEPT {
@@ -321,7 +331,7 @@ public:
     inline goldilocks_error_t GOLDILOCKS_WARN_UNUSED decode (
         const FixedBlock<SER_BYTES> &buffer, bool allow_identity=true
     ) GOLDILOCKS_NOEXCEPT {
-        return $(c_ns)_point_decode(p,buffer.data(),allow_identity ? GOLDILOCKS_TRUE : GOLDILOCKS_FALSE);
+        return goldilocks_448_point_decode(p,buffer.data(),allow_identity ? GOLDILOCKS_TRUE : GOLDILOCKS_FALSE);
     }
 
     /**
@@ -335,7 +345,7 @@ public:
     inline goldilocks_error_t GOLDILOCKS_WARN_UNUSED decode_like_eddsa_and_mul_by_ratio_noexcept (
         const FixedBlock<GOLDILOCKS_EDDSA_448_PUBLIC_BYTES> &buffer
     ) GOLDILOCKS_NOEXCEPT {
-        return $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio(p,buffer.data());
+        return goldilocks_448_point_decode_like_eddsa_and_mul_by_ratio(p,buffer.data());
     }
 
     /**
@@ -352,7 +362,7 @@ public:
     /** Multiply by EDDSA_ENCODE_RATIO and encode like EdDSA. */
     inline SecureBuffer mul_by_ratio_and_encode_like_eddsa() const {
         SecureBuffer ret(GOLDILOCKS_EDDSA_448_PUBLIC_BYTES);
-        $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa(ret.data(),p);
+        goldilocks_448_point_mul_by_ratio_and_encode_like_eddsa(ret.data(),p);
         return ret;
     }
 
@@ -360,19 +370,19 @@ public:
     inline void mul_by_ratio_and_encode_like_eddsa(
         FixedBuffer<GOLDILOCKS_EDDSA_448_PUBLIC_BYTES> &out
     ) const {
-        $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa(out.data(),p);
+        goldilocks_448_point_mul_by_ratio_and_encode_like_eddsa(out.data(),p);
     }
 
     /** Multiply by LADDER_ENCODE_RATIO and encode like X448. */
     inline SecureBuffer mul_by_ratio_and_encode_like_ladder() const {
         SecureBuffer ret(LADDER_BYTES);
-        $(c_ns)_point_mul_by_ratio_and_encode_like_x448(ret.data(),p);
+        goldilocks_448_point_mul_by_ratio_and_encode_like_x448(ret.data(),p);
         return ret;
     }
 
     /** Multiply by LADDER_ENCODE_RATIO and encode like X448. */
     inline void mul_by_ratio_and_encode_like_ladder(FixedBuffer<LADDER_BYTES> &out) const {
-        $(c_ns)_point_mul_by_ratio_and_encode_like_x448(out.data(),p);
+        goldilocks_448_point_mul_by_ratio_and_encode_like_x448(out.data(),p);
     }
 
     /**
@@ -395,22 +405,22 @@ public:
         if (s.size() < HASH_BYTES) {
             SecureBuffer b(HASH_BYTES);
             memcpy(b.data(), s.data(), s.size());
-            $(c_ns)_point_from_hash_nonuniform(p,b.data());
+            goldilocks_448_point_from_hash_nonuniform(p,b.data());
         } else if (s.size() == HASH_BYTES) {
-            $(c_ns)_point_from_hash_nonuniform(p,s.data());
+            goldilocks_448_point_from_hash_nonuniform(p,s.data());
         } else if (s.size() < 2*HASH_BYTES) {
             SecureBuffer b(2*HASH_BYTES);
             memcpy(b.data(), s.data(), s.size());
-            $(c_ns)_point_from_hash_uniform(p,b.data());
+            goldilocks_448_point_from_hash_uniform(p,b.data());
         } else {
-            $(c_ns)_point_from_hash_uniform(p,s.data());
+            goldilocks_448_point_from_hash_uniform(p,s.data());
         }
     }
 
     /** Encode to string. The identity encodes to the all-zero string. */
     inline operator SecureBuffer() const {
         SecureBuffer buffer(SER_BYTES);
-        $(c_ns)_point_encode(buffer.data(), p);
+        goldilocks_448_point_encode(buffer.data(), p);
         return buffer;
     }
 
@@ -419,41 +429,41 @@ public:
 
     /** Serializable instance */
     inline void serialize_into(unsigned char *buffer) const GOLDILOCKS_NOEXCEPT {
-        $(c_ns)_point_encode(buffer, p);
+        goldilocks_448_point_encode(buffer, p);
     }
 
     /** Point add. */
-    inline Point operator+ (const Point &q) const GOLDILOCKS_NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_add(r.p,p,q.p); return r; }
+    inline Point operator+ (const Point &q) const GOLDILOCKS_NOEXCEPT { Point r((NOINIT())); goldilocks_448_point_add(r.p,p,q.p); return r; }
 
     /** Point add. */
-    inline Point &operator+=(const Point &q) GOLDILOCKS_NOEXCEPT { $(c_ns)_point_add(p,p,q.p); return *this; }
+    inline Point &operator+=(const Point &q) GOLDILOCKS_NOEXCEPT { goldilocks_448_point_add(p,p,q.p); return *this; }
 
     /** Point subtract. */
-    inline Point operator- (const Point &q) const GOLDILOCKS_NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_sub(r.p,p,q.p); return r; }
+    inline Point operator- (const Point &q) const GOLDILOCKS_NOEXCEPT { Point r((NOINIT())); goldilocks_448_point_sub(r.p,p,q.p); return r; }
 
     /** Point subtract. */
-    inline Point &operator-=(const Point &q) GOLDILOCKS_NOEXCEPT { $(c_ns)_point_sub(p,p,q.p); return *this; }
+    inline Point &operator-=(const Point &q) GOLDILOCKS_NOEXCEPT { goldilocks_448_point_sub(p,p,q.p); return *this; }
 
     /** Point negate. */
-    inline Point operator- () const GOLDILOCKS_NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_negate(r.p,p); return r; }
+    inline Point operator- () const GOLDILOCKS_NOEXCEPT { Point r((NOINIT())); goldilocks_448_point_negate(r.p,p); return r; }
 
     /** Double the point out of place. */
-    inline Point times_two () const GOLDILOCKS_NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_double(r.p,p); return r; }
+    inline Point times_two () const GOLDILOCKS_NOEXCEPT { Point r((NOINIT())); goldilocks_448_point_double(r.p,p); return r; }
 
     /** Double the point in place. */
-    inline Point &double_in_place() GOLDILOCKS_NOEXCEPT { $(c_ns)_point_double(p,p); return *this; }
+    inline Point &double_in_place() GOLDILOCKS_NOEXCEPT { goldilocks_448_point_double(p,p); return *this; }
 
     /** Constant-time compare. */
-    inline bool operator!=(const Point &q) const GOLDILOCKS_NOEXCEPT { return ! $(c_ns)_point_eq(p,q.p); }
+    inline bool operator!=(const Point &q) const GOLDILOCKS_NOEXCEPT { return ! goldilocks_448_point_eq(p,q.p); }
 
     /** Constant-time compare. */
-    inline bool operator==(const Point &q) const GOLDILOCKS_NOEXCEPT { return !!$(c_ns)_point_eq(p,q.p); }
+    inline bool operator==(const Point &q) const GOLDILOCKS_NOEXCEPT { return !!goldilocks_448_point_eq(p,q.p); }
 
     /** Scalar multiply. */
-    inline Point operator* (const Scalar &s) const GOLDILOCKS_NOEXCEPT { Point r((NOINIT())); $(c_ns)_point_scalarmul(r.p,p,s.s); return r; }
+    inline Point operator* (const Scalar &s) const GOLDILOCKS_NOEXCEPT { Point r((NOINIT())); goldilocks_448_point_scalarmul(r.p,p,s.s); return r; }
 
     /** Scalar multiply in place. */
-    inline Point &operator*=(const Scalar &s) GOLDILOCKS_NOEXCEPT { $(c_ns)_point_scalarmul(p,p,s.s); return *this; }
+    inline Point &operator*=(const Scalar &s) GOLDILOCKS_NOEXCEPT { goldilocks_448_point_scalarmul(p,p,s.s); return *this; }
 
     /** Multiply by s.inverse(). If s=0, maps to the identity. */
     inline Point operator/ (const Scalar &s) const /*throw(CryptoException)*/ { return (*this) * s.inverse(); }
@@ -462,20 +472,20 @@ public:
     inline Point &operator/=(const Scalar &s) /*throw(CryptoException)*/ { return (*this) *= s.inverse(); }
 
     /** Validate / sanity check */
-    inline bool validate() const GOLDILOCKS_NOEXCEPT { return $(c_ns)_point_valid(p); }
+    inline bool validate() const GOLDILOCKS_NOEXCEPT { return goldilocks_448_point_valid(p); }
 
     /** Double-scalar multiply, equivalent to q*qs + r*rs but faster. */
     static inline Point double_scalarmul (
         const Point &q, const Scalar &qs, const Point &r, const Scalar &rs
     ) GOLDILOCKS_NOEXCEPT {
-        Point p((NOINIT())); $(c_ns)_point_double_scalarmul(p.p,q.p,qs.s,r.p,rs.s); return p;
+        Point p((NOINIT())); goldilocks_448_point_double_scalarmul(p.p,q.p,qs.s,r.p,rs.s); return p;
     }
 
     /** Dual-scalar multiply, equivalent to this*r1, this*r2 but faster. */
     inline void dual_scalarmul (
         Point &q1, Point &q2, const Scalar &r1, const Scalar &r2
     ) const GOLDILOCKS_NOEXCEPT {
-        $(c_ns)_point_dual_scalarmul(q1.p,q2.p,p,r1.s,r2.s);
+        goldilocks_448_point_dual_scalarmul(q1.p,q2.p,p,r1.s,r2.s);
     }
 
     /**
@@ -494,20 +504,20 @@ public:
      * it doesn't).
      */
     inline Point non_secret_combo_with_base(const Scalar &s, const Scalar &s_base) GOLDILOCKS_NOEXCEPT {
-        Point r((NOINIT())); $(c_ns)_base_double_scalarmul_non_secret(r.p,s_base.s,p,s.s); return r;
+        Point r((NOINIT())); goldilocks_448_base_double_scalarmul_non_secret(r.p,s_base.s,p,s.s); return r;
     }
 
     /** Return a point equal to *this, whose internal data is rotated by a torsion element. */
     inline Point debugging_torque() const GOLDILOCKS_NOEXCEPT {
         Point q;
-        $(c_ns)_point_debugging_torque(q.p,p);
+        goldilocks_448_point_debugging_torque(q.p,p);
         return q;
     }
 
     /** Return a point equal to *this, whose internal data has a modified representation. */
     inline Point debugging_pscale(const FixedBlock<SER_BYTES> factor) const GOLDILOCKS_NOEXCEPT {
         Point q;
-        $(c_ns)_point_debugging_pscale(q.p,p,factor.data());
+        goldilocks_448_point_debugging_pscale(q.p,p,factor.data());
         return q;
     }
 
@@ -529,9 +539,9 @@ public:
         memcpy(buf2,buf.data(),(buf.size() > 2*HASH_BYTES) ? 2*HASH_BYTES : buf.size());
         goldilocks_bool_t ret;
         if (buf.size() > HASH_BYTES) {
-            ret = goldilocks_successful($(c_ns)_invert_elligator_uniform(buf2, p, hint));
+            ret = goldilocks_successful(goldilocks_448_invert_elligator_uniform(buf2, p, hint));
         } else {
-            ret = goldilocks_successful($(c_ns)_invert_elligator_nonuniform(buf2, p, hint));
+            ret = goldilocks_successful(goldilocks_448_invert_elligator_nonuniform(buf2, p, hint));
         }
         if (buf.size() < HASH_BYTES) {
             ret &= goldilocks_memeq(&buf2[buf.size()], &buf2[HASH_BYTES], HASH_BYTES - buf.size());
@@ -558,10 +568,10 @@ public:
     }
 
     /** Return the base point of the curve. */
-    static inline const Point base() GOLDILOCKS_NOEXCEPT { return Point($(c_ns)_point_base); }
+    static inline const Point base() GOLDILOCKS_NOEXCEPT { return Point(goldilocks_448_point_base); }
 
     /** Return the identity point of the curve. */
-    static inline const Point identity() GOLDILOCKS_NOEXCEPT { return Point($(c_ns)_point_identity); }
+    static inline const Point identity() GOLDILOCKS_NOEXCEPT { return Point(goldilocks_448_point_identity); }
 };
 
 /**
@@ -572,7 +582,7 @@ public:
  */
 
 /** @cond internal */
-typedef $(c_ns)_precomputed_s Precomputed_U;
+typedef goldilocks_448_precomputed_s Precomputed_U;
 /** @endcond */
 class Precomputed
     /** @cond internal */
@@ -596,7 +606,7 @@ public:
      * initializer for points which makes this equal to the identity.
      */
     inline Precomputed (
-        const Precomputed_U &yours = *$(c_ns)_precomputed_base
+        const Precomputed_U &yours = *goldilocks_448_precomputed_base
     ) GOLDILOCKS_NOEXCEPT : OwnedOrUnowned<Precomputed,Precomputed_U>(yours) {}
 
 
@@ -624,7 +634,7 @@ public:
      */
     inline Precomputed &operator=(const Point &it) /*throw(std::bad_alloc)*/ {
         alloc();
-        $(c_ns)_precompute(ours.mine,it.p);
+        goldilocks_448_precompute(ours.mine,it.p);
         return *this;
     }
 
@@ -641,7 +651,7 @@ public:
         : OwnedOrUnowned<Precomputed,Precomputed_U>() { *this = it; }
 
     /** Fixed base scalarmul. */
-    inline Point operator* (const Scalar &s) const GOLDILOCKS_NOEXCEPT { Point r; $(c_ns)_precomputed_scalarmul(r.p,get(),s.s); return r; }
+    inline Point operator* (const Scalar &s) const GOLDILOCKS_NOEXCEPT { Point r; goldilocks_448_precomputed_scalarmul(r.p,get(),s.s); return r; }
 
     /** Multiply by s.inverse(). If s=0, maps to the identity. */
     inline Point operator/ (const Scalar &s) const /*throw(CryptoException)*/ { return (*this) * s.inverse(); }
@@ -652,9 +662,9 @@ public:
 public:
     /** @cond internal */
     friend class OwnedOrUnowned<Precomputed,Precomputed_U>;
-    static inline size_t size() GOLDILOCKS_NOEXCEPT { return $(c_ns)_sizeof_precomputed_s; }
-    static inline size_t alignment() GOLDILOCKS_NOEXCEPT { return $(c_ns)_alignof_precomputed_s; }
-    static inline const Precomputed_U * default_value() GOLDILOCKS_NOEXCEPT { return $(c_ns)_precomputed_base; }
+    static inline size_t size() GOLDILOCKS_NOEXCEPT { return goldilocks_448_sizeof_precomputed_s; }
+    static inline size_t alignment() GOLDILOCKS_NOEXCEPT { return goldilocks_448_alignof_precomputed_s; }
+    static inline const Precomputed_U * default_value() GOLDILOCKS_NOEXCEPT { return goldilocks_448_precomputed_base; }
     /** @endcond */
 };
 
@@ -717,34 +727,36 @@ public:
     }
 };
 
-}; /* struct $(cxx_ns) */
+}; /* struct Ed448Goldilocks */
 
 /** @cond internal */
-inline SecureBuffer $(cxx_ns)::Scalar::direct_scalarmul (
-    const FixedBlock<$(cxx_ns)::Point::SER_BYTES> &in,
+inline SecureBuffer Ed448Goldilocks::Scalar::direct_scalarmul (
+    const FixedBlock<Ed448Goldilocks::Point::SER_BYTES> &in,
     goldilocks_bool_t allow_identity,
     goldilocks_bool_t short_circuit
 ) const /*throw(CryptoException)*/ {
-    SecureBuffer out($(cxx_ns)::Point::SER_BYTES);
+    SecureBuffer out(Ed448Goldilocks::Point::SER_BYTES);
     if (GOLDILOCKS_SUCCESS !=
-        $(c_ns)_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit)
+        goldilocks_448_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit)
     ) {
         throw CryptoException();
     }
     return out;
 }
 
-inline goldilocks_error_t $(cxx_ns)::Scalar::direct_scalarmul_noexcept (
-    FixedBuffer<$(cxx_ns)::Point::SER_BYTES> &out,
-    const FixedBlock<$(cxx_ns)::Point::SER_BYTES> &in,
+inline goldilocks_error_t Ed448Goldilocks::Scalar::direct_scalarmul_noexcept (
+    FixedBuffer<Ed448Goldilocks::Point::SER_BYTES> &out,
+    const FixedBlock<Ed448Goldilocks::Point::SER_BYTES> &in,
     goldilocks_bool_t allow_identity,
     goldilocks_bool_t short_circuit
 ) const GOLDILOCKS_NOEXCEPT {
-    return $(c_ns)_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit);
+    return goldilocks_448_direct_scalarmul(out.data(), in.data(), s, allow_identity, short_circuit);
 }
 /** @endcond */
 
-$("/** Alternative name for %s, for backwards compatibility */\ntypedef %s %s;\n" % (cxx_ns,cxx_ns,altname) if altname else "")
+
 
 #undef GOLDILOCKS_NOEXCEPT
 } /* namespace goldilocks */
+
+#endif /* __GOLDILOCKS_POINT_448_HXX__ */

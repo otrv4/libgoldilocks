@@ -1,6 +1,18 @@
-/** @brief A group of prime order p, based on Ed448-Goldilocks. */
+/**
+ * @file goldilocks/ed448.h
+ * @author Mike Hamburg
+ *
+ * @copyright
+ *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \n
+ *   Released under the MIT License.  See LICENSE.txt for license information.
+ *
+ * @brief A group of prime order p, based on Ed448-Goldilocks.
+ */
 
-#include <goldilocks/point_$(gf_bits).h>
+#ifndef __GOLDILOCKS_ED448_H__
+#define __GOLDILOCKS_ED448_H__ 1
+
+#include <goldilocks/point_448.h>
 #include <goldilocks/shake.h>
 
 #ifdef __cplusplus
@@ -8,7 +20,7 @@ extern "C" {
 #endif
 
 /** Number of bytes in an EdDSA public key. */
-#define GOLDILOCKS_EDDSA_448_PUBLIC_BYTES $((gf_bits)//8 + 1)
+#define GOLDILOCKS_EDDSA_448_PUBLIC_BYTES 57
 
 /** Number of bytes in an EdDSA private key. */
 #define GOLDILOCKS_EDDSA_448_PRIVATE_BYTES GOLDILOCKS_EDDSA_448_PUBLIC_BYTES
@@ -17,26 +29,26 @@ extern "C" {
 #define GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES (GOLDILOCKS_EDDSA_448_PUBLIC_BYTES + GOLDILOCKS_EDDSA_448_PRIVATE_BYTES)
 
 /** Does EdDSA support non-contextual signatures? */
-#define GOLDILOCKS_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS $(eddsa_no_context)
-$("extern const uint8_t * const GOLDILOCKS_ED" + 448 + "_NO_CONTEXT GOLDILOCKS_API_VIS;\n" if eddsa_no_context else "")
+#define GOLDILOCKS_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS 0
+
 
 /** Prehash context (raw), because each EdDSA instance has a different prehash. */
-#define goldilocks_ed448_prehash_ctx_s   goldilocks_$(eddsa_hash)_ctx_s
+#define goldilocks_ed448_prehash_ctx_s   goldilocks_shake256_ctx_s
 
 /** Prehash context, array[1] form. */
-#define goldilocks_ed448_prehash_ctx_t   goldilocks_$(eddsa_hash)_ctx_t
+#define goldilocks_ed448_prehash_ctx_t   goldilocks_shake256_ctx_t
 
 /** Prehash update. */
-#define goldilocks_ed448_prehash_update  goldilocks_$(eddsa_hash)_update
+#define goldilocks_ed448_prehash_update  goldilocks_shake256_update
 
 /** Prehash destroy. */
-#define goldilocks_ed448_prehash_destroy goldilocks_$(eddsa_hash)_destroy
+#define goldilocks_ed448_prehash_destroy goldilocks_shake256_destroy
 
 /** EdDSA encoding ratio. */
-#define $(C_NS)_EDDSA_ENCODE_RATIO $(eddsa_encode_ratio)
+#define GOLDILOCKS_448_EDDSA_ENCODE_RATIO 4
 
 /** EdDSA decoding ratio. */
-#define $(C_NS)_EDDSA_DECODE_RATIO ($(cofactor) / $(eddsa_encode_ratio))
+#define GOLDILOCKS_448_EDDSA_DECODE_RATIO (4 / 4)
 
 /**
  * @brief EdDSA key secret key generation.  This function uses a different (non-Decaf)
@@ -46,7 +58,7 @@ $("extern const uint8_t * const GOLDILOCKS_ED" + 448 + "_NO_CONTEXT GOLDILOCKS_A
  * @param [in] privkey The private key.
  */
 void goldilocks_ed448_derive_secret_scalar (
-    $(c_ns)_scalar_t secret,
+    goldilocks_448_scalar_t secret,
     const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES]
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
@@ -177,7 +189,7 @@ goldilocks_error_t goldilocks_ed448_verify_prehash (
 
 /**
  * @brief EdDSA point encoding.  Used internally, exposed externally.
- * Multiplies by $(C_NS)_EDDSA_ENCODE_RATIO first.
+ * Multiplies by GOLDILOCKS_448_EDDSA_ENCODE_RATIO first.
  *
  * The multiplication is required because the EdDSA encoding represents
  * the cofactor information, but the Decaf encoding ignores it (which
@@ -186,35 +198,35 @@ goldilocks_error_t goldilocks_ed448_verify_prehash (
  * representation doesn't track it.
  *
  * The way libgoldilocks handles this is to multiply by
- * $(C_NS)_EDDSA_DECODE_RATIO when decoding, and by
- * $(C_NS)_EDDSA_ENCODE_RATIO when encoding.  The product of these
- * ratios is always exactly the cofactor $(cofactor), so the cofactor
+ * GOLDILOCKS_448_EDDSA_DECODE_RATIO when decoding, and by
+ * GOLDILOCKS_448_EDDSA_ENCODE_RATIO when encoding.  The product of these
+ * ratios is always exactly the cofactor 4, so the cofactor
  * ends up cleared one way or another.  But exactly how that shakes
  * out depends on the base points specified in RFC 8032.
  *
  * The upshot is that if you pass the Decaf/Ristretto base point to
- * this function, you will get $(C_NS)_EDDSA_ENCODE_RATIO times the
+ * this function, you will get GOLDILOCKS_448_EDDSA_ENCODE_RATIO times the
  * EdDSA base point.
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
  */
-void $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa (
+void goldilocks_448_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
-    const $(c_ns)_point_t p
+    const goldilocks_448_point_t p
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
- * @brief EdDSA point decoding.  Multiplies by $(C_NS)_EDDSA_DECODE_RATIO,
+ * @brief EdDSA point decoding.  Multiplies by GOLDILOCKS_448_EDDSA_DECODE_RATIO,
  * and ignores cofactor information.
  *
- * See notes on $(c_ns)_point_mul_by_ratio_and_encode_like_eddsa
+ * See notes on goldilocks_448_point_mul_by_ratio_and_encode_like_eddsa
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
  */
-goldilocks_error_t $(c_ns)_point_decode_like_eddsa_and_mul_by_ratio (
-    $(c_ns)_point_t p,
+goldilocks_error_t goldilocks_448_point_decode_like_eddsa_and_mul_by_ratio (
+    goldilocks_448_point_t p,
     const uint8_t enc[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES]
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
@@ -250,3 +262,5 @@ void goldilocks_ed448_convert_private_key_to_x448 (
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+#endif /* __GOLDILOCKS_ED448_H__ */

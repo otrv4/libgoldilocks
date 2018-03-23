@@ -1,5 +1,5 @@
 /**
- * @file ed448goldilocks/goldilocks_gen_tables.c
+ * @file goldilocks_gen_tables.c
  * @author Mike Hamburg
  *
  * @copyright
@@ -7,9 +7,6 @@
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * @brief Goldilocks global constant table precomputation.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
 #include <stdio.h>

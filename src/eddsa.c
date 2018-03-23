@@ -1,5 +1,5 @@
 /**
- * @file ed448goldilocks/eddsa.c
+ * @file eddsa.c
  * @author Mike Hamburg
  *
  * @copyright
@@ -8,9 +8,6 @@
  *
  * @cond internal
  * @brief EdDSA routines.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
  */
 #include "word.h"
 #include <goldilocks/ed448.h>

@@ -1,9 +1,17 @@
-/** @brief Generic arithmetic which has to be compiled per field. */
-
+/**
+ * @file f_generic.c
+ * @author Mike Hamburg
+ *
+ * @copyright
+ *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \n
+ *   Released under the MIT License.  See LICENSE.txt for license information.
+ *
+ * @brief Generic arithmetic which has to be compiled per field.
+ */
 #include "field.h"
 
 static const gf MODULUS = {FIELD_LITERAL(
-    $(ser(modulus,gf_lit_limb_bits))
+    0xffffffffffffff, 0xffffffffffffff, 0xffffffffffffff, 0xffffffffffffff, 0xfffffffffffffe, 0xffffffffffffff, 0xffffffffffffff, 0xffffffffffffff
 )};
 
 /** Serialize to wire format. */

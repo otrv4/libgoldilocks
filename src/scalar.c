@@ -1,21 +1,29 @@
-/** @brief Goldilocks high-level functions. */
-
+/**
+ * @file scalar.c
+ * @author Mike Hamburg
+ *
+ * @copyright
+ *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \n
+ *   Released under the MIT License.  See LICENSE.txt for license information.
+ *
+ * @brief Goldilocks high-level functions.
+ */
 #include "word.h"
 #include "constant_time.h"
 #include <goldilocks.h>
 
 /* Template stuff */
-#define API_NS(_id) $(c_ns)_##_id
-#define SCALAR_BITS $(C_NS)_SCALAR_BITS
-#define SCALAR_SER_BYTES $(C_NS)_SCALAR_BYTES
-#define SCALAR_LIMBS $(C_NS)_SCALAR_LIMBS
+#define API_NS(_id) goldilocks_448_##_id
+#define SCALAR_BITS GOLDILOCKS_448_SCALAR_BITS
+#define SCALAR_SER_BYTES GOLDILOCKS_448_SCALAR_BYTES
+#define SCALAR_LIMBS GOLDILOCKS_448_SCALAR_LIMBS
 #define scalar_t API_NS(scalar_t)
 
-static const goldilocks_word_t MONTGOMERY_FACTOR = (goldilocks_word_t)0x$("%x" % pow(-q,2**64-1,2**64))ull;
+static const goldilocks_word_t MONTGOMERY_FACTOR = (goldilocks_word_t)0x3bd440fae918bc5ull;
 static const scalar_t sc_p = {{{
-    $(ser(q,64,"SC_LIMB"))
+    SC_LIMB(0x2378c292ab5844f3), SC_LIMB(0x216cc2728dc58f55), SC_LIMB(0xc44edb49aed63690), SC_LIMB(0xffffffff7cca23e9), SC_LIMB(0xffffffffffffffff), SC_LIMB(0xffffffffffffffff), SC_LIMB(0x3fffffffffffffff)
 }}}, sc_r2 = {{{
-    $(ser(((2**128)**((scalar_bits+63)//64))%q,64,"SC_LIMB"))
+    SC_LIMB(0xe3539257049b9b60), SC_LIMB(0x7af32c4bc1b195d9), SC_LIMB(0x0d66de2388ea1859), SC_LIMB(0xae17cf725ee4d838), SC_LIMB(0x1a9cc14ba3c47c44), SC_LIMB(0x2052bcb7e4d070af), SC_LIMB(0x3402a939f823b729)
 }}};
 /* End of template stuff */
 
@@ -327,4 +335,3 @@ void API_NS(scalar_halve) (
     }
     out->limb[i] = out->limb[i]>>1 | chain<<(WBITS-1);
 }
-
