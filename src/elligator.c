@@ -122,13 +122,8 @@ API_NS(invert_elligator_nonuniform) (
     API_NS(deisogenize)(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
 
     mask_t is_identity = gf_eq(p->t,ZERO);
-#if COFACTOR==4
     gf_cond_sel(b,b,ONE,is_identity & sgn_altx);
     gf_cond_sel(c,c,ONE,is_identity & sgn_s &~ sgn_altx);
-#else
-#error "Different special-casing goes here!"
-#endif
-
     gf_mulw(a,b,EDWARDS_D-1);
     gf_add(b,a,b);
     gf_sub(a,a,c);
@@ -144,6 +139,7 @@ API_NS(invert_elligator_nonuniform) (
     /* Eliminate duplicate values for identity ... */
     succ &= ~(gf_eq(b,ZERO) & (sgn_r0 | sgn_s));
     gf_serialize(recovered_hash,b,1);
+// TODO: ??!
 #if 0
         recovered_hash[SER_BYTES-1] ^= (hint>>3)<<0;
 #endif

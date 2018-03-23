@@ -49,20 +49,10 @@ const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
 
 #define TWISTED_D ((EDWARDS_D)-1)
 
-/* check this too */
-#if TWISTED_D < 0
 #define EFF_D (-(TWISTED_D))
 #define NEG_D 1
-#else
-#define EFF_D TWISTED_D
-#define NEG_D 0
-#endif
 
 /* End of template stuff */
-
-#if (COFACTOR != 4)
-    #error "COFACTOR must be 4"
-#endif
 
 #define WBITS GOLDILOCKS_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
@@ -109,6 +99,8 @@ void API_NS(deisogenize) (
     mask_t toggle_rotation
 );
 
+// TODO: this function signature should change to not include
+// toggle_rotation
 void API_NS(deisogenize) (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
@@ -118,7 +110,6 @@ void API_NS(deisogenize) (
     mask_t toggle_altx,
     mask_t toggle_rotation
 ) {
-#if COFACTOR == 4
     (void)toggle_rotation; /* Only applies to cofactor 8 */
     gf t1;
     gf_s *t2 = s, *t3=inv_el_sum, *t4=inv_el_m1;
@@ -144,9 +135,6 @@ void API_NS(deisogenize) (
     gf_copy(inv_el_m1,p->x);
     gf_cond_neg(inv_el_m1,~lobs^negx^toggle_s);
     gf_add(inv_el_m1,inv_el_m1,p->t);
-#else
-#error "Cofactor must be 4"
-#endif
 }
 
 void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
@@ -210,13 +198,8 @@ void API_NS(point_sub) (
     gf_mul ( a, q->z, r->z );
     gf_add_nr ( a, a, a );       /* 2+e */
     if (GF_HEADROOM <= 3) gf_weak_reduce(a); /* or 1+e */
-#if NEG_D
     gf_sub_nr ( p->y, a, p->x ); /* 4+e or 3+e */
     gf_add_nr ( a, a, p->x );    /* 3+e or 2+e */
-#else
-    gf_add_nr ( p->y, a, p->x ); /* 3+e or 2+e */
-    gf_sub_nr ( a, a, p->x );    /* 4+e or 3+e */
-#endif
     gf_mul ( p->z, a, p->y );
     gf_mul ( p->x, p->y, c );
     gf_mul ( p->y, a, b );
@@ -242,13 +225,8 @@ void API_NS(point_add) (
     gf_mul ( a, q->z, r->z );
     gf_add_nr ( a, a, a );       /* 2+e */
     if (GF_HEADROOM <= 3) gf_weak_reduce(a); /* or 1+e */
-#if NEG_D
     gf_add_nr ( p->y, a, p->x ); /* 3+e or 2+e */
     gf_sub_nr ( a, a, p->x );    /* 4+e or 3+e */
-#else
-    gf_sub_nr ( p->y, a, p->x ); /* 4+e or 3+e */
-    gf_add_nr ( a, a, p->x );    /* 3+e or 2+e */
-#endif
     gf_mul ( p->z, a, p->y );
     gf_mul ( p->x, p->y, c );
     gf_mul ( p->y, a, b );
@@ -670,13 +648,6 @@ goldilocks_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     gf_mul ( b, q->y, p->x );
     mask_t succ = gf_eq(a,b);
 
-    /* this should be removed too */
-    #if (COFACTOR == 8)
-        gf_mul ( a, p->y, q->y );
-        gf_mul ( b, q->x, p->x );
-        succ |= gf_eq(a,b);
-    #endif
-
     return mask_to_bool(succ);
 }
 
@@ -982,6 +953,7 @@ goldilocks_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     enc2[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1] &= ~0x80;
 
     mask_t succ = gf_deserialize(p->y, enc2, 1, 0);
+// TODO: ??!
 /* actually the case on 448 */
 #if 0 == 0
     succ &= word_is_zero(enc2[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1]);
