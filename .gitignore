@@ -14,6 +14,7 @@ compile
 config.guess
 config.h
 config.h.in
+config.h.in~
 config.log
 config.status
 config.sub
@@ -29,12 +30,9 @@ stamp-h1
 pkgconfig/libgoldilocks.pc
 m4/
 
-src/goldilocks_gen_tables_ed448goldilocks
+src/goldilocks_gen_tables
 test/test
 test/test_bench
 
-src/GENERATED/c/ed448goldilocks/.dirstamp
-src/GENERATED/c/p448/.dirstamp
-src/p448/.dirstamp
-src/p448/arch_x86_64/.dirstamp
+src/**/.dirstamp
 build/
