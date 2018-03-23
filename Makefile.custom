@@ -34,7 +34,7 @@ PYTHON ?= python
 WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 	 -Wmissing-declarations -Wunused-function -Wno-overlength-strings $(EXWARN)
 
-INCFLAGS = -Isrc -Isrc/include -I$(BUILD_INC)
+INCFLAGS = -Isrc -Isrc/include -I$(BUILD_INC) -Isrc/include/arch_x86_64 -Isrc/arch_x86_64
 PUB_INCFLAGS = -I$(BUILD_INC)
 LANGFLAGS = -std=c99 -fno-strict-aliasing
 LANGXXFLAGS = -fno-strict-aliasing
@@ -69,15 +69,13 @@ SAGE ?= sage
 SAGES= $(shell ls test/*.sage)
 BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 
-.PHONY: clean all test test_ct bench todo doc lib bat sage sagetest gen_code gen_code_static
+.PHONY: clean all test test_ct bench todo doc lib bat sage sagetest gen_code
 .PRECIOUS: $(BUILD_C)/%.c  $(BUILD_IBIN)/%
 
 HEADERS= Makefile.custom $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp
 
-# components needed by the lib
-LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/spongerng.o
-# and per-field components
-
+GENCOMPONENTS = $(BUILD_OBJ)/f_impl.o $(BUILD_OBJ)/f_arithmetic.o $(BUILD_OBJ)/f_generic.o
+LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/spongerng.o $(GENCOMPONENTS) $(BUILD_OBJ)/goldilocks.o $(BUILD_OBJ)/elligator.o $(BUILD_OBJ)/scalar.o $(BUILD_OBJ)/eddsa.o $(BUILD_OBJ)/decaf_tables.o
 BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o
 
 all: lib $(BUILD_IBIN)/test $(BUILD_BIN)/ristretto $(BUILD_IBIN)/bench $(BUILD_BIN)/shakesum
@@ -125,24 +123,11 @@ $(BUILD_OBJ)/timestamp:
 		$(PER_OBJ_DIRS) $(BUILD_C)/goldilocks
 	touch $@
 
-COMPONENTS_OF = $(BUILD_OBJ)/f_impl.o $(BUILD_OBJ)/f_arithmetic.o $(BUILD_OBJ)/f_generic.o
-LIBCOMPONENTS += $COMPONENTS_OF
-
-$(BUILD_OBJ)/%.o: src/%.c $(HEADERS)
-	$(CC) $(CFLAGS) -I src/arch_x86_64 -I src/include/arch_x86_64 \
-	-c -o $@ $<
-
-LIBCOMPONENTS += $(BUILD_OBJ)/goldilocks.o $(BUILD_OBJ)/elligator.o $(BUILD_OBJ)/scalar.o \
-	 $(BUILD_OBJ)/eddsa.o $(BUILD_OBJ)/decaf_tables.o
-GLOBAL_HEADERS_OF = $(BUILD_INC)/goldilocks/point_448.h $(BUILD_INC)/goldilocks/point_448.hxx \
-		$(BUILD_INC)/goldilocks/ed448.h $(BUILD_INC)/goldilocks/ed448.hxx
-HEADERS += $(GLOBAL_HEADERS_OF)
-
 GEN_CODE = $(BUILD_C)/decaf_tables.c
 
 $(BUILD_IBIN)/goldilocks_gen_tables: $(BUILD_OBJ)/goldilocks_gen_tables.o \
 		$(BUILD_OBJ)/goldilocks.o $(BUILD_OBJ)/scalar.o $(BUILD_OBJ)/utils.o \
-		$(COMPONENTS_OF)
+		$(GENCOMPONENTS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(BUILD_C)/decaf_tables.c: $(BUILD_IBIN)/goldilocks_gen_tables
@@ -181,6 +166,12 @@ else
 	strip --discard-all $@
 endif
 
+# $(BUILD_OBJ)/%.o: src/%.c $(HEADERS)
+# 	$(CC) $(CFLAGS) -I src/arch_x86_64 -I src/include/arch_x86_64 \
+# 	-c -o $@ $<
+
+$(BUILD_OBJ)/%.o: src/arch_x86_64/%.c $(HEADERS)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BUILD_OBJ)/%.o: src/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -c -o $@ $<

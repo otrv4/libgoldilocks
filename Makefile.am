@@ -3,7 +3,7 @@ include $(top_srcdir)/variables.am
 SUBDIRS = src test pkgconfig
 ACLOCAL_AMFLAGS = -I m4
 
-.PHONY: gen_code gen_code_static test_ct todo lib sage sagetest all clean
+.PHONY: gen_code test_ct todo lib sage sage-test all clean test bench microbench
 
 ci: test mem-check
 
@@ -12,9 +12,6 @@ all-lib:
 
 gen-code:
 	$(MAKE) gen_code -f $(top_srcdir)/Makefile.custom
-
-gen-code-static:
-	$(MAKE) gen_code_static -f $(top_srcdir)/Makefile.custom
 
 test-ct:
 	$(MAKE) test_ct -f $(top_srcdir)/Makefile.custom
@@ -34,14 +31,14 @@ lib:
 clean-scan:
 	$(MAKE) clean -f $(top_srcdir)/Makefile.custom
 
-test: check
-	$(top_srcdir)/test/test
+test:
+	$(MAKE) test -f $(top_srcdir)/Makefile.custom
 
-bench: check
-	$(top_srcdir)/test/test_bench
+bench:
+	$(MAKE) bench -f $(top_srcdir)/Makefile.custom
 
-microbench: check
-	$(top_srcdir)/test/test_bench --micro
+microbench:
+	$(MAKE) microbench -f $(top_srcdir)/Makefile.custom
 
 # NB: you must compile with XCFLAGS=-DNDEBUG or you will get lots of extra warnings due to assert(stuff).
 mem-check: check
