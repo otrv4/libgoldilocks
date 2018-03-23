@@ -28,7 +28,6 @@ stamp-h1
 **/.deps
 **/.libs
 pkgconfig/libgoldilocks.pc
-m4/
 
 src/goldilocks_gen_tables
 test/test
