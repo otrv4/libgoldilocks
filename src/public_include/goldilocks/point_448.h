@@ -413,7 +413,7 @@ goldilocks_error_t goldilocks_x448 (
  * points are always even, so it multiplies by half the cofactor instead.
  *
  * As it happens, this aligns with the base point definitions; that is,
- * if you pass the Decaf/Ristretto base point to this function, the result
+ * if you pass the base point to this function, the result
  * will be GOLDILOCKS_X448_ENCODE_RATIO times the X448
  * base point.
  *

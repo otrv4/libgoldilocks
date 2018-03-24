@@ -18,10 +18,6 @@
 #define COFACTOR 4
 static const int EDWARDS_D = -39081;
 
-/* This is prob also not needed */
-#define RISTRETTO_FACTOR GOLDILOCKS_448_RISTRETTO_FACTOR
-extern const gf RISTRETTO_FACTOR;
-
 /* End of template stuff */
 extern mask_t API_NS(deisogenize) (
     gf_s *__restrict__ s,

@@ -204,7 +204,7 @@ goldilocks_error_t goldilocks_ed448_verify_prehash (
  * ends up cleared one way or another.  But exactly how that shakes
  * out depends on the base points specified in RFC 8032.
  *
- * The upshot is that if you pass the Decaf/Ristretto base point to
+ * The upshot is that if you pass the base point to
  * this function, you will get GOLDILOCKS_448_EDDSA_ENCODE_RATIO times the
  * EdDSA base point.
  *

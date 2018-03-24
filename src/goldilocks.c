@@ -42,8 +42,7 @@ static const scalar_t point_scalarmul_adjustment = {{{
 
 const uint8_t goldilocks_x448_base_point[GOLDILOCKS_X448_PUBLIC_BYTES] = { 0x05 };
 
-#define RISTRETTO_FACTOR GOLDILOCKS_448_RISTRETTO_FACTOR
-const gf RISTRETTO_FACTOR = {FIELD_LITERAL(
+const gf GOLDILOCKS_448_FACTOR = {FIELD_LITERAL(
     0x42ef0f45572736, 0x7bf6aa20ce5296, 0xf4fd6eded26033, 0x968c14ba839a66, 0xb8d54b64a2d780, 0x6aa0a1f1a7b8a5, 0x683bf68d722fa2, 0x22d962fbeb24f7
 )};
 
@@ -122,7 +121,7 @@ void API_NS(deisogenize) (
     gf_mulw(t2,t1,-1-TWISTED_D); /* -x^2 * (a-d) * num */
     gf_isr(t1,t2);    /* t1 = isr */
     gf_mul(t2,t1,t3); /* t2 = ratio */
-    gf_mul(t4,t2,RISTRETTO_FACTOR);
+    gf_mul(t4,t2,GOLDILOCKS_448_FACTOR);
     mask_t negx = gf_lobit(t4) ^ toggle_altx;
     gf_cond_neg(t2, negx);
     gf_mul(t3,t2,p->z);
@@ -169,7 +168,7 @@ goldilocks_error_t API_NS(point_decode) (
     gf_add(tmp2,tmp2,tmp2);        /* 2*s*isr*den */
     gf_mul(tmp,tmp2,isr);          /* 2*s*isr^2*den */
     gf_mul(p->x,tmp,num);          /* 2*s*isr^2*den*num */
-    gf_mul(tmp,tmp2,RISTRETTO_FACTOR); /* 2*s*isr*den*magic */
+    gf_mul(tmp,tmp2,GOLDILOCKS_448_FACTOR); /* 2*s*isr*den*magic */
     gf_cond_neg(p->x,gf_lobit(tmp)); /* flip x */
     /* Fill in z and t */
     gf_copy(p->z,ONE);

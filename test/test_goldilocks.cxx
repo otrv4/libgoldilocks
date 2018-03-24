@@ -20,7 +20,7 @@ using namespace goldilocks;
 static bool passing = true;
 static const long NTESTS = 10000;
 
-#include "ristretto_vectors.inc.cxx"
+#include "elligator_vectors.inc.cxx"
 
 class Test {
 public:
