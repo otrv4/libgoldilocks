@@ -20,12 +20,12 @@ matrix:
       compiler: gcc
       env: T=normal
     - os: linux
-      dist: precise
+      dist: trusty
       compiler: gcc
       env: T=valgrind-check
   allow_failures:
     - os: linux
-      dist: precise
+      dist: trusty
       compiler: gcc
       env: T=valgrind-check
 
