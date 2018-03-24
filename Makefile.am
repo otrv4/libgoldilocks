@@ -41,5 +41,5 @@ microbench:
 	$(MAKE) microbench -f $(top_srcdir)/Makefile.custom
 
 # NB: you must compile with XCFLAGS=-DNDEBUG or you will get lots of extra warnings due to assert(stuff).
-mem-check: check
-	valgrind $(top_srcdir)/test/test
+mem-check:
+	$(MAKE) mem-check -f $(top_srcdir)/Makefile.custom

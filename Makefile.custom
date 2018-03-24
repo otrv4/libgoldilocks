@@ -231,6 +231,9 @@ bench: $(BUILD_IBIN)/bench
 test: $(BUILD_IBIN)/test
 	./$<
 
+mem-check: $(BUILD_IBIN)/test
+	valgrind ./$<
+
 test_ct: $(BUILD_IBIN)/test_ct
 	# NB: you must compile with XCFLAGS=-DNDEBUG or you will get lots of extra warnings due to assert(thing that is always true).
 	valgrind ./$<
