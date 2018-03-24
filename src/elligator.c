@@ -11,11 +11,10 @@
 #include "word.h"
 #include "field.h"
 #include <goldilocks.h>
+#include "api.h"
 
 /* Template stuff */
-#define API_NS(_id) goldilocks_448_##_id
 #define point_t API_NS(point_t)
-#define COFACTOR 4
 static const int EDWARDS_D = -39081;
 
 /* End of template stuff */

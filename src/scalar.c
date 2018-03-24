@@ -11,13 +11,7 @@
 #include "word.h"
 #include "constant_time.h"
 #include <goldilocks.h>
-
-/* Template stuff */
-#define API_NS(_id) goldilocks_448_##_id
-#define SCALAR_BITS GOLDILOCKS_448_SCALAR_BITS
-#define SCALAR_SER_BYTES GOLDILOCKS_448_SCALAR_BYTES
-#define SCALAR_LIMBS GOLDILOCKS_448_SCALAR_LIMBS
-#define scalar_t API_NS(scalar_t)
+#include "api.h"
 
 static const goldilocks_word_t MONTGOMERY_FACTOR = (goldilocks_word_t)0x3bd440fae918bc5ull;
 static const scalar_t sc_p = {{{
@@ -26,8 +20,6 @@ static const scalar_t sc_p = {{{
     SC_LIMB(0xe3539257049b9b60), SC_LIMB(0x7af32c4bc1b195d9), SC_LIMB(0x0d66de2388ea1859), SC_LIMB(0xae17cf725ee4d838), SC_LIMB(0x1a9cc14ba3c47c44), SC_LIMB(0x2052bcb7e4d070af), SC_LIMB(0x3402a939f823b729)
 }}};
 /* End of template stuff */
-
-#define WBITS GOLDILOCKS_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
 const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
 

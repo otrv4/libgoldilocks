@@ -14,16 +14,11 @@
 
 #include <goldilocks.h>
 #include <goldilocks/ed448.h>
+#include "api.h"
 
 /* Template stuff */
-#define API_NS(_id) goldilocks_448_##_id
-#define SCALAR_BITS GOLDILOCKS_448_SCALAR_BITS
-#define SCALAR_SER_BYTES GOLDILOCKS_448_SCALAR_BYTES
-#define SCALAR_LIMBS GOLDILOCKS_448_SCALAR_LIMBS
-#define scalar_t API_NS(scalar_t)
 #define point_t API_NS(point_t)
 #define precomputed_s API_NS(precomputed_s)
-#define COFACTOR 4
 
 /* Comb config: number of combs, n, t, s. */
 #define COMBS_N 5
@@ -52,8 +47,6 @@ const gf GOLDILOCKS_448_FACTOR = {FIELD_LITERAL(
 #define NEG_D 1
 
 /* End of template stuff */
-
-#define WBITS GOLDILOCKS_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
 extern const point_t API_NS(point_base);
 

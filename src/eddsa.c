@@ -13,9 +13,7 @@
 #include <goldilocks/ed448.h>
 #include <goldilocks/shake.h>
 #include <string.h>
-
-#define API_NAME "goldilocks_448"
-#define API_NS(_id) goldilocks_448_##_id
+#include "api.h"
 
 #define hash_ctx_t   goldilocks_shake256_ctx_t
 #define hash_init    goldilocks_shake256_init
@@ -25,7 +23,6 @@
 #define hash_hash    goldilocks_shake256_hash
 
 #define NO_CONTEXT GOLDILOCKS_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS
-#define COFACTOR 4
 #define EDDSA_PREHASH_BYTES 64
 
 #if NO_CONTEXT
