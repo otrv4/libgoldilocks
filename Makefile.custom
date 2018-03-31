@@ -94,14 +94,6 @@ else
 	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
 endif
 
-# Internal test programs, which are not part of the final build/bin directory.
-$(BUILD_IBIN)/test_ct: $(BUILD_OBJ)/test_ct.o lib
-ifeq ($(UNAME),Darwin)
-	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
-else
-	$(LDXX) $(LDFLAGS) -Wl,-rpath,`pwd`/$(BUILD_LIB) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
-endif
-
 $(BUILD_IBIN)/bench: $(BUILD_OBJ)/bench_goldilocks.o lib
 ifeq ($(UNAME),Darwin)
 	$(LDXX) $(LDFLAGS) -o $@ $< -L$(BUILD_LIB) -lgoldilocks
@@ -226,10 +218,6 @@ test: $(BUILD_IBIN)/test
 
 mem-check: $(BUILD_IBIN)/test
 	valgrind --track-origins=yes --error-exitcode=2 --leak-check=full ./$<
-
-test_ct: $(BUILD_IBIN)/test_ct
-	# NB: you must compile with XCFLAGS=-DNDEBUG or you will get lots of extra warnings due to assert(thing that is always true).
-	valgrind ./$<
 
 microbench: $(BUILD_IBIN)/bench
 	./$< --micro

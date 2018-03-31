@@ -13,9 +13,6 @@ all-lib:
 gen-code:
 	$(MAKE) gen_code -f $(top_srcdir)/Makefile.custom
 
-test-ct:
-	$(MAKE) test_ct -f $(top_srcdir)/Makefile.custom
-
 todo:
 	$(MAKE) todo -f $(top_srcdir)/Makefile.custom
 
