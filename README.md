@@ -13,7 +13,7 @@ exchange securely.  Consult your local cryptographer for advice.
 Before you try to build libgoldilocks, verify you have installed:
 
 * [autoconf](https://www.gnu.org/software/autoconf/autoconf.html)
-* [valgrind(http://valgrind.org/). At least, version 3.12.0
+* [valgrind](http://valgrind.org/). At least, version 3.12.0
 
 To generate project configuration:
 
