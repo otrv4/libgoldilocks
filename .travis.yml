@@ -6,48 +6,25 @@ matrix:
     - os: linux
       dist: trusty
       compiler: clang
-      env: T=normal
     - os: linux
       dist: trusty
       compiler: gcc
-      env: T=normal
     - os: linux
       dist: precise
       compiler: clang
-      env: T=normal
     - os: linux
       dist: precise
       compiler: gcc
-      env: T=normal
-    - os: linux
-      dist: trusty
-      compiler: gcc
-      env: T=valgrind-check
-  allow_failures:
-    - os: linux
-      dist: trusty
-      compiler: gcc
-      env: T=valgrind-check
 
 sudo: required
 
 before_install:
   - sudo apt-get update --quiet --assume-yes
   - sudo apt-get install splint --quiet --assume-yes
-  - if [[ "$T" = "valgrind-check" ]]; then sudo apt-get install valgrind --quiet --assume-yes; fi
 
-before_script: ./autogen.sh
 script:
-  - |
-      if [ "$T" = "normal" ]; then
-           ./autogen.sh
-           ./configure --disable-shared
-           make
-           make test
-      fi
-  - |
-      if [ "$T" = "valgrind-check" ]; then
-           ./autogen.sh
-           ./configure --disable-shared
-           make ci
-      fi
+  - if [ "$T" = "normal" ]; then
+  - ./autogen.sh
+  - ./configure --disable-shared
+  - make
+  - make test
