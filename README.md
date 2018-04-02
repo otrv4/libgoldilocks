@@ -8,6 +8,37 @@ This library is intended for developers who have experience with cryptography.
 It doesn't (yet?) include documentation on how to use digital signatures or key
 exchange securely.  Consult your local cryptographer for advice.
 
+## Building the library
+
+Before you try to build libgoldilocks, verify you have installed:
+
+* [autoconf](https://www.gnu.org/software/autoconf/autoconf.html)
+* [valgrind(http://valgrind.org/). At least, version 3.12.0
+
+To generate project configuration:
+
+```
+$ autoreconf --install
+```
+
+To configure the project:
+
+```
+$ ./configure
+```
+
+To build and install:
+
+```
+$ make && make install
+```
+
+To run the tests:
+
+```
+$ make test
+```
+
 ## Using the library
 
 * To run the python wrapper: `python setup.py install --user`
