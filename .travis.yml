@@ -23,7 +23,6 @@ before_install:
   - sudo apt-get install splint --quiet --assume-yes
 
 script:
-  - if [ "$T" = "normal" ]; then
   - ./autogen.sh
   - ./configure --disable-shared
   - make
