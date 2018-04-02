@@ -21,7 +21,7 @@ lib_LTLIBRARIES = libgoldilocks.la
 
 libgoldilocks_la_SOURCES = utils.c \
 		      shake.c \
-		      spongerng.c
+		      spongerng.c \
 		      arch_x86_64/f_impl.c \
 		      f_arithmetic.c \
 		      f_generic.c \
