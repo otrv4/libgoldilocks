@@ -130,9 +130,7 @@ See the paper for more details.
 
 ## Licensing
 
-Most of the source files here are by Mike Hamburg.  Those files are (c)
-2014-2017 Cryptography Research, Inc (a division of Rambus). All of these files
-are usable under the MIT license contained in LICENSE.txt.
+See LICENSE.txt.
 
 ## Caveats
 

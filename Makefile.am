@@ -40,3 +40,6 @@ microbench:
 # NB: you must compile with XCFLAGS=-DNDEBUG or you will get lots of extra warnings due to assert(stuff).
 mem-check:
 	$(MAKE) mem-check -f $(top_srcdir)/Makefile.custom
+
+clean-hard:
+	git clean -d -x -f
