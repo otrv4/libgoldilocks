@@ -1,4 +1,5 @@
 /* Copyright (c) 2014-2016 Cryptography Research, Inc.
+ * Copyright (c) 2018 the libgoldilocks contributors.
  * Released under the MIT License.  See LICENSE.txt for license information.
  */
 

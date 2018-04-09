@@ -4,6 +4,7 @@
  *
  * @copyright
  *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \n
+ *   Copyright (c) 2018 the libgoldilocks contributors.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  *
  * Master header for Goldilocks library, C++ version.

@@ -1,3 +1,6 @@
+# Copyright (c) 2018 the libgoldilocks contributors.
+# Released under the MIT License.  See LICENSE.txt for license information.
+
 include $(top_srcdir)/variables.am
 
 SUBDIRS = src test pkgconfig

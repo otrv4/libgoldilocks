@@ -3,6 +3,7 @@
  * @file spongerng.c
  * @copyright
  *   Copyright (c) 2015-2017 Cryptography Research, Inc.  \n
+ *   Copyright (c) 2018 the libgoldilocks contributors.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  * @author Mike Hamburg
  * @brief Spongerng instances (STROBE removed)

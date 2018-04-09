@@ -3,6 +3,7 @@
  * @copyright
  *   Based on CC0 code by David Leon Gil, 2015 \n
  *   Copyright (c) 2015 Cryptography Research, Inc.  \n
+ *   Copyright (c) 2018 the libgoldilocks contributors.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  * @author Mike Hamburg
  * @brief SHA-3-n and SHAKE-n instances, C++ wrapper.

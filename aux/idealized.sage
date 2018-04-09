@@ -1,3 +1,6 @@
+# Copyright (c) 2014-2017 Cryptography Research, Inc.
+# Released under the MIT License.  See LICENSE.txt for license information.
+
 class Unique(object):
     def __init__(self,name):
         self.name = name

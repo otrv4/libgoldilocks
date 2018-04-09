@@ -3,6 +3,7 @@
  * @file keccak_internal.h
  * @copyright
  *   Copyright (c) 2016 Cryptography Research, Inc.  \n
+ *   Copyright (c) 2018 the libgoldilocks contributors.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
  * @author Mike Hamburg
  * @brief Keccak internal interfaces.  Will be used by STROBE once reintegrated.
