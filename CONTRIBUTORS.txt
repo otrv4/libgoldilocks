@@ -2,5 +2,4 @@
 - John-Mark Gurney
 - Mike Hamburg
 - Cryptography Research, Inc.
-- ThoughtWorks Inc.
 - Centro de Autonomia Digital
