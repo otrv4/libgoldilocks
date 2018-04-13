@@ -26,7 +26,7 @@ extern "C" {
 /** Number of bytes in an EdDSA private key. */
 #define GOLDILOCKS_EDDSA_448_PRIVATE_BYTES GOLDILOCKS_EDDSA_448_PUBLIC_BYTES
 
-/** Number of bytes in an EdDSA private key. */
+/** Number of bytes in an EdDSA signature. */
 #define GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES (GOLDILOCKS_EDDSA_448_PUBLIC_BYTES + GOLDILOCKS_EDDSA_448_PRIVATE_BYTES)
 
 /** Does EdDSA support non-contextual signatures? */
