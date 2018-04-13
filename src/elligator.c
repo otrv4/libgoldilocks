@@ -15,7 +15,7 @@
 #include "api.h"
 
 /* Template stuff */
-#define point_t API_NS(point_t)
+#define point_p API_NS(point_p)
 static const int EDWARDS_D = -39081;
 
 /* End of template stuff */
@@ -23,14 +23,14 @@ extern mask_t API_NS(deisogenize) (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
     gf_s *__restrict__ inv_el_m1,
-    const point_t p,
+    const point_p p,
     mask_t toggle_hibit_s,
     mask_t toggle_altx,
     mask_t toggle_rotation
 );
 
 void API_NS(point_from_hash_nonuniform) (
-    point_t p,
+    point_p p,
     const unsigned char ser[SER_BYTES]
 ) {
     gf r0,r,a,b,c,N,e;
@@ -83,10 +83,10 @@ void API_NS(point_from_hash_nonuniform) (
 }
 
 void API_NS(point_from_hash_uniform) (
-    point_t pt,
+    point_p pt,
     const unsigned char hashed_data[2*SER_BYTES]
 ) {
-    point_t pt2;
+    point_p pt2;
     API_NS(point_from_hash_nonuniform)(pt,hashed_data);
     API_NS(point_from_hash_nonuniform)(pt2,&hashed_data[SER_BYTES]);
     API_NS(point_add)(pt,pt,pt2);
@@ -103,7 +103,7 @@ void API_NS(point_from_hash_uniform) (
 goldilocks_error_t
 API_NS(invert_elligator_nonuniform) (
     unsigned char recovered_hash[SER_BYTES],
-    const point_t p,
+    const point_p p,
     uint32_t hint_
 ) {
     mask_t hint = hint_;
@@ -145,10 +145,10 @@ API_NS(invert_elligator_nonuniform) (
 goldilocks_error_t
 API_NS(invert_elligator_uniform) (
     unsigned char partial_hash[2*SER_BYTES],
-    const point_t p,
+    const point_p p,
     uint32_t hint
 ) {
-    point_t pt2;
+    point_p pt2;
     API_NS(point_from_hash_nonuniform)(pt2,&partial_hash[SER_BYTES]);
     API_NS(point_sub)(pt2,p,pt2);
     return API_NS(invert_elligator_nonuniform)(partial_hash,pt2,hint);

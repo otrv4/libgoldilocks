@@ -24,7 +24,7 @@ static const unsigned char base_point_ser_for_pregen[SER_BYTES] = {
 
  /* To satisfy linker. */
 const gf API_NS(precomputed_base_as_fe)[1];
-const API_NS(point_t) API_NS(point_base);
+const API_NS(point_p) API_NS(point_base);
 
 struct niels_s;
 const gf_s *API_NS(precomputed_wnaf_as_fe);
@@ -32,7 +32,7 @@ extern const size_t API_NS(sizeof_precomputed_wnafs);
 
 void API_NS(precompute_wnafs) (
     struct niels_s *out,
-    const API_NS(point_t) base
+    const API_NS(point_p) base
 );
 static void field_print(const gf f) {
     unsigned char ser[X_SER_BYTES];
@@ -59,7 +59,7 @@ static void field_print(const gf f) {
 int main(int argc, char **argv) {
     (void)argc; (void)argv;
 
-    API_NS(point_t) real_point_base;
+    API_NS(point_p) real_point_base;
     int ret = API_NS(point_decode)(real_point_base,base_point_ser_for_pregen,0);
     if (ret != GOLDILOCKS_SUCCESS) {
         fprintf(stderr, "Can't decode base point!\n");
@@ -91,8 +91,8 @@ int main(int argc, char **argv) {
     printf("#define API_NS(_id) goldilocks_448_##_id\n");
 
     output = (const gf_s *)real_point_base;
-    printf("const API_NS(point_t) API_NS(point_base) = {{\n");
-    for (i=0; i < sizeof(API_NS(point_t)); i+=sizeof(gf)) {
+    printf("const API_NS(point_p) API_NS(point_base) = {{\n");
+    for (i=0; i < sizeof(API_NS(point_p)); i+=sizeof(gf)) {
         if (i) printf(",\n  ");
         field_print(output++);
     }

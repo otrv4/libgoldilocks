@@ -16,22 +16,22 @@
 /* The internal, non-opaque definition of the goldilocks_sponge struct. */
 typedef union {
     uint64_t w[25]; uint8_t b[25*8];
-} kdomain_t[1];
+} kdomain_u[1];
 
 typedef struct goldilocks_kparams_s {
     uint8_t position, flags, rate, start_round, pad, rate_pad, max_out, remaining;
-} goldilocks_kparams_s, goldilocks_kparams_t[1];
+} goldilocks_kparams_s, goldilocks_kparams_p[1];
 
 typedef struct goldilocks_keccak_sponge_s {
-    kdomain_t state;
-    goldilocks_kparams_t params;
-} goldilocks_keccak_sponge_s, goldilocks_keccak_sponge_t[1];
+    kdomain_u state;
+    goldilocks_kparams_p params;
+} goldilocks_keccak_sponge_s, goldilocks_keccak_sponge_p[1];
 
 #define INTERNAL_SPONGE_STRUCT 1
 
-void __attribute__((noinline)) keccakf(kdomain_t state, uint8_t start_round);
+void __attribute__((noinline)) keccakf(kdomain_u state, uint8_t start_round);
 
-static inline void dokeccak (goldilocks_keccak_sponge_t goldilocks_sponge) {
+static inline void dokeccak (goldilocks_keccak_sponge_p goldilocks_sponge) {
     keccakf(goldilocks_sponge->state, goldilocks_sponge->params->start_round);
     goldilocks_sponge->params->position = 0;
 }

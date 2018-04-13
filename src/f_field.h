@@ -25,14 +25,14 @@
 #define SER_BYTES 56
 typedef struct gf_448_s {
     word_t limb[NLIMBS];
-} __attribute__((aligned(32))) gf_448_s, gf_448_t[1];
+} __attribute__((aligned(32))) gf_448_s, gf_448_p[1];
 
 #define GF_LIT_LIMB_BITS  56
 #define GF_BITS           448
 #define ZERO              gf_448_ZERO
 #define ONE               gf_448_ONE
 #define MODULUS           gf_448_MODULUS
-#define gf                gf_448_t
+#define gf                gf_448_p
 #define gf_s              gf_448_s
 #define gf_eq             gf_448_eq
 #define gf_hibit          gf_448_hibit

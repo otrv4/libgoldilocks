@@ -37,7 +37,7 @@ namespace goldilocks {
 class SpongeRng : public Rng {
 private:
     /** C wrapped object */
-    goldilocks_keccak_prng_t sp;
+    goldilocks_keccak_prng_p sp;
 
 public:
     /** Deterministic flag.

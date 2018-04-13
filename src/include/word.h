@@ -154,11 +154,11 @@ extern int posix_memalign(void **, size_t, size_t);
 
 typedef struct {
     uint64xn_t unaligned;
-} __attribute__((packed)) unaligned_uint64xn_t;
+} __attribute__((packed)) unaligned_uint64xn_s;
 
 typedef struct {
     uint32xn_t unaligned;
-} __attribute__((packed)) unaligned_uint32xn_t;
+} __attribute__((packed)) unaligned_uint32xn_s;
 
 #if __AVX2__
     static GOLDILOCKS_INLINE big_register_t

@@ -76,7 +76,7 @@ class Precomputed;
 class Scalar : public Serializable<Scalar> {
 public:
     /** wrapped C type */
-    typedef goldilocks_448_scalar_t Wrapped;
+    typedef goldilocks_448_scalar_p Wrapped;
 
     /** Size of a serialized element */
     static const size_t SER_BYTES = GOLDILOCKS_448_SCALAR_BYTES;
@@ -107,7 +107,7 @@ public:
         *this = sb;
     }
 
-    /** Construct from goldilocks_scalar_t object. */
+    /** Construct from goldilocks_scalar_p object. */
     inline Scalar(const Wrapped &t = goldilocks_448_scalar_zero) GOLDILOCKS_NOEXCEPT { goldilocks_448_scalar_copy(s,t); }
 
     /** Copy constructor. */
@@ -245,7 +245,7 @@ public:
 class Point : public Serializable<Point> {
 public:
     /** Wrapped C type */
-    typedef goldilocks_448_point_t Wrapped;
+    typedef goldilocks_448_point_p Wrapped;
 
     /** Size of a serialized element */
     static const size_t SER_BYTES = GOLDILOCKS_448_SER_BYTES;

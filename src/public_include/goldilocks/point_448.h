@@ -32,7 +32,7 @@ extern "C" {
 /** @brief Galois field element internal structure */
 typedef struct gf_448_s {
     goldilocks_word_t limb[512/GOLDILOCKS_WORD_BITS];
-} __attribute__((aligned(32))) gf_448_s, gf_448_t[1];
+} __attribute__((aligned(32))) gf_448_s, gf_448_p[1];
 #endif /* __GOLDILOCKS_448_GF_DEFINED__ */
 /** @endcond */
 
@@ -65,9 +65,9 @@ typedef struct gf_448_s {
 /** Representation of a point on the elliptic curve. */
 typedef struct goldilocks_448_point_s {
     /** @cond internal */
-    gf_448_t x,y,z,t; /* Twisted extended homogeneous coordinates */
+    gf_448_p x,y,z,t; /* Twisted extended homogeneous coordinates */
     /** @endcond */
-} goldilocks_448_point_t[1];
+} goldilocks_448_point_s, goldilocks_448_point_p[1];
 
 /** Precomputed table based on a point.  Can be trivial implementation. */
 struct goldilocks_448_precomputed_s;
@@ -83,19 +83,19 @@ typedef struct goldilocks_448_scalar_s {
     /** @cond internal */
     goldilocks_word_t limb[GOLDILOCKS_448_SCALAR_LIMBS];
     /** @endcond */
-} goldilocks_448_scalar_t[1];
+} goldilocks_448_scalar_p[1];
 
 /** The scalar 1. */
-extern const goldilocks_448_scalar_t goldilocks_448_scalar_one GOLDILOCKS_API_VIS;
+extern const goldilocks_448_scalar_p goldilocks_448_scalar_one GOLDILOCKS_API_VIS;
 
 /** The scalar 0. */
-extern const goldilocks_448_scalar_t goldilocks_448_scalar_zero GOLDILOCKS_API_VIS;
+extern const goldilocks_448_scalar_p goldilocks_448_scalar_zero GOLDILOCKS_API_VIS;
 
 /** The identity (zero) point on the curve. */
-extern const goldilocks_448_point_t goldilocks_448_point_identity GOLDILOCKS_API_VIS;
+extern const goldilocks_448_point_p goldilocks_448_point_identity GOLDILOCKS_API_VIS;
 
 /** An arbitrarily-chosen base point on the curve. */
-extern const goldilocks_448_point_t goldilocks_448_point_base GOLDILOCKS_API_VIS;
+extern const goldilocks_448_point_p goldilocks_448_point_base GOLDILOCKS_API_VIS;
 
 /** Precomputed table of multiples of the base point on the curve. */
 extern const struct goldilocks_448_precomputed_s *goldilocks_448_precomputed_base GOLDILOCKS_API_VIS;
@@ -111,7 +111,7 @@ extern const struct goldilocks_448_precomputed_s *goldilocks_448_precomputed_bas
  * and has been reduced modulo that modulus.
  */
 goldilocks_error_t goldilocks_448_scalar_decode (
-    goldilocks_448_scalar_t out,
+    goldilocks_448_scalar_p out,
     const unsigned char ser[GOLDILOCKS_448_SCALAR_BYTES]
 ) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
@@ -124,7 +124,7 @@ goldilocks_error_t goldilocks_448_scalar_decode (
  * @param [out] out Deserialized form.
  */
 void goldilocks_448_scalar_decode_long (
-    goldilocks_448_scalar_t out,
+    goldilocks_448_scalar_p out,
     const unsigned char *ser,
     size_t ser_len
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
@@ -137,7 +137,7 @@ void goldilocks_448_scalar_decode_long (
  */
 void goldilocks_448_scalar_encode (
     unsigned char ser[GOLDILOCKS_448_SCALAR_BYTES],
-    const goldilocks_448_scalar_t s
+    const goldilocks_448_scalar_p s
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE GOLDILOCKS_NOINLINE;
 
 /**
@@ -147,9 +147,9 @@ void goldilocks_448_scalar_encode (
  * @param [out] out a+b.
  */
 void goldilocks_448_scalar_add (
-    goldilocks_448_scalar_t out,
-    const goldilocks_448_scalar_t a,
-    const goldilocks_448_scalar_t b
+    goldilocks_448_scalar_p out,
+    const goldilocks_448_scalar_p a,
+    const goldilocks_448_scalar_p b
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -160,8 +160,8 @@ void goldilocks_448_scalar_add (
  * @retval GOLDILOCKS_FALSE The scalars are not equal.
  */
 goldilocks_bool_t goldilocks_448_scalar_eq (
-    const goldilocks_448_scalar_t a,
-    const goldilocks_448_scalar_t b
+    const goldilocks_448_scalar_p a,
+    const goldilocks_448_scalar_p b
 ) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -171,9 +171,9 @@ goldilocks_bool_t goldilocks_448_scalar_eq (
  * @param [out] out a-b.
  */
 void goldilocks_448_scalar_sub (
-    goldilocks_448_scalar_t out,
-    const goldilocks_448_scalar_t a,
-    const goldilocks_448_scalar_t b
+    goldilocks_448_scalar_p out,
+    const goldilocks_448_scalar_p a,
+    const goldilocks_448_scalar_p b
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -183,9 +183,9 @@ void goldilocks_448_scalar_sub (
  * @param [out] out a*b.
  */
 void goldilocks_448_scalar_mul (
-    goldilocks_448_scalar_t out,
-    const goldilocks_448_scalar_t a,
-    const goldilocks_448_scalar_t b
+    goldilocks_448_scalar_p out,
+    const goldilocks_448_scalar_p a,
+    const goldilocks_448_scalar_p b
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -194,8 +194,8 @@ void goldilocks_448_scalar_mul (
 * @param [out] out a/2.
 */
 void goldilocks_448_scalar_halve (
-   goldilocks_448_scalar_t out,
-   const goldilocks_448_scalar_t a
+   goldilocks_448_scalar_p out,
+   const goldilocks_448_scalar_p a
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -205,8 +205,8 @@ void goldilocks_448_scalar_halve (
  * @return GOLDILOCKS_SUCCESS The input is nonzero.
  */
 goldilocks_error_t goldilocks_448_scalar_invert (
-    goldilocks_448_scalar_t out,
-    const goldilocks_448_scalar_t a
+    goldilocks_448_scalar_p out,
+    const goldilocks_448_scalar_p a
 ) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -216,8 +216,8 @@ goldilocks_error_t goldilocks_448_scalar_invert (
  * @param [out] out Will become a copy of a.
  */
 static inline void GOLDILOCKS_NONNULL goldilocks_448_scalar_copy (
-    goldilocks_448_scalar_t out,
-    const goldilocks_448_scalar_t a
+    goldilocks_448_scalar_p out,
+    const goldilocks_448_scalar_p a
 ) {
     *out = *a;
 }
@@ -228,7 +228,7 @@ static inline void GOLDILOCKS_NONNULL goldilocks_448_scalar_copy (
  * @param [out] out Will become equal to a.
  */
 void goldilocks_448_scalar_set_unsigned (
-    goldilocks_448_scalar_t out,
+    goldilocks_448_scalar_p out,
     uint64_t a
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
@@ -240,7 +240,7 @@ void goldilocks_448_scalar_set_unsigned (
  */
 void goldilocks_448_point_encode (
     uint8_t ser[GOLDILOCKS_448_SER_BYTES],
-    const goldilocks_448_point_t pt
+    const goldilocks_448_point_p pt
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -258,7 +258,7 @@ void goldilocks_448_point_encode (
  * ser does not represent a point.
  */
 goldilocks_error_t goldilocks_448_point_decode (
-    goldilocks_448_point_t pt,
+    goldilocks_448_point_p pt,
     const uint8_t ser[GOLDILOCKS_448_SER_BYTES],
     goldilocks_bool_t allow_identity
 ) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
@@ -271,8 +271,8 @@ goldilocks_error_t goldilocks_448_point_decode (
  * @param [in] b Any point.
  */
 static inline void GOLDILOCKS_NONNULL goldilocks_448_point_copy (
-    goldilocks_448_point_t a,
-    const goldilocks_448_point_t b
+    goldilocks_448_point_p a,
+    const goldilocks_448_point_p b
 ) {
     *a=*b;
 }
@@ -287,8 +287,8 @@ static inline void GOLDILOCKS_NONNULL goldilocks_448_point_copy (
  * @retval GOLDILOCKS_FALSE The points are not equal.
  */
 goldilocks_bool_t goldilocks_448_point_eq (
-    const goldilocks_448_point_t a,
-    const goldilocks_448_point_t b
+    const goldilocks_448_point_p a,
+    const goldilocks_448_point_p b
 ) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -301,9 +301,9 @@ goldilocks_bool_t goldilocks_448_point_eq (
  * @param [in] b An addend.
  */
 void goldilocks_448_point_add (
-    goldilocks_448_point_t sum,
-    const goldilocks_448_point_t a,
-    const goldilocks_448_point_t b
+    goldilocks_448_point_p sum,
+    const goldilocks_448_point_p a,
+    const goldilocks_448_point_p b
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
 /**
@@ -314,8 +314,8 @@ void goldilocks_448_point_add (
  * @param [in] a A point.
  */
 void goldilocks_448_point_double (
-    goldilocks_448_point_t two_a,
-    const goldilocks_448_point_t a
+    goldilocks_448_point_p two_a,
+    const goldilocks_448_point_p a
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
 /**
@@ -328,9 +328,9 @@ void goldilocks_448_point_double (
  * @param [in] b The subtrahend.
  */
 void goldilocks_448_point_sub (
-    goldilocks_448_point_t diff,
-    const goldilocks_448_point_t a,
-    const goldilocks_448_point_t b
+    goldilocks_448_point_p diff,
+    const goldilocks_448_point_p a,
+    const goldilocks_448_point_p b
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
 /**
@@ -341,8 +341,8 @@ void goldilocks_448_point_sub (
  * @param [in] a The input point.
  */
 void goldilocks_448_point_negate (
-   goldilocks_448_point_t nega,
-   const goldilocks_448_point_t a
+   goldilocks_448_point_p nega,
+   const goldilocks_448_point_p a
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
 /**
@@ -353,9 +353,9 @@ void goldilocks_448_point_negate (
  * @param [in] scalar The scalar to multiply by.
  */
 void goldilocks_448_point_scalarmul (
-    goldilocks_448_point_t scaled,
-    const goldilocks_448_point_t base,
-    const goldilocks_448_scalar_t scalar
+    goldilocks_448_point_p scaled,
+    const goldilocks_448_point_p base,
+    const goldilocks_448_scalar_p scalar
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -378,7 +378,7 @@ void goldilocks_448_point_scalarmul (
 goldilocks_error_t goldilocks_448_direct_scalarmul (
     uint8_t scaled[GOLDILOCKS_448_SER_BYTES],
     const uint8_t base[GOLDILOCKS_448_SER_BYTES],
-    const goldilocks_448_scalar_t scalar,
+    const goldilocks_448_scalar_p scalar,
     goldilocks_bool_t allow_identity,
     goldilocks_bool_t short_circuit
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NOINLINE;
@@ -423,7 +423,7 @@ goldilocks_error_t goldilocks_x448 (
  */
 void goldilocks_448_point_mul_by_ratio_and_encode_like_x448 (
     uint8_t out[GOLDILOCKS_X448_PUBLIC_BYTES],
-    const goldilocks_448_point_t p
+    const goldilocks_448_point_p p
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL;
 
 /** The base point for X448 Diffie-Hellman */
@@ -460,7 +460,7 @@ void goldilocks_x448_derive_public_key (
  */
 void goldilocks_448_precompute (
     goldilocks_448_precomputed_s *a,
-    const goldilocks_448_point_t b
+    const goldilocks_448_point_p b
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -475,9 +475,9 @@ void goldilocks_448_precompute (
  * @param [in] scalar The scalar to multiply by.
  */
 void goldilocks_448_precomputed_scalarmul (
-    goldilocks_448_point_t scaled,
+    goldilocks_448_point_p scaled,
     const goldilocks_448_precomputed_s *base,
-    const goldilocks_448_scalar_t scalar
+    const goldilocks_448_scalar_p scalar
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -494,11 +494,11 @@ void goldilocks_448_precomputed_scalarmul (
  * @param [in] scalar2 A second scalar to multiply by.
  */
 void goldilocks_448_point_double_scalarmul (
-    goldilocks_448_point_t combo,
-    const goldilocks_448_point_t base1,
-    const goldilocks_448_scalar_t scalar1,
-    const goldilocks_448_point_t base2,
-    const goldilocks_448_scalar_t scalar2
+    goldilocks_448_point_p combo,
+    const goldilocks_448_point_p base1,
+    const goldilocks_448_scalar_p scalar1,
+    const goldilocks_448_point_p base2,
+    const goldilocks_448_scalar_p scalar2
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -517,11 +517,11 @@ void goldilocks_448_point_double_scalarmul (
  * @param [in] scalar2 A second scalar to multiply by.
  */
 void goldilocks_448_point_dual_scalarmul (
-    goldilocks_448_point_t a1,
-    goldilocks_448_point_t a2,
-    const goldilocks_448_point_t base1,
-    const goldilocks_448_scalar_t scalar1,
-    const goldilocks_448_scalar_t scalar2
+    goldilocks_448_point_p a1,
+    goldilocks_448_point_p a2,
+    const goldilocks_448_point_p base1,
+    const goldilocks_448_scalar_p scalar1,
+    const goldilocks_448_scalar_p scalar2
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -540,10 +540,10 @@ void goldilocks_448_point_dual_scalarmul (
  * used.  It is designed for signature verification.
  */
 void goldilocks_448_base_double_scalarmul_non_secret (
-    goldilocks_448_point_t combo,
-    const goldilocks_448_scalar_t scalar1,
-    const goldilocks_448_point_t base2,
-    const goldilocks_448_scalar_t scalar2
+    goldilocks_448_point_p combo,
+    const goldilocks_448_scalar_p scalar1,
+    const goldilocks_448_point_p base2,
+    const goldilocks_448_scalar_p scalar2
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -556,9 +556,9 @@ void goldilocks_448_base_double_scalarmul_non_secret (
  * @param [in] pick_b If nonzero, choose point b.
  */
 void goldilocks_448_point_cond_sel (
-    goldilocks_448_point_t out,
-    const goldilocks_448_point_t a,
-    const goldilocks_448_point_t b,
+    goldilocks_448_point_p out,
+    const goldilocks_448_point_p a,
+    const goldilocks_448_point_p b,
     goldilocks_word_t pick_b
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
@@ -572,9 +572,9 @@ void goldilocks_448_point_cond_sel (
  * @param [in] pick_b If nonzero, choose scalar b.
  */
 void goldilocks_448_scalar_cond_sel (
-    goldilocks_448_scalar_t out,
-    const goldilocks_448_scalar_t a,
-    const goldilocks_448_scalar_t b,
+    goldilocks_448_scalar_p out,
+    const goldilocks_448_scalar_p a,
+    const goldilocks_448_scalar_p b,
     goldilocks_word_t pick_b
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
@@ -586,7 +586,7 @@ void goldilocks_448_scalar_cond_sel (
  * @retval GOLDILOCKS_FALSE The point is invalid.
  */
 goldilocks_bool_t goldilocks_448_point_valid (
-    const goldilocks_448_point_t to_test
+    const goldilocks_448_point_p to_test
 ) GOLDILOCKS_API_VIS GOLDILOCKS_WARN_UNUSED GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -597,8 +597,8 @@ goldilocks_bool_t goldilocks_448_point_valid (
  * @param [in] p The point to torque.
  */
 void goldilocks_448_point_debugging_torque (
-    goldilocks_448_point_t q,
-    const goldilocks_448_point_t p
+    goldilocks_448_point_p q,
+    const goldilocks_448_point_p p
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -611,8 +611,8 @@ void goldilocks_448_point_debugging_torque (
  * @param [in] factor Serialized GF factor to scale.
  */
 void goldilocks_448_point_debugging_pscale (
-    goldilocks_448_point_t q,
-    const goldilocks_448_point_t p,
+    goldilocks_448_point_p q,
+    const goldilocks_448_point_p p,
     const unsigned char factor[GOLDILOCKS_448_SER_BYTES]
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
@@ -646,7 +646,7 @@ void goldilocks_448_point_debugging_pscale (
  */
 void
 goldilocks_448_point_from_hash_nonuniform (
-    goldilocks_448_point_t pt,
+    goldilocks_448_point_p pt,
     const unsigned char hashed_data[GOLDILOCKS_448_HASH_BYTES]
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
@@ -659,7 +659,7 @@ goldilocks_448_point_from_hash_nonuniform (
  * @param [out] pt The data hashed to the curve.
  */
 void goldilocks_448_point_from_hash_uniform (
-    goldilocks_448_point_t pt,
+    goldilocks_448_point_p pt,
     const unsigned char hashed_data[2*GOLDILOCKS_448_HASH_BYTES]
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
@@ -694,7 +694,7 @@ void goldilocks_448_point_from_hash_uniform (
 goldilocks_error_t
 goldilocks_448_invert_elligator_nonuniform (
     unsigned char recovered_hash[GOLDILOCKS_448_HASH_BYTES],
-    const goldilocks_448_point_t pt,
+    const goldilocks_448_point_p pt,
     uint32_t which
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE GOLDILOCKS_WARN_UNUSED;
 
@@ -719,20 +719,20 @@ goldilocks_448_invert_elligator_nonuniform (
 goldilocks_error_t
 goldilocks_448_invert_elligator_uniform (
     unsigned char recovered_hash[2*GOLDILOCKS_448_HASH_BYTES],
-    const goldilocks_448_point_t pt,
+    const goldilocks_448_point_p pt,
     uint32_t which
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE GOLDILOCKS_WARN_UNUSED;
 
 /** Securely erase a scalar. */
 void goldilocks_448_scalar_destroy (
-    goldilocks_448_scalar_t scalar
+    goldilocks_448_scalar_p scalar
 ) GOLDILOCKS_NONNULL GOLDILOCKS_API_VIS;
 
 /** Securely erase a point by overwriting it with zeros.
  * @warning This causes the point object to become invalid.
  */
 void goldilocks_448_point_destroy (
-    goldilocks_448_point_t point
+    goldilocks_448_point_p point
 ) GOLDILOCKS_NONNULL GOLDILOCKS_API_VIS;
 
 /** Securely erase a precomputed table by overwriting it with zeros.

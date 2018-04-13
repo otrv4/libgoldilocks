@@ -57,7 +57,7 @@ static inline uint64_t rol(uint64_t x, int s) {
 #endif
 
 /*** The Keccak-f[1600] permutation ***/
-void keccakf(kdomain_t state, uint8_t start_round) {
+void keccakf(kdomain_u state, uint8_t start_round) {
     uint64_t* a = state->w;
     uint64_t b[5] = {0}, t, u;
     uint8_t x, y, i;
@@ -112,7 +112,7 @@ goldilocks_error_t goldilocks_sha3_update (
 }
 
 goldilocks_error_t goldilocks_sha3_output (
-    goldilocks_keccak_sponge_t goldilocks_sponge,
+    goldilocks_keccak_sponge_p goldilocks_sponge,
     uint8_t * __restrict__ out,
     size_t len
 ) {
@@ -162,7 +162,7 @@ goldilocks_error_t goldilocks_sha3_output (
 }
 
 goldilocks_error_t goldilocks_sha3_final (
-    goldilocks_keccak_sponge_t goldilocks_sponge,
+    goldilocks_keccak_sponge_p goldilocks_sponge,
     uint8_t * __restrict__ out,
     size_t len
 ) {
@@ -172,19 +172,19 @@ goldilocks_error_t goldilocks_sha3_final (
 }
 
 void goldilocks_sha3_reset (
-    goldilocks_keccak_sponge_t goldilocks_sponge
+    goldilocks_keccak_sponge_p goldilocks_sponge
 ) {
     goldilocks_sha3_init(goldilocks_sponge, goldilocks_sponge->params);
     goldilocks_sponge->params->flags = FLAG_ABSORBING;
     goldilocks_sponge->params->remaining = goldilocks_sponge->params->max_out;
 }
 
-void goldilocks_sha3_destroy (goldilocks_keccak_sponge_t goldilocks_sponge) {
-    goldilocks_bzero(goldilocks_sponge, sizeof(goldilocks_keccak_sponge_t));
+void goldilocks_sha3_destroy (goldilocks_keccak_sponge_p goldilocks_sponge) {
+    goldilocks_bzero(goldilocks_sponge, sizeof(goldilocks_keccak_sponge_p));
 }
 
 void goldilocks_sha3_init (
-    goldilocks_keccak_sponge_t goldilocks_sponge,
+    goldilocks_keccak_sponge_p goldilocks_sponge,
     const struct goldilocks_kparams_s *params
 ) {
     memset(goldilocks_sponge->state, 0, sizeof(goldilocks_sponge->state));
@@ -199,7 +199,7 @@ goldilocks_error_t goldilocks_sha3_hash (
     size_t inlen,
     const struct goldilocks_kparams_s *params
 ) {
-    goldilocks_keccak_sponge_t goldilocks_sponge;
+    goldilocks_keccak_sponge_p goldilocks_sponge;
     goldilocks_sha3_init(goldilocks_sponge, params);
     goldilocks_sha3_update(goldilocks_sponge, in, inlen);
     goldilocks_error_t ret = goldilocks_sha3_output(goldilocks_sponge, out, outlen);
@@ -216,7 +216,7 @@ goldilocks_error_t goldilocks_sha3_hash (
         { 0, FLAG_ABSORBING, 200-n/4, 0, 0x06, 0x80, n/8, n/8 };
 
 size_t goldilocks_sha3_default_output_bytes (
-    const goldilocks_keccak_sponge_t s
+    const goldilocks_keccak_sponge_p s
 ) {
     return (s->params->max_out == 0xFF)
         ? (200-s->params->rate)
@@ -224,7 +224,7 @@ size_t goldilocks_sha3_default_output_bytes (
 }
 
 size_t goldilocks_sha3_max_output_bytes (
-    const goldilocks_keccak_sponge_t s
+    const goldilocks_keccak_sponge_p s
 ) {
     return (s->params->max_out == 0xFF)
         ? SIZE_MAX

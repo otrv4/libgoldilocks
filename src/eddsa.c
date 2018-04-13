@@ -16,7 +16,7 @@
 #include <string.h>
 #include "api.h"
 
-#define hash_ctx_t   goldilocks_shake256_ctx_t
+#define hash_ctx_p   goldilocks_shake256_ctx_p
 #define hash_init    goldilocks_shake256_init
 #define hash_update  goldilocks_shake256_update
 #define hash_final   goldilocks_shake256_final
@@ -48,7 +48,7 @@ static void clamp (
 
 /* is ed448 by default with no context? */
 static void hash_init_with_dom(
-    hash_ctx_t hash,
+    hash_ctx_p hash,
     uint8_t prehashed,
     uint8_t for_prehash,
     const uint8_t *context,
@@ -73,7 +73,7 @@ static void hash_init_with_dom(
 }
 
 void goldilocks_ed448_prehash_init (
-    hash_ctx_t hash
+    hash_ctx_p hash
 ) {
     hash_init(hash);
 }
@@ -95,7 +95,7 @@ void goldilocks_ed448_convert_private_key_to_x448 (
 
 /* Specially for libotrv4 */
 void goldilocks_ed448_derive_secret_scalar (
-    API_NS(scalar_t) secret,
+    API_NS(scalar_p) secret,
     const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES]
 ) {
     /* only this much used for keygen */
@@ -128,10 +128,10 @@ void goldilocks_ed448_derive_public_key (
     uint8_t pubkey[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
     const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES]
 ) {
-    API_NS(scalar_t) secret_scalar;
+    API_NS(scalar_p) secret_scalar;
     goldilocks_ed448_derive_secret_scalar(secret_scalar, privkey);
 
-    API_NS(point_t) p;
+    API_NS(point_p) p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),secret_scalar);
 
     API_NS(point_mul_by_ratio_and_encode_like_eddsa)(pubkey, p);
@@ -151,8 +151,8 @@ void goldilocks_ed448_sign (
     const uint8_t *context,
     uint8_t context_len
 ) {
-    API_NS(scalar_t) secret_scalar;
-    hash_ctx_t hash;
+    API_NS(scalar_p) secret_scalar;
+    hash_ctx_p hash;
     {
         /* Schedule the secret key */
         struct {
@@ -176,7 +176,7 @@ void goldilocks_ed448_sign (
     }
 
     /* Decode the nonce */
-    API_NS(scalar_t) nonce_scalar;
+    API_NS(scalar_p) nonce_scalar;
     {
         uint8_t nonce[2*GOLDILOCKS_EDDSA_448_PRIVATE_BYTES];
         hash_final(hash,nonce,sizeof(nonce));
@@ -187,20 +187,20 @@ void goldilocks_ed448_sign (
     uint8_t nonce_point[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES] = {0};
     {
         /* Scalarmul to create the nonce-point */
-        API_NS(scalar_t) nonce_scalar_2;
+        API_NS(scalar_p) nonce_scalar_2;
         API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar);
         for (unsigned int c = 2; c < GOLDILOCKS_448_EDDSA_ENCODE_RATIO; c <<= 1) {
             API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar_2);
         }
 
-        API_NS(point_t) p;
+        API_NS(point_p) p;
         API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),nonce_scalar_2);
         API_NS(point_mul_by_ratio_and_encode_like_eddsa)(nonce_point, p);
         API_NS(point_destroy)(p);
         API_NS(scalar_destroy)(nonce_scalar_2);
     }
 
-    API_NS(scalar_t) challenge_scalar;
+    API_NS(scalar_p) challenge_scalar;
     {
         /* Compute the challenge */
         hash_init_with_dom(hash,prehashed,0,context,context_len);
@@ -231,13 +231,13 @@ void goldilocks_ed448_sign_prehash (
     uint8_t signature[GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES],
     const uint8_t pubkey[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
-    const goldilocks_ed448_prehash_ctx_t hash,
+    const goldilocks_ed448_prehash_ctx_p hash,
     const uint8_t *context,
     uint8_t context_len
 ) {
     uint8_t hash_output[EDDSA_PREHASH_BYTES];
     {
-        goldilocks_ed448_prehash_ctx_t hash_too;
+        goldilocks_ed448_prehash_ctx_p hash_too;
         memcpy(hash_too,hash,sizeof(hash_too));
         hash_final(hash_too,hash_output,sizeof(hash_output));
         hash_destroy(hash_too);
@@ -256,17 +256,17 @@ goldilocks_error_t goldilocks_ed448_verify (
     const uint8_t *context,
     uint8_t context_len
 ) {
-    API_NS(point_t) pk_point, r_point;
+    API_NS(point_p) pk_point, r_point;
     goldilocks_error_t error = API_NS(point_decode_like_eddsa_and_mul_by_ratio)(pk_point,pubkey);
     if (GOLDILOCKS_SUCCESS != error) { return error; }
 
     error = API_NS(point_decode_like_eddsa_and_mul_by_ratio)(r_point,signature);
     if (GOLDILOCKS_SUCCESS != error) { return error; }
 
-    API_NS(scalar_t) challenge_scalar;
+    API_NS(scalar_p) challenge_scalar;
     {
         /* Compute the challenge */
-        hash_ctx_t hash;
+        hash_ctx_p hash;
         hash_init_with_dom(hash,prehashed,0,context,context_len);
         hash_update(hash,signature,GOLDILOCKS_EDDSA_448_PUBLIC_BYTES);
         hash_update(hash,pubkey,GOLDILOCKS_EDDSA_448_PUBLIC_BYTES);
@@ -279,7 +279,7 @@ goldilocks_error_t goldilocks_ed448_verify (
     }
     API_NS(scalar_sub)(challenge_scalar, API_NS(scalar_zero), challenge_scalar);
 
-    API_NS(scalar_t) response_scalar;
+    API_NS(scalar_p) response_scalar;
     API_NS(scalar_decode_long)(
         response_scalar,
         &signature[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
@@ -305,7 +305,7 @@ goldilocks_error_t goldilocks_ed448_verify (
 goldilocks_error_t goldilocks_ed448_verify_prehash (
     const uint8_t signature[GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t pubkey[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
-    const goldilocks_ed448_prehash_ctx_t hash,
+    const goldilocks_ed448_prehash_ctx_p hash,
     const uint8_t *context,
     uint8_t context_len
 ) {
@@ -313,7 +313,7 @@ goldilocks_error_t goldilocks_ed448_verify_prehash (
 
     uint8_t hash_output[EDDSA_PREHASH_BYTES];
     {
-        goldilocks_ed448_prehash_ctx_t hash_too;
+        goldilocks_ed448_prehash_ctx_p hash_too;
         memcpy(hash_too,hash,sizeof(hash_too));
         hash_final(hash_too,hash_output,sizeof(hash_output));
         hash_destroy(hash_too);

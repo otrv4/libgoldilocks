@@ -18,7 +18,7 @@
 #include "api.h"
 
 /* Template stuff */
-#define point_t API_NS(point_t)
+#define point_p API_NS(point_p)
 #define precomputed_s API_NS(precomputed_s)
 
 /* Comb config: number of combs, n, t, s. */
@@ -30,7 +30,7 @@
 #define GOLDILOCKS_WNAF_VAR_TABLE_BITS 3
 
 static const int EDWARDS_D = -39081;
-static const scalar_t point_scalarmul_adjustment = {{{
+static const scalar_p point_scalarmul_adjustment = {{{
     SC_LIMB(0xc873d6d54a7bb0cf), SC_LIMB(0xe933d8d723a70aad), SC_LIMB(0xbb124b65129c96fd), SC_LIMB(0x00000008335dc163)
 }}}, precomputed_scalarmul_adjustment = {{{
     SC_LIMB(0xc873d6d54a7bb0cf), SC_LIMB(0xe933d8d723a70aad), SC_LIMB(0xbb124b65129c96fd), SC_LIMB(0x00000008335dc163)
@@ -49,14 +49,14 @@ const gf GOLDILOCKS_448_FACTOR = {FIELD_LITERAL(
 
 /* End of template stuff */
 
-extern const point_t API_NS(point_base);
+extern const point_p API_NS(point_base);
 
 /* Projective Niels coordinates */
-typedef struct { gf a, b, c; } niels_s, niels_t[1];
-typedef struct { niels_t n; gf z; } VECTOR_ALIGNED pniels_s, pniels_t[1];
+typedef struct { gf a, b, c; } niels_s, niels_p[1];
+typedef struct { niels_p n; gf z; } VECTOR_ALIGNED pniels_s, pniels_p[1];
 
 /* Precomputed base */
-struct precomputed_s { niels_t table [COMBS_N<<(COMBS_T-1)]; };
+struct precomputed_s { niels_p table [COMBS_N<<(COMBS_T-1)]; };
 
 extern const gf API_NS(precomputed_base_as_fe)[];
 const precomputed_s *API_NS(precomputed_base) =
@@ -79,14 +79,14 @@ gf_invert(gf y, const gf x, int assert_nonzero) {
 }
 
 /** identity = (0,1) */
-const point_t API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
+const point_p API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 
 /* Predeclare because not static: called by elligator */
 void API_NS(deisogenize) (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
     gf_s *__restrict__ inv_el_m1,
-    const point_t p,
+    const point_p p,
     mask_t toggle_s,
     mask_t toggle_altx,
     mask_t toggle_rotation
@@ -98,7 +98,7 @@ void API_NS(deisogenize) (
     gf_s *__restrict__ s,
     gf_s *__restrict__ inv_el_sum,
     gf_s *__restrict__ inv_el_m1,
-    const point_t p,
+    const point_p p,
     mask_t toggle_s,
     mask_t toggle_altx,
     mask_t toggle_rotation
@@ -130,14 +130,14 @@ void API_NS(deisogenize) (
     gf_add(inv_el_m1,inv_el_m1,p->t);
 }
 
-void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_t p ) {
+void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_p p ) {
     gf s,ie1,ie2;
     API_NS(deisogenize)(s,ie1,ie2,p,0,0,0);
     gf_serialize(ser,s,1);
 }
 
 goldilocks_error_t API_NS(point_decode) (
-    point_t p,
+    point_p p,
     const unsigned char ser[SER_BYTES],
     goldilocks_bool_t allow_identity
 ) {
@@ -173,9 +173,9 @@ goldilocks_error_t API_NS(point_decode) (
 }
 
 void API_NS(point_sub) (
-    point_t p,
-    const point_t q,
-    const point_t r
+    point_p p,
+    const point_p q,
+    const point_p r
 ) {
     gf a, b, c, d;
     gf_sub_nr ( b, q->y, q->x ); /* 3+e */
@@ -200,9 +200,9 @@ void API_NS(point_sub) (
 }
 
 void API_NS(point_add) (
-    point_t p,
-    const point_t q,
-    const point_t r
+    point_p p,
+    const point_p q,
+    const point_p r
 ) {
     gf a, b, c, d;
     gf_sub_nr ( b, q->y, q->x ); /* 3+e */
@@ -228,8 +228,8 @@ void API_NS(point_add) (
 
 static GOLDILOCKS_NOINLINE void
 point_double_internal (
-    point_t p,
-    const point_t q,
+    point_p p,
+    const point_p q,
     int before_double
 ) {
     gf a, b, c, d;
@@ -250,13 +250,13 @@ point_double_internal (
     if (!before_double) gf_mul ( p->t, b, d );
 }
 
-void API_NS(point_double)(point_t p, const point_t q) {
+void API_NS(point_double)(point_p p, const point_p q) {
     point_double_internal(p,q,0);
 }
 
 void API_NS(point_negate) (
-   point_t nega,
-   const point_t a
+   point_p nega,
+   const point_p a
 ) {
     gf_sub(nega->x, ZERO, a->x);
     gf_copy(nega->y, a->y);
@@ -267,7 +267,7 @@ void API_NS(point_negate) (
 /* Operations on [p]niels */
 static GOLDILOCKS_INLINE void
 cond_neg_niels (
-    niels_t n,
+    niels_p n,
     mask_t neg
 ) {
     gf_cond_swap(n->a, n->b, neg);
@@ -275,8 +275,8 @@ cond_neg_niels (
 }
 
 static GOLDILOCKS_NOINLINE void pt_to_pniels (
-    pniels_t b,
-    const point_t a
+    pniels_p b,
+    const point_p a
 ) {
     gf_sub ( b->n->a, a->y, a->x );
     gf_add ( b->n->b, a->x, a->y );
@@ -285,8 +285,8 @@ static GOLDILOCKS_NOINLINE void pt_to_pniels (
 }
 
 static GOLDILOCKS_NOINLINE void pniels_to_pt (
-    point_t e,
-    const pniels_t d
+    point_p e,
+    const pniels_p d
 ) {
     gf eu;
     gf_add ( eu, d->n->b, d->n->a );
@@ -299,8 +299,8 @@ static GOLDILOCKS_NOINLINE void pniels_to_pt (
 
 static GOLDILOCKS_NOINLINE void
 niels_to_pt (
-    point_t e,
-    const niels_t n
+    point_p e,
+    const niels_p n
 ) {
     gf_add ( e->y, n->b, n->a );
     gf_sub ( e->x, n->b, n->a );
@@ -310,8 +310,8 @@ niels_to_pt (
 
 static GOLDILOCKS_NOINLINE void
 add_niels_to_pt (
-    point_t d,
-    const niels_t e,
+    point_p d,
+    const niels_p e,
     int before_double
 ) {
     gf a, b, c;
@@ -332,8 +332,8 @@ add_niels_to_pt (
 
 static GOLDILOCKS_NOINLINE void
 sub_niels_from_pt (
-    point_t d,
-    const niels_t e,
+    point_p d,
+    const niels_p e,
     int before_double
 ) {
     gf a, b, c;
@@ -354,8 +354,8 @@ sub_niels_from_pt (
 
 static void
 add_pniels_to_pt (
-    point_t p,
-    const pniels_t pn,
+    point_p p,
+    const pniels_p pn,
     int before_double
 ) {
     gf L0;
@@ -366,8 +366,8 @@ add_pniels_to_pt (
 
 static void
 sub_pniels_from_pt (
-    point_t p,
-    const pniels_t pn,
+    point_p p,
+    const pniels_p pn,
     int before_double
 ) {
     gf L0;
@@ -378,12 +378,12 @@ sub_pniels_from_pt (
 
 static GOLDILOCKS_NOINLINE void
 prepare_fixed_window(
-    pniels_t *multiples,
-    const point_t b,
+    pniels_p *multiples,
+    const point_p b,
     int ntable
 ) {
-    point_t tmp;
-    pniels_t pn;
+    point_p tmp;
+    pniels_p pn;
     int i;
 
     point_double_internal(tmp, b, 0);
@@ -400,22 +400,22 @@ prepare_fixed_window(
 }
 
 void API_NS(point_scalarmul) (
-    point_t a,
-    const point_t b,
-    const scalar_t scalar
+    point_p a,
+    const point_p b,
+    const scalar_p scalar
 ) {
     const int WINDOW = GOLDILOCKS_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
 
-    scalar_t scalar1x;
+    scalar_p scalar1x;
     API_NS(scalar_add)(scalar1x, scalar, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
 
     /* Set up a precomputed table with odd multiples of b. */
-    pniels_t pn, multiples[NTABLE];
-    point_t tmp;
+    pniels_p pn, multiples[NTABLE];
+    point_p tmp;
     prepare_fixed_window(multiples, b, NTABLE);
 
     /* Initialize. */
@@ -460,26 +460,26 @@ void API_NS(point_scalarmul) (
 }
 
 void API_NS(point_double_scalarmul) (
-    point_t a,
-    const point_t b,
-    const scalar_t scalarb,
-    const point_t c,
-    const scalar_t scalarc
+    point_p a,
+    const point_p b,
+    const scalar_p scalarb,
+    const point_p c,
+    const scalar_p scalarc
 ) {
     const int WINDOW = GOLDILOCKS_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
 
-    scalar_t scalar1x, scalar2x;
+    scalar_p scalar1x, scalar2x;
     API_NS(scalar_add)(scalar1x, scalarb, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
     API_NS(scalar_add)(scalar2x, scalarc, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar2x,scalar2x);
 
     /* Set up a precomputed table with odd multiples of b. */
-    pniels_t pn, multiples1[NTABLE], multiples2[NTABLE];
-    point_t tmp;
+    pniels_p pn, multiples1[NTABLE], multiples2[NTABLE];
+    point_p tmp;
     prepare_fixed_window(multiples1, b, NTABLE);
     prepare_fixed_window(multiples2, c, NTABLE);
 
@@ -535,26 +535,26 @@ void API_NS(point_double_scalarmul) (
 }
 
 void API_NS(point_dual_scalarmul) (
-    point_t a1,
-    point_t a2,
-    const point_t b,
-    const scalar_t scalar1,
-    const scalar_t scalar2
+    point_p a1,
+    point_p a2,
+    const point_p b,
+    const scalar_p scalar1,
+    const scalar_p scalar2
 ) {
     const int WINDOW = GOLDILOCKS_WINDOW_BITS,
         WINDOW_MASK = (1<<WINDOW)-1,
         WINDOW_T_MASK = WINDOW_MASK >> 1,
         NTABLE = 1<<(WINDOW-1);
 
-    scalar_t scalar1x, scalar2x;
+    scalar_p scalar1x, scalar2x;
     API_NS(scalar_add)(scalar1x, scalar1, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
     API_NS(scalar_add)(scalar2x, scalar2, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar2x,scalar2x);
 
     /* Set up a precomputed table with odd multiples of b. */
-    point_t multiples1[NTABLE], multiples2[NTABLE], working, tmp;
-    pniels_t pn;
+    point_p multiples1[NTABLE], multiples2[NTABLE], working, tmp;
+    pniels_p pn;
 
     API_NS(point_copy)(working, b);
 
@@ -634,7 +634,7 @@ void API_NS(point_dual_scalarmul) (
     goldilocks_bzero(working,sizeof(working));
 }
 
-goldilocks_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
+goldilocks_bool_t API_NS(point_eq) ( const point_p p, const point_p q ) {
     /* equality mod 2-torsion compares x/y */
     gf a, b;
     gf_mul ( a, p->y, q->x );
@@ -645,7 +645,7 @@ goldilocks_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
 }
 
 goldilocks_bool_t API_NS(point_valid) (
-    const point_t p
+    const point_p p
 ) {
     gf a,b,c;
     gf_mul(a,p->x,p->y);
@@ -664,8 +664,8 @@ goldilocks_bool_t API_NS(point_valid) (
 }
 
 void API_NS(point_debugging_torque) (
-    point_t q,
-    const point_t p
+    point_p q,
+    const point_p p
 ) {
     gf_sub(q->x,ZERO,p->x);
     gf_sub(q->y,ZERO,p->y);
@@ -674,8 +674,8 @@ void API_NS(point_debugging_torque) (
 }
 
 void API_NS(point_debugging_pscale) (
-    point_t q,
-    const point_t p,
+    point_p q,
+    const point_p p,
     const uint8_t factor[SER_BYTES]
 ) {
     gf gfac,tmp;
@@ -717,7 +717,7 @@ static void gf_batch_invert (
 }
 
 static void batch_normalize_niels (
-    niels_t *table,
+    niels_p *table,
     const gf *zs,
     gf *__restrict__ zis,
     int n
@@ -745,14 +745,14 @@ static void batch_normalize_niels (
 
 void API_NS(precompute) (
     precomputed_s *table,
-    const point_t base
+    const point_p base
 ) {
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
     assert(n*t*s >= SCALAR_BITS);
 
-    point_t working, start, doubles[t-1];
+    point_p working, start, doubles[t-1];
     API_NS(point_copy)(working, base);
-    pniels_t pn_tmp;
+    pniels_p pn_tmp;
 
     gf zs[n<<(t-1)], zis[n<<(t-1)];
 
@@ -811,7 +811,7 @@ void API_NS(precompute) (
 static GOLDILOCKS_INLINE void
 constant_time_lookup_niels (
     niels_s *__restrict__ ni,
-    const niels_t *table,
+    const niels_p *table,
     int nelts,
     int idx
 ) {
@@ -819,19 +819,19 @@ constant_time_lookup_niels (
 }
 
 void API_NS(precomputed_scalarmul) (
-    point_t out,
+    point_p out,
     const precomputed_s *table,
-    const scalar_t scalar
+    const scalar_p scalar
 ) {
     int i;
     unsigned j,k;
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
 
-    scalar_t scalar1x;
+    scalar_p scalar1x;
     API_NS(scalar_add)(scalar1x, scalar, precomputed_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
 
-    niels_t ni;
+    niels_p ni;
 
     for (i=s-1; i>=0; i--) {
         if (i != (int)s-1) point_double_internal(out,out,0);
@@ -866,22 +866,22 @@ void API_NS(precomputed_scalarmul) (
 }
 
 void API_NS(point_cond_sel) (
-    point_t out,
-    const point_t a,
-    const point_t b,
+    point_p out,
+    const point_p a,
+    const point_p b,
     goldilocks_bool_t pick_b
 ) {
-    constant_time_select(out,a,b,sizeof(point_t),bool_to_mask(pick_b),0);
+    constant_time_select(out,a,b,sizeof(point_p),bool_to_mask(pick_b),0);
 }
 
 goldilocks_error_t API_NS(direct_scalarmul) (
     uint8_t scaled[SER_BYTES],
     const uint8_t base[SER_BYTES],
-    const scalar_t scalar,
+    const scalar_p scalar,
     goldilocks_bool_t allow_identity,
     goldilocks_bool_t short_circuit
 ) {
-    point_t basep;
+    point_p basep;
     goldilocks_error_t succ = API_NS(point_decode)(basep, base, allow_identity);
     if (short_circuit && succ != GOLDILOCKS_SUCCESS) return succ;
     API_NS(point_cond_sel)(basep, API_NS(point_base), basep, succ);
@@ -893,12 +893,12 @@ goldilocks_error_t API_NS(direct_scalarmul) (
 
 void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     uint8_t enc[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
-    const point_t p
+    const point_p p
 ) {
 
     /* The point is now on the twisted curve.  Move it to untwisted. */
     gf x, y, z, t;
-    point_t q;
+    point_p q;
     API_NS(point_copy)(q,p);
     /* 4-isogeny: 2xy/(y^+x^2), (y^2-x^2)/(2z^2-y^2+x^2) */
     gf u;
@@ -936,7 +936,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
 
 
 goldilocks_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
-    point_t p,
+    point_p p,
     const uint8_t enc[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES]
 ) {
     uint8_t enc2[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES];
@@ -1090,9 +1090,9 @@ void goldilocks_ed448_convert_public_key_to_x448 (
 
 void API_NS(point_mul_by_ratio_and_encode_like_x448) (
     uint8_t out[X_PUBLIC_BYTES],
-    const point_t p
+    const point_p p
 ) {
-    point_t q;
+    point_p q;
     API_NS(point_copy)(q,p);
     gf_invert(q->t,q->x,0); /* 1/x */
     gf_mul(q->z,q->t,q->y); /* y/x */
@@ -1113,14 +1113,14 @@ void goldilocks_x448_derive_public_key (
     scalar2[X_PRIVATE_BYTES-1] &= ~(-1u<<((X_PRIVATE_BITS+7)%8));
     scalar2[X_PRIVATE_BYTES-1] |= 1<<((X_PRIVATE_BITS+7)%8);
 
-    scalar_t the_scalar;
+    scalar_p the_scalar;
     API_NS(scalar_decode_long)(the_scalar,scalar2,sizeof(scalar2));
 
     /* Compensate for the encoding ratio */
     for (unsigned i=1; i<GOLDILOCKS_X448_ENCODE_RATIO; i<<=1) {
         API_NS(scalar_halve)(the_scalar,the_scalar);
     }
-    point_t p;
+    point_p p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),the_scalar);
     API_NS(point_mul_by_ratio_and_encode_like_x448)(out,p);
     API_NS(point_destroy)(p);
@@ -1136,7 +1136,7 @@ struct smvt_control {
 
 static int recode_wnaf (
     struct smvt_control *control, /* [nbits/(table_bits+1) + 3] */
-    const scalar_t scalar,
+    const scalar_p scalar,
     unsigned int table_bits
 ) {
     unsigned int table_size = SCALAR_BITS/(table_bits+1) + 3;
@@ -1188,18 +1188,18 @@ static int recode_wnaf (
 
 static void
 prepare_wnaf_table(
-    pniels_t *output,
-    const point_t working,
+    pniels_p *output,
+    const point_p working,
     unsigned int tbits
 ) {
-    point_t tmp;
+    point_p tmp;
     int i;
     pt_to_pniels(output[0], working);
 
     if (tbits == 0) return;
 
     API_NS(point_double)(tmp,working);
-    pniels_t twop;
+    pniels_p twop;
     pt_to_pniels(twop, tmp);
 
     add_pniels_to_pt(tmp, output[0],0);
@@ -1215,25 +1215,25 @@ prepare_wnaf_table(
 }
 
 extern const gf API_NS(precomputed_wnaf_as_fe)[];
-static const niels_t *API_NS(wnaf_base) = (const niels_t *)API_NS(precomputed_wnaf_as_fe);
+static const niels_p *API_NS(wnaf_base) = (const niels_p *)API_NS(precomputed_wnaf_as_fe);
 const size_t API_NS(sizeof_precomputed_wnafs) __attribute((visibility("hidden")))
-    = sizeof(niels_t)<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS;
+    = sizeof(niels_p)<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS;
 
 void API_NS(precompute_wnafs) (
-    niels_t out[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS],
-    const point_t base
+    niels_p out[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS],
+    const point_p base
 ) __attribute__ ((visibility ("hidden")));
 
 void API_NS(precompute_wnafs) (
-    niels_t out[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS],
-    const point_t base
+    niels_p out[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS],
+    const point_p base
 ) {
-    pniels_t tmp[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS];
+    pniels_p tmp[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS];
     gf zs[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS], zis[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS];
     int i;
     prepare_wnaf_table(tmp,base,GOLDILOCKS_WNAF_FIXED_TABLE_BITS);
     for (i=0; i<1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS; i++) {
-        memcpy(out[i], tmp[i]->n, sizeof(niels_t));
+        memcpy(out[i], tmp[i]->n, sizeof(niels_p));
         gf_copy(zs[i], tmp[i]->z);
     }
     batch_normalize_niels(out, (const gf *)zs, zis, 1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS);
@@ -1244,10 +1244,10 @@ void API_NS(precompute_wnafs) (
 }
 
 void API_NS(base_double_scalarmul_non_secret) (
-    point_t combo,
-    const scalar_t scalar1,
-    const point_t base2,
-    const scalar_t scalar2
+    point_p combo,
+    const scalar_p scalar1,
+    const point_p base2,
+    const scalar_p scalar2
 ) {
     const int table_bits_var = GOLDILOCKS_WNAF_VAR_TABLE_BITS,
         table_bits_pre = GOLDILOCKS_WNAF_FIXED_TABLE_BITS;
@@ -1257,7 +1257,7 @@ void API_NS(base_double_scalarmul_non_secret) (
     int ncb_pre = recode_wnaf(control_pre, scalar1, table_bits_pre);
     int ncb_var = recode_wnaf(control_var, scalar2, table_bits_var);
 
-    pniels_t precmp_var[1<<table_bits_var];
+    pniels_p precmp_var[1<<table_bits_var];
     prepare_wnaf_table(precmp_var, base2, table_bits_var);
 
     int contp=0, contv=0, i = control_var[0].power;
@@ -1315,9 +1315,9 @@ void API_NS(base_double_scalarmul_non_secret) (
 }
 
 void API_NS(point_destroy) (
-    point_t point
+    point_p point
 ) {
-    goldilocks_bzero(point, sizeof(point_t));
+    goldilocks_bzero(point, sizeof(point_p));
 }
 
 void API_NS(precomputed_destroy) (

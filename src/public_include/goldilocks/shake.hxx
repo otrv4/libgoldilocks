@@ -36,7 +36,7 @@ class KeccakHash {
 protected:
     /** @cond internal */
     /** The C-wrapper sponge state */
-    goldilocks_keccak_sponge_t wrapped;
+    goldilocks_keccak_sponge_p wrapped;
 
     /** Initialize from parameters */
     inline KeccakHash(const goldilocks_kparams_s *params) GOLDILOCKS_NOEXCEPT { goldilocks_sha3_init(wrapped, params); }

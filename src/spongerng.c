@@ -90,7 +90,7 @@ static void get_cpu_entropy(uint8_t *entropy, size_t len) {
 }
 
 void goldilocks_spongerng_next (
-    goldilocks_keccak_prng_t prng,
+    goldilocks_keccak_prng_p prng,
     uint8_t * __restrict__ out,
     size_t len
 ) {
@@ -116,7 +116,7 @@ void goldilocks_spongerng_next (
 }
 
 void goldilocks_spongerng_stir (
-    goldilocks_keccak_prng_t prng,
+    goldilocks_keccak_prng_p prng,
     const uint8_t * __restrict__ in,
     size_t len
 ) {
@@ -133,7 +133,7 @@ void goldilocks_spongerng_stir (
 }
 
 void goldilocks_spongerng_init_from_buffer (
-    goldilocks_keccak_prng_t prng,
+    goldilocks_keccak_prng_p prng,
     const uint8_t * __restrict__ in,
     size_t len,
     int deterministic
@@ -144,7 +144,7 @@ void goldilocks_spongerng_init_from_buffer (
 }
 
 goldilocks_error_t goldilocks_spongerng_init_from_file (
-    goldilocks_keccak_prng_t prng,
+    goldilocks_keccak_prng_p prng,
     const char *file,
     size_t len,
     int deterministic
@@ -174,7 +174,7 @@ goldilocks_error_t goldilocks_spongerng_init_from_file (
 }
 
 goldilocks_error_t goldilocks_spongerng_init_from_dev_urandom (
-    goldilocks_keccak_prng_t goldilocks_sponge
+    goldilocks_keccak_prng_p goldilocks_sponge
 ) {
     return goldilocks_spongerng_init_from_file(goldilocks_sponge, "/dev/urandom", 64, 0);
 }

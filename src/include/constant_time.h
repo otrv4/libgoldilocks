@@ -41,14 +41,14 @@
  */
 typedef struct {
     big_register_t unaligned;
-} __attribute__((packed)) unaligned_br_t;
+} __attribute__((packed)) unaligned_br_s;
 
 /**
  * Unaligned word register, for architectures where that matters.
  */
 typedef struct {
     word_t unaligned;
-} __attribute__((packed)) unaligned_word_t;
+} __attribute__((packed)) unaligned_word_s;
 
 /**
  * @brief Constant-time conditional swap.
@@ -75,11 +75,11 @@ constant_time_cond_swap (
         if (elem_bytes % sizeof(big_register_t)) {
             /* unaligned */
             big_register_t xor =
-                ((unaligned_br_t*)(&a[k]))->unaligned
-              ^ ((unaligned_br_t*)(&b[k]))->unaligned;
+                ((unaligned_br_s*)(&a[k]))->unaligned
+              ^ ((unaligned_br_s*)(&b[k]))->unaligned;
             xor &= br_mask;
-            ((unaligned_br_t*)(&a[k]))->unaligned ^= xor;
-            ((unaligned_br_t*)(&b[k]))->unaligned ^= xor;
+            ((unaligned_br_s*)(&a[k]))->unaligned ^= xor;
+            ((unaligned_br_s*)(&b[k]))->unaligned ^= xor;
         } else {
             /* aligned */
             big_register_t xor =
@@ -96,11 +96,11 @@ constant_time_cond_swap (
             if (elem_bytes % sizeof(word_t)) {
                 /* unaligned */
                 word_t xor =
-                    ((unaligned_word_t*)(&a[k]))->unaligned
-                  ^ ((unaligned_word_t*)(&b[k]))->unaligned;
+                    ((unaligned_word_s*)(&a[k]))->unaligned
+                  ^ ((unaligned_word_s*)(&b[k]))->unaligned;
                 xor &= doswap;
-                ((unaligned_word_t*)(&a[k]))->unaligned ^= xor;
-                ((unaligned_word_t*)(&b[k]))->unaligned ^= xor;
+                ((unaligned_word_s*)(&a[k]))->unaligned ^= xor;
+                ((unaligned_word_s*)(&b[k]))->unaligned ^= xor;
             } else {
                 /* aligned */
                 word_t xor =
@@ -153,8 +153,8 @@ constant_time_lookup (
         for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
             if (elem_bytes % sizeof(big_register_t)) {
                 /* unaligned */
-                ((unaligned_br_t *)(out+k))->unaligned
-			|= br_mask & ((const unaligned_br_t*)(&table[k+j*elem_bytes]))->unaligned;
+                ((unaligned_br_s *)(out+k))->unaligned
+			|= br_mask & ((const unaligned_br_s*)(&table[k+j*elem_bytes]))->unaligned;
             } else {
                 /* aligned */
                 *(big_register_t *)(out+k) |= br_mask & *(const big_register_t*)(&table[k+j*elem_bytes]);
@@ -166,7 +166,7 @@ constant_time_lookup (
             for (; k<=elem_bytes-sizeof(word_t); k+=sizeof(word_t)) {
                 if (elem_bytes % sizeof(word_t)) {
                     /* input unaligned, output aligned */
-                    *(word_t *)(out+k) |= mask & ((const unaligned_word_t*)(&table[k+j*elem_bytes]))->unaligned;
+                    *(word_t *)(out+k) |= mask & ((const unaligned_word_s*)(&table[k+j*elem_bytes]))->unaligned;
                 } else {
                     /* aligned */
                     *(word_t *)(out+k) |= mask & *(const word_t*)(&table[k+j*elem_bytes]);
@@ -211,9 +211,9 @@ constant_time_insert (
         for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
             if (elem_bytes % sizeof(big_register_t)) {
                 /* unaligned */
-                ((unaligned_br_t*)(&table[k+j*elem_bytes]))->unaligned
-                    = ( ((unaligned_br_t*)(&table[k+j*elem_bytes]))->unaligned & ~br_mask )
-                    | ( ((const unaligned_br_t *)(in+k))->unaligned & br_mask );
+                ((unaligned_br_s*)(&table[k+j*elem_bytes]))->unaligned
+                    = ( ((unaligned_br_s*)(&table[k+j*elem_bytes]))->unaligned & ~br_mask )
+                    | ( ((const unaligned_br_s *)(in+k))->unaligned & br_mask );
             } else {
                 /* aligned */
                 *(big_register_t*)(&table[k+j*elem_bytes])
@@ -227,8 +227,8 @@ constant_time_insert (
             for (; k<=elem_bytes-sizeof(word_t); k+=sizeof(word_t)) {
                 if (elem_bytes % sizeof(word_t)) {
                     /* output unaligned, input aligned */
-                    ((unaligned_word_t*)(&table[k+j*elem_bytes]))->unaligned
-                        = ( ((unaligned_word_t*)(&table[k+j*elem_bytes]))->unaligned & ~mask )
+                    ((unaligned_word_s*)(&table[k+j*elem_bytes]))->unaligned
+                        = ( ((unaligned_word_s*)(&table[k+j*elem_bytes]))->unaligned & ~mask )
                         | ( *(const word_t *)(in+k) & mask );
                 } else {
                     /* aligned */
@@ -270,7 +270,7 @@ constant_time_mask (
     for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
         if (elem_bytes % sizeof(big_register_t)) {
             /* unaligned */
-            ((unaligned_br_t*)(&a[k]))->unaligned = br_mask & ((const unaligned_br_t*)(&b[k]))->unaligned;
+            ((unaligned_br_s*)(&a[k]))->unaligned = br_mask & ((const unaligned_br_s*)(&b[k]))->unaligned;
         } else {
             /* aligned */
             *(big_register_t *)(a+k) = br_mask & *(const big_register_t*)(&b[k]);
@@ -281,7 +281,7 @@ constant_time_mask (
         for (; k<=elem_bytes-sizeof(word_t); k+=sizeof(word_t)) {
             if (elem_bytes % sizeof(word_t)) {
                 /* unaligned */
-                ((unaligned_word_t*)(&a[k]))->unaligned = mask & ((const unaligned_word_t*)(&b[k]))->unaligned;
+                ((unaligned_word_s*)(&a[k]))->unaligned = mask & ((const unaligned_word_s*)(&b[k]))->unaligned;
             } else {
                 /* aligned */
                 *(word_t *)(a+k) = mask & *(const word_t*)(&b[k]);
@@ -326,9 +326,9 @@ constant_time_select (
     for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
         if (alignment_bytes % sizeof(big_register_t)) {
             /* unaligned */
-            ((unaligned_br_t*)(&a[k]))->unaligned =
-		  ( br_mask & ((const unaligned_br_t*)(&bTrue [k]))->unaligned)
-		| (~br_mask & ((const unaligned_br_t*)(&bFalse[k]))->unaligned);
+            ((unaligned_br_s*)(&a[k]))->unaligned =
+		  ( br_mask & ((const unaligned_br_s*)(&bTrue [k]))->unaligned)
+		| (~br_mask & ((const unaligned_br_s*)(&bFalse[k]))->unaligned);
         } else {
             /* aligned */
             *(big_register_t *)(a+k) =
@@ -341,9 +341,9 @@ constant_time_select (
         for (; k<=elem_bytes-sizeof(word_t); k+=sizeof(word_t)) {
             if (alignment_bytes % sizeof(word_t)) {
                 /* unaligned */
-                ((unaligned_word_t*)(&a[k]))->unaligned =
-		    ( mask & ((const unaligned_word_t*)(&bTrue [k]))->unaligned)
-		  | (~mask & ((const unaligned_word_t*)(&bFalse[k]))->unaligned);
+                ((unaligned_word_s*)(&a[k]))->unaligned =
+		    ( mask & ((const unaligned_word_s*)(&bTrue [k]))->unaligned)
+		  | (~mask & ((const unaligned_word_s*)(&bFalse[k]))->unaligned);
             } else {
                 /* aligned */
                 *(word_t *)(a+k) =

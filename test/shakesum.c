@@ -23,7 +23,7 @@ static void usage() {
 int main(int argc, char **argv) {
     (void)argc; (void)argv;
 
-    goldilocks_keccak_sponge_t sponge;
+    goldilocks_keccak_sponge_p sponge;
     unsigned char buf[1024];
 
     unsigned int outlen = 512;

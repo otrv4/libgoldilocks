@@ -37,7 +37,7 @@ extern "C" {
 #define goldilocks_ed448_prehash_ctx_s   goldilocks_shake256_ctx_s
 
 /** Prehash context, array[1] form. */
-#define goldilocks_ed448_prehash_ctx_t   goldilocks_shake256_ctx_t
+#define goldilocks_ed448_prehash_ctx_p   goldilocks_shake256_ctx_p
 
 /** Prehash update. */
 #define goldilocks_ed448_prehash_update  goldilocks_shake256_update
@@ -59,7 +59,7 @@ extern "C" {
  * @param [in] privkey The private key.
  */
 void goldilocks_ed448_derive_secret_scalar (
-    goldilocks_448_scalar_t secret,
+    goldilocks_448_scalar_p secret,
     const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES]
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
@@ -122,7 +122,7 @@ void goldilocks_ed448_sign_prehash (
     uint8_t signature[GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES],
     const uint8_t pubkey[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
-    const goldilocks_ed448_prehash_ctx_t hash,
+    const goldilocks_ed448_prehash_ctx_p hash,
     const uint8_t *context,
     uint8_t context_len
 ) GOLDILOCKS_API_VIS __attribute__((nonnull(1,2,3,4))) GOLDILOCKS_NOINLINE;
@@ -133,7 +133,7 @@ void goldilocks_ed448_sign_prehash (
  * @param [out] hash The hash object to be initialized.
  */
 void goldilocks_ed448_prehash_init (
-    goldilocks_ed448_prehash_ctx_t hash
+    goldilocks_ed448_prehash_ctx_p hash
 ) GOLDILOCKS_API_VIS __attribute__((nonnull(1))) GOLDILOCKS_NOINLINE;
 
 /**
@@ -183,7 +183,7 @@ goldilocks_error_t goldilocks_ed448_verify (
 goldilocks_error_t goldilocks_ed448_verify_prehash (
     const uint8_t signature[GOLDILOCKS_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t pubkey[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
-    const goldilocks_ed448_prehash_ctx_t hash,
+    const goldilocks_ed448_prehash_ctx_p hash,
     const uint8_t *context,
     uint8_t context_len
 ) GOLDILOCKS_API_VIS __attribute__((nonnull(1,2))) GOLDILOCKS_NOINLINE;
@@ -214,7 +214,7 @@ goldilocks_error_t goldilocks_ed448_verify_prehash (
  */
 void goldilocks_448_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
-    const goldilocks_448_point_t p
+    const goldilocks_448_point_p p
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 
 /**
@@ -227,7 +227,7 @@ void goldilocks_448_point_mul_by_ratio_and_encode_like_eddsa (
  * @param [in] p The point.
  */
 goldilocks_error_t goldilocks_448_point_decode_like_eddsa_and_mul_by_ratio (
-    goldilocks_448_point_t p,
+    goldilocks_448_point_p p,
     const uint8_t enc[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES]
 ) GOLDILOCKS_API_VIS GOLDILOCKS_NONNULL GOLDILOCKS_NOINLINE;
 

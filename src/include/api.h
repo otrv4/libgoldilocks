@@ -20,7 +20,7 @@
 #define SCALAR_SER_BYTES GOLDILOCKS_448_SCALAR_BYTES
 #define SCALAR_LIMBS GOLDILOCKS_448_SCALAR_LIMBS
 
-#define scalar_t API_NS(scalar_t)
+#define scalar_p API_NS(scalar_p)
 
 #define WBITS GOLDILOCKS_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 

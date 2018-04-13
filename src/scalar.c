@@ -15,23 +15,23 @@
 #include "api.h"
 
 static const goldilocks_word_t MONTGOMERY_FACTOR = (goldilocks_word_t)0x3bd440fae918bc5ull;
-static const scalar_t sc_p = {{{
+static const scalar_p sc_p = {{{
     SC_LIMB(0x2378c292ab5844f3), SC_LIMB(0x216cc2728dc58f55), SC_LIMB(0xc44edb49aed63690), SC_LIMB(0xffffffff7cca23e9), SC_LIMB(0xffffffffffffffff), SC_LIMB(0xffffffffffffffff), SC_LIMB(0x3fffffffffffffff)
 }}}, sc_r2 = {{{
     SC_LIMB(0xe3539257049b9b60), SC_LIMB(0x7af32c4bc1b195d9), SC_LIMB(0x0d66de2388ea1859), SC_LIMB(0xae17cf725ee4d838), SC_LIMB(0x1a9cc14ba3c47c44), SC_LIMB(0x2052bcb7e4d070af), SC_LIMB(0x3402a939f823b729)
 }}};
 /* End of template stuff */
 
-const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
+const scalar_p API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
 
 /** {extra,accum} - sub +? p
  * Must have extra <= 1
  */
 static GOLDILOCKS_NOINLINE void sc_subx(
-    scalar_t out,
+    scalar_p out,
     const goldilocks_word_t accum[SCALAR_LIMBS],
-    const scalar_t sub,
-    const scalar_t p,
+    const scalar_p sub,
+    const scalar_p p,
     goldilocks_word_t extra
 ) {
     goldilocks_dsword_t chain = 0;
@@ -52,9 +52,9 @@ static GOLDILOCKS_NOINLINE void sc_subx(
 }
 
 static GOLDILOCKS_NOINLINE void sc_montmul (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t b
+    scalar_p out,
+    const scalar_p a,
+    const scalar_p b
 ) {
     unsigned int i,j;
     goldilocks_word_t accum[SCALAR_LIMBS+1] = {0};
@@ -90,28 +90,28 @@ static GOLDILOCKS_NOINLINE void sc_montmul (
 }
 
 void API_NS(scalar_mul) (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t b
+    scalar_p out,
+    const scalar_p a,
+    const scalar_p b
 ) {
     sc_montmul(out,a,b);
     sc_montmul(out,out,sc_r2);
 }
 
 /* PERF: could implement this */
-static GOLDILOCKS_INLINE void sc_montsqr (scalar_t out, const scalar_t a) {
+static GOLDILOCKS_INLINE void sc_montsqr (scalar_p out, const scalar_p a) {
     sc_montmul(out,a,a);
 }
 
 goldilocks_error_t API_NS(scalar_invert) (
-    scalar_t out,
-    const scalar_t a
+    scalar_p out,
+    const scalar_p a
 ) {
     /* Fermat's little theorem, sliding window.
      * Sliding window is fine here because the modulus isn't secret.
      */
     const int SCALAR_WINDOW_BITS = 3;
-    scalar_t precmp[1<<SCALAR_WINDOW_BITS];
+    scalar_p precmp[1<<SCALAR_WINDOW_BITS];
     const int LAST = (1<<SCALAR_WINDOW_BITS)-1;
 
     /* Precompute precmp = [a^1,a^3,...] */
@@ -164,17 +164,17 @@ goldilocks_error_t API_NS(scalar_invert) (
 }
 
 void API_NS(scalar_sub) (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t b
+    scalar_p out,
+    const scalar_p a,
+    const scalar_p b
 ) {
     sc_subx(out, a->limb, b, sc_p, 0);
 }
 
 void API_NS(scalar_add) (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t b
+    scalar_p out,
+    const scalar_p a,
+    const scalar_p b
 ) {
     goldilocks_dword_t chain = 0;
     unsigned int i;
@@ -188,10 +188,10 @@ void API_NS(scalar_add) (
 
 void
 API_NS(scalar_set_unsigned) (
-    scalar_t out,
+    scalar_p out,
     uint64_t w
 ) {
-    memset(out,0,sizeof(scalar_t));
+    memset(out,0,sizeof(scalar_p));
     unsigned int i = 0;
     for (; i<sizeof(uint64_t)/sizeof(goldilocks_word_t); i++) {
         out->limb[i] = w;
@@ -203,8 +203,8 @@ API_NS(scalar_set_unsigned) (
 
 goldilocks_bool_t
 API_NS(scalar_eq) (
-    const scalar_t a,
-    const scalar_t b
+    const scalar_p a,
+    const scalar_p b
 ) {
     goldilocks_word_t diff = 0;
     unsigned int i;
@@ -215,7 +215,7 @@ API_NS(scalar_eq) (
 }
 
 static GOLDILOCKS_INLINE void scalar_decode_short (
-    scalar_t s,
+    scalar_p s,
     const unsigned char *ser,
     unsigned int nbytes
 ) {
@@ -230,7 +230,7 @@ static GOLDILOCKS_INLINE void scalar_decode_short (
 }
 
 goldilocks_error_t API_NS(scalar_decode)(
-    scalar_t s,
+    scalar_p s,
     const unsigned char ser[SCALAR_SER_BYTES]
 ) {
     unsigned int i;
@@ -247,13 +247,13 @@ goldilocks_error_t API_NS(scalar_decode)(
 }
 
 void API_NS(scalar_destroy) (
-    scalar_t scalar
+    scalar_p scalar
 ) {
-    goldilocks_bzero(scalar, sizeof(scalar_t));
+    goldilocks_bzero(scalar, sizeof(scalar_p));
 }
 
 void API_NS(scalar_decode_long)(
-    scalar_t s,
+    scalar_p s,
     const unsigned char *ser,
     size_t ser_len
 ) {
@@ -263,14 +263,14 @@ void API_NS(scalar_decode_long)(
     }
 
     size_t i;
-    scalar_t t1, t2;
+    scalar_p t1, t2;
 
     i = ser_len - (ser_len%SCALAR_SER_BYTES);
     if (i==ser_len) i -= SCALAR_SER_BYTES;
 
     scalar_decode_short(t1, &ser[i], ser_len-i);
 
-    if (ser_len == sizeof(scalar_t)) {
+    if (ser_len == sizeof(scalar_p)) {
         assert(i==0);
         /* ham-handed reduce */
         API_NS(scalar_mul)(s,t1,API_NS(scalar_one));
@@ -292,7 +292,7 @@ void API_NS(scalar_decode_long)(
 
 void API_NS(scalar_encode)(
     unsigned char ser[SCALAR_SER_BYTES],
-    const scalar_t s
+    const scalar_p s
 ) {
     unsigned int i,j,k=0;
     for (i=0; i<SCALAR_LIMBS; i++) {
@@ -303,17 +303,17 @@ void API_NS(scalar_encode)(
 }
 
 void API_NS(scalar_cond_sel) (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t b,
+    scalar_p out,
+    const scalar_p a,
+    const scalar_p b,
     goldilocks_bool_t pick_b
 ) {
-    constant_time_select(out,a,b,sizeof(scalar_t),bool_to_mask(pick_b),sizeof(out->limb[0]));
+    constant_time_select(out,a,b,sizeof(scalar_p),bool_to_mask(pick_b),sizeof(out->limb[0]));
 }
 
 void API_NS(scalar_halve) (
-    scalar_t out,
-    const scalar_t a
+    scalar_p out,
+    const scalar_p a
 ) {
     goldilocks_word_t mask = -(a->limb[0] & 1);
     goldilocks_dword_t chain = 0;
