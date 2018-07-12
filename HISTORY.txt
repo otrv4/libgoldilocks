@@ -1,3 +1,6 @@
+July 12, 2018:
+    Release 1.0 with Johan Pascal's build scripts.
+
 October 13, 2017:
     OK, back to preparations for 1.0, today with major changes.
     
