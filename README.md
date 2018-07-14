@@ -6,7 +6,7 @@ curve. It is based on Mike Hamburg's libdecaf library:
 
 This library is intended for developers who have experience with cryptography.
 It doesn't (yet?) include documentation on how to use digital signatures or key
-exchange securely.  Consult your local cryptographer for advice.
+exchange securely. Consult your local cryptographer for advice.
 
 ## Building the library
 

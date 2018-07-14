@@ -1,4 +1,8 @@
-Important work items for Ed448-Goldilocks / decaf / Ristretto.
+Important work items for Libgoldilocks.
+
+* Check some edge cases: only for 25519?
+
+* Add CMake from Jhon Pascal?
 
 * Test signed 32-bit NEON implementation to avoid bias/reduce after subtract
 
@@ -6,13 +10,11 @@ Important work items for Ed448-Goldilocks / decaf / Ristretto.
   other implementors.
     * Pretty good progress on Doxygenating the code.
 
-* Documentation: help work on ristretto.group website.
-
 * Cleanup: unify intrinsics code
     * Generate asm intrinsics with a script?
 
 * Testing:
-    * More testing.  Testing, testing and testing.
+    * More testing. Testing, testing and testing.
     * Test corner cases better.
     * Try to formally verify some things.
 
