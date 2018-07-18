@@ -1,4 +1,6 @@
 # Goldilocks library
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fotrv4%2Flibgoldilocks.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fotrv4%2Flibgoldilocks?ref=badge_shield)
+
 
 The Goldilocks library is a production library, providing the ed448 elliptic
 curve. It is based on Mike Hamburg's libdecaf library:
@@ -131,6 +133,9 @@ See the paper for more details.
 ## Licensing
 
 See LICENSE.txt.
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fotrv4%2Flibgoldilocks.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fotrv4%2Flibgoldilocks?ref=badge_large)
 
 ## Caveats
 
