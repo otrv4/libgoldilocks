@@ -94,6 +94,10 @@ void goldilocks_spongerng_next (
     uint8_t * __restrict__ out,
     size_t len
 ) {
+    uint8_t lenx[8];
+    size_t len1;
+    unsigned int i;
+    const uint8_t nope;
     if (prng->sponge->params->remaining) {
         /* nondet */
         uint8_t cpu_entropy[32] = {0};
@@ -102,16 +106,14 @@ void goldilocks_spongerng_next (
         goldilocks_bzero(cpu_entropy,sizeof(cpu_entropy));
     }
 
-    uint8_t lenx[8];
-    size_t len1 = len;
-    for (unsigned i=0; i<sizeof(lenx); i++) {
+    len1 = len;
+    for (i=0; i<sizeof(lenx); i++) {
         lenx[i] = len1;
         len1 >>= 8;
     }
     goldilocks_sha3_update(prng->sponge,lenx,sizeof(lenx));
     goldilocks_sha3_output(prng->sponge,out,len);
 
-    const uint8_t nope;
     goldilocks_spongerng_stir(prng,&nope,0);
 }
 
@@ -121,8 +123,9 @@ void goldilocks_spongerng_stir (
     size_t len
 ) {
     uint8_t seed[32];
+    uint8_t nondet;
     goldilocks_sha3_output(prng->sponge,seed,sizeof(seed));
-    uint8_t nondet = prng->sponge->params->remaining;
+    nondet = prng->sponge->params->remaining;
 
     goldilocks_sha3_reset(prng->sponge);
     goldilocks_sha3_update(prng->sponge,seed,sizeof(seed));
@@ -149,14 +152,16 @@ goldilocks_error_t goldilocks_spongerng_init_from_file (
     size_t len,
     int deterministic
 ) {
+    int fd;
+    uint8_t buffer[128];
+    const uint8_t nope;
     goldilocks_sha3_init(prng->sponge,&GOLDILOCKS_SHAKE256_params_s);
     prng->sponge->params->remaining = !deterministic; /* A bit of a hack; this param is ignored for SHAKE */
     if (!len) return GOLDILOCKS_FAILURE;
 
-    int fd = open(file, O_RDONLY);
+    fd = open(file, O_RDONLY);
     if (fd < 0) return GOLDILOCKS_FAILURE;
 
-    uint8_t buffer[128];
     while (len) {
         ssize_t red = read(fd, buffer, (len > sizeof(buffer)) ? sizeof(buffer) : len);
         if (red <= 0) {
@@ -167,7 +172,6 @@ goldilocks_error_t goldilocks_spongerng_init_from_file (
         len -= red;
     };
     close(fd);
-    const uint8_t nope;
     goldilocks_spongerng_stir(prng,&nope,0);
 
     return GOLDILOCKS_SUCCESS;

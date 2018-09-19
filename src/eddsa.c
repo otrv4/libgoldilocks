@@ -34,9 +34,10 @@ const uint8_t * const GOLDILOCKS_ED448_NO_CONTEXT = &NO_CONTEXT_POINTS_HERE;
 static void clamp (
     uint8_t secret_scalar_ser[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES]
 ) {
+    uint8_t hibit;
     /* Blarg */
     secret_scalar_ser[0] &= -COFACTOR;
-    uint8_t hibit = (1<<0)>>1;
+    hibit = (1<<0)>>1;
     if (hibit == 0) {
         secret_scalar_ser[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES - 1] = 0;
         secret_scalar_ser[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES - 2] |= 0x80;
@@ -54,6 +55,8 @@ static void hash_init_with_dom(
     const uint8_t *context,
     uint8_t context_len
 ) {
+    const char *dom_s =  "SigEd448";
+    const uint8_t dom[2] = {2+word_is_zero(prehashed)+word_is_zero(for_prehash), context_len};
     hash_init(hash);
 
 #if NO_CONTEXT
@@ -65,8 +68,6 @@ static void hash_init_with_dom(
         return;
     }
 #endif
-    const char *dom_s = "SigEd448";
-    const uint8_t dom[2] = {2+word_is_zero(prehashed)+word_is_zero(for_prehash), context_len};
     hash_update(hash,(const unsigned char *)dom_s, strlen(dom_s));
     hash_update(hash,dom,2);
     hash_update(hash,context,context_len);
@@ -98,6 +99,7 @@ void goldilocks_ed448_derive_secret_scalar (
     API_NS(scalar_p) secret,
     const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES]
 ) {
+    unsigned int c;
     /* only this much used for keygen */
     uint8_t secret_scalar_ser[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES];
 
@@ -117,7 +119,7 @@ void goldilocks_ed448_derive_secret_scalar (
      * the decaf base point is on Etwist_d, and when converted it effectively
      * picks up a factor of 2 from the isogenies.  So we might start at 2 instead of 1.
      */
-    for (unsigned int c=1; c < GOLDILOCKS_448_EDDSA_ENCODE_RATIO; c <<= 1) {
+    for (c=1; c < GOLDILOCKS_448_EDDSA_ENCODE_RATIO; c <<= 1) {
         API_NS(scalar_halve)(secret,secret);
     }
 
@@ -129,9 +131,9 @@ void goldilocks_ed448_derive_public_key (
     const uint8_t privkey[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES]
 ) {
     API_NS(scalar_p) secret_scalar;
+    API_NS(point_p) p;
     goldilocks_ed448_derive_secret_scalar(secret_scalar, privkey);
 
-    API_NS(point_p) p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),secret_scalar);
 
     API_NS(point_mul_by_ratio_and_encode_like_eddsa)(pubkey, p);
@@ -153,6 +155,9 @@ void goldilocks_ed448_sign (
 ) {
     API_NS(scalar_p) secret_scalar;
     hash_ctx_p hash;
+    API_NS(scalar_p) nonce_scalar;
+    uint8_t nonce_point[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES] = {0};
+    API_NS(scalar_p) challenge_scalar;
     {
         /* Schedule the secret key */
         struct {
@@ -176,7 +181,6 @@ void goldilocks_ed448_sign (
     }
 
     /* Decode the nonce */
-    API_NS(scalar_p) nonce_scalar;
     {
         uint8_t nonce[2*GOLDILOCKS_EDDSA_448_PRIVATE_BYTES];
         hash_final(hash,nonce,sizeof(nonce));
@@ -184,30 +188,29 @@ void goldilocks_ed448_sign (
         goldilocks_bzero(nonce, sizeof(nonce));
     }
 
-    uint8_t nonce_point[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES] = {0};
     {
+        unsigned int c;
+        API_NS(point_p) p;
         /* Scalarmul to create the nonce-point */
         API_NS(scalar_p) nonce_scalar_2;
         API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar);
-        for (unsigned int c = 2; c < GOLDILOCKS_448_EDDSA_ENCODE_RATIO; c <<= 1) {
+        for (c = 2; c < GOLDILOCKS_448_EDDSA_ENCODE_RATIO; c <<= 1) {
             API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar_2);
         }
 
-        API_NS(point_p) p;
         API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),nonce_scalar_2);
         API_NS(point_mul_by_ratio_and_encode_like_eddsa)(nonce_point, p);
         API_NS(point_destroy)(p);
         API_NS(scalar_destroy)(nonce_scalar_2);
     }
 
-    API_NS(scalar_p) challenge_scalar;
     {
+        uint8_t challenge[2*GOLDILOCKS_EDDSA_448_PRIVATE_BYTES];
         /* Compute the challenge */
         hash_init_with_dom(hash,prehashed,0,context,context_len);
         hash_update(hash,nonce_point,sizeof(nonce_point));
         hash_update(hash,pubkey,GOLDILOCKS_EDDSA_448_PUBLIC_BYTES);
         hash_update(hash,message,message_len);
-        uint8_t challenge[2*GOLDILOCKS_EDDSA_448_PRIVATE_BYTES];
         hash_final(hash,challenge,sizeof(challenge));
         hash_destroy(hash);
         API_NS(scalar_decode_long)(challenge_scalar,challenge,sizeof(challenge));
@@ -257,21 +260,23 @@ goldilocks_error_t goldilocks_ed448_verify (
     uint8_t context_len
 ) {
     API_NS(point_p) pk_point, r_point;
+    API_NS(scalar_p) challenge_scalar;
+    API_NS(scalar_p) response_scalar;
+    unsigned  int c;
     goldilocks_error_t error = API_NS(point_decode_like_eddsa_and_mul_by_ratio)(pk_point,pubkey);
     if (GOLDILOCKS_SUCCESS != error) { return error; }
 
     error = API_NS(point_decode_like_eddsa_and_mul_by_ratio)(r_point,signature);
     if (GOLDILOCKS_SUCCESS != error) { return error; }
 
-    API_NS(scalar_p) challenge_scalar;
     {
         /* Compute the challenge */
         hash_ctx_p hash;
+        uint8_t challenge[2*GOLDILOCKS_EDDSA_448_PRIVATE_BYTES];
         hash_init_with_dom(hash,prehashed,0,context,context_len);
         hash_update(hash,signature,GOLDILOCKS_EDDSA_448_PUBLIC_BYTES);
         hash_update(hash,pubkey,GOLDILOCKS_EDDSA_448_PUBLIC_BYTES);
         hash_update(hash,message,message_len);
-        uint8_t challenge[2*GOLDILOCKS_EDDSA_448_PRIVATE_BYTES];
         hash_final(hash,challenge,sizeof(challenge));
         hash_destroy(hash);
         API_NS(scalar_decode_long)(challenge_scalar,challenge,sizeof(challenge));
@@ -279,14 +284,13 @@ goldilocks_error_t goldilocks_ed448_verify (
     }
     API_NS(scalar_sub)(challenge_scalar, API_NS(scalar_zero), challenge_scalar);
 
-    API_NS(scalar_p) response_scalar;
     API_NS(scalar_decode_long)(
         response_scalar,
         &signature[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES],
         GOLDILOCKS_EDDSA_448_PRIVATE_BYTES
     );
 
-    for (unsigned c=1; c<GOLDILOCKS_448_EDDSA_DECODE_RATIO; c<<=1) {
+    for (c=1; c<GOLDILOCKS_448_EDDSA_DECODE_RATIO; c<<=1) {
         API_NS(scalar_add)(response_scalar,response_scalar,response_scalar);
     }
 

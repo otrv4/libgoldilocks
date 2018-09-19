@@ -268,8 +268,10 @@ static GOLDILOCKS_INLINE mask_t bool_to_mask (goldilocks_bool_t m) {
     /* On most arches this will be optimized to a simple cast. */
     mask_t ret = 0;
     unsigned int limit = sizeof(goldilocks_bool_t)/sizeof(mask_t);
+    unsigned int i;
+
     if (limit < 1) limit = 1;
-    for (unsigned int i=0; i<limit; i++) {
+    for (i=0; i<limit; i++) {
         ret |= ~ word_is_zero(m >> (i*8*sizeof(word_t)));
     }
     return ret;

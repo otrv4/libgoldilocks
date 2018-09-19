@@ -36,9 +36,9 @@ void API_NS(precompute_wnafs) (
 );
 static void field_print(const gf f) {
     unsigned char ser[X_SER_BYTES];
-    gf_serialize(ser,f,1);
     int b=0, i, comma=0;
     unsigned long long limb = 0;
+    gf_serialize(ser,f,1);
     printf("{FIELD_LITERAL(");
     for (i=0; i<X_SER_BYTES; i++) {
         limb |= ((uint64_t)ser[i])<<b;
@@ -57,16 +57,21 @@ static void field_print(const gf f) {
 }
 
 int main(int argc, char **argv) {
+    API_NS(point_p) real_point_base;
+    int ret;
+    API_NS(precomputed_s) *pre;
+    const gf_s *output;
+    unsigned i;
+    struct niels_s *pre_wnaf;
+
     (void)argc; (void)argv;
 
-    API_NS(point_p) real_point_base;
-    int ret = API_NS(point_decode)(real_point_base,base_point_ser_for_pregen,0);
+    ret = API_NS(point_decode)(real_point_base,base_point_ser_for_pregen,0);
     if (ret != GOLDILOCKS_SUCCESS) {
         fprintf(stderr, "Can't decode base point!\n");
         return 1;
     }
 
-    API_NS(precomputed_s) *pre;
     ret = posix_memalign((void**)&pre, API_NS(alignof_precomputed_s), API_NS(sizeof_precomputed_s));
     if (ret || !pre) {
         fprintf(stderr, "Can't allocate space for precomputed table\n");
@@ -74,16 +79,12 @@ int main(int argc, char **argv) {
     }
     API_NS(precompute)(pre, real_point_base);
 
-    struct niels_s *pre_wnaf;
     ret = posix_memalign((void**)&pre_wnaf, API_NS(alignof_precomputed_s), API_NS(sizeof_precomputed_wnafs));
     if (ret || !pre_wnaf) {
         fprintf(stderr, "Can't allocate space for precomputed WNAF table\n");
         return 1;
     }
     API_NS(precompute_wnafs)(pre_wnaf, real_point_base);
-
-    const gf_s *output;
-    unsigned i;
 
     printf("/** @warning: this file was automatically generated. */\n");
     printf("#include \"field.h\"\n\n");

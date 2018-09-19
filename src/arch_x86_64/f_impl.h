@@ -8,7 +8,8 @@
 #define LIMB_PLACE_VALUE(i) 56
 
 void gf_add_RAW (gf out, const gf a, const gf b) {
-    for (unsigned int i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
+    unsigned int i;
+    for (i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
         ((uint64xn_t*)out)[i] = ((const uint64xn_t*)a)[i] + ((const uint64xn_t*)b)[i];
     }
     /*
@@ -20,7 +21,8 @@ void gf_add_RAW (gf out, const gf a, const gf b) {
 }
 
 void gf_sub_RAW (gf out, const gf a, const gf b) {
-    for (unsigned int i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
+    unsigned int i;
+    for (i=0; i<sizeof(*out)/sizeof(uint64xn_t); i++) {
         ((uint64xn_t*)out)[i] = ((const uint64xn_t*)a)[i] - ((const uint64xn_t*)b)[i];
     }
     /*
@@ -47,7 +49,8 @@ void gf_bias (gf a, int amt) {
     aa[2] += hi;
     aa[3] += lo;
 #else
-    for (unsigned int i=0; i<sizeof(*a)/sizeof(uint64_t); i++) {
+    unsigned int i;
+    for (i=0; i<sizeof(*a)/sizeof(uint64_t); i++) {
         a->limb[i] += (i==4) ? co2 : co1;
     }
 #endif
@@ -55,10 +58,11 @@ void gf_bias (gf a, int amt) {
 
 void gf_weak_reduce (gf a) {
     /* PERF: use pshufb/palignr if anyone cares about speed of this */
+    unsigned int i;
     uint64_t mask = (1ull<<56) - 1;
     uint64_t tmp = a->limb[7] >> 56;
     a->limb[4] += tmp;
-    for (unsigned int i=7; i>0; i--) {
+    for (i=7; i>0; i--) {
         a->limb[i] = (a->limb[i] & mask) + (a->limb[i-1]>>56);
     }
     a->limb[0] = (a->limb[0] & mask) + tmp;

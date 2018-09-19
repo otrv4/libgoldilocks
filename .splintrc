@@ -1,0 +1,18 @@
+-Isrc
+-Isrc/include
+-Isrc/include/arch_x86_64
+-Isrc/public_include
+-Isrc/arch_x86_64
+
+-D__restrict__=
+-D__linux__
+-D__uint128_t=uint64_t
+-D__int128_t=int64_t
+
+-linelen 160
+
++showscan
++posixlib
++skip-posix-headers
++whichlib
++stats

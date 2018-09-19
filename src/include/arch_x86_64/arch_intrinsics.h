@@ -282,7 +282,8 @@ static __inline__ void msb2(__uint128_t *acc, const uint64_t *a, const uint64_t 
 }
 
 static __inline__ void mrs(__uint128_t *acc, const uint64_t *a, const uint64_t *b) {
-  uint64_t c,d, lo = *acc, hi = *acc>>64;
+  /*@unused@*/
+  uint64_t c,d, lo = *acc, hi = *acc>>64; 
   __asm__ volatile
       ("movq %[a], %%rdx; "
        "mulx %[b], %[c], %[d]; "

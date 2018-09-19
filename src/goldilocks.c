@@ -69,8 +69,9 @@ const size_t API_NS(alignof_precomputed_s) = sizeof(big_register_t);
 static void
 gf_invert(gf y, const gf x, int assert_nonzero) {
     gf t1, t2;
+    mask_t ret;
     gf_sqr(t1, x); // o^2
-    mask_t ret = gf_isr(t2, t1); // +-1/sqrt(o^2) = +-1/o
+    ret = gf_isr(t2, t1); // +-1/sqrt(o^2) = +-1/o
     (void)ret;
     if (assert_nonzero) assert(ret);
     gf_sqr(t1, t2);
@@ -103,9 +104,11 @@ void API_NS(deisogenize) (
     mask_t toggle_altx,
     mask_t toggle_rotation
 ) {
-    (void)toggle_rotation; /* Only applies to cofactor 8 */
     gf t1;
+    mask_t negx;
+    mask_t lobs;
     gf_s *t2 = s, *t3=inv_el_sum, *t4=inv_el_m1;
+    (void)toggle_rotation; /* Only applies to cofactor 8 */
 
     gf_add(t1,p->x,p->t);
     gf_sub(t2,p->x,p->t);
@@ -116,14 +119,14 @@ void API_NS(deisogenize) (
     gf_isr(t1,t2);    /* t1 = isr */
     gf_mul(t2,t1,t3); /* t2 = ratio */
     gf_mul(t4,t2,GOLDILOCKS_448_FACTOR);
-    mask_t negx = gf_lobit(t4) ^ toggle_altx;
+    negx = gf_lobit(t4) ^ toggle_altx;
     gf_cond_neg(t2, negx);
     gf_mul(t3,t2,p->z);
     gf_sub(t3,t3,p->t);
     gf_mul(t2,t3,p->x);
     gf_mulw(t4,t2,-1-TWISTED_D);
     gf_mul(s,t4,t1);
-    mask_t lobs = gf_lobit(s);
+    lobs = gf_lobit(s);
     gf_cond_neg(s,lobs);
     gf_copy(inv_el_m1,p->x);
     gf_cond_neg(inv_el_m1,~lobs^negx^toggle_s);
@@ -410,26 +413,28 @@ void API_NS(point_scalarmul) (
         NTABLE = 1<<(WINDOW-1);
 
     scalar_p scalar1x;
+    pniels_p pn, multiples[NTABLE];
+    point_p tmp;
+    int i,j,first=1;
+
     API_NS(scalar_add)(scalar1x, scalar, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
 
     /* Set up a precomputed table with odd multiples of b. */
-    pniels_p pn, multiples[NTABLE];
-    point_p tmp;
     prepare_fixed_window(multiples, b, NTABLE);
 
     /* Initialize. */
-    int i,j,first=1;
     i = SCALAR_BITS - ((SCALAR_BITS-1) % WINDOW) - 1;
 
     for (; i>=0; i-=WINDOW) {
+        mask_t inv;
         /* Fetch another block of bits */
         word_t bits = scalar1x->limb[i/WBITS] >> (i%WBITS);
         if (i%WBITS >= WBITS-WINDOW && i/WBITS<SCALAR_LIMBS-1) {
             bits ^= scalar1x->limb[i/WBITS+1] << (WBITS - (i%WBITS));
         }
         bits &= WINDOW_MASK;
-        mask_t inv = (bits>>(WINDOW-1))-1;
+        inv = (bits>>(WINDOW-1))-1;
         bits ^= inv;
 
         /* Add in from table.  Compute t only on last iteration. */
@@ -472,33 +477,34 @@ void API_NS(point_double_scalarmul) (
         NTABLE = 1<<(WINDOW-1);
 
     scalar_p scalar1x, scalar2x;
+    pniels_p pn, multiples1[NTABLE], multiples2[NTABLE];
+    point_p tmp;
+    int i,j,first=1;
     API_NS(scalar_add)(scalar1x, scalarb, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
     API_NS(scalar_add)(scalar2x, scalarc, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar2x,scalar2x);
 
     /* Set up a precomputed table with odd multiples of b. */
-    pniels_p pn, multiples1[NTABLE], multiples2[NTABLE];
-    point_p tmp;
     prepare_fixed_window(multiples1, b, NTABLE);
     prepare_fixed_window(multiples2, c, NTABLE);
 
     /* Initialize. */
-    int i,j,first=1;
     i = SCALAR_BITS - ((SCALAR_BITS-1) % WINDOW) - 1;
 
     for (; i>=0; i-=WINDOW) {
         /* Fetch another block of bits */
         word_t bits1 = scalar1x->limb[i/WBITS] >> (i%WBITS),
                      bits2 = scalar2x->limb[i/WBITS] >> (i%WBITS);
+        mask_t inv1, inv2;
         if (i%WBITS >= WBITS-WINDOW && i/WBITS<SCALAR_LIMBS-1) {
             bits1 ^= scalar1x->limb[i/WBITS+1] << (WBITS - (i%WBITS));
             bits2 ^= scalar2x->limb[i/WBITS+1] << (WBITS - (i%WBITS));
         }
         bits1 &= WINDOW_MASK;
         bits2 &= WINDOW_MASK;
-        mask_t inv1 = (bits1>>(WINDOW-1))-1;
-        mask_t inv2 = (bits2>>(WINDOW-1))-1;
+        inv1 = (bits1>>(WINDOW-1))-1;
+        inv2 = (bits2>>(WINDOW-1))-1;
         bits1 ^= inv1;
         bits2 ^= inv2;
 
@@ -547,26 +553,27 @@ void API_NS(point_dual_scalarmul) (
         NTABLE = 1<<(WINDOW-1);
 
     scalar_p scalar1x, scalar2x;
+    point_p multiples1[NTABLE], multiples2[NTABLE], working, tmp;
+    pniels_p pn;
+    int i,j;
     API_NS(scalar_add)(scalar1x, scalar1, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
     API_NS(scalar_add)(scalar2x, scalar2, point_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar2x,scalar2x);
 
     /* Set up a precomputed table with odd multiples of b. */
-    point_p multiples1[NTABLE], multiples2[NTABLE], working, tmp;
-    pniels_p pn;
 
     API_NS(point_copy)(working, b);
 
     /* Initialize. */
-    int i,j;
-
     for (i=0; i<NTABLE; i++) {
         API_NS(point_copy)(multiples1[i], API_NS(point_identity));
         API_NS(point_copy)(multiples2[i], API_NS(point_identity));
     }
 
     for (i=0; i<SCALAR_BITS; i+=WINDOW) {
+        word_t bits1, bits2;
+        mask_t inv1, inv2;
         if (i) {
             for (j=0; j<WINDOW-1; j++)
                 point_double_internal(working, working, -1);
@@ -574,16 +581,16 @@ void API_NS(point_dual_scalarmul) (
         }
 
         /* Fetch another block of bits */
-        word_t bits1 = scalar1x->limb[i/WBITS] >> (i%WBITS),
-               bits2 = scalar2x->limb[i/WBITS] >> (i%WBITS);
+        bits1 = scalar1x->limb[i/WBITS] >> (i%WBITS);
+        bits2 = scalar2x->limb[i/WBITS] >> (i%WBITS);
         if (i%WBITS >= WBITS-WINDOW && i/WBITS<SCALAR_LIMBS-1) {
             bits1 ^= scalar1x->limb[i/WBITS+1] << (WBITS - (i%WBITS));
             bits2 ^= scalar2x->limb[i/WBITS+1] << (WBITS - (i%WBITS));
         }
         bits1 &= WINDOW_MASK;
         bits2 &= WINDOW_MASK;
-        mask_t inv1 = (bits1>>(WINDOW-1))-1;
-        mask_t inv2 = (bits2>>(WINDOW-1))-1;
+        inv1 = (bits1>>(WINDOW-1))-1;
+        inv2 = (bits2>>(WINDOW-1))-1;
         bits1 ^= inv1;
         bits2 ^= inv2;
 
@@ -637,9 +644,10 @@ void API_NS(point_dual_scalarmul) (
 goldilocks_bool_t API_NS(point_eq) ( const point_p p, const point_p q ) {
     /* equality mod 2-torsion compares x/y */
     gf a, b;
+    mask_t succ;
     gf_mul ( a, p->y, q->x );
     gf_mul ( b, q->y, p->x );
-    mask_t succ = gf_eq(a,b);
+    succ = gf_eq(a,b);
 
     return mask_to_bool(succ);
 }
@@ -648,9 +656,10 @@ goldilocks_bool_t API_NS(point_valid) (
     const point_p p
 ) {
     gf a,b,c;
+    mask_t out;
     gf_mul(a,p->x,p->y);
     gf_mul(b,p->z,p->t);
-    mask_t out = gf_eq(a,b);
+    out = gf_eq(a,b);
     gf_sqr(a,p->x);
     gf_sqr(b,p->y);
     gf_sub(a,b,a);
@@ -697,10 +706,10 @@ static void gf_batch_invert (
     unsigned int n
 ) {
     gf t1;
+    int i;
     assert(n>1);
 
     gf_copy(out[1], in[0]);
-    int i;
     for (i=1; i<(int) (n-1); i++) {
         gf_mul(out[i+1], out[i], in[i]);
     }
@@ -748,15 +757,14 @@ void API_NS(precompute) (
     const point_p base
 ) {
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
+    point_p working, start, doubles[t-1];
+    pniels_p pn_tmp;
+    gf zs[n<<(t-1)], zis[n<<(t-1)];
+    unsigned int i,j,k;
+
     assert(n*t*s >= SCALAR_BITS);
 
-    point_p working, start, doubles[t-1];
     API_NS(point_copy)(working, base);
-    pniels_p pn_tmp;
-
-    gf zs[n<<(t-1)], zis[n<<(t-1)];
-
-    unsigned int i,j,k;
 
     /* Compute n tables */
     for (i=0; i<n; i++) {
@@ -779,13 +787,14 @@ void API_NS(precompute) (
         for (j=0;; j++) {
             int gray = j ^ (j>>1);
             int idx = (((i+1)<<(t-1))-1) ^ gray;
-
+            int delta;
+            
             pt_to_pniels(pn_tmp, start);
             memcpy(table->table[idx], pn_tmp->n, sizeof(pn_tmp->n));
             gf_copy(zs[idx], pn_tmp->z);
 
             if (j >= (1u<<(t-1)) - 1) break;
-            int delta = (j+1) ^ ((j+1)>>1) ^ gray;
+            delta = (j+1) ^ ((j+1)>>1) ^ gray;
 
             for (k=0; delta>1; k++)
                 delta >>=1;
@@ -828,16 +837,18 @@ void API_NS(precomputed_scalarmul) (
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
 
     scalar_p scalar1x;
+    niels_p ni;
+
     API_NS(scalar_add)(scalar1x, scalar, precomputed_scalarmul_adjustment);
     API_NS(scalar_halve)(scalar1x,scalar1x);
 
-    niels_p ni;
 
     for (i=s-1; i>=0; i--) {
         if (i != (int)s-1) point_double_internal(out,out,0);
 
         for (j=0; j<n; j++) {
             int tab = 0;
+            mask_t invert;
 
             for (k=0; k<t; k++) {
                 unsigned int bit = i + s*(k + j*t);
@@ -846,7 +857,7 @@ void API_NS(precomputed_scalarmul) (
                 }
             }
 
-            mask_t invert = (tab>>(t-1))-1;
+            invert = (tab>>(t-1))-1;
             tab ^= invert;
             tab &= (1<<(t-1)) - 1;
 
@@ -899,9 +910,9 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     /* The point is now on the twisted curve.  Move it to untwisted. */
     gf x, y, z, t;
     point_p q;
+    gf u;
     API_NS(point_copy)(q,p);
     /* 4-isogeny: 2xy/(y^+x^2), (y^2-x^2)/(2z^2-y^2+x^2) */
-    gf u;
     gf_sqr ( x, q->x );
     gf_sqr ( t, q->y );
     gf_add( u, x, t );
@@ -940,12 +951,14 @@ goldilocks_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     const uint8_t enc[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES]
 ) {
     uint8_t enc2[GOLDILOCKS_EDDSA_448_PUBLIC_BYTES];
+    mask_t low, succ;
+    gf a, b, c, d;
     memcpy(enc2,enc,sizeof(enc2));
 
-    mask_t low = ~word_is_zero(enc2[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1] & 0x80);
+    low = ~word_is_zero(enc2[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1] & 0x80);
     enc2[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1] &= ~0x80;
 
-    mask_t succ = gf_deserialize(p->y, enc2, 1, 0);
+    succ = gf_deserialize(p->y, enc2, 1, 0);
 // TODO: ??!
 /* actually the case on 448 */
 #if 0 == 0
@@ -965,7 +978,6 @@ goldilocks_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     gf_copy(p->z,ONE);
 
     /* 4-isogeny 2xy/(y^2-ax^2), (y^2+ax^2)/(2-y^2-ax^2) */
-    gf a, b, c, d;
     gf_sqr ( c, p->x );
     gf_sqr ( a, p->y );
     gf_add ( d, c, a );
@@ -997,23 +1009,24 @@ goldilocks_error_t goldilocks_x448 (
     const uint8_t scalar[X_PRIVATE_BYTES]
 ) {
     gf x1, x2, z2, x3, z3, t1, t2;
+    int t;
+    mask_t swap = 0, nz = 0;
     ignore_result(gf_deserialize(x1,base,1,0));
     gf_copy(x2,ONE);
     gf_copy(z2,ZERO);
     gf_copy(x3,x1);
     gf_copy(z3,ONE);
 
-    int t;
-    mask_t swap = 0;
 
     for (t = X_PRIVATE_BITS-1; t>=0; t--) {
         uint8_t sb = scalar[t/8];
+        mask_t k_t;
 
         /* Scalar conditioning */
         if (t/8==0) sb &= -(uint8_t)COFACTOR;
         else if (t == X_PRIVATE_BITS-1) sb = -1;
 
-        mask_t k_t = (sb>>(t%8)) & 1;
+        k_t = (sb>>(t%8)) & 1;
         k_t = -k_t; /* set to all 0s or all 1s */
 
         swap ^= k_t;
@@ -1049,7 +1062,7 @@ goldilocks_error_t goldilocks_x448 (
     gf_invert(z2,z2,0);
     gf_mul(x1,x2,z2);
     gf_serialize(out,x1,1);
-    mask_t nz = ~gf_eq(x1,ZERO);
+    nz = ~gf_eq(x1,ZERO);
 
     goldilocks_bzero(x1,sizeof(x1));
     goldilocks_bzero(x2,sizeof(x2));
@@ -1069,9 +1082,9 @@ void goldilocks_ed448_convert_public_key_to_x448 (
 ) {
     gf y;
     const uint8_t mask = (uint8_t)(0xFE<<(7));
-    ignore_result(gf_deserialize(y, ed, 1, mask));
-
     gf n,d;
+
+    ignore_result(gf_deserialize(y, ed, 1, mask));
 
     /* u = y^2 * (1-dy^2) / (1-y^2) */
     gf_sqr(n,y); /* y^2*/
@@ -1107,20 +1120,21 @@ void goldilocks_x448_derive_public_key (
 ) {
     /* Scalar conditioning */
     uint8_t scalar2[X_PRIVATE_BYTES];
+    scalar_p the_scalar;
+    unsigned int i;
+    point_p p;
     memcpy(scalar2,scalar,sizeof(scalar2));
     scalar2[0] &= -(uint8_t)COFACTOR;
 
     scalar2[X_PRIVATE_BYTES-1] &= ~(-1u<<((X_PRIVATE_BITS+7)%8));
     scalar2[X_PRIVATE_BYTES-1] |= 1<<((X_PRIVATE_BITS+7)%8);
 
-    scalar_p the_scalar;
     API_NS(scalar_decode_long)(the_scalar,scalar2,sizeof(scalar2));
 
     /* Compensate for the encoding ratio */
-    for (unsigned i=1; i<GOLDILOCKS_X448_ENCODE_RATIO; i<<=1) {
+    for (i=1; i<GOLDILOCKS_X448_ENCODE_RATIO; i<<=1) {
         API_NS(scalar_halve)(the_scalar,the_scalar);
     }
-    point_p p;
     API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),the_scalar);
     API_NS(point_mul_by_ratio_and_encode_like_x448)(out,p);
     API_NS(point_destroy)(p);
@@ -1141,6 +1155,10 @@ static int recode_wnaf (
 ) {
     unsigned int table_size = SCALAR_BITS/(table_bits+1) + 3;
     int position = table_size - 1; /* at the end */
+    uint64_t current;
+    uint32_t mask;
+    unsigned int w, n, i;
+    const unsigned int B_OVER_16 = sizeof(scalar->limb[0]) / 2;
 
     /* place the end marker */
     control[position].power = -1;
@@ -1152,11 +1170,9 @@ static int recode_wnaf (
      * Probably not worth it.
      */
 
-    uint64_t current = scalar->limb[0] & 0xFFFF;
-    uint32_t mask = (1<<(table_bits+1))-1;
+    current = scalar->limb[0] & 0xFFFF;
+    mask = (1<<(table_bits+1))-1;
 
-    unsigned int w;
-    const unsigned int B_OVER_16 = sizeof(scalar->limb[0]) / 2;
     for (w = 1; w<(SCALAR_BITS-1)/16+3; w++) {
         if (w < (SCALAR_BITS-1)/16+1) {
             /* Refill the 16 high bits of current */
@@ -1164,9 +1180,9 @@ static int recode_wnaf (
         }
 
         while (current & 0xFFFF) {
-            assert(position >= 0);
             uint32_t pos = __builtin_ctz((uint32_t)current), odd = (uint32_t)current >> pos;
             int32_t delta = odd & mask;
+            assert(position >= 0);
             if (odd & 1<<(table_bits+1)) delta -= (1<<(table_bits+1));
             current -= delta << pos;
             control[position].power = pos + 16*(w-1);
@@ -1178,8 +1194,7 @@ static int recode_wnaf (
     assert(current==0);
 
     position++;
-    unsigned int n = table_size - position;
-    unsigned int i;
+    n = table_size - position;
     for (i=0; i<n; i++) {
         control[i] = control[i+position];
     }
@@ -1194,12 +1209,12 @@ prepare_wnaf_table(
 ) {
     point_p tmp;
     int i;
+    pniels_p twop;
     pt_to_pniels(output[0], working);
 
     if (tbits == 0) return;
 
     API_NS(point_double)(tmp,working);
-    pniels_p twop;
     pt_to_pniels(twop, tmp);
 
     add_pniels_to_pt(tmp, output[0],0);
@@ -1216,8 +1231,7 @@ prepare_wnaf_table(
 
 extern const gf API_NS(precomputed_wnaf_as_fe)[];
 static const niels_p *API_NS(wnaf_base) = (const niels_p *)API_NS(precomputed_wnaf_as_fe);
-const size_t API_NS(sizeof_precomputed_wnafs) __attribute((visibility("hidden")))
-    = sizeof(niels_p)<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS;
+const size_t API_NS(sizeof_precomputed_wnafs) = sizeof(niels_p)<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS;
 
 void API_NS(precompute_wnafs) (
     niels_p out[1<<GOLDILOCKS_WNAF_FIXED_TABLE_BITS],
@@ -1251,6 +1265,7 @@ void API_NS(base_double_scalarmul_non_secret) (
 ) {
     const int table_bits_var = GOLDILOCKS_WNAF_VAR_TABLE_BITS,
         table_bits_pre = GOLDILOCKS_WNAF_FIXED_TABLE_BITS;
+    int contp=0, contv=0, i;
     struct smvt_control control_var[SCALAR_BITS/(table_bits_var+1)+3];
     struct smvt_control control_pre[SCALAR_BITS/(table_bits_pre+1)+3];
 
@@ -1260,7 +1275,7 @@ void API_NS(base_double_scalarmul_non_secret) (
     pniels_p precmp_var[1<<table_bits_var];
     prepare_wnaf_table(precmp_var, base2, table_bits_var);
 
-    int contp=0, contv=0, i = control_var[0].power;
+    i = control_var[0].power;
 
     if (i < 0) {
         API_NS(point_copy)(combo, API_NS(point_identity));

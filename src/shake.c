@@ -200,9 +200,10 @@ goldilocks_error_t goldilocks_sha3_hash (
     const struct goldilocks_kparams_s *params
 ) {
     goldilocks_keccak_sponge_p goldilocks_sponge;
+    goldilocks_error_t ret;
     goldilocks_sha3_init(goldilocks_sponge, params);
     goldilocks_sha3_update(goldilocks_sponge, in, inlen);
-    goldilocks_error_t ret = goldilocks_sha3_output(goldilocks_sponge, out, outlen);
+    ret = goldilocks_sha3_output(goldilocks_sponge, out, outlen);
     goldilocks_sha3_destroy(goldilocks_sponge);
     return ret;
 }

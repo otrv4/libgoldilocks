@@ -36,12 +36,13 @@ static GOLDILOCKS_NOINLINE void sc_subx(
 ) {
     goldilocks_dsword_t chain = 0;
     unsigned int i;
+    goldilocks_word_t borrow;
     for (i=0; i<SCALAR_LIMBS; i++) {
         chain = (chain + accum[i]) - sub->limb[i];
         out->limb[i] = chain;
         chain >>= WBITS;
     }
-    goldilocks_word_t borrow = chain+extra; /* = 0 or -1 */
+    borrow = chain+extra; /* = 0 or -1 */
 
     chain = 0;
     for (i=0; i<SCALAR_LIMBS; i++) {
@@ -113,23 +114,24 @@ goldilocks_error_t API_NS(scalar_invert) (
     const int SCALAR_WINDOW_BITS = 3;
     scalar_p precmp[1<<SCALAR_WINDOW_BITS];
     const int LAST = (1<<SCALAR_WINDOW_BITS)-1;
+    int i;
+    unsigned residue = 0, trailing = 0, started = 0;
 
     /* Precompute precmp = [a^1,a^3,...] */
     sc_montmul(precmp[0],a,sc_r2);
     if (LAST > 0) sc_montmul(precmp[LAST],precmp[0],precmp[0]);
 
-    int i;
     for (i=1; i<=LAST; i++) {
         sc_montmul(precmp[i],precmp[i-1],precmp[LAST]);
     }
 
     /* Sliding window */
-    unsigned residue = 0, trailing = 0, started = 0;
     for (i=SCALAR_BITS-1; i>=-SCALAR_WINDOW_BITS; i--) {
-
+        goldilocks_word_t w;
+        
         if (started) sc_montsqr(out,out);
 
-        goldilocks_word_t w = (i>=0) ? sc_p->limb[i/WBITS] : 0;
+        w = (i>=0) ? sc_p->limb[i/WBITS] : 0;
         if (i >= 0 && i<WBITS) {
             assert(w >= 2);
             w-=2;
@@ -191,8 +193,8 @@ API_NS(scalar_set_unsigned) (
     scalar_p out,
     uint64_t w
 ) {
-    memset(out,0,sizeof(scalar_p));
     unsigned int i = 0;
+    memset(out,0,sizeof(scalar_p));
     for (; i<sizeof(uint64_t)/sizeof(goldilocks_word_t); i++) {
         out->limb[i] = w;
 #if GOLDILOCKS_WORD_BITS < 64
@@ -234,8 +236,8 @@ goldilocks_error_t API_NS(scalar_decode)(
     const unsigned char ser[SCALAR_SER_BYTES]
 ) {
     unsigned int i;
-    scalar_decode_short(s, ser, SCALAR_SER_BYTES);
     goldilocks_dsword_t accum = 0;
+    scalar_decode_short(s, ser, SCALAR_SER_BYTES);
     for (i=0; i<SCALAR_LIMBS; i++) {
         accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
     }
@@ -257,13 +259,13 @@ void API_NS(scalar_decode_long)(
     const unsigned char *ser,
     size_t ser_len
 ) {
+    size_t i;
+    scalar_p t1, t2;
+
     if (ser_len == 0) {
         API_NS(scalar_copy)(s, API_NS(scalar_zero));
         return;
     }
-
-    size_t i;
-    scalar_p t1, t2;
 
     i = ser_len - (ser_len%SCALAR_SER_BYTES);
     if (i==ser_len) i -= SCALAR_SER_BYTES;

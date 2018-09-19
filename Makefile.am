@@ -46,3 +46,6 @@ mem-check:
 
 clean-hard:
 	git clean -d -x -f
+
+splint:
+	splint src/*.{c,h}

@@ -35,6 +35,7 @@ void API_NS(point_from_hash_nonuniform) (
 ) {
     gf r0,r,a,b,c,N,e;
     const uint8_t mask = (uint8_t)(0xFE<<(7));
+    mask_t square;
     ignore_result(gf_deserialize(r0,ser,0,mask));
     gf_strong_reduce(r0);
     gf_sqr(a,r0);
@@ -53,7 +54,7 @@ void API_NS(point_from_hash_nonuniform) (
 
     /* e = +-sqrt(1/ND) or +-r0 * sqrt(qnr/ND) */
     gf_mul(a,c,N);
-    mask_t square = gf_isr(b,a);
+    square = gf_isr(b,a);
     gf_cond_sel(c,r0,ONE,square); /* r? = square ? 1 : r0 */
     gf_mul(e,b,c);
 
@@ -115,9 +116,11 @@ API_NS(invert_elligator_nonuniform) (
          */
         sgn_ed_T = -(hint>>3 & 1);
     gf a,b,c;
+    mask_t is_identity;
+    mask_t succ;
     API_NS(deisogenize)(a,b,c,p,sgn_s,sgn_altx,sgn_ed_T);
 
-    mask_t is_identity = gf_eq(p->t,ZERO);
+    is_identity = gf_eq(p->t,ZERO);
     gf_cond_sel(b,b,ONE,is_identity & sgn_altx);
     gf_cond_sel(c,c,ONE,is_identity & sgn_s &~ sgn_altx);
     gf_mulw(a,b,EDWARDS_D-1);
@@ -127,7 +130,7 @@ API_NS(invert_elligator_nonuniform) (
     gf_cond_swap(a,b,sgn_s);
     gf_mul_qnr(c,b);
     gf_mul(b,c,a);
-    mask_t succ = gf_isr(c,b);
+    succ = gf_isr(c,b);
     succ |= gf_eq(b,ZERO);
     gf_mul(b,c,a);
 
