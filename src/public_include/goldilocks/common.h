@@ -22,7 +22,7 @@ extern "C" {
 
 /* Goldilocks' build flags default to hidden and stripping executables. */
 /** @cond internal */
-#if DOXYGEN || defined(__attribute__)
+#if (defined(DOXYGEN) && DOXYGEN) || defined(__attribute__)
 #define __attribute__(x)
 #define NOINLINE
 #endif
