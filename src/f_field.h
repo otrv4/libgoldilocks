@@ -21,7 +21,6 @@
 
 #define __GOLDILOCKS_448_GF_DEFINED__ 1
 #define NLIMBS (64/sizeof(word_t))
-#define X_SER_BYTES 56
 #define SER_BYTES 56
 typedef struct gf_448_s {
     word_t limb[NLIMBS];
@@ -52,7 +51,7 @@ typedef struct gf_448_s {
 #define gf_deserialize    gf_448_deserialize
 
 /* RFC 7748 support */
-#define X_PUBLIC_BYTES  X_SER_BYTES
+#define X_PUBLIC_BYTES  SER_BYTES
 #define X_PRIVATE_BYTES X_PUBLIC_BYTES
 #define X_PRIVATE_BITS  448
 
