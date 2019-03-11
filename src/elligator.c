@@ -36,7 +36,7 @@ void API_NS(point_from_hash_nonuniform) (
     gf r0,r,a,b,c,N,e;
     const uint8_t mask = (uint8_t)(0xFE<<(7));
     mask_t square;
-    ignore_result(gf_deserialize(r0,ser,0,mask));
+    ignore_result(gf_deserialize(r0,ser,mask));
     gf_strong_reduce(r0);
     gf_sqr(a,r0);
     gf_mul_qnr(r,a);
@@ -137,7 +137,7 @@ API_NS(invert_elligator_nonuniform) (
     gf_cond_neg(b, sgn_r0^gf_lobit(b));
     /* Eliminate duplicate values for identity ... */
     succ &= ~(gf_eq(b,ZERO) & (sgn_r0 | sgn_s));
-    gf_serialize(recovered_hash,b,1);
+    gf_serialize(recovered_hash,b);
 // TODO: ??!
 #if 0
         recovered_hash[SER_BYTES-1] ^= (hint>>3)<<0;
