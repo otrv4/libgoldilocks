@@ -1,7 +1,12 @@
-This library was originally created and copyrighted by Mike Hamburg and Cryptography Research, Inc under the name libdecaf or Ed448-Goldilocks. You can access the original source code at http://ed448goldilocks.sourceforge.net/. 
+This library was originally created and copyrighted by Mike Hamburg and
+Cryptography Research, Inc under the name libdecaf or Ed448-Goldilocks. You can
+access the original source code at http://ed448goldilocks.sourceforge.net/.
 
-The library was forked by the libgoldilocks developers in early 2018. Several parts of the code have been refactored and changed in various ways. These changes are
-  Copyright (c) 2018 the libgoldilocks contributors.
+The library was forked by the libgoldilocks developers in early 2018. Several
+parts of the code have been refactored and changed in various ways. These
+changes are
+
+Copyright (c) 2018 the libgoldilocks contributors.
 
 and licensed under the following MIT license:
 
@@ -40,7 +45,7 @@ Earlier versions of this project used small amounts of code which were
   Copyright (c) 2011 Mike Hamburg
 but I believe that all of this code has now been replaced.
 
-The bulk of this library is 
+The bulk of this library is
   Copyright (c) 2014-2017 Cryptography Research, Inc.
 and licensed under the following MIT license.
 
