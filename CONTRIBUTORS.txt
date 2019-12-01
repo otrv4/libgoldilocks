@@ -3,4 +3,4 @@
 - Mike Hamburg
 - Cryptography Research, Inc.
 - Sofía Celi
-- Centro de Autonomia Digital
+- Centro de Autonomia Digital Brazil
