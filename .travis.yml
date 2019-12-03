@@ -10,10 +10,10 @@ matrix:
       dist: trusty
       compiler: gcc
     - os: linux
-      dist: precise
+      dist: xenial
       compiler: clang
     - os: linux
-      dist: precise
+      dist: xenial
       compiler: gcc
 
 sudo: required
