@@ -2,7 +2,7 @@ dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([libgoldilocks], [0.0.1], [otrv4-dev@autonomia.digital])
+AC_INIT([libgoldilocks], [0.0.1], [otr@cypherpunks.ca],[],[https://otr.cypherpunks.ca])
 AC_CONFIG_SRCDIR([src/include/field.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
