@@ -18,13 +18,6 @@ BUILD_IBIN = build/obj/bin
 
 DOXYGEN ?= doxygen
 
-ifeq ($(UNAME),Darwin)
-CC = clang
-CXX = clang++
-else
-CC = gcc
-CXX = g++
-endif
 LD = $(CC)
 LDXX = $(CXX)
 ASM ?= $(CC)
