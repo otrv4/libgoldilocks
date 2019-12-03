@@ -94,7 +94,8 @@ goldilocks_succeed_if(goldilocks_bool_t x) {
 /** Return GOLDILOCKS_TRUE iff x == GOLDILOCKS_SUCCESS */
 static GOLDILOCKS_INLINE goldilocks_bool_t
 goldilocks_successful(goldilocks_error_t e) {
-    goldilocks_dword_t w = ((goldilocks_word_t)e) ^  ((goldilocks_word_t)GOLDILOCKS_SUCCESS);
+    goldilocks_word_t succ = GOLDILOCKS_SUCCESS;
+    goldilocks_dword_t w = ((goldilocks_word_t)e) ^  succ;
     return (w-1)>>GOLDILOCKS_WORD_BITS;
 }
 
