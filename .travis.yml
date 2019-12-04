@@ -34,5 +34,6 @@ before_script:
 script:
   - ./autogen.sh
   - ./configure --disable-shared
+  - make gen-code
   - make
   - make test

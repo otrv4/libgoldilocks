@@ -31,6 +31,9 @@ lib:
 clean-scan:
 	$(MAKE) clean -f $(top_srcdir)/Makefile.custom
 
+clean-generated:
+	$(MAKE) clean_generated -f $(top_srcdir)/Makefile.custom
+
 test:
 	$(MAKE) test -f $(top_srcdir)/Makefile.custom
 
