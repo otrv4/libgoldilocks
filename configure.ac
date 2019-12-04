@@ -107,6 +107,7 @@ Configuration completed in directory '${prefix}'.
 
 echo
 echo "Options used to compile and link:"
+echo "  Arch          = $ARCH_DIR"
 echo "  CC            = $CC"
 echo "  CFLAGS        = $CFLAGS"
 echo "  LDFLAGS       = $LDFLAGS"
