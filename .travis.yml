@@ -18,6 +18,7 @@ matrix:
     - os: linux
       dist: trusty
       compiler: gcc
+      arch: arm32
       env: T=32bit
 
 sudo: required
