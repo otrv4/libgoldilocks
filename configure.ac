@@ -50,7 +50,6 @@ AX_CFLAGS_GCC_OPTION([-Wdiv-by-zero])
 AX_CFLAGS_GCC_OPTION([-Wfloat-equal])
 AX_CFLAGS_GCC_OPTION([-Wnested-externs])
 AX_CFLAGS_GCC_OPTION([-Wpointer-arith])
-AX_CFLAGS_GCC_OPTION([-Wredundant-decls])
 AX_CFLAGS_GCC_OPTION([-Wstrict-prototypes])
 AX_CFLAGS_GCC_OPTION([-Wlogical-op])
 AX_CFLAGS_GCC_OPTION([-Wbad-cast-qual])
@@ -86,3 +85,16 @@ AC_CONFIG_FILES([
                  pkgconfig/Makefile
                  ])
 AC_OUTPUT
+
+echo \
+"----------------------------------------------------------------------------
+Thank you for configuring libgoldilocks version ${PACKAGE_VERSION}.
+Configuration completed in directory '${prefix}'.
+----------------------------------------------------------------------------"
+
+echo
+echo "Options used to compile and link:"
+echo "  CC            = $CC"
+echo "  CFLAGS        = $CFLAGS"
+echo "  LDFLAGS       = $LDFLAGS"
+echo
