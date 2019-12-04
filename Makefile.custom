@@ -3,6 +3,21 @@
 # Released under the MIT License.  See LICENSE.txt for license information.
 
 UNAME := $(shell uname)
+ARCH := $(shell uname -m)
+
+ARCH_DEF := arch_32
+
+ifeq ($(ARCH),x86_64)
+ARCH_DEF = arch_x86_64
+endif
+
+ifeq ($(ARCH),arch64)
+ARCH_DEF = arch_ref64
+endif
+
+ifeq ($(ARCH),arm)
+ARCH_DEF := arch_arm_32
+endif
 
 # Subdirectories for objects etc.
 # Many of them are mapped to build/obj right now, but could be split later.
@@ -26,7 +41,7 @@ PYTHON ?= python
 WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 	 -Wmissing-declarations -Wunused-function -Wno-overlength-strings $(EXWARN)
 
-INCFLAGS = -Isrc -Isrc/include -I$(BUILD_INC) -Isrc/include/arch_x86_64 -Isrc/arch_x86_64
+INCFLAGS = -Isrc -Isrc/include -I$(BUILD_INC) -Isrc/include/$(ARCH_DEF) -Isrc/$(ARCH_DEF)
 PUB_INCFLAGS = -I$(BUILD_INC)
 LANGFLAGS = -std=c99 -fno-strict-aliasing
 LANGXXFLAGS = -fno-strict-aliasing
@@ -110,11 +125,11 @@ $(BUILD_C)/decaf_tables.c: $(BUILD_IBIN)/goldilocks_gen_tables
 
 $(BUILD_OBJ)/%.o: $(BUILD_C)/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -c -o $@ $< \
-		-I build/obj/ -I src/ -I src/arch_x86_64 -I src/include/arch_x86_64
+		-I build/obj/ -I src/ -I src/$(ARCH_DEF) -I src/include/$(ARCH_DEF)
 
 $(BUILD_OBJ)/goldilocks_gen_tables.o: src/goldilocks_gen_tables.c $(HEADERS)
 	$(CC) $(CFLAGS) \
-		-I build/obj/ -I src -I src/arch_x86_64 -I src/include/arch_x86_64 \
+		-I build/obj/ -I src -I src/$(ARCH_DEF) -I src/include/$(ARCH_DEF) \
 		-c -o $@ $<
 
 
@@ -142,10 +157,10 @@ else
 endif
 
 # $(BUILD_OBJ)/%.o: src/%.c $(HEADERS)
-# 	$(CC) $(CFLAGS) -I src/arch_x86_64 -I src/include/arch_x86_64 \
+# 	$(CC) $(CFLAGS) -I src/$(ARCH_DEF) -I src/include/$(ARCH_DEF) \
 # 	-c -o $@ $<
 
-$(BUILD_OBJ)/%.o: src/arch_x86_64/%.c $(HEADERS)
+$(BUILD_OBJ)/%.o: src/$(ARCH_DEF)/%.c $(HEADERS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BUILD_OBJ)/%.o: src/%.c $(HEADERS)
