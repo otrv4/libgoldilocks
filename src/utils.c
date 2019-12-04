@@ -9,6 +9,8 @@
  * @brief Goldilocks utility functions.
  */
 
+#include <string.h>
+
 #include <goldilocks/common.h>
 
 void goldilocks_bzero (
@@ -20,10 +22,15 @@ void goldilocks_bzero (
 #else
     const size_t sw = sizeof(goldilocks_word_t);
     volatile uint8_t *destroy = (volatile uint8_t *)s;
+    volatile goldilocks_word_t *n;
+    const uint8_t *d;
+
     for (; size && ((uintptr_t)destroy)%sw; size--, destroy++)
         *destroy = 0;
     for (; size >= sw; size -= sw, destroy += sw)
-        *(volatile goldilocks_word_t *)destroy = 0;
+        d = (uint8_t *)destroy;
+        memcpy(&n, d, sizeof(n));
+        n = 0;
     for (; size; size--, destroy++)
         *destroy = 0;
 #endif

@@ -3,7 +3,6 @@
 # Released under the MIT License.  See LICENSE.txt for license information.
 
 UNAME := $(shell uname)
-MACHINE := $(shell uname -m)
 
 # Subdirectories for objects etc.
 # Many of them are mapped to build/obj right now, but could be split later.
@@ -38,8 +37,6 @@ MACOSX_VERSION_MIN ?= 10.9
 ifeq ($(UNAME),Darwin)
 GENFLAGS += -mmacosx-version-min=$(MACOSX_VERSION_MIN)
 endif
-
-TODAY = $(shell date "+%Y-%m-%d")
 
 ARCHFLAGS ?= -march=native
 
