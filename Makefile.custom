@@ -129,7 +129,7 @@ $(BUILD_OBJ)/%.o: $(BUILD_C)/%.c $(HEADERS)
 
 $(BUILD_OBJ)/goldilocks_gen_tables.o: src/goldilocks_gen_tables.c $(HEADERS)
 	$(CC) $(CFLAGS) \
-		-I build/obj/ -I src -I src/arch_x86_64 -I src/include/arch_x86_64 \
+		-I build/obj/ -I src -I src/$(ARCH_DEF) -I src/include/$(ARCH_DEF) \
 		-c -o $@ $<
 
 
