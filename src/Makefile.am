@@ -5,6 +5,10 @@ noinst_PROGRAMS = goldilocks_gen_tables
 goldilocks_gen_tables_SOURCES = utils.c \
 					   goldilocks_gen_tables.c \
 					   arch_x86_64/f_impl.c \
+					   arch_32/f_impl.c \
+					   arch_arm_32/f_impl.c \
+					   arch_neon/f_impl.c \
+					   arch_ref64/f_impl.c \
 	       			   f_arithmetic.c \
 	       			   f_generic.c \
 	      			   goldilocks.c \
@@ -23,6 +27,10 @@ libgoldilocks_la_SOURCES = utils.c \
 		      shake.c \
 		      spongerng.c \
 		      arch_x86_64/f_impl.c \
+		      arch_32/f_impl.c \
+		      arch_arm_32/f_impl.c \
+		      arch_neon/f_impl.c \
+		      arch_ref64/f_impl.c \
 		      f_arithmetic.c \
 		      f_generic.c \
 		      goldilocks.c \
