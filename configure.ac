@@ -18,18 +18,10 @@ AC_PROG_CC
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
-dnl Checks for libraries.
-# FIXME: Replace `main' with a function in `-lc':
-#AC_CHECK_LIB([c], [main])
-# FIXME: Replace `main' with a function in `-ldecaf':
-#AC_CHECK_LIB([decaf], [main])
-
 dnl Checks for header files.
 AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h sys/param.h sys/time.h unistd.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
-# TODO: prob do not include bool
-# AC_CHECK_HEADER_STDBOOL
 AC_C_INLINE
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T
