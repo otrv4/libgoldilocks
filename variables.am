@@ -1,13 +1,11 @@
-ARCH_NAME = arch_x86_64
+# Another arch can be forced here
+ARCH_NAME = $(ARCH_DIR)
 
 LANGFLAGS = -std=c99 -fno-strict-aliasing
+LANGXXFLAGS = -fno-strict-aliasing
 
 WARNFLAGS = -pedantic -Wall -Wextra -Werror -Wunreachable-code \
 	 -Wmissing-declarations -Wunused-function -Wno-overlength-strings $(EXWARN)
-
-#ifeq ($(CC),clang)
-#WARNFLAGS += -Wgcc-compat
-#endif
 
 INCFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/src/include -I$(top_srcdir)/src/public_include
 INCFLAGS += -I$(top_srcdir)/src/$(ARCH_NAME)
@@ -18,5 +16,3 @@ OFLAGS ?= -O2
 ARCHFLAGS = -maes # -mavx2 -mbmi2 #TODO
 ARCHFLAGS += $(XARCHFLAGS)
 GENFLAGS = -ffunction-sections -fdata-sections -fvisibility=hidden -fomit-frame-pointer -fPIC
-
-LANGXXFLAGS = -fno-strict-aliasing

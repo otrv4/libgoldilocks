@@ -39,6 +39,19 @@ dnl Checks for library functions.
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([gettimeofday memmove memset pow sqrt])
 
+AC_CANONICAL_HOST
+
+# default target arch is arch_32 which shall be generic enough to compile mostly on anything
+# target arch dirs:
+# availables: arch_32, arch_arm_32, arch_neon, arch_ref64, arch_x86_64
+AS_CASE([$host_cpu],
+  [x86_64], [ARCH_DIR=arch_x86_64],
+  [arch64], [ARCH_DIR=arch_ref64],
+  [arm], [ARCH_DIR=arch_neon],
+  [ARCH_DIR=arch_32]
+)
+AC_SUBST([ARCH_DIR])
+
 AX_CFLAGS_GCC_OPTION([-Wall])
 AX_CFLAGS_GCC_OPTION([-Wextra])
 AX_CFLAGS_GCC_OPTION([-Werror])

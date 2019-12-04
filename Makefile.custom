@@ -45,7 +45,7 @@ WARNFLAGS_C += -Wgcc-compat
 endif
 
 ifeq ($(CXX),clang++)
-WARNFLAGS_CXX += -Wgcc-compat
+WARNFLAGS_CXX = -Wgcc-compat
 endif
 
 ARCHFLAGS += $(XARCHFLAGS)
