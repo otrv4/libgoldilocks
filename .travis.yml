@@ -15,12 +15,20 @@ matrix:
     - os: linux
       dist: xenial
       compiler: gcc
+    - os: linux
+      dist: trusty
+      compiler: gcc
+      env: T=32bit
 
 sudo: required
 
 before_install:
   - sudo apt-get update --quiet --assume-yes
   - sudo apt-get install splint --quiet --assume-yes
+  - if [[ "$T" = "32bit" ]]; then sudo apt-get install gcc-multilib --quiet --assume-yes; fi
+
+before_script:
+  - if [[ "$T" = "32bit" ]]; then export CLAFGS="-m32"; fi
 
 script:
   - ./autogen.sh
