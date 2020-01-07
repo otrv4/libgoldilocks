@@ -596,6 +596,22 @@ static void test_eddsa() {
     }
 }
 
+static void test_x448() {
+    Test test("X448 Encoding/Decoding");
+    SpongeRng rng(Block("test_x448"),SpongeRng::DETERMINISTIC);
+
+    for (int i=0; i<NTESTS && test.passing_now; i++) {
+        /* Test encode_like and torque */
+        Point p(rng);
+        SecureBuffer p1 = p.mul_by_ratio_and_encode_like_ladder();
+        SecureBuffer p2 = p.debugging_torque().mul_by_ratio_and_encode_like_ladder();
+        if (!memeq(p1,p2)) {
+            test.fail();
+            printf("    Torque and encode like x448 failed\n");
+        }
+    }
+}
+
 /* Thanks Johan Pascal */
 static void test_convert_eddsa_to_x() {
     Test test("ECDH using EdDSA keys");
@@ -660,6 +676,7 @@ static void run() {
     test_elligator();
     test_ec();
     test_eddsa();
+    test_x448();
     test_convert_eddsa_to_x();
     test_cfrg_crypto();
     test_cfrg_vectors();
