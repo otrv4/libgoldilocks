@@ -88,6 +88,15 @@ static void print(const char *name, const Point &x) {
     printf("\n");
 }
 
+static void galoisprint(gf_448_s *gf){
+    printf("%s", "&bigNumber{");
+    unsigned int i = 0;
+    for (i=0; i <(512/GOLDILOCKS_WORD_BITS); i++) {
+        printf("0x%016llx, \n", gf->limb[i]);
+    };
+    printf("%s", "} \n");
+}
+
 static bool arith_check(
     Test &test,
     const Scalar &x,
