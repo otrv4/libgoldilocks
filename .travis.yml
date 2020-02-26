@@ -26,7 +26,7 @@ matrix:
     - os: linux
       dist: trusty
       # https://packages.ubuntu.com/xenial/crossbuild-essential-armhf
-      compiler: arm-linux-gnueabihf-gcc
+      compiler: gcc
       arch: arm64
       env:
         - debugflags=-g0
