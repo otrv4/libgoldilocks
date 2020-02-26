@@ -80,7 +80,7 @@ BUILDPYS= $(SAGES:test/%.sage=$(BUILD_PY)/%.py)
 HEADERS= Makefile.custom $(shell find src test -name "*.h") $(BUILD_OBJ)/timestamp
 
 GENCOMPONENTS = $(BUILD_OBJ)/f_impl.o $(BUILD_OBJ)/f_arithmetic.o $(BUILD_OBJ)/f_generic.o
-LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/spongerng.o $(GENCOMPONENTS) $(BUILD_OBJ)/goldilocks.o $(BUILD_OBJ)/elligator.o $(BUILD_OBJ)/scalar.o $(BUILD_OBJ)/eddsa.o $(BUILD_OBJ)/decaf_tables.o
+LIBCOMPONENTS = $(BUILD_OBJ)/utils.o $(BUILD_OBJ)/shake.o $(BUILD_OBJ)/spongerng.o $(GENCOMPONENTS) $(BUILD_OBJ)/goldilocks.o $(BUILD_OBJ)/elligator.o $(BUILD_OBJ)/scalar.o $(BUILD_OBJ)/eddsa.o $(BUILD_OBJ)/goldilocks_tables.o
 BENCHCOMPONENTS = $(BUILD_OBJ)/bench.o $(BUILD_OBJ)/shake.o
 
 all: lib $(BUILD_IBIN)/test $(BUILD_IBIN)/bench $(BUILD_BIN)/shakesum
@@ -113,14 +113,14 @@ $(BUILD_OBJ)/timestamp:
 		$(PER_OBJ_DIRS) $(BUILD_C)/goldilocks
 	touch $@
 
-GEN_CODE = $(BUILD_C)/decaf_tables.c
+GEN_CODE = $(BUILD_C)/goldilocks_tables.c
 
 $(BUILD_IBIN)/goldilocks_gen_tables: $(BUILD_OBJ)/goldilocks_gen_tables.o \
 		$(BUILD_OBJ)/goldilocks.o $(BUILD_OBJ)/scalar.o $(BUILD_OBJ)/utils.o \
 		$(GENCOMPONENTS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
-$(BUILD_C)/decaf_tables.c: $(BUILD_IBIN)/goldilocks_gen_tables
+$(BUILD_C)/goldilocks_tables.c: $(BUILD_IBIN)/goldilocks_gen_tables
 	./$< > $@ || (rm $@; exit 1)
 
 $(BUILD_OBJ)/%.o: $(BUILD_C)/%.c $(HEADERS)

@@ -14,7 +14,7 @@ goldilocks_gen_tables_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS
 goldilocks_gen_tables_LDFLAGS = $(AM_LDFLAGS) $(XLDFLAGS)
 
 
-GEN/decaf_tables.c: goldilocks_gen_tables
+GEN/goldilocks_tables.c: goldilocks_gen_tables
 	./$< > $@ || (rm $@; exit 1)
 
 lib_LTLIBRARIES = libgoldilocks.la
@@ -29,7 +29,7 @@ libgoldilocks_la_SOURCES = utils.c \
 		      elligator.c \
 		      scalar.c \
 		      eddsa.c \
-		      GEN/decaf_tables.c
+		      GEN/goldilocks_tables.c
 
 libgoldilocks_la_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
 libgoldilocks_la_LDFLAGS = $(AM_LDFLAGS) $(XLDFLAGS)
