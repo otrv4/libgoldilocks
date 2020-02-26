@@ -40,6 +40,15 @@ before_install:
   - sudo apt-get install splint --quiet --assume-yes
   - if [[ "$T" = "32bit" ]]; then sudo dpkg --add-architecture armhf; fi
 
+before_script:
+  - date # Debugging "Permission defined" failure on darwin like https://travis-ci.org/ruby/ruby/jobs/508683759
+  - dpkg --print-architecture
+  - dpkg --print-foreign-architectures
+  - setarch --list
+  - echo SETARCH=${SETARCH}
+  - $SETARCH uname -a
+  - $SETARCH uname -r
+
 script:
   - ./autogen.sh
   - if [[ "$T" = "32bit" ]]; then $SETARCH ./configure -C; fi
