@@ -17,19 +17,20 @@ matrix:
       compiler: gcc
     - os: linux
       dist: trusty
-      compiler: gcc
-      arch: arm32
-      env: T=32bit
+      # https://packages.ubuntu.com/xenial/crossbuild-essential-armhf
+      compiler: arm-linux-gnueabihf-gcc
+      arch: arm64
+      env:
+        - debugflags=-g0
+        - SETARCH='setarch linux32 --verbose --32bit'
+        - T=32bit
 
 sudo: required
 
 before_install:
   - sudo apt-get update --quiet --assume-yes
   - sudo apt-get install splint --quiet --assume-yes
-  - if [[ "$T" = "32bit" ]]; then sudo apt-get install gcc-multilib --quiet --assume-yes; fi
-
-before_script:
-  - if [[ "$T" = "32bit" ]]; then export CLAFGS="-m32"; fi
+  - if [[ "$T" = "32bit" ]]; then sudo dpkg --add-architecture armhf; fi
 
 script:
   - ./autogen.sh
