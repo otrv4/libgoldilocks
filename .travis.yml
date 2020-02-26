@@ -1,20 +1,28 @@
 language: c
 
+env:
+  global:
+    - SETARCH=
+
 matrix:
   fast_finish: true
   include:
     - os: linux
       dist: trusty
       compiler: clang
+      env: T=normal
     - os: linux
       dist: trusty
       compiler: gcc
+      env: T=normal
     - os: linux
       dist: xenial
       compiler: clang
+      env: T=normal
     - os: linux
       dist: xenial
       compiler: gcc
+      env: T=normal
     - os: linux
       dist: trusty
       # https://packages.ubuntu.com/xenial/crossbuild-essential-armhf
@@ -34,7 +42,8 @@ before_install:
 
 script:
   - ./autogen.sh
-  - ./configure --disable-shared
+  - if [[ "$T" = "32bit" ]]; then $SETARCH ./configure -C; fi
+  - if [[ "$T" = "normal" ]]; then ./configure --disable-shared; fi
   - make gen-code
   - make
   - make test
