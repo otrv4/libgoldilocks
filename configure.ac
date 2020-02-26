@@ -52,6 +52,8 @@ AS_CASE([$host_cpu],
 )
 AC_SUBST([ARCH_DIR])
 
+AM_CONDITIONAL([NAMER], [test $(ARCH_DIR) -eq "arch_neon"])
+
 AX_CFLAGS_GCC_OPTION([-Wall])
 AX_CFLAGS_GCC_OPTION([-Wextra])
 AX_CFLAGS_GCC_OPTION([-Werror])
