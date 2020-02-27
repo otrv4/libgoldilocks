@@ -1,10 +1,12 @@
 include $(top_srcdir)/variables.am
 
+ARCH_NAMET = $(ARCH_DIR)
+
 noinst_PROGRAMS = goldilocks_gen_tables
 
 goldilocks_gen_tables_SOURCES = utils.c \
 					   goldilocks_gen_tables.c \
-					   $(ARCH_DIR)/f_impl.c \
+					   $(ARCH_NAMET)/f_impl.c \
 	       			   f_arithmetic.c \
 	       			   f_generic.c \
 	      			   goldilocks.c \
@@ -22,7 +24,7 @@ lib_LTLIBRARIES = libgoldilocks.la
 libgoldilocks_la_SOURCES = utils.c \
 		      shake.c \
 		      spongerng.c \
-		      $(ARCH_DIR)/f_impl.c \
+		      $(ARCH_NAMET)/f_impl.c \
 		      f_arithmetic.c \
 		      f_generic.c \
 		      goldilocks.c \
