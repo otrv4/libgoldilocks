@@ -53,6 +53,7 @@ AS_CASE([$host_cpu],
 AC_SUBST([ARCH_DIR])
 
 AM_CONDITIONAL([X86], [test $(ARCH_DIR) -eq "arch_x86_64"])
+AM_COND_IF([X86], [AC_SUBST(ENHANCE, "arch_32")], [AC_SUBST(ENHANCE, "arch_x86_64")])
 
 AX_CFLAGS_GCC_OPTION([-Wall])
 AX_CFLAGS_GCC_OPTION([-Wextra])
