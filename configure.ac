@@ -52,7 +52,7 @@ AS_CASE([$host_cpu],
 )
 AC_SUBST([ARCH_DIR])
 
-AM_CONDITIONAL([NAMER], [test $(ARCH_DIR) -eq "arch_neon"])
+AM_CONDITIONAL([X86], [test $(ARCH_DIR) -eq "arch_x86_64"])
 
 AX_CFLAGS_GCC_OPTION([-Wall])
 AX_CFLAGS_GCC_OPTION([-Wextra])
