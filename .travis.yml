@@ -32,6 +32,16 @@ matrix:
         - debugflags=-g0
         - SETARCH='setarch linux32 --verbose --32bit'
         - T=32bit
+   allow_failures:
+     - os: linux
+       dist: trusty
+       # https://packages.ubuntu.com/xenial/crossbuild-essential-armhf
+       compiler: gcc
+       arch: arm64
+       env:
+         - debugflags=-g0
+         - SETARCH='setarch linux32 --verbose --32bit'
+         - T=32bit
 
 sudo: required
 
