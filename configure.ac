@@ -128,6 +128,10 @@ Configuration completed in directory '${prefix}'.
 echo
 echo "Options used to compile and link:"
 echo "  Arch          = $ARCH_DIR"
+echo "  x86_64        = $needx64"
+echo "  Arch_64       = $need64"
+echo "  Arch_arm_32   = $needarm32"
+echo "  Arch_32       = $need32"
 echo "  CC            = $CC"
 echo "  CFLAGS        = $CFLAGS"
 echo "  LDFLAGS       = $LDFLAGS"
