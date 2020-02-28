@@ -127,6 +127,7 @@ Configuration completed in directory '${prefix}'.
 
 echo
 echo "Options used to compile and link:"
+echo "  Host CPU      = $host_cpu"
 echo "  Arch          = $ARCH_DIR"
 echo "  x86_64        = $needx64"
 echo "  Arch_64       = $need64"
