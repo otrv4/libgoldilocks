@@ -52,10 +52,10 @@ AS_CASE([$host_cpu],
 )
 AC_SUBST([ARCH_DIR])
 
-AS_IF([test "x$host_cpu" != "x86_64"], [need32=yes],
-    [test "x$host_cpu" = "x86_64"], [need32=no])
+AS_IF([test "x$ARCH_DIR" = "xarch_x86_64"], [need64=yes],
+    [test "x$ARCH_DIR" != "xarch_x86_64"], [need64=no])
 
-AM_CONDITIONAL([X86], [test "x$need32" = "xyes"])
+AM_CONDITIONAL([X86], [test "x$need64" = "xyes"])
 
 AX_CFLAGS_GCC_OPTION([-Wall])
 AX_CFLAGS_GCC_OPTION([-Wextra])
