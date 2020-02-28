@@ -2,25 +2,7 @@ include $(top_srcdir)/variables.am
 
 noinst_PROGRAMS = goldilocks_gen_tables
 
-if X86
 goldilocks_gen_tables_SOURCES = utils.c goldilocks_gen_tables.c arch_x86_64/f_impl.c f_arithmetic.c f_generic.c goldilocks.c scalar.c
-endif
-
-if ARCH_64
-goldilocks_gen_tables_SOURCES = utils.c goldilocks_gen_tables.c arch_ref64/f_impl.c f_arithmetic.c f_generic.c goldilocks.c scalar.c
-endif
-
-if ARCH_ARM_32
-goldilocks_gen_tables_SOURCES = utils.c goldilocks_gen_tables.c arch_arm_32/f_impl.c f_arithmetic.c f_generic.c goldilocks.c scalar.c
-endif
-
-if ARCH_32
-goldilocks_gen_tables_SOURCES = utils.c goldilocks_gen_tables.c arch_32/f_impl.c f_arithmetic.c f_generic.c goldilocks.c scalar.c
-endif
-
-goldilocks_gen_tables_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(INCFLAGS_448) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
-goldilocks_gen_tables_LDFLAGS = $(AM_LDFLAGS) $(XLDFLAGS)
-
 
 GEN/goldilocks_tables.c: goldilocks_gen_tables
 	./$< > $@ || (rm $@; exit 1)
