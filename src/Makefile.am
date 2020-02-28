@@ -29,7 +29,17 @@ lib_LTLIBRARIES = libgoldilocks.la
 
 if X86
 libgoldilocks_la_SOURCES = utils.c shake.c spongerng.c arch_x86_64/f_impl.c f_arithmetic.c f_generic.c goldilocks.c elligator.c scalar.c eddsa.c GEN/goldilocks_tables.c
-else
+endif
+
+if ARCH_64
+libgoldilocks_la_SOURCES = utils.c shake.c spongerng.c arch_ref64/f_impl.c f_arithmetic.c f_generic.c goldilocks.c elligator.c scalar.c eddsa.c GEN/goldilocks_tables.c
+endif
+
+if ARCH_ARM_32
+libgoldilocks_la_SOURCES = utils.c shake.c spongerng.c arch_arm_32/f_impl.c f_arithmetic.c f_generic.c goldilocks.c elligator.c scalar.c eddsa.c GEN/goldilocks_tables.c
+endif
+
+if ARCH_32
 libgoldilocks_la_SOURCES = utils.c shake.c spongerng.c arch_32/f_impl.c f_arithmetic.c f_generic.c goldilocks.c elligator.c scalar.c eddsa.c GEN/goldilocks_tables.c
 endif
 
