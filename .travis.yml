@@ -53,6 +53,5 @@ script:
   - if [[ "$T" = "32bit" ]]; then $SETARCH ./configure -C; fi
   - if [[ "$T" = "normal" ]]; then ./configure --disable-shared; fi
   - make gen-code
-  - ls -la src/arch_x86_64/
   - make
   - make test
