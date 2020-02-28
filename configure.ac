@@ -47,15 +47,30 @@ AC_CANONICAL_HOST
 AS_CASE([$host_cpu],
   [x86_64], [ARCH_DIR=arch_x86_64],
   [arch64], [ARCH_DIR=arch_ref64],
-  [arm], [ARCH_DIR=arch_neon],
+  [arm], [ARCH_DIR=arch_arm_32],
   [ARCH_DIR=arch_32]
 )
 AC_SUBST([ARCH_DIR])
 
-AS_IF([test "x$ARCH_DIR" = "xarch_x86_64"], [need64=yes],
-    [test "x$ARCH_DIR" != "xarch_x86_64"], [need64=no])
+AS_IF([test "x$ARCH_DIR" = "xarch_x86_64"], [needx64=yes],
+    [test "x$ARCH_DIR" != "xarch_x86_64"], [needx64=no])
 
-AM_CONDITIONAL([X86], [test "x$need64" = "xyes"])
+AM_CONDITIONAL([X86], [test "x$needx64" = "xyes"])
+
+AS_IF([test "x$ARCH_DIR" = "xarch_64"], [need64=yes],
+    [test "x$ARCH_DIR" != "xarch_64"], [need64=no])
+
+AM_CONDITIONAL([ARCH_64], [test "x$need64" = "xyes"])
+
+AS_IF([test "x$ARCH_DIR" = "xarch_arm_32"], [needarm32=yes],
+    [test "x$ARCH_DIR" != "xarch_arm_32"], [needarm32=no])
+
+AM_CONDITIONAL([ARCH_ARM_32], [test "x$needarm32" = "xyes"])
+
+AS_IF([test "x$ARCH_DIR" = "xarch_32"], [need32=yes],
+    [test "x$ARCH_DIR" != "xarch_32"], [need32=no])
+
+AM_CONDITIONAL([ARCH_32], [test "x$need32" = "xyes"])
 
 AX_CFLAGS_GCC_OPTION([-Wall])
 AX_CFLAGS_GCC_OPTION([-Wextra])
