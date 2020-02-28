@@ -10,7 +10,7 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
     uint64_t *c = cs->limb;
 
     __uint128_t accum0 = 0, accum1 = 0, accum2;
-    uint64_t mask = (1ull<<56) - 1;  
+    uint64_t mask = (1ull<<56) - 1;
 
     uint64_t aa[4] VECTOR_ALIGNED, bb[4] VECTOR_ALIGNED, bbb[4] VECTOR_ALIGNED;
 
