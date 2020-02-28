@@ -3,9 +3,9 @@ include $(top_srcdir)/variables.am
 noinst_PROGRAMS = goldilocks_gen_tables
 
 if X86
-goldilocks_gen_tables_SOURCES = utils.c goldilocks_gen_tables.c arch_32/f_impl.c f_arithmetic.c f_generic.c goldilocks.c scalar.c
-else
 goldilocks_gen_tables_SOURCES = utils.c goldilocks_gen_tables.c arch_x86_64/f_impl.c f_arithmetic.c f_generic.c goldilocks.c scalar.c
+else
+goldilocks_gen_tables_SOURCES = utils.c goldilocks_gen_tables.c arch_32/f_impl.c f_arithmetic.c f_generic.c goldilocks.c scalar.c
 endif
 
 goldilocks_gen_tables_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(INCFLAGS_448) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
@@ -18,9 +18,9 @@ GEN/goldilocks_tables.c: goldilocks_gen_tables
 lib_LTLIBRARIES = libgoldilocks.la
 
 if X86
-libgoldilocks_la_SOURCES = utils.c shake.c spongerng.c arch_32/f_impl.c f_arithmetic.c f_generic.c goldilocks.c elligator.c scalar.c eddsa.c GEN/goldilocks_tables.c
-else
 libgoldilocks_la_SOURCES = utils.c shake.c spongerng.c arch_x86_64/f_impl.c f_arithmetic.c f_generic.c goldilocks.c elligator.c scalar.c eddsa.c GEN/goldilocks_tables.c
+else
+libgoldilocks_la_SOURCES = utils.c shake.c spongerng.c arch_32/f_impl.c f_arithmetic.c f_generic.c goldilocks.c elligator.c scalar.c eddsa.c GEN/goldilocks_tables.c
 endif
 
 libgoldilocks_la_CFLAGS = $(AM_CFLAGS) $(LANGFLAGS) $(WARNFLAGS) $(INCFLAGS) $(OFLAGS) $(ARCHFLAGS) $(GENFLAGS) $(XCFLAGS)
