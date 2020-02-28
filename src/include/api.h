@@ -2,10 +2,9 @@
  * @file api.h
  * @brief Generic api helper header.
  * @copyright
- *   Copyright (c) 2018 Centro de Autonomía Digital \n
  *   Copyright (c) 2018 the libgoldilocks contributors.  \n
  *   Released under the MIT License.  See LICENSE.txt for license information.
- * @author Ola Bini
+ *
  */
 
 #ifndef __API_H__
