@@ -13,6 +13,7 @@
 #include "word.h"
 #include "field.h"
 
+#include <stdio.h>
 #include <goldilocks.h>
 #include <goldilocks/ed448.h>
 #include "api.h"
