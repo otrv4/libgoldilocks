@@ -61,6 +61,6 @@ script:
   - ./autogen.sh
   - if [[ "$T" = "32bit" ]]; then $SETARCH ./configure -C; fi
   - if [[ "$T" = "normal" ]]; then ./configure --disable-shared; fi
-  - make gen-code
   - make
+  - make gen-code
   - make test
