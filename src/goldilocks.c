@@ -140,6 +140,15 @@ void API_NS(point_encode)( unsigned char ser[SER_BYTES], const point_p p ) {
     gf_serialize(ser,s);
 }
 
+#define FOR_LIMB(i,op) { unsigned int i=0; for (i=0; i<SER_BYTES; i++)  { op; }}
+static void print_lol(const unsigned char ser[SER_BYTES]){
+    printf("\n");
+    for (unsigned int i = 0; i < SER_BYTES; i++) {
+        printf("0x%02x, \n", ser[i]);
+    }
+    printf("\n");
+}
+
 goldilocks_error_t API_NS(point_decode) (
     point_p p,
     const unsigned char ser[SER_BYTES],
@@ -147,6 +156,8 @@ goldilocks_error_t API_NS(point_decode) (
 ) {
     gf s, s2, num, tmp;
     gf_s *tmp2=s2, *ynum=p->z, *isr=p->x, *den=p->t;
+
+    print_lol(ser);
 
     mask_t succ = gf_deserialize(s, ser, 0);
     succ &= bool_to_mask(allow_identity) | ~gf_eq(s, ZERO);
