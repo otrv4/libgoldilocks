@@ -15,10 +15,6 @@ ifeq ($(ARCH),arch64)
 ARCH_DEF = arch_ref64
 endif
 
-ifeq ($(ARCH),arm)
-ARCH_DEF := arch_arm_32
-endif
-
 # Subdirectories for objects etc.
 # Many of them are mapped to build/obj right now, but could be split later.
 # The non-build/obj directories are the public interface.
