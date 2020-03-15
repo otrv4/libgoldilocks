@@ -13,7 +13,6 @@
 #include "word.h"
 #include "field.h"
 
-#include <stdio.h>
 #include <goldilocks.h>
 #include <goldilocks/ed448.h>
 #include "api.h"
@@ -912,9 +911,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     gf x, y, z, t;
     point_p q;
     gf u;
-    printf("\n TESTING 10 \n");
     API_NS(point_copy)(q,p);
-    printf("\n TESTING 11 \n");
     /* 4-isogeny: 2xy/(y^+x^2), (y^2-x^2)/(2z^2-y^2+x^2) */
     gf_sqr ( x, q->x );
     gf_sqr ( t, q->y );
@@ -922,7 +919,6 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     gf_add( z, q->y, q->x );
     gf_sqr ( y, z);
     gf_sub ( y, y, u );
-    printf("\n TESTING 12 \n");
     gf_sub ( z, t, x );
     gf_sqr ( x, q->z );
     gf_add ( t, x, x);
@@ -930,7 +926,6 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     gf_mul ( x, t, y );
     gf_mul ( y, z, u );
     gf_mul ( z, u, t );
-    printf("\n TESTING 13 \n");
     goldilocks_bzero(u,sizeof(u));
 
     /* Affinize */
@@ -938,18 +933,15 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     gf_mul(t,x,z);
     gf_mul(x,y,z);
 
-    printf("\n TESTING 14 \n");
     /* Encode */
     enc[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1] = 0;
     gf_serialize(enc, x);
-    printf("\n TESTING 15 \n");
     enc[GOLDILOCKS_EDDSA_448_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
 
     goldilocks_bzero(x,sizeof(x));
     goldilocks_bzero(y,sizeof(y));
     goldilocks_bzero(z,sizeof(z));
     goldilocks_bzero(t,sizeof(t));
-    printf("\n TESTING 16 \n");
     API_NS(point_destroy)(q);
 }
 
