@@ -15,8 +15,8 @@ ifeq ($(ARCH),arch64)
 ARCH_DEF = arch_ref64
 endif
 
-echo $(ARCH_DEF)
-echo $(ARCH)
+$(info    ARCH_DEF is $(ARCH_DEF))
+$(info    ARCH is $(ARCH))
 
 # Subdirectories for objects etc.
 # Many of them are mapped to build/obj right now, but could be split later.
