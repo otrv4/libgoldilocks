@@ -46,7 +46,7 @@ $ make test
   `make gen-code`
 * To generate the code based on the curve data and per field:
   `make gen-code-static`
-* To test the internal test programs: `make test`
+* To test the programs: `make test`
 * To generate the main decaf library and its symlinks: `make lib`
 
 ## Mailing lists
