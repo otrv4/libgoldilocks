@@ -66,9 +66,7 @@ int main(int argc, char **argv) {
 
     (void)argc; (void)argv;
 
-    printf("\n AM I HERE 1\n");
     ret = API_NS(point_decode)(real_point_base,base_point_ser_for_pregen,0);
-    printf("\n AM I HERE 2\n");
     if (ret != GOLDILOCKS_SUCCESS) {
         fprintf(stderr, "Can't decode base point!\n");
         return 1;
