@@ -7,7 +7,7 @@ ARCH := $(shell uname -m)
 
 ARCH_DEF := arch_32
 
-ifeq X86
+ifeq ($(ARCH),x86_64)
 ARCH_DEF = arch_x86_64
 endif
 
