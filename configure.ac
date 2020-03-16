@@ -47,8 +47,8 @@ AC_CANONICAL_HOST
 AS_CASE([$host_cpu],
   [ia64|mips64|mips64eb|mipseb64|mips64el|mipsel64|mips64*|powerpc64*|sparc64|x86_64*|amd64*], [ARCH_DIR=arch_x86_64],
   [arch64|aarch64|powerpc*], [ARCH_DIR=arch_ref64],
-  [arm64|armv*], [ARCH_DIR=arch_neon],
-  [arm32], [ARCH_DIR=arch_arm_32],
+  [arm64], [ARCH_DIR=arch_neon],
+  [arm32|armv*], [ARCH_DIR=arch_arm_32],
   [ARCH_DIR=arch_32]
 )
 
