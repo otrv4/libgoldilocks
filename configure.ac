@@ -46,8 +46,8 @@ AC_CANONICAL_HOST
 # availables: arch_32, arch_arm_32, arch_neon, arch_ref64, arch_x86_64
 AS_CASE([$host_cpu],
   [ia64|mips64|mips64eb|mipseb64|mips64el|mipsel64|mips64*|powerpc64*|sparc64|x86_64], [ARCH_DIR=arch_x86_64],
-  [arch64], [ARCH_DIR=arch_ref64],
-  [arm], [ARCH_DIR=arch_arm_32],
+  [arch64|aarch64|powerpc*], [ARCH_DIR=arch_ref64],
+  [arm*], [ARCH_DIR=arch_arm_32],
   [ARCH_DIR=arch_32]
 )
 AC_SUBST([ARCH_DIR])
