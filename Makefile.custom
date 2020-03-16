@@ -7,17 +7,24 @@ ARCH := $(shell uname -m)
 
 ARCH_DEF := arch_32
 
-ifeq ($(ARCH),x86_64*|amd64*)
+ifeq ($(ARCH),ia64|mips64|mips64eb|mipseb64|mips64el|mipsel64|mips64*|powerpc64*|sparc64|x86_64*|amd64*)
 ARCH_DEF = arch_x86_64
 endif
 
-ifeq ($(ARCH),arch64)
+ifeq ($(ARCH),arch64|aarch64|powerpc*)
 ARCH_DEF = arch_ref64
+endif
+
+ifeq ($(ARCH),arm64)
+ARCH_DEF = arch_neon
+endif
+
+ifeq ($(ARCH),arm32|armv*)
+ARCH_DEF = arch_neon
 endif
 
 $(info    ARCH_DEF is $(ARCH_DEF))
 $(info    ARCH is $(ARCH))
-$(info    ARCH_DIR is $(ARCH_DIR))
 
 # Subdirectories for objects etc.
 # Many of them are mapped to build/obj right now, but could be split later.
