@@ -60,10 +60,15 @@ AS_IF([test "x$ARCH_DIR" = "xarch_x86_64"], [needx64=yes],
 
 AM_CONDITIONAL([X86], [test "x$needx64" = "xyes"])
 
-AS_IF([test "x$ARCH_DIR" = "xarch_64"], [need64=yes],
-    [test "x$ARCH_DIR" != "xarch_64"], [need64=no])
+AS_IF([test "x$ARCH_DIR" = "xarch_ref64"], [need64=yes],
+    [test "x$ARCH_DIR" != "xarch_ref64"], [need64=no])
 
 AM_CONDITIONAL([ARCH_64], [test "x$need64" = "xyes"])
+
+AS_IF([test "x$ARCH_DIR" = "xarch_neon"], [needneon=yes],
+    [test "x$ARCH_DIR" != "xarch_neon"], [needneon=no])
+
+AM_CONDITIONAL([ARCH_NEON], [test "x$needneon" = "xyes"])
 
 AS_IF([test "x$ARCH_DIR" = "xarch_arm_32"], [needarm32=yes],
     [test "x$ARCH_DIR" != "xarch_arm_32"], [needarm32=no])

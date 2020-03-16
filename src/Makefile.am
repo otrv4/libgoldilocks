@@ -10,6 +10,10 @@ if ARCH_64
 goldilocks_gen_tables_SOURCES = utils.c goldilocks_gen_tables.c arch_ref64/f_impl.c f_arithmetic.c f_generic.c goldilocks.c scalar.c
 endif
 
+if ARCH_NEON
+goldilocks_gen_tables_SOURCES = utils.c goldilocks_gen_tables.c arch_neon/f_impl.c f_arithmetic.c f_generic.c goldilocks.c scalar.c
+endif
+
 if ARCH_ARM_32
 goldilocks_gen_tables_SOURCES = utils.c goldilocks_gen_tables.c arch_arm_32/f_impl.c f_arithmetic.c f_generic.c goldilocks.c scalar.c
 endif
@@ -33,6 +37,10 @@ endif
 
 if ARCH_64
 libgoldilocks_la_SOURCES = utils.c shake.c spongerng.c arch_ref64/f_impl.c f_arithmetic.c f_generic.c goldilocks.c elligator.c scalar.c eddsa.c GEN/goldilocks_tables.c
+endif
+
+if ARCH_NEON
+libgoldilocks_la_SOURCES = utils.c shake.c spongerng.c arch_neon/f_impl.c f_arithmetic.c f_generic.c goldilocks.c elligator.c scalar.c eddsa.c GEN/goldilocks_tables.c
 endif
 
 if ARCH_ARM_32
