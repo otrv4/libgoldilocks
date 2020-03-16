@@ -17,6 +17,7 @@ endif
 
 $(info    ARCH_DEF is $(ARCH_DEF))
 $(info    ARCH is $(ARCH))
+$(info    ARCH_DIR is $(ARCH_DIR))
 
 # Subdirectories for objects etc.
 # Many of them are mapped to build/obj right now, but could be split later.
