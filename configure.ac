@@ -47,12 +47,9 @@ AC_CANONICAL_HOST
 AS_CASE([$host_cpu],
   [ia64|mips64|mips64eb|mipseb64|mips64el|mipsel64|mips64*|powerpc64*|sparc64|x86_64], [ARCH_DIR=arch_x86_64],
   [arch64|aarch64|powerpc*], [ARCH_DIR=arch_ref64],
+  [arm64], [ARCH_DIR=arch_neon],
+  [arm32], [ARCH_DIR=arch_arm_32],
   [ARCH_DIR=arch_32]
-)
-
-AS_CASE([$simd],
-  [neon], [ARCH_ARM=arch_neon],
-  [ARCH_ARM=arch_arm_32]
 )
 
 AC_SUBST([ARCH_DIR])
@@ -134,9 +131,7 @@ Configuration completed in directory '${prefix}'.
 echo
 echo "Options used to compile and link:"
 echo "  Host CPU      = $host_cpu"
-echo "  SMID          = $smid"
 echo "  Arch          = $ARCH_DIR"
-echo "  Arch Arm      = $ARCH_ARM"
 echo "  x86_64        = $needx64"
 echo "  Arch_64       = $need64"
 echo "  Arch_arm_32   = $needarm32"
